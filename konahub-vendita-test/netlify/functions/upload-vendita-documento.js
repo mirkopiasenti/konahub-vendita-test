@@ -55,9 +55,20 @@ function sanitizePath(basePath) {
     .join('/');
 }
 
+/**
+ * Evita che finisca per errore una cartella finale chiamata "file".
+ * Esempio:
+ * 2026/04/contratto_test/file
+ * diventa:
+ * 2026/04/contratto_test
+ */
+function removeAccidentalFileSegment(path) {
+  return String(path || '').replace(/\/file$/i, '');
+}
+
 function normalizeBasePath({ praticaId, storageBasePath, nomeCartellaStorage }) {
   if (storageBasePath && String(storageBasePath).trim()) {
-    const clean = sanitizePath(storageBasePath);
+    const clean = removeAccidentalFileSegment(sanitizePath(storageBasePath));
     return clean ? `${clean}/` : '';
   }
 
@@ -66,7 +77,8 @@ function normalizeBasePath({ praticaId, storageBasePath, nomeCartellaStorage }) 
   const month = String(now.getMonth() + 1).padStart(2, '0');
 
   if (nomeCartellaStorage && String(nomeCartellaStorage).trim()) {
-    return `${year}/${month}/${sanitizeSegment(nomeCartellaStorage, `pratica_${praticaId}`)}/`;
+    const cleanFolderName = sanitizeSegment(nomeCartellaStorage, `pratica_${praticaId}`);
+    return `${year}/${month}/${cleanFolderName}/`;
   }
 
   return `${year}/${month}/pratica_${sanitizeSegment(praticaId)}/`;
@@ -78,14 +90,18 @@ function suggestedFileName(tipoDocumento, fields) {
   switch (tipo) {
     case 'documento_identita':
       return 'documento_identita.pdf';
+
     case 'contratto': {
       const categoria = fields.categoria || fields.categoria_snapshot || 'generico';
       return `contratto_${sanitizeSegment(categoria, 'generico')}.pdf`;
     }
+
     case 'copia_sim_mnp':
       return 'copia_sim_mnp.pdf';
+
     case 'copia_bolletta':
       return 'copia_bolletta.pdf';
+
     default:
       return `${tipo}.pdf`;
   }
@@ -115,7 +131,7 @@ function readMultipart(event) {
         return;
       }
 
-      // Ignora eventuali file extra: in questa API è previsto un solo PDF per richiesta.
+      // Questa API accetta un solo PDF per richiesta.
       if (parsedFile) {
         file.resume();
         return;
@@ -208,7 +224,10 @@ exports.handler = async (event) => {
   }
 
   if (event.httpMethod !== 'POST') {
-    return response(405, { success: false, error: 'Metodo non consentito: usa POST' });
+    return response(405, {
+      success: false,
+      error: 'Metodo non consentito: usa POST'
+    });
   }
 
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -233,25 +252,41 @@ exports.handler = async (event) => {
     const uploadedBy = normalizeOptional(fields.uploaded_by);
 
     if (!praticaId) {
-      return response(400, { success: false, error: 'Campo obbligatorio mancante: pratica_id' });
+      return response(400, {
+        success: false,
+        error: 'Campo obbligatorio mancante: pratica_id'
+      });
     }
 
     if (!anagraficaId) {
-      return response(400, { success: false, error: 'Campo obbligatorio mancante: anagrafica_id' });
+      return response(400, {
+        success: false,
+        error: 'Campo obbligatorio mancante: anagrafica_id'
+      });
     }
 
     if (!tipoDocumento) {
-      return response(400, { success: false, error: 'Campo obbligatorio mancante: tipo_documento' });
+      return response(400, {
+        success: false,
+        error: 'Campo obbligatorio mancante: tipo_documento'
+      });
     }
 
     if (file.mimeType !== 'application/pdf') {
-      return response(400, { success: false, error: 'Tipo file non valido: è consentito solo application/pdf' });
+      return response(400, {
+        success: false,
+        error: 'Tipo file non valido: è consentito solo application/pdf'
+      });
     }
 
-    const requestedFileName = normalizeOptional(fields.file_name)
-      || suggestedFileName(tipoDocumento, fields);
+    const requestedFileName =
+      normalizeOptional(fields.file_name) ||
+      suggestedFileName(tipoDocumento, fields);
 
-    const finalFileName = sanitizeFileName(requestedFileName, sanitizeSegment(tipoDocumento, 'documento'));
+    const finalFileName = sanitizeFileName(
+      requestedFileName,
+      sanitizeSegment(tipoDocumento, 'documento')
+    );
 
     const basePath = normalizeBasePath({
       praticaId,
@@ -262,7 +297,10 @@ exports.handler = async (event) => {
     const storagePath = `${basePath}${finalFileName}`;
 
     const supabase = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     });
 
     const { error: uploadError } = await supabase
@@ -300,7 +338,7 @@ exports.handler = async (event) => {
       .single();
 
     if (insertError) {
-      // Rollback best-effort del file caricato se il record DB fallisce.
+      // Rollback best-effort: se il DB fallisce, proviamo a rimuovere il file appena caricato.
       await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
 
       return response(500, {
