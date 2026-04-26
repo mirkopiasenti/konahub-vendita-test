@@ -5,6 +5,7 @@ const ORIGINI_PRATICA_AMMESSE = new Set([
   'contatto_callcenter_entro_10_giorni',
   'spontaneo'
 ]);
+const CLUSTER_AMMESSI = new Set(['Consumer', 'Business']);
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -46,6 +47,18 @@ function parseBoolean(value, fallback = null) {
   if (['false', '0', 'no'].includes(normalized)) return false;
 
   return fallback;
+}
+
+function normalizeCluster(value) {
+  const raw = cleanString(value);
+
+  if (!raw) return null;
+
+  const normalized = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+
+  if (CLUSTER_AMMESSI.has(normalized)) return normalized;
+
+  throw new Error('Cluster non valido: usa Consumer o Business');
 }
 
 function sanitizeSegment(value, fallback = 'valore') {
@@ -146,7 +159,13 @@ exports.handler = async (event) => {
   }
 
   const cfPiva = cleanString(payload.cf_piva);
-  const cluster = cleanString(payload.cluster);
+  let cluster;
+
+  try {
+    cluster = normalizeCluster(payload.cluster);
+  } catch (error) {
+    return response(400, { success: false, error: error.message });
+  }
   const ragioneSociale = cleanString(payload.ragione_sociale);
   const nomeReferente = cleanString(payload.nome_referente);
   const cellulare = cleanString(payload.cellulare);

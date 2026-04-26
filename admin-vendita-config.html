@@ -160,7 +160,10 @@
         </div>
         <div class="field">
           <label for="offerta_cluster">Cluster cliente</label>
-          <input id="offerta_cluster" value="Consumer">
+          <select id="offerta_cluster">
+            <option value="Consumer">Consumer</option>
+            <option value="Business">Business</option>
+          </select>
         </div>
         <div class="field full">
           <label for="offerta_nome">Nome offerta *</label>
@@ -221,7 +224,10 @@
         </div>
         <div class="field">
           <label for="opzione_cluster">Cluster cliente</label>
-          <input id="opzione_cluster" value="Consumer">
+          <select id="opzione_cluster">
+            <option value="Consumer">Consumer</option>
+            <option value="Business">Business</option>
+          </select>
         </div>
         <div class="field">
           <label for="opzione_punteggio">Punteggio default</label>
@@ -365,6 +371,14 @@
     function statusChip(active) {
       if (active) return '<span class="chip on">attivo</span>';
       return '<span class="chip off">non attivo</span>';
+    }
+
+    function normalizeClusterSelectValue(value) {
+      if (value === 'Consumer' || value === 'Business') {
+        return value;
+      }
+
+      return 'Consumer';
     }
 
     function categoriaName(id) {
@@ -560,7 +574,7 @@
 
       offertaIdInput.value = item.id;
       offertaCategoriaId.value = item.categoria_id || '';
-      offertaCluster.value = item.cluster_cliente || '';
+      offertaCluster.value = normalizeClusterSelectValue(item.cluster_cliente);
       offertaNome.value = item.nome_offerta || '';
       offertaDescrizione.value = item.descrizione || '';
       offertaPunteggio.value = Number(item.punteggio_default || 0);
@@ -588,7 +602,7 @@
       opzioneCategoriaId.value = item.categoria_id || '';
       fillOfferteByCategoriaForOpzioni();
       opzioneOffertaId.value = item.offerta_id || '';
-      opzioneCluster.value = item.cluster_cliente || '';
+      opzioneCluster.value = normalizeClusterSelectValue(item.cluster_cliente);
       opzioneNome.value = item.nome_opzione || '';
       opzioneDescrizione.value = item.descrizione || '';
       opzionePunteggio.value = Number(item.punteggio_default || 0);

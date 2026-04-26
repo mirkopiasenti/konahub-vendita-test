@@ -6,6 +6,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Content-Type': 'application/json'
 };
+const CLUSTER_AMMESSI = new Set(['Consumer', 'Business']);
 
 function response(statusCode, payload) {
   return {
@@ -19,6 +20,18 @@ function cleanString(value) {
   if (value === undefined || value === null) return null;
   const trimmed = String(value).trim();
   return trimmed || null;
+}
+
+function normalizeClusterCliente(value) {
+  const raw = cleanString(value);
+
+  if (!raw) return null;
+
+  const normalized = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+
+  if (CLUSTER_AMMESSI.has(normalized)) return normalized;
+
+  throw new Error('Cluster non valido: usa Consumer o Business');
 }
 
 function parseBoolean(value, fallback = null) {
@@ -117,10 +130,11 @@ function assertRequired(value, fieldName) {
 async function createOfferta(supabase, payload) {
   assertRequired(payload.categoria_id, 'categoria_id');
   assertRequired(payload.nome_offerta, 'nome_offerta');
+  const clusterCliente = normalizeClusterCliente(payload.cluster_cliente);
 
   const insertPayload = {
     categoria_id: cleanString(payload.categoria_id),
-    cluster_cliente: cleanString(payload.cluster_cliente),
+    cluster_cliente: clusterCliente,
     nome_offerta: cleanString(payload.nome_offerta),
     descrizione: cleanString(payload.descrizione),
     punteggio_default: toNumber(payload.punteggio_default, 0),
@@ -142,10 +156,11 @@ async function updateOfferta(supabase, payload) {
   assertRequired(payload.id, 'id');
   assertRequired(payload.categoria_id, 'categoria_id');
   assertRequired(payload.nome_offerta, 'nome_offerta');
+  const clusterCliente = normalizeClusterCliente(payload.cluster_cliente);
 
   const updatePayload = {
     categoria_id: cleanString(payload.categoria_id),
-    cluster_cliente: cleanString(payload.cluster_cliente),
+    cluster_cliente: clusterCliente,
     nome_offerta: cleanString(payload.nome_offerta),
     descrizione: cleanString(payload.descrizione),
     punteggio_default: toNumber(payload.punteggio_default, 0),
@@ -191,11 +206,12 @@ async function createOpzione(supabase, payload) {
   assertRequired(payload.categoria_id, 'categoria_id');
   assertRequired(payload.offerta_id, 'offerta_id');
   assertRequired(payload.nome_opzione, 'nome_opzione');
+  const clusterCliente = normalizeClusterCliente(payload.cluster_cliente);
 
   const insertPayload = {
     categoria_id: cleanString(payload.categoria_id),
     offerta_id: cleanString(payload.offerta_id),
-    cluster_cliente: cleanString(payload.cluster_cliente),
+    cluster_cliente: clusterCliente,
     nome_opzione: cleanString(payload.nome_opzione),
     descrizione: cleanString(payload.descrizione),
     punteggio_default: toNumber(payload.punteggio_default, 0),
@@ -218,11 +234,12 @@ async function updateOpzione(supabase, payload) {
   assertRequired(payload.categoria_id, 'categoria_id');
   assertRequired(payload.offerta_id, 'offerta_id');
   assertRequired(payload.nome_opzione, 'nome_opzione');
+  const clusterCliente = normalizeClusterCliente(payload.cluster_cliente);
 
   const updatePayload = {
     categoria_id: cleanString(payload.categoria_id),
     offerta_id: cleanString(payload.offerta_id),
-    cluster_cliente: cleanString(payload.cluster_cliente),
+    cluster_cliente: clusterCliente,
     nome_opzione: cleanString(payload.nome_opzione),
     descrizione: cleanString(payload.descrizione),
     punteggio_default: toNumber(payload.punteggio_default, 0),
