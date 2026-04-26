@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Upload Documento Vendita</title>
+</head>
+<body>
+  <h1>Test Upload Documento Vendita</h1>
+
+  <div>
+    <label>Anagrafica ID</label><br>
+    <input id="anagrafica_id" style="width: 500px;">
+  </div>
+
+  <br>
+
+  <div>
+    <label>Pratica ID</label><br>
+    <input id="pratica_id" style="width: 500px;">
+  </div>
+
+  <br>
+
+  <div>
+    <label>Tipo documento</label><br>
+    <select id="tipo_documento">
+      <option value="documento_identita">documento_identita</option>
+      <option value="contratto">contratto</option>
+      <option value="copia_sim_mnp">copia_sim_mnp</option>
+      <option value="copia_bolletta">copia_bolletta</option>
+    </select>
+  </div>
+
+  <br>
+
+  <div>
+    <label>PDF</label><br>
+    <input id="file" type="file" accept="application/pdf">
+  </div>
+
+  <br>
+
+  <button onclick="testUpload()">Carica PDF</button>
+
+  <pre id="result"></pre>
+
+  <script src="/js/vendita-storage-helper.js"></script>
+  <script>
+    async function testUpload() {
+      const resultBox = document.getElementById('result');
+
+      try {
+        const file = document.getElementById('file').files[0];
+
+        const result = await uploadVenditaDocumento({
+          file,
+          anagrafica_id: document.getElementById('anagrafica_id').value.trim(),
+          pratica_id: document.getElementById('pratica_id').value.trim(),
+          tipo_documento: document.getElementById('tipo_documento').value,
+          storage_base_path: '2026/04/Contratto_Test_26_04_2026_test/'
+        });
+
+        resultBox.textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        resultBox.textContent = 'ERRORE: ' + error.message;
+      }
+    }
+  </script>
+</body>
+</html>
