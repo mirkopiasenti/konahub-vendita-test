@@ -5,22 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Test Crea Contratto Vendita</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 24px; background: #f5f7fa; color: #1f2937; }
-    h1 { margin-bottom: 16px; font-size: 24px; }
-    .card { max-width: 980px; background: #fff; border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; }
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field.full { grid-column: 1 / -1; }
-    label { font-weight: 600; font-size: 14px; }
-    input, select, button, textarea { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: #fff; }
-    button { cursor: pointer; font-weight: 700; background: #111827; color: #fff; border: 0; }
-    button:disabled { opacity: 0.7; cursor: not-allowed; }
-    .status { margin: 12px 0; font-size: 14px; font-weight: 600; }
-    .status.error { color: #b91c1c; }
-    .status.ok { color: #047857; }
-    pre { margin-top: 14px; background: #111827; color: #f9fafb; border-radius: 8px; padding: 12px; font-size: 12px; overflow: auto; max-height: 420px; }
-    .hint { font-size: 12px; color: #6b7280; margin-bottom: 10px; }
-    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 24px;
+      background: #f5f7fa;
+      color: #1f2937;
+    }
+
+    h1 {
+      margin-bottom: 16px;
+      font-size: 24px;
+    }
+
+    .card {
+      max-width: 980px;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    input,
+    select,
+    button,
+    textarea {
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+      background: #111827;
+      color: #fff;
+      border: 0;
+    }
+
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin: 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status.error {
+      color: #b91c1c;
+    }
+
+    .status.ok {
+      color: #047857;
+    }
+
+    pre {
+      margin-top: 14px;
+      background: #111827;
+      color: #f9fafb;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+      overflow: auto;
+      max-height: 420px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 720px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -35,8 +120,8 @@
       </div>
 
       <div class="field">
-        <label for="cluster">Cluster *</label>
-        <select id="cluster" name="cluster" required>
+        <label for="cluster">Cluster</label>
+        <select id="cluster" name="cluster">
           <option value="Consumer">Consumer</option>
           <option value="Business">Business</option>
         </select>
@@ -122,7 +207,12 @@
 
   <script src="/js/vendita-storage-helper.js"></script>
   <script>
-    const state = { categorie: [], offerte: [], opzioni: [], reload: [] };
+    const state = {
+      categorie: [],
+      offerte: [],
+      opzioni: [],
+      reload: []
+    };
 
     const form = document.getElementById('testForm');
     const clusterSelect = document.getElementById('cluster');
@@ -148,12 +238,15 @@
     }
 
     function renderCategorie() {
-      categoriaSelect.innerHTML = state.categorie.map((c) => optionHtml(c.id, c.nome || c.id)).join('');
+      categoriaSelect.innerHTML = state.categorie
+        .map((c) => optionHtml(c.id, c.nome || c.id))
+        .join('');
     }
 
     function filteredOfferte() {
       const categoriaId = categoriaSelect.value;
       const cluster = clusterSelect.value;
+
       return state.offerte.filter((o) => {
         const categoriaOk = o.categoria_id === categoriaId;
         const clusterOk = !o.cluster_cliente || o.cluster_cliente === cluster;
@@ -165,6 +258,7 @@
       const categoriaId = categoriaSelect.value;
       const offertaId = offertaSelect.value;
       const cluster = clusterSelect.value;
+
       return state.opzioni.filter((o) => {
         const categoriaOk = !o.categoria_id || o.categoria_id === categoriaId;
         const offertaOk = !o.offerta_id || o.offerta_id === offertaId;
@@ -175,41 +269,56 @@
 
     function renderOfferte() {
       const offerte = filteredOfferte();
+
       if (offerte.length === 0) {
         offertaSelect.innerHTML = '<option value="">Nessuna offerta disponibile per categoria/cluster</option>';
-        renderOpzioni();
         return;
       }
-      offertaSelect.innerHTML = offerte.map((o) => optionHtml(o.id, o.nome_offerta || o.id)).join('');
-      renderOpzioni();
+
+      offertaSelect.innerHTML = offerte
+        .map((o) => optionHtml(o.id, o.nome_offerta || o.id))
+        .join('');
     }
 
     function renderOpzioni() {
       const opzioni = filteredOpzioni();
-      const rows = [optionHtml('', 'Nessuna opzione')].concat(opzioni.map((o) => optionHtml(o.id, o.nome_opzione || o.id)));
+      const rows = [optionHtml('', 'Nessuna opzione')].concat(
+        opzioni.map((o) => optionHtml(o.id, o.nome_opzione || o.id))
+      );
+
       opzioneSelect.innerHTML = rows.join('');
     }
 
     function renderReload() {
-      const rows = [optionHtml('', 'Nessun reload')].concat(state.reload.map((r) => optionHtml(r.id, r.nome || r.id)));
+      const rows = [optionHtml('', 'Nessun reload')].concat(
+        state.reload.map((r) => optionHtml(r.id, r.nome || r.id))
+      );
+
       reloadSelect.innerHTML = rows.join('');
     }
 
     async function loadConfig() {
       setStatus('Caricamento configurazione vendita...', '');
+
       const response = await fetch('/.netlify/functions/vendita-config');
       const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.error || 'Errore caricamento configurazione');
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Errore caricamento configurazione');
+      }
 
       state.categorie = data.categorie || [];
       state.offerte = data.offerte || [];
       state.opzioni = data.opzioni || [];
       state.reload = data.reload || [];
 
-      if (state.categorie.length === 0) throw new Error('Nessuna categoria attiva disponibile');
+      if (state.categorie.length === 0) {
+        throw new Error('Nessuna categoria attiva disponibile');
+      }
 
       renderCategorie();
       renderOfferte();
+      renderOpzioni();
       renderReload();
       setStatus('Configurazione caricata', 'ok');
     }
@@ -225,19 +334,23 @@
         comune: form.comune.value.trim() || null,
         via: form.via.value.trim() || null,
         civico: form.civico.value.trim() || null,
+
         origine_pratica: form.origine_pratica.value || 'spontaneo',
         appuntamento_id: null,
         chiamata_id: null,
         operatore_id: null,
+
         categoria_id: form.categoria_id.value,
         offerta_id: form.offerta_id.value,
         opzione_id: form.opzione_id.value || null,
         reload_id: form.reload_id.value || null,
+
         tipo_attivazione: null,
         apri_chiudi: null,
         intestatario: null,
         switch_sim: null,
         modalita_pagamento: null,
+
         dispositivo_associato: false,
         imei: null,
         fascia_prezzo: null,
@@ -253,19 +366,39 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
       const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.error || 'Errore creazione pratica/contratto');
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Errore creazione pratica/contratto');
+      }
+
       return data;
     }
 
-    clusterSelect.addEventListener('change', () => { renderOfferte(); });
-    categoriaSelect.addEventListener('change', () => { renderOfferte(); });
-    offertaSelect.addEventListener('change', () => { renderOpzioni(); });
+    clusterSelect.addEventListener('change', () => {
+      renderOfferte();
+      renderOpzioni();
+    });
+
+    categoriaSelect.addEventListener('change', () => {
+      renderOfferte();
+      renderOpzioni();
+    });
+
+    offertaSelect.addEventListener('change', () => {
+      renderOpzioni();
+    });
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
+
       const pdfFile = document.getElementById('pdf_file').files[0];
-      if (!pdfFile) { setStatus('Seleziona un file PDF', 'error'); return; }
+
+      if (!pdfFile) {
+        setStatus('Seleziona un file PDF', 'error');
+        return;
+      }
 
       submitBtn.disabled = true;
       setStatus('Creazione pratica e contratto in corso...', '');
@@ -274,6 +407,7 @@
       try {
         const createPayload = buildCreatePayload();
         const createResult = await createPraticaContratto(createPayload);
+
         setStatus('Contratto creato, upload PDF in corso...', '');
 
         const uploadResult = await uploadVenditaDocumento({
@@ -286,7 +420,13 @@
           categoria_snapshot: createResult?.contratto?.categoria_snapshot || null
         });
 
-        setResult({ success: true, createResult, uploadResult });
+        const finalResult = {
+          success: true,
+          createResult,
+          uploadResult
+        };
+
+        setResult(finalResult);
         setStatus('Test completato con successo', 'ok');
       } catch (error) {
         setResult({ success: false, error: error.message });
@@ -296,10 +436,14 @@
       }
     });
 
-    loadConfig().catch((error) => {
-      setStatus(error.message, 'error');
-      setResult({ success: false, error: error.message });
-    });
+    (async () => {
+      try {
+        await loadConfig();
+      } catch (error) {
+        setStatus(error.message, 'error');
+        setResult({ success: false, error: error.message });
+      }
+    })();
   </script>
 </body>
 </html>

@@ -45,27 +45,27 @@ exports.handler = async (event) => {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    // Carichiamo solo voci attive, ordinate in modo utile alla UI di test.
+    // Restituiamo solo record attivi e solo i campi punteggio nuovi.
     const [categorieRes, offerteRes, opzioniRes, reloadRes] = await Promise.all([
       supabase
         .from('vendita_categorie')
-        .select('*')
+        .select('id, nome, descrizione, attiva, ordine, created_at, updated_at')
         .eq('attiva', true)
         .order('ordine', { ascending: true })
         .order('nome', { ascending: true }),
       supabase
         .from('vendita_offerte')
-        .select('*')
+        .select('id, categoria_id, cluster_cliente, nome_offerta, descrizione, punteggio_gara, punteggio_extra_gara, attiva, valid_from, valid_to, created_at, updated_at')
         .eq('attiva', true)
         .order('nome_offerta', { ascending: true }),
       supabase
         .from('vendita_opzioni')
-        .select('*')
+        .select('id, categoria_id, offerta_id, cluster_cliente, nome_opzione, descrizione, punteggio_gara, punteggio_extra_gara, attiva, valid_from, valid_to, created_at, updated_at')
         .eq('attiva', true)
         .order('nome_opzione', { ascending: true }),
       supabase
         .from('vendita_reload')
-        .select('*')
+        .select('id, nome, attivo, ordine, created_at, updated_at')
         .eq('attivo', true)
         .order('ordine', { ascending: true })
         .order('nome', { ascending: true })
