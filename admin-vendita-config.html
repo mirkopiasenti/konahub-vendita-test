@@ -5,152 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Configurazione Vendita (Test)</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f5f7fa;
-      color: #111827;
-    }
-
-    h1, h2 {
-      margin: 0 0 12px;
-    }
-
-    .top-bar {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-
-    .message {
-      font-size: 14px;
-      font-weight: 700;
-      margin: 8px 0 0;
-    }
-
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f7fa; color: #111827; }
+    h1, h2, h3 { margin: 0 0 12px; }
+    .top-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .message { font-size: 14px; font-weight: 700; margin: 8px 0 0; }
     .message.ok { color: #047857; }
     .message.error { color: #b91c1c; }
     .message.info { color: #1d4ed8; }
-
-    .card {
-      background: #fff;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 14px;
-      overflow: auto;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .field.full {
-      grid-column: 1 / -1;
-    }
-
-    label {
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    input, select, textarea, button {
-      font-size: 14px;
-      padding: 8px;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      background: #fff;
-    }
-
+    .card { background: #fff; border: 1px solid #d1d5db; border-radius: 8px; padding: 14px; margin-bottom: 14px; overflow: auto; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-size: 13px; font-weight: 700; }
+    input, select, textarea, button { font-size: 14px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; }
     textarea { min-height: 64px; resize: vertical; }
-
-    button {
-      cursor: pointer;
-      background: #111827;
-      color: #fff;
-      border: 0;
-      font-weight: 700;
-    }
-
-    button.secondary {
-      background: #4b5563;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    th, td {
-      border: 1px solid #e5e7eb;
-      padding: 8px;
-      text-align: left;
-      vertical-align: top;
-    }
-
+    button { cursor: pointer; background: #111827; color: #fff; border: 0; font-weight: 700; }
+    button.secondary { background: #4b5563; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; vertical-align: top; }
     th { background: #f3f4f6; }
-
-    .actions {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .chip {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
     .chip.on { background: #dcfce7; color: #166534; }
     .chip.off { background: #fee2e2; color: #991b1b; }
-
-    @media (max-width: 860px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-    }
+    .note { font-size: 12px; color: #6b7280; margin: 4px 0 12px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <h1>Admin configurazione vendita (test)</h1>
+  <p class="note">Ambiente test libero. Nel CRM reale questa pagina dovrà essere protetta da login/ruoli.</p>
 
   <div class="top-bar">
     <button id="btnLoad">Carica configurazione</button>
     <a href="/test-crea-contratto.html">Vai a test-crea-contratto</a>
+    <a href="/">Home</a>
   </div>
   <div id="message" class="message info">Pronto</div>
 
   <div class="card">
-    <h2>Sezione categorie</h2>
+    <h2>Categorie</h2>
     <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Ordine</th>
-          <th>Stato</th>
-        </tr>
-      </thead>
+      <thead><tr><th>Nome</th><th>Ordine</th><th>Stato</th></tr></thead>
       <tbody id="tbodyCategorie"></tbody>
     </table>
   </div>
 
   <div class="card">
-    <h2>Sezione offerte</h2>
+    <h2>Offerte</h2>
     <form id="formOfferta">
       <input type="hidden" id="offerta_id">
       <div class="grid">
@@ -159,8 +61,8 @@
           <select id="offerta_categoria_id" required></select>
         </div>
         <div class="field">
-          <label for="offerta_cluster">Cluster cliente</label>
-          <select id="offerta_cluster">
+          <label for="offerta_cluster">Cluster cliente *</label>
+          <select id="offerta_cluster" required>
             <option value="Consumer">Consumer</option>
             <option value="Business">Business</option>
           </select>
@@ -174,15 +76,16 @@
           <textarea id="offerta_descrizione"></textarea>
         </div>
         <div class="field">
-          <label for="offerta_punteggio">Punteggio default</label>
-          <input id="offerta_punteggio" type="number" step="0.01" value="0">
+          <label for="offerta_punteggio_gara">Punteggio Gara *</label>
+          <input id="offerta_punteggio_gara" type="number" step="0.01" value="0" required>
+        </div>
+        <div class="field">
+          <label for="offerta_punteggio_extra_gara">Punteggio Extra Gara</label>
+          <input id="offerta_punteggio_extra_gara" type="number" step="0.01" value="0">
         </div>
         <div class="field">
           <label for="offerta_attiva">Attiva</label>
-          <select id="offerta_attiva">
-            <option value="true">true</option>
-            <option value="false">false</option>
-          </select>
+          <select id="offerta_attiva"><option value="true">true</option><option value="false">false</option></select>
         </div>
       </div>
       <div class="actions">
@@ -190,27 +93,16 @@
         <button type="button" id="btnResetOfferta" class="secondary">Nuova offerta</button>
       </div>
     </form>
-
     <hr>
-
-    <h3>Tabella offerte esistenti</h3>
+    <h3>Offerte esistenti</h3>
     <table>
-      <thead>
-        <tr>
-          <th>Categoria</th>
-          <th>Cluster</th>
-          <th>Nome offerta</th>
-          <th>Punteggio</th>
-          <th>Stato</th>
-          <th>Azioni</th>
-        </tr>
-      </thead>
+      <thead><tr><th>Categoria</th><th>Cluster</th><th>Nome</th><th>Punteggio Gara</th><th>Extra Gara</th><th>Stato</th><th>Azioni</th></tr></thead>
       <tbody id="tbodyOfferte"></tbody>
     </table>
   </div>
 
   <div class="card">
-    <h2>Sezione opzioni</h2>
+    <h2>Opzioni</h2>
     <form id="formOpzione">
       <input type="hidden" id="opzione_id">
       <div class="grid">
@@ -219,19 +111,23 @@
           <select id="opzione_categoria_id" required></select>
         </div>
         <div class="field">
-          <label for="opzione_offerta_id">Offerta *</label>
-          <select id="opzione_offerta_id" required></select>
-        </div>
-        <div class="field">
-          <label for="opzione_cluster">Cluster cliente</label>
-          <select id="opzione_cluster">
+          <label for="opzione_cluster">Cluster cliente *</label>
+          <select id="opzione_cluster" required>
             <option value="Consumer">Consumer</option>
             <option value="Business">Business</option>
           </select>
         </div>
         <div class="field">
-          <label for="opzione_punteggio">Punteggio default</label>
-          <input id="opzione_punteggio" type="number" step="0.01" value="0">
+          <label for="opzione_offerta_id">Offerta *</label>
+          <select id="opzione_offerta_id" required></select>
+        </div>
+        <div class="field">
+          <label for="opzione_punteggio_gara">Punteggio Gara *</label>
+          <input id="opzione_punteggio_gara" type="number" step="0.01" value="0" required>
+        </div>
+        <div class="field">
+          <label for="opzione_punteggio_extra_gara">Punteggio Extra Gara</label>
+          <input id="opzione_punteggio_extra_gara" type="number" step="0.01" value="0">
         </div>
         <div class="field full">
           <label for="opzione_nome">Nome opzione *</label>
@@ -243,10 +139,7 @@
         </div>
         <div class="field">
           <label for="opzione_attiva">Attiva</label>
-          <select id="opzione_attiva">
-            <option value="true">true</option>
-            <option value="false">false</option>
-          </select>
+          <select id="opzione_attiva"><option value="true">true</option><option value="false">false</option></select>
         </div>
       </div>
       <div class="actions">
@@ -254,105 +147,65 @@
         <button type="button" id="btnResetOpzione" class="secondary">Nuova opzione</button>
       </div>
     </form>
-
     <hr>
-
-    <h3>Tabella opzioni esistenti</h3>
+    <h3>Opzioni esistenti</h3>
     <table>
-      <thead>
-        <tr>
-          <th>Categoria</th>
-          <th>Offerta</th>
-          <th>Cluster</th>
-          <th>Nome opzione</th>
-          <th>Punteggio</th>
-          <th>Stato</th>
-          <th>Azioni</th>
-        </tr>
-      </thead>
+      <thead><tr><th>Categoria</th><th>Offerta</th><th>Cluster</th><th>Nome</th><th>Punteggio Gara</th><th>Extra Gara</th><th>Stato</th><th>Azioni</th></tr></thead>
       <tbody id="tbodyOpzioni"></tbody>
     </table>
   </div>
 
   <div class="card">
-    <h2>Sezione reload</h2>
+    <h2>Reload</h2>
     <form id="formReload">
       <div class="grid">
-        <div class="field">
-          <label for="reload_nome">Nome *</label>
-          <input id="reload_nome" required>
-        </div>
-        <div class="field">
-          <label for="reload_ordine">Ordine</label>
-          <input id="reload_ordine" type="number" step="1" value="0">
-        </div>
-        <div class="field">
-          <label for="reload_attivo">Attivo</label>
-          <select id="reload_attivo">
-            <option value="true">true</option>
-            <option value="false">false</option>
-          </select>
-        </div>
+        <div class="field"><label for="reload_nome">Nome *</label><input id="reload_nome" required></div>
+        <div class="field"><label for="reload_ordine">Ordine</label><input id="reload_ordine" type="number" step="1" value="0"></div>
+        <div class="field"><label for="reload_attivo">Attivo</label><select id="reload_attivo"><option value="true">true</option><option value="false">false</option></select></div>
       </div>
-      <div class="actions">
-        <button type="submit">Crea reload</button>
-      </div>
+      <button type="submit">Crea reload</button>
     </form>
-
     <hr>
-
-    <h3>Tabella reload esistenti</h3>
+    <h3>Reload esistenti</h3>
     <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Ordine</th>
-          <th>Stato</th>
-          <th>Azioni</th>
-        </tr>
-      </thead>
+      <thead><tr><th>Nome</th><th>Ordine</th><th>Stato</th><th>Azioni</th></tr></thead>
       <tbody id="tbodyReload"></tbody>
     </table>
   </div>
 
   <script>
     const API_URL = '/.netlify/functions/admin-vendita-config';
+    const state = { categorie: [], offerte: [], opzioni: [], reload: [], documenti_regole: [] };
+    const $ = (id) => document.getElementById(id);
 
-    const state = {
-      categorie: [],
-      offerte: [],
-      opzioni: [],
-      reload: [],
-      documenti_regole: []
-    };
+    const messageBox = $('message');
+    const tbodyCategorie = $('tbodyCategorie');
+    const tbodyOfferte = $('tbodyOfferte');
+    const tbodyOpzioni = $('tbodyOpzioni');
+    const tbodyReload = $('tbodyReload');
 
-    const messageBox = document.getElementById('message');
+    const offertaIdInput = $('offerta_id');
+    const offertaCategoriaId = $('offerta_categoria_id');
+    const offertaCluster = $('offerta_cluster');
+    const offertaNome = $('offerta_nome');
+    const offertaDescrizione = $('offerta_descrizione');
+    const offertaPunteggioGara = $('offerta_punteggio_gara');
+    const offertaPunteggioExtraGara = $('offerta_punteggio_extra_gara');
+    const offertaAttiva = $('offerta_attiva');
 
-    const tbodyCategorie = document.getElementById('tbodyCategorie');
-    const tbodyOfferte = document.getElementById('tbodyOfferte');
-    const tbodyOpzioni = document.getElementById('tbodyOpzioni');
-    const tbodyReload = document.getElementById('tbodyReload');
+    const opzioneIdInput = $('opzione_id');
+    const opzioneCategoriaId = $('opzione_categoria_id');
+    const opzioneCluster = $('opzione_cluster');
+    const opzioneOffertaId = $('opzione_offerta_id');
+    const opzioneNome = $('opzione_nome');
+    const opzioneDescrizione = $('opzione_descrizione');
+    const opzionePunteggioGara = $('opzione_punteggio_gara');
+    const opzionePunteggioExtraGara = $('opzione_punteggio_extra_gara');
+    const opzioneAttiva = $('opzione_attiva');
 
-    const offertaIdInput = document.getElementById('offerta_id');
-    const offertaCategoriaId = document.getElementById('offerta_categoria_id');
-    const offertaCluster = document.getElementById('offerta_cluster');
-    const offertaNome = document.getElementById('offerta_nome');
-    const offertaDescrizione = document.getElementById('offerta_descrizione');
-    const offertaPunteggio = document.getElementById('offerta_punteggio');
-    const offertaAttiva = document.getElementById('offerta_attiva');
-
-    const opzioneIdInput = document.getElementById('opzione_id');
-    const opzioneCategoriaId = document.getElementById('opzione_categoria_id');
-    const opzioneOffertaId = document.getElementById('opzione_offerta_id');
-    const opzioneCluster = document.getElementById('opzione_cluster');
-    const opzioneNome = document.getElementById('opzione_nome');
-    const opzioneDescrizione = document.getElementById('opzione_descrizione');
-    const opzionePunteggio = document.getElementById('opzione_punteggio');
-    const opzioneAttiva = document.getElementById('opzione_attiva');
-
-    const reloadNome = document.getElementById('reload_nome');
-    const reloadOrdine = document.getElementById('reload_ordine');
-    const reloadAttivo = document.getElementById('reload_attivo');
+    const reloadNome = $('reload_nome');
+    const reloadOrdine = $('reload_ordine');
+    const reloadAttivo = $('reload_attivo');
 
     function setMessage(message, type = 'info') {
       messageBox.textContent = message;
@@ -360,46 +213,32 @@
     }
 
     function escapeHtml(value) {
-      return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+      return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
     function statusChip(active) {
-      if (active) return '<span class="chip on">attivo</span>';
-      return '<span class="chip off">non attivo</span>';
-    }
-
-    function normalizeClusterSelectValue(value) {
-      if (value === 'Consumer' || value === 'Business') {
-        return value;
-      }
-
-      return 'Consumer';
+      return active ? '<span class="chip on">attivo</span>' : '<span class="chip off">non attivo</span>';
     }
 
     function categoriaName(id) {
-      const found = state.categorie.find((c) => c.id === id);
-      return found ? found.nome : '-';
+      const item = state.categorie.find((c) => c.id === id);
+      return item ? item.nome : '-';
     }
 
     function offertaName(id) {
-      const found = state.offerte.find((o) => o.id === id);
-      return found ? found.nome_offerta : '-';
+      const item = state.offerte.find((o) => o.id === id);
+      return item ? item.nome_offerta : '-';
+    }
+
+    function optionHtml(value, label) {
+      return `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
     }
 
     async function apiGetConfig() {
       const response = await fetch(API_URL);
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Errore caricamento configurazione');
-      }
-
-      return result;
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'Errore caricamento configurazione');
+      return data;
     }
 
     async function apiAction(payload) {
@@ -408,122 +247,68 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Errore operazione admin');
-      }
-
-      return result.data;
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || 'Errore salvataggio');
+      return data.data;
     }
 
     function fillCategoriaSelects() {
-      const options = state.categorie
-        .map((c) => `<option value="${c.id}">${escapeHtml(c.nome)}${c.attiva ? '' : ' (non attiva)'}</option>`)
-        .join('');
-
-      offertaCategoriaId.innerHTML = options;
-      opzioneCategoriaId.innerHTML = options;
+      const html = state.categorie.map((c) => optionHtml(c.id, c.nome)).join('');
+      offertaCategoriaId.innerHTML = html;
+      opzioneCategoriaId.innerHTML = html;
+      fillOfferteByCategoriaClusterForOpzioni();
     }
 
-    function fillOfferteByCategoriaForOpzioni() {
+    function fillOfferteByCategoriaClusterForOpzioni() {
       const categoriaId = opzioneCategoriaId.value;
-
-      const options = state.offerte
-        .filter((o) => o.categoria_id === categoriaId)
-        .map((o) => `<option value="${o.id}">${escapeHtml(o.nome_offerta)}${o.attiva ? '' : ' (non attiva)'}</option>`)
-        .join('');
-
-      opzioneOffertaId.innerHTML = options || '<option value="">Nessuna offerta disponibile</option>';
+      const cluster = opzioneCluster.value;
+      const offerte = state.offerte.filter((o) => o.categoria_id === categoriaId && (!o.cluster_cliente || o.cluster_cliente === cluster));
+      opzioneOffertaId.innerHTML = offerte.length
+        ? offerte.map((o) => optionHtml(o.id, o.nome_offerta)).join('')
+        : '<option value="">Nessuna offerta per categoria/cluster</option>';
     }
 
     function renderCategorie() {
-      if (state.categorie.length === 0) {
-        tbodyCategorie.innerHTML = '<tr><td colspan="3">Nessuna categoria trovata</td></tr>';
-        return;
-      }
-
-      tbodyCategorie.innerHTML = state.categorie
-        .map((c) => `
-          <tr>
-            <td>${escapeHtml(c.nome)}</td>
-            <td>${c.ordine ?? 0}</td>
-            <td>${statusChip(!!c.attiva)}</td>
-          </tr>
-        `)
-        .join('');
+      tbodyCategorie.innerHTML = state.categorie.length
+        ? state.categorie.map((c) => `<tr><td>${escapeHtml(c.nome)}</td><td>${c.ordine ?? 0}</td><td>${statusChip(!!c.attiva)}</td></tr>`).join('')
+        : '<tr><td colspan="3">Nessuna categoria trovata</td></tr>';
     }
 
     function renderOfferte() {
-      if (state.offerte.length === 0) {
-        tbodyOfferte.innerHTML = '<tr><td colspan="6">Nessuna offerta trovata</td></tr>';
-        return;
-      }
-
-      tbodyOfferte.innerHTML = state.offerte
-        .map((o) => `
+      tbodyOfferte.innerHTML = state.offerte.length
+        ? state.offerte.map((o) => `
           <tr>
             <td>${escapeHtml(categoriaName(o.categoria_id))}</td>
             <td>${escapeHtml(o.cluster_cliente || '-')}</td>
             <td>${escapeHtml(o.nome_offerta || '-')}</td>
-            <td>${Number(o.punteggio_default || 0).toFixed(2)}</td>
+            <td>${Number(o.punteggio_gara || 0).toFixed(2)}</td>
+            <td>${Number(o.punteggio_extra_gara || 0).toFixed(2)}</td>
             <td>${statusChip(!!o.attiva)}</td>
-            <td>
-              <div class="actions">
-                <button type="button" class="secondary" onclick="editOfferta('${o.id}')">modifica</button>
-                <button type="button" onclick="toggleOfferta('${o.id}', ${o.attiva ? 'false' : 'true'})">${o.attiva ? 'disattiva' : 'attiva'}</button>
-              </div>
-            </td>
-          </tr>
-        `)
-        .join('');
+            <td><div class="actions"><button type="button" class="secondary" onclick="editOfferta('${o.id}')">modifica</button><button type="button" onclick="toggleOfferta('${o.id}', ${o.attiva ? 'false' : 'true'})">${o.attiva ? 'disattiva' : 'attiva'}</button></div></td>
+          </tr>`).join('')
+        : '<tr><td colspan="7">Nessuna offerta trovata</td></tr>';
     }
 
     function renderOpzioni() {
-      if (state.opzioni.length === 0) {
-        tbodyOpzioni.innerHTML = '<tr><td colspan="7">Nessuna opzione trovata</td></tr>';
-        return;
-      }
-
-      tbodyOpzioni.innerHTML = state.opzioni
-        .map((o) => `
+      tbodyOpzioni.innerHTML = state.opzioni.length
+        ? state.opzioni.map((o) => `
           <tr>
             <td>${escapeHtml(categoriaName(o.categoria_id))}</td>
             <td>${escapeHtml(offertaName(o.offerta_id))}</td>
             <td>${escapeHtml(o.cluster_cliente || '-')}</td>
             <td>${escapeHtml(o.nome_opzione || '-')}</td>
-            <td>${Number(o.punteggio_default || 0).toFixed(2)}</td>
+            <td>${Number(o.punteggio_gara || 0).toFixed(2)}</td>
+            <td>${Number(o.punteggio_extra_gara || 0).toFixed(2)}</td>
             <td>${statusChip(!!o.attiva)}</td>
-            <td>
-              <div class="actions">
-                <button type="button" class="secondary" onclick="editOpzione('${o.id}')">modifica</button>
-                <button type="button" onclick="toggleOpzione('${o.id}', ${o.attiva ? 'false' : 'true'})">${o.attiva ? 'disattiva' : 'attiva'}</button>
-              </div>
-            </td>
-          </tr>
-        `)
-        .join('');
+            <td><div class="actions"><button type="button" class="secondary" onclick="editOpzione('${o.id}')">modifica</button><button type="button" onclick="toggleOpzione('${o.id}', ${o.attiva ? 'false' : 'true'})">${o.attiva ? 'disattiva' : 'attiva'}</button></div></td>
+          </tr>`).join('')
+        : '<tr><td colspan="8">Nessuna opzione trovata</td></tr>';
     }
 
     function renderReload() {
-      if (state.reload.length === 0) {
-        tbodyReload.innerHTML = '<tr><td colspan="4">Nessun reload trovato</td></tr>';
-        return;
-      }
-
-      tbodyReload.innerHTML = state.reload
-        .map((r) => `
-          <tr>
-            <td>${escapeHtml(r.nome || '-')}</td>
-            <td>${r.ordine ?? 0}</td>
-            <td>${statusChip(!!r.attivo)}</td>
-            <td>
-              <button type="button" onclick="toggleReload('${r.id}', ${r.attivo ? 'false' : 'true'})">${r.attivo ? 'disattiva' : 'attiva'}</button>
-            </td>
-          </tr>
-        `)
-        .join('');
+      tbodyReload.innerHTML = state.reload.length
+        ? state.reload.map((r) => `<tr><td>${escapeHtml(r.nome || '-')}</td><td>${r.ordine ?? 0}</td><td>${statusChip(!!r.attivo)}</td><td><button type="button" onclick="toggleReload('${r.id}', ${r.attivo ? 'false' : 'true'})">${r.attivo ? 'disattiva' : 'attiva'}</button></td></tr>`).join('')
+        : '<tr><td colspan="4">Nessun reload trovato</td></tr>';
     }
 
     function resetOffertaForm() {
@@ -531,7 +316,8 @@
       offertaCluster.value = 'Consumer';
       offertaNome.value = '';
       offertaDescrizione.value = '';
-      offertaPunteggio.value = '0';
+      offertaPunteggioGara.value = '0';
+      offertaPunteggioExtraGara.value = '0';
       offertaAttiva.value = 'true';
     }
 
@@ -540,8 +326,10 @@
       opzioneCluster.value = 'Consumer';
       opzioneNome.value = '';
       opzioneDescrizione.value = '';
-      opzionePunteggio.value = '0';
+      opzionePunteggioGara.value = '0';
+      opzionePunteggioExtraGara.value = '0';
       opzioneAttiva.value = 'true';
+      fillOfferteByCategoriaClusterForOpzioni();
     }
 
     function applyConfig(config) {
@@ -550,9 +338,7 @@
       state.opzioni = config.opzioni || [];
       state.reload = config.reload || [];
       state.documenti_regole = config.documenti_regole || [];
-
       fillCategoriaSelects();
-      fillOfferteByCategoriaForOpzioni();
       renderCategorie();
       renderOfferte();
       renderOpzioni();
@@ -561,180 +347,107 @@
 
     async function loadConfig() {
       setMessage('Caricamento configurazione in corso...', 'info');
-
       const config = await apiGetConfig();
       applyConfig(config);
-
       setMessage('Configurazione caricata con successo', 'ok');
     }
 
     window.editOfferta = function (id) {
       const item = state.offerte.find((o) => o.id === id);
       if (!item) return;
-
       offertaIdInput.value = item.id;
       offertaCategoriaId.value = item.categoria_id || '';
-      offertaCluster.value = normalizeClusterSelectValue(item.cluster_cliente);
+      offertaCluster.value = item.cluster_cliente || 'Consumer';
       offertaNome.value = item.nome_offerta || '';
       offertaDescrizione.value = item.descrizione || '';
-      offertaPunteggio.value = Number(item.punteggio_default || 0);
+      offertaPunteggioGara.value = Number(item.punteggio_gara || 0);
+      offertaPunteggioExtraGara.value = Number(item.punteggio_extra_gara || 0);
       offertaAttiva.value = item.attiva ? 'true' : 'false';
-
       setMessage('Offerta caricata in modifica', 'info');
     };
 
     window.toggleOfferta = async function (id, attiva) {
-      try {
-        setMessage('Aggiornamento stato offerta...', 'info');
-        await apiAction({ action: 'toggle_offerta', id, attiva });
-        await loadConfig();
-        setMessage('Stato offerta aggiornato', 'ok');
-      } catch (error) {
-        setMessage(error.message, 'error');
-      }
+      try { setMessage('Aggiornamento stato offerta...', 'info'); await apiAction({ action: 'toggle_offerta', id, attiva }); await loadConfig(); setMessage('Stato offerta aggiornato', 'ok'); }
+      catch (error) { setMessage(error.message, 'error'); }
     };
 
     window.editOpzione = function (id) {
       const item = state.opzioni.find((o) => o.id === id);
       if (!item) return;
-
       opzioneIdInput.value = item.id;
       opzioneCategoriaId.value = item.categoria_id || '';
-      fillOfferteByCategoriaForOpzioni();
+      opzioneCluster.value = item.cluster_cliente || 'Consumer';
+      fillOfferteByCategoriaClusterForOpzioni();
       opzioneOffertaId.value = item.offerta_id || '';
-      opzioneCluster.value = normalizeClusterSelectValue(item.cluster_cliente);
       opzioneNome.value = item.nome_opzione || '';
       opzioneDescrizione.value = item.descrizione || '';
-      opzionePunteggio.value = Number(item.punteggio_default || 0);
+      opzionePunteggioGara.value = Number(item.punteggio_gara || 0);
+      opzionePunteggioExtraGara.value = Number(item.punteggio_extra_gara || 0);
       opzioneAttiva.value = item.attiva ? 'true' : 'false';
-
       setMessage('Opzione caricata in modifica', 'info');
     };
 
     window.toggleOpzione = async function (id, attiva) {
-      try {
-        setMessage('Aggiornamento stato opzione...', 'info');
-        await apiAction({ action: 'toggle_opzione', id, attiva });
-        await loadConfig();
-        setMessage('Stato opzione aggiornato', 'ok');
-      } catch (error) {
-        setMessage(error.message, 'error');
-      }
+      try { setMessage('Aggiornamento stato opzione...', 'info'); await apiAction({ action: 'toggle_opzione', id, attiva }); await loadConfig(); setMessage('Stato opzione aggiornato', 'ok'); }
+      catch (error) { setMessage(error.message, 'error'); }
     };
 
     window.toggleReload = async function (id, attivo) {
-      try {
-        setMessage('Aggiornamento stato reload...', 'info');
-        await apiAction({ action: 'toggle_reload', id, attivo });
-        await loadConfig();
-        setMessage('Stato reload aggiornato', 'ok');
-      } catch (error) {
-        setMessage(error.message, 'error');
-      }
+      try { setMessage('Aggiornamento stato reload...', 'info'); await apiAction({ action: 'toggle_reload', id, attivo }); await loadConfig(); setMessage('Stato reload aggiornato', 'ok'); }
+      catch (error) { setMessage(error.message, 'error'); }
     };
 
-    document.getElementById('btnLoad').addEventListener('click', async () => {
-      try {
-        await loadConfig();
-      } catch (error) {
-        setMessage(error.message, 'error');
-      }
-    });
+    $('btnLoad').addEventListener('click', () => loadConfig().catch((error) => setMessage(error.message, 'error')));
+    $('btnResetOfferta').addEventListener('click', () => { resetOffertaForm(); setMessage('Form offerta resettato', 'info'); });
+    $('btnResetOpzione').addEventListener('click', () => { resetOpzioneForm(); setMessage('Form opzione resettato', 'info'); });
+    opzioneCategoriaId.addEventListener('change', fillOfferteByCategoriaClusterForOpzioni);
+    opzioneCluster.addEventListener('change', fillOfferteByCategoriaClusterForOpzioni);
 
-    document.getElementById('btnResetOfferta').addEventListener('click', () => {
-      resetOffertaForm();
-      setMessage('Form offerta resettato', 'info');
-    });
-
-    document.getElementById('btnResetOpzione').addEventListener('click', () => {
-      resetOpzioneForm();
-      setMessage('Form opzione resettato', 'info');
-    });
-
-    opzioneCategoriaId.addEventListener('change', () => {
-      fillOfferteByCategoriaForOpzioni();
-    });
-
-    document.getElementById('formOfferta').addEventListener('submit', async (event) => {
+    $('formOfferta').addEventListener('submit', async (event) => {
       event.preventDefault();
-
       const id = offertaIdInput.value;
       const payload = {
         action: id ? 'update_offerta' : 'create_offerta',
         id: id || undefined,
         categoria_id: offertaCategoriaId.value,
-        cluster_cliente: offertaCluster.value || null,
+        cluster_cliente: offertaCluster.value,
         nome_offerta: offertaNome.value,
         descrizione: offertaDescrizione.value || null,
-        punteggio_default: Number(offertaPunteggio.value || 0),
+        punteggio_gara: offertaPunteggioGara.value,
+        punteggio_extra_gara: offertaPunteggioExtraGara.value || 0,
         attiva: offertaAttiva.value === 'true'
       };
-
-      try {
-        setMessage(id ? 'Aggiornamento offerta in corso...' : 'Creazione offerta in corso...', 'info');
-        await apiAction(payload);
-        await loadConfig();
-        resetOffertaForm();
-        setMessage(id ? 'Offerta aggiornata' : 'Offerta creata', 'ok');
-      } catch (error) {
-        setMessage(error.message, 'error');
-      }
+      try { setMessage(id ? 'Aggiornamento offerta...' : 'Creazione offerta...', 'info'); await apiAction(payload); await loadConfig(); resetOffertaForm(); setMessage(id ? 'Offerta aggiornata' : 'Offerta creata', 'ok'); }
+      catch (error) { setMessage(error.message, 'error'); }
     });
 
-    document.getElementById('formOpzione').addEventListener('submit', async (event) => {
+    $('formOpzione').addEventListener('submit', async (event) => {
       event.preventDefault();
-
       const id = opzioneIdInput.value;
       const payload = {
         action: id ? 'update_opzione' : 'create_opzione',
         id: id || undefined,
         categoria_id: opzioneCategoriaId.value,
         offerta_id: opzioneOffertaId.value,
-        cluster_cliente: opzioneCluster.value || null,
+        cluster_cliente: opzioneCluster.value,
         nome_opzione: opzioneNome.value,
         descrizione: opzioneDescrizione.value || null,
-        punteggio_default: Number(opzionePunteggio.value || 0),
+        punteggio_gara: opzionePunteggioGara.value,
+        punteggio_extra_gara: opzionePunteggioExtraGara.value || 0,
         attiva: opzioneAttiva.value === 'true'
       };
-
-      try {
-        setMessage(id ? 'Aggiornamento opzione in corso...' : 'Creazione opzione in corso...', 'info');
-        await apiAction(payload);
-        await loadConfig();
-        resetOpzioneForm();
-        setMessage(id ? 'Opzione aggiornata' : 'Opzione creata', 'ok');
-      } catch (error) {
-        setMessage(error.message, 'error');
-      }
+      try { setMessage(id ? 'Aggiornamento opzione...' : 'Creazione opzione...', 'info'); await apiAction(payload); await loadConfig(); resetOpzioneForm(); setMessage(id ? 'Opzione aggiornata' : 'Opzione creata', 'ok'); }
+      catch (error) { setMessage(error.message, 'error'); }
     });
 
-    document.getElementById('formReload').addEventListener('submit', async (event) => {
+    $('formReload').addEventListener('submit', async (event) => {
       event.preventDefault();
-
-      const payload = {
-        action: 'create_reload',
-        nome: reloadNome.value,
-        ordine: Number(reloadOrdine.value || 0),
-        attivo: reloadAttivo.value === 'true'
-      };
-
-      try {
-        setMessage('Creazione reload in corso...', 'info');
-        await apiAction(payload);
-        await loadConfig();
-        reloadNome.value = '';
-        reloadOrdine.value = '0';
-        reloadAttivo.value = 'true';
-        setMessage('Reload creato', 'ok');
-      } catch (error) {
-        setMessage(error.message, 'error');
-      }
+      const payload = { action: 'create_reload', nome: reloadNome.value, ordine: Number(reloadOrdine.value || 0), attivo: reloadAttivo.value === 'true' };
+      try { setMessage('Creazione reload...', 'info'); await apiAction(payload); await loadConfig(); reloadNome.value = ''; reloadOrdine.value = '0'; reloadAttivo.value = 'true'; setMessage('Reload creato', 'ok'); }
+      catch (error) { setMessage(error.message, 'error'); }
     });
 
-    // Primo caricamento automatico.
-    loadConfig().catch((error) => {
-      setMessage(error.message, 'error');
-    });
+    loadConfig().catch((error) => setMessage(error.message, 'error'));
   </script>
 </body>
 </html>

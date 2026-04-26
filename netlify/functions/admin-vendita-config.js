@@ -6,7 +6,8 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Content-Type': 'application/json'
 };
-const CLUSTER_AMMESSI = new Set(['Consumer', 'Business']);
+
+const VALID_CLUSTERS = ['Consumer', 'Business'];
 
 function response(statusCode, payload) {
   return {
@@ -22,33 +23,30 @@ function cleanString(value) {
   return trimmed || null;
 }
 
-function normalizeClusterCliente(value) {
-  const raw = cleanString(value);
-
-  if (!raw) return null;
-
-  const normalized = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-
-  if (CLUSTER_AMMESSI.has(normalized)) return normalized;
-
-  throw new Error('Cluster non valido: usa Consumer o Business');
-}
-
 function parseBoolean(value, fallback = null) {
   if (value === undefined || value === null || value === '') return fallback;
   if (typeof value === 'boolean') return value;
-
   const normalized = String(value).trim().toLowerCase();
-
-  if (['true', '1', 'yes', 'si'].includes(normalized)) return true;
+  if (['true', '1', 'yes', 'si', 'sì'].includes(normalized)) return true;
   if (['false', '0', 'no'].includes(normalized)) return false;
-
   return fallback;
 }
 
 function toNumber(value, fallback = 0) {
+  if (value === undefined || value === null || value === '') return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function requireNumber(value, fieldName) {
+  if (value === undefined || value === null || value === '') {
+    throw new Error(`Campo obbligatorio mancante: ${fieldName}`);
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`Campo non valido: ${fieldName} deve essere numerico`);
+  }
+  return parsed;
 }
 
 function toInteger(value, fallback = 0) {
@@ -73,6 +71,24 @@ function getSupabaseClient() {
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false }
   });
+}
+
+function assertRequired(value, fieldName) {
+  if (!cleanString(value)) {
+    throw new Error(`Campo obbligatorio mancante: ${fieldName}`);
+  }
+}
+
+function normalizeCluster(value, { required = true } = {}) {
+  const cleaned = cleanString(value);
+  if (!cleaned) {
+    if (required) throw new Error('Campo obbligatorio mancante: cluster_cliente');
+    return null;
+  }
+  if (!VALID_CLUSTERS.includes(cleaned)) {
+    throw new Error('Cluster non valido: usa Consumer o Business');
+  }
+  return cleaned;
 }
 
 async function loadFullConfig(supabase) {
@@ -113,6 +129,7 @@ async function loadFullConfig(supabase) {
   }
 
   return {
+    success: true,
     categorie: categorieRes.data || [],
     offerte: offerteRes.data || [],
     opzioni: opzioniRes.data || [],
@@ -121,73 +138,74 @@ async function loadFullConfig(supabase) {
   };
 }
 
-function assertRequired(value, fieldName) {
-  if (!cleanString(value)) {
-    throw new Error(`Campo obbligatorio mancante: ${fieldName}`);
-  }
+function buildOffertaPayload(payload) {
+  assertRequired(payload.categoria_id, 'categoria_id');
+  assertRequired(payload.nome_offerta, 'nome_offerta');
+
+  const punteggioGara = requireNumber(payload.punteggio_gara, 'punteggio_gara');
+  const punteggioExtraGara = toNumber(payload.punteggio_extra_gara, 0);
+
+  return {
+    categoria_id: cleanString(payload.categoria_id),
+    cluster_cliente: normalizeCluster(payload.cluster_cliente),
+    nome_offerta: cleanString(payload.nome_offerta),
+    descrizione: cleanString(payload.descrizione),
+    punteggio_gara: punteggioGara,
+    punteggio_extra_gara: punteggioExtraGara,
+    attiva: parseBoolean(payload.attiva, true)
+  };
+}
+
+function buildOpzionePayload(payload) {
+  assertRequired(payload.categoria_id, 'categoria_id');
+  assertRequired(payload.offerta_id, 'offerta_id');
+  assertRequired(payload.nome_opzione, 'nome_opzione');
+
+  const punteggioGara = requireNumber(payload.punteggio_gara, 'punteggio_gara');
+  const punteggioExtraGara = toNumber(payload.punteggio_extra_gara, 0);
+
+  return {
+    categoria_id: cleanString(payload.categoria_id),
+    offerta_id: cleanString(payload.offerta_id),
+    cluster_cliente: normalizeCluster(payload.cluster_cliente),
+    nome_opzione: cleanString(payload.nome_opzione),
+    descrizione: cleanString(payload.descrizione),
+    punteggio_gara: punteggioGara,
+    punteggio_extra_gara: punteggioExtraGara,
+    attiva: parseBoolean(payload.attiva, true)
+  };
 }
 
 async function createOfferta(supabase, payload) {
-  assertRequired(payload.categoria_id, 'categoria_id');
-  assertRequired(payload.nome_offerta, 'nome_offerta');
-  const clusterCliente = normalizeClusterCliente(payload.cluster_cliente);
-
-  const insertPayload = {
-    categoria_id: cleanString(payload.categoria_id),
-    cluster_cliente: clusterCliente,
-    nome_offerta: cleanString(payload.nome_offerta),
-    descrizione: cleanString(payload.descrizione),
-    punteggio_default: toNumber(payload.punteggio_default, 0),
-    attiva: parseBoolean(payload.attiva, true)
-  };
-
   const { data, error } = await supabase
     .from('vendita_offerte')
-    .insert(insertPayload)
+    .insert(buildOffertaPayload(payload))
     .select('*')
     .single();
 
   if (error) throw new Error(readableError(error, 'Errore creazione offerta'));
-
   return data;
 }
 
 async function updateOfferta(supabase, payload) {
   assertRequired(payload.id, 'id');
-  assertRequired(payload.categoria_id, 'categoria_id');
-  assertRequired(payload.nome_offerta, 'nome_offerta');
-  const clusterCliente = normalizeClusterCliente(payload.cluster_cliente);
-
-  const updatePayload = {
-    categoria_id: cleanString(payload.categoria_id),
-    cluster_cliente: clusterCliente,
-    nome_offerta: cleanString(payload.nome_offerta),
-    descrizione: cleanString(payload.descrizione),
-    punteggio_default: toNumber(payload.punteggio_default, 0),
-    attiva: parseBoolean(payload.attiva, true)
-  };
 
   const { data, error } = await supabase
     .from('vendita_offerte')
-    .update(updatePayload)
+    .update(buildOffertaPayload(payload))
     .eq('id', cleanString(payload.id))
     .select('*')
     .maybeSingle();
 
   if (error) throw new Error(readableError(error, 'Errore aggiornamento offerta'));
   if (!data) throw new Error('Offerta non trovata');
-
   return data;
 }
 
 async function toggleOfferta(supabase, payload) {
   assertRequired(payload.id, 'id');
-
   const attiva = parseBoolean(payload.attiva, null);
-
-  if (attiva === null) {
-    throw new Error('Campo obbligatorio non valido: attiva');
-  }
+  if (attiva === null) throw new Error('Campo obbligatorio non valido: attiva');
 
   const { data, error } = await supabase
     .from('vendita_offerte')
@@ -198,75 +216,39 @@ async function toggleOfferta(supabase, payload) {
 
   if (error) throw new Error(readableError(error, 'Errore toggle offerta'));
   if (!data) throw new Error('Offerta non trovata');
-
   return data;
 }
 
 async function createOpzione(supabase, payload) {
-  assertRequired(payload.categoria_id, 'categoria_id');
-  assertRequired(payload.offerta_id, 'offerta_id');
-  assertRequired(payload.nome_opzione, 'nome_opzione');
-  const clusterCliente = normalizeClusterCliente(payload.cluster_cliente);
-
-  const insertPayload = {
-    categoria_id: cleanString(payload.categoria_id),
-    offerta_id: cleanString(payload.offerta_id),
-    cluster_cliente: clusterCliente,
-    nome_opzione: cleanString(payload.nome_opzione),
-    descrizione: cleanString(payload.descrizione),
-    punteggio_default: toNumber(payload.punteggio_default, 0),
-    attiva: parseBoolean(payload.attiva, true)
-  };
-
   const { data, error } = await supabase
     .from('vendita_opzioni')
-    .insert(insertPayload)
+    .insert(buildOpzionePayload(payload))
     .select('*')
     .single();
 
   if (error) throw new Error(readableError(error, 'Errore creazione opzione'));
-
   return data;
 }
 
 async function updateOpzione(supabase, payload) {
   assertRequired(payload.id, 'id');
-  assertRequired(payload.categoria_id, 'categoria_id');
-  assertRequired(payload.offerta_id, 'offerta_id');
-  assertRequired(payload.nome_opzione, 'nome_opzione');
-  const clusterCliente = normalizeClusterCliente(payload.cluster_cliente);
-
-  const updatePayload = {
-    categoria_id: cleanString(payload.categoria_id),
-    offerta_id: cleanString(payload.offerta_id),
-    cluster_cliente: clusterCliente,
-    nome_opzione: cleanString(payload.nome_opzione),
-    descrizione: cleanString(payload.descrizione),
-    punteggio_default: toNumber(payload.punteggio_default, 0),
-    attiva: parseBoolean(payload.attiva, true)
-  };
 
   const { data, error } = await supabase
     .from('vendita_opzioni')
-    .update(updatePayload)
+    .update(buildOpzionePayload(payload))
     .eq('id', cleanString(payload.id))
     .select('*')
     .maybeSingle();
 
   if (error) throw new Error(readableError(error, 'Errore aggiornamento opzione'));
   if (!data) throw new Error('Opzione non trovata');
-
   return data;
 }
 
 async function toggleOpzione(supabase, payload) {
   assertRequired(payload.id, 'id');
-
   const attiva = parseBoolean(payload.attiva, null);
-
-  if (attiva === null) {
-    throw new Error('Campo obbligatorio non valido: attiva');
-  }
+  if (attiva === null) throw new Error('Campo obbligatorio non valido: attiva');
 
   const { data, error } = await supabase
     .from('vendita_opzioni')
@@ -277,7 +259,6 @@ async function toggleOpzione(supabase, payload) {
 
   if (error) throw new Error(readableError(error, 'Errore toggle opzione'));
   if (!data) throw new Error('Opzione non trovata');
-
   return data;
 }
 
@@ -297,18 +278,13 @@ async function createReload(supabase, payload) {
     .single();
 
   if (error) throw new Error(readableError(error, 'Errore creazione reload'));
-
   return data;
 }
 
 async function toggleReload(supabase, payload) {
   assertRequired(payload.id, 'id');
-
   const attivo = parseBoolean(payload.attivo, null);
-
-  if (attivo === null) {
-    throw new Error('Campo obbligatorio non valido: attivo');
-  }
+  if (attivo === null) throw new Error('Campo obbligatorio non valido: attivo');
 
   const { data, error } = await supabase
     .from('vendita_reload')
@@ -319,36 +295,23 @@ async function toggleReload(supabase, payload) {
 
   if (error) throw new Error(readableError(error, 'Errore toggle reload'));
   if (!data) throw new Error('Reload non trovato');
-
   return data;
 }
 
 async function handleAction(supabase, payload) {
   const action = cleanString(payload.action);
-
-  if (!action) {
-    throw new Error('Campo obbligatorio mancante: action');
-  }
+  if (!action) throw new Error('Campo obbligatorio mancante: action');
 
   switch (action) {
-    case 'create_offerta':
-      return createOfferta(supabase, payload);
-    case 'update_offerta':
-      return updateOfferta(supabase, payload);
-    case 'toggle_offerta':
-      return toggleOfferta(supabase, payload);
-    case 'create_opzione':
-      return createOpzione(supabase, payload);
-    case 'update_opzione':
-      return updateOpzione(supabase, payload);
-    case 'toggle_opzione':
-      return toggleOpzione(supabase, payload);
-    case 'create_reload':
-      return createReload(supabase, payload);
-    case 'toggle_reload':
-      return toggleReload(supabase, payload);
-    default:
-      throw new Error(`Action non supportata: ${action}`);
+    case 'create_offerta': return createOfferta(supabase, payload);
+    case 'update_offerta': return updateOfferta(supabase, payload);
+    case 'toggle_offerta': return toggleOfferta(supabase, payload);
+    case 'create_opzione': return createOpzione(supabase, payload);
+    case 'update_opzione': return updateOpzione(supabase, payload);
+    case 'toggle_opzione': return toggleOpzione(supabase, payload);
+    case 'create_reload': return createReload(supabase, payload);
+    case 'toggle_reload': return toggleReload(supabase, payload);
+    default: throw new Error(`Action non supportata: ${action}`);
   }
 }
 
@@ -367,17 +330,9 @@ exports.handler = async (event) => {
 
   if (event.httpMethod === 'GET') {
     try {
-      const config = await loadFullConfig(supabase);
-
-      return response(200, {
-        success: true,
-        ...config
-      });
+      return response(200, await loadFullConfig(supabase));
     } catch (error) {
-      return response(500, {
-        success: false,
-        error: readableError(error, 'Errore caricamento configurazione vendita')
-      });
+      return response(500, { success: false, error: readableError(error) });
     }
   }
 
@@ -385,40 +340,11 @@ exports.handler = async (event) => {
     return response(405, { success: false, error: 'Metodo non consentito: usa GET o POST' });
   }
 
-  const contentType = event.headers?.['content-type'] || event.headers?.['Content-Type'] || '';
-
-  if (!contentType.toLowerCase().includes('application/json')) {
-    return response(415, {
-      success: false,
-      error: 'Content-Type non valido: usare application/json'
-    });
-  }
-
-  let payload;
-
   try {
-    payload = JSON.parse(event.body || '{}');
-  } catch (error) {
-    return response(400, {
-      success: false,
-      error: 'JSON non valido nel body della richiesta'
-    });
-  }
-
-  try {
+    const payload = JSON.parse(event.body || '{}');
     const data = await handleAction(supabase, payload);
-
-    return response(200, {
-      success: true,
-      data
-    });
+    return response(200, { success: true, data });
   } catch (error) {
-    const message = readableError(error, 'Errore esecuzione action');
-    const statusCode = /obbligatorio|non supportata|non valido/i.test(message) ? 400 : 500;
-
-    return response(statusCode, {
-      success: false,
-      error: message
-    });
+    return response(500, { success: false, error: readableError(error) });
   }
 };

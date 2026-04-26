@@ -1,12 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const ORIGINI_PRATICA_AMMESSE = new Set([
-  'appuntamento_callcenter',
-  'contatto_callcenter_entro_10_giorni',
-  'spontaneo'
-]);
-const CLUSTER_AMMESSI = new Set(['Consumer', 'Business']);
-
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
@@ -14,12 +7,16 @@ const CORS_HEADERS = {
   'Content-Type': 'application/json'
 };
 
+const VALID_ORIGINI = [
+  'appuntamento_callcenter',
+  'contatto_callcenter_entro_10_giorni',
+  'spontaneo'
+];
+
+const VALID_CLUSTERS = ['Consumer', 'Business'];
+
 function response(statusCode, payload) {
-  return {
-    statusCode,
-    headers: CORS_HEADERS,
-    body: JSON.stringify(payload)
-  };
+  return { statusCode, headers: CORS_HEADERS, body: JSON.stringify(payload) };
 }
 
 function cleanString(value) {
@@ -33,89 +30,94 @@ function isBlank(value) {
 }
 
 function toNumber(value, fallback = 0) {
+  if (value === undefined || value === null || value === '') return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function parseBoolean(value, fallback = null) {
+function parseBoolean(value, fallback = false) {
   if (value === undefined || value === null || value === '') return fallback;
   if (typeof value === 'boolean') return value;
-
   const normalized = String(value).trim().toLowerCase();
-
-  if (['true', '1', 'yes', 'si'].includes(normalized)) return true;
+  if (['true', '1', 'yes', 'si', 'sì'].includes(normalized)) return true;
   if (['false', '0', 'no'].includes(normalized)) return false;
-
   return fallback;
 }
 
-function normalizeCluster(value) {
-  const raw = cleanString(value);
-
-  if (!raw) return null;
-
-  const normalized = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-
-  if (CLUSTER_AMMESSI.has(normalized)) return normalized;
-
-  throw new Error('Cluster non valido: usa Consumer o Business');
+function readableError(error, fallback = 'Errore creazione pratica/contratto vendita') {
+  if (!error) return fallback;
+  if (typeof error === 'string') return error;
+  return error.message || error.error_description || error.details || fallback;
 }
 
-function sanitizeSegment(value, fallback = 'valore') {
+function getSupabaseClient() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('Variabili ambiente mancanti: SUPABASE_URL e/o SUPABASE_SERVICE_ROLE_KEY');
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+}
+
+function assertRequired(value, fieldName) {
+  if (!cleanString(value)) throw new Error(`Campo obbligatorio mancante: ${fieldName}`);
+}
+
+function normalizeCluster(value) {
+  const cluster = cleanString(value) || 'Consumer';
+  if (!VALID_CLUSTERS.includes(cluster)) {
+    throw new Error('Cluster non valido: usa Consumer o Business');
+  }
+  return cluster;
+}
+
+function normalizeOrigine(value) {
+  const origine = cleanString(value) || 'spontaneo';
+  if (!VALID_ORIGINI.includes(origine)) {
+    throw new Error('Origine pratica non valida');
+  }
+  return origine;
+}
+
+function sanitizeSegment(value, fallback = 'cliente') {
   const normalized = String(value || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/[^a-zA-Z0-9_-]+/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 
   return normalized || fallback;
 }
 
-function formatDateDdMmYyyy(date = new Date()) {
-  const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const yyyy = String(date.getFullYear());
-  return `${dd}_${mm}_${yyyy}`;
+function pad2(value) {
+  return String(value).padStart(2, '0');
 }
 
-function buildStorageNames({ ragioneSociale, praticaId, now = new Date() }) {
+function buildStorageNames({ ragioneSociale, praticaId, now }) {
+  const day = pad2(now.getDate());
+  const month = pad2(now.getMonth() + 1);
   const year = String(now.getFullYear());
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const praticaShort = String(praticaId || '').replace(/-/g, '').slice(0, 6).toLowerCase() || 'xxxxxx';
-  const ragioneSafe = sanitizeSegment(ragioneSociale, 'cliente');
-  const datePart = formatDateDdMmYyyy(now);
-
-  const nomeCartellaStorage = `Contratto_${ragioneSafe}_${datePart}_${praticaShort}`;
-  const folderPathSegment = sanitizeSegment(nomeCartellaStorage, `contratto_${praticaShort}`).toLowerCase();
-  const storageBasePath = `${year}/${month}/${folderPathSegment}/`;
-
+  const shortId = String(praticaId || '').slice(0, 6);
+  const safeName = sanitizeSegment(ragioneSociale, 'cliente');
+  const nomeCartellaStorage = `Contratto_${safeName}_${day}_${month}_${year}_${shortId}`;
+  const storageBasePath = `${year}/${month}/${nomeCartellaStorage.toLowerCase()}/`;
   return { nomeCartellaStorage, storageBasePath };
 }
 
-function readableError(error, fallback = 'Errore durante la creazione pratica/contratto') {
-  if (!error) return fallback;
-  if (typeof error === 'string') return error;
-  return error.message || error.error_description || error.details || fallback;
-}
+async function fetchEntityById({ supabase, table, id, activeColumn, notFoundMessage }) {
+  if (!id) return null;
 
-async function fetchEntityById({ supabase, table, id, notFoundMessage, activeColumn }) {
-  let query = supabase.from(table).select('*').eq('id', id).limit(1);
-
-  if (activeColumn) {
-    query = query.eq(activeColumn, true);
-  }
+  let query = supabase.from(table).select('*').eq('id', id);
+  if (activeColumn) query = query.eq(activeColumn, true);
 
   const { data, error } = await query.maybeSingle();
-
-  if (error) {
-    throw new Error(readableError(error));
-  }
-
-  if (!data) {
-    throw new Error(notFoundMessage);
-  }
-
+  if (error) throw new Error(readableError(error, notFoundMessage));
+  if (!data) throw new Error(notFoundMessage);
   return data;
 }
 
@@ -128,44 +130,18 @@ exports.handler = async (event) => {
     return response(405, { success: false, error: 'Metodo non consentito: usa POST' });
   }
 
-  const contentType = event.headers?.['content-type'] || event.headers?.['Content-Type'] || '';
-
-  if (!contentType.toLowerCase().includes('application/json')) {
-    return response(415, {
-      success: false,
-      error: 'Content-Type non valido: usare application/json'
-    });
-  }
-
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    return response(500, {
-      success: false,
-      error: 'Variabili ambiente mancanti: SUPABASE_URL e/o SUPABASE_SERVICE_ROLE_KEY'
-    });
-  }
-
   let payload;
+  let supabase;
 
   try {
     payload = JSON.parse(event.body || '{}');
+    supabase = getSupabaseClient();
   } catch (error) {
-    return response(400, {
-      success: false,
-      error: 'JSON non valido nel body della richiesta'
-    });
+    return response(400, { success: false, error: readableError(error) });
   }
 
   const cfPiva = cleanString(payload.cf_piva);
-  let cluster;
-
-  try {
-    cluster = normalizeCluster(payload.cluster);
-  } catch (error) {
-    return response(400, { success: false, error: error.message });
-  }
+  const cluster = normalizeCluster(payload.cluster);
   const ragioneSociale = cleanString(payload.ragione_sociale);
   const nomeReferente = cleanString(payload.nome_referente);
   const cellulare = cleanString(payload.cellulare);
@@ -174,15 +150,15 @@ exports.handler = async (event) => {
   const via = cleanString(payload.via);
   const civico = cleanString(payload.civico);
 
+  const originePratica = normalizeOrigine(payload.origine_pratica);
+  const appuntamentoId = cleanString(payload.appuntamento_id);
+  const chiamataId = cleanString(payload.chiamata_id);
+  const operatoreId = cleanString(payload.operatore_id);
+
   const categoriaId = cleanString(payload.categoria_id);
   const offertaId = cleanString(payload.offerta_id);
   const opzioneId = cleanString(payload.opzione_id);
   const reloadId = cleanString(payload.reload_id);
-
-  const originePratica = cleanString(payload.origine_pratica) || 'spontaneo';
-  const appuntamentoId = cleanString(payload.appuntamento_id);
-  const chiamataId = cleanString(payload.chiamata_id);
-  const operatoreId = cleanString(payload.operatore_id);
 
   const tipoAttivazione = cleanString(payload.tipo_attivazione);
   const apriChiudi = cleanString(payload.apri_chiudi);
@@ -195,39 +171,18 @@ exports.handler = async (event) => {
   const fasciaPrezzo = cleanString(payload.fascia_prezzo);
   const tipoAcquisto = cleanString(payload.tipo_acquisto);
   const finanziaria = cleanString(payload.finanziaria);
-  const kolme = parseBoolean(payload.kolme, null);
-
-  if (!cfPiva) {
-    return response(400, { success: false, error: 'Campo obbligatorio mancante: cf_piva' });
-  }
-
-  if (!ragioneSociale) {
-    return response(400, { success: false, error: 'Campo obbligatorio mancante: ragione_sociale' });
-  }
-
-  if (!categoriaId) {
-    return response(400, { success: false, error: 'Campo obbligatorio mancante: categoria_id' });
-  }
-
-  if (!offertaId) {
-    return response(400, { success: false, error: 'Campo obbligatorio mancante: offerta_id' });
-  }
-
-  if (!ORIGINI_PRATICA_AMMESSE.has(originePratica)) {
-    return response(400, {
-      success: false,
-      error: 'origine_pratica non valida. Valori ammessi: appuntamento_callcenter, contatto_callcenter_entro_10_giorni, spontaneo'
-    });
-  }
-
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  });
+  const kolme = payload.kolme === undefined || payload.kolme === null || payload.kolme === ''
+    ? null
+    : parseBoolean(payload.kolme, false);
 
   try {
+    assertRequired(cfPiva, 'cf_piva');
+    assertRequired(ragioneSociale, 'ragione_sociale');
+    assertRequired(categoriaId, 'categoria_id');
+    assertRequired(offertaId, 'offerta_id');
+
     let anagraficaId;
 
-    // 1) Cerca anagrafica esistente per cf_piva (evita doppioni).
     const { data: anagraficaEsistente, error: anagraficaLookupError } = await supabase
       .from('anagrafica')
       .select('id, cf_piva, cluster, ragione_sociale, nome_referente, cellulare, provincia, comune, via, civico')
@@ -240,8 +195,6 @@ exports.handler = async (event) => {
 
     if (anagraficaEsistente) {
       anagraficaId = anagraficaEsistente.id;
-
-      // Aggiorna solo campi vuoti: non sovrascrive dati già compilati.
       const updates = {};
       const candidateFields = {
         cluster,
@@ -255,66 +208,50 @@ exports.handler = async (event) => {
       };
 
       Object.entries(candidateFields).forEach(([column, newValue]) => {
-        if (isBlank(newValue)) return;
-
-        const currentValue = anagraficaEsistente[column];
-
-        if (isBlank(currentValue)) {
+        if (!isBlank(newValue) && isBlank(anagraficaEsistente[column])) {
           updates[column] = newValue;
         }
       });
 
       if (Object.keys(updates).length > 0) {
-        const { error: anagraficaUpdateError } = await supabase
+        const { error: updateError } = await supabase
           .from('anagrafica')
           .update(updates)
           .eq('id', anagraficaId);
-
-        if (anagraficaUpdateError) {
-          throw new Error(readableError(anagraficaUpdateError, 'Errore aggiornamento anagrafica esistente'));
-        }
+        if (updateError) throw new Error(readableError(updateError, 'Errore aggiornamento anagrafica'));
       }
     } else {
-      // Crea nuova anagrafica se non trovata.
-      const anagraficaInsertPayload = {
-        cf_piva: cfPiva,
-        cluster,
-        ragione_sociale: ragioneSociale,
-        nome_referente: nomeReferente,
-        cellulare,
-        provincia,
-        comune,
-        via,
-        civico
-      };
-
-      const { data: anagraficaNuova, error: anagraficaInsertError } = await supabase
+      const { data: nuovaAnagrafica, error: insertError } = await supabase
         .from('anagrafica')
-        .insert(anagraficaInsertPayload)
+        .insert({
+          cf_piva: cfPiva,
+          cluster,
+          ragione_sociale: ragioneSociale,
+          nome_referente: nomeReferente,
+          cellulare,
+          provincia,
+          comune,
+          via,
+          civico
+        })
         .select('id')
         .single();
 
-      if (anagraficaInsertError) {
-        throw new Error(readableError(anagraficaInsertError, 'Errore creazione anagrafica'));
-      }
-
-      anagraficaId = anagraficaNuova.id;
+      if (insertError) throw new Error(readableError(insertError, 'Errore creazione anagrafica'));
+      anagraficaId = nuovaAnagrafica.id;
     }
-
-    // 2) Crea pratica vendita.
-    const praticaPayload = {
-      anagrafica_id: anagraficaId,
-      appuntamento_id: appuntamentoId,
-      chiamata_id: chiamataId,
-      operatore_id: operatoreId,
-      origine_pratica: originePratica,
-      stato_pratica: 'inviata',
-      note: 'Pratica test vendita'
-    };
 
     const { data: pratica, error: praticaInsertError } = await supabase
       .from('vendita_pratiche')
-      .insert(praticaPayload)
+      .insert({
+        anagrafica_id: anagraficaId,
+        appuntamento_id: appuntamentoId,
+        chiamata_id: chiamataId,
+        operatore_id: operatoreId,
+        origine_pratica: originePratica,
+        stato_pratica: 'inviata',
+        note: 'Pratica test vendita'
+      })
       .select('*')
       .single();
 
@@ -322,26 +259,21 @@ exports.handler = async (event) => {
       throw new Error(readableError(praticaInsertError, 'Errore creazione vendita_pratiche'));
     }
 
-    // 3) Costruisci nome cartella/storage path e aggiorna la pratica.
     const { nomeCartellaStorage, storageBasePath } = buildStorageNames({
       ragioneSociale,
       praticaId: pratica.id,
       now: new Date()
     });
 
-    const { error: praticaUpdateStorageError } = await supabase
+    const { error: praticaUpdateError } = await supabase
       .from('vendita_pratiche')
-      .update({
-        nome_cartella_storage: nomeCartellaStorage,
-        storage_base_path: storageBasePath
-      })
+      .update({ nome_cartella_storage: nomeCartellaStorage, storage_base_path: storageBasePath })
       .eq('id', pratica.id);
 
-    if (praticaUpdateStorageError) {
-      throw new Error(readableError(praticaUpdateStorageError, 'Errore aggiornamento path storage su vendita_pratiche'));
+    if (praticaUpdateError) {
+      throw new Error(readableError(praticaUpdateError, 'Errore aggiornamento storage pratica'));
     }
 
-    // 4) Recupera le entità di configurazione per snapshot e punteggi.
     const categoria = await fetchEntityById({
       supabase,
       table: 'vendita_categorie',
@@ -362,8 +294,11 @@ exports.handler = async (event) => {
       throw new Error('Offerta non coerente con la categoria selezionata');
     }
 
-    let opzione = null;
+    if (offerta.cluster_cliente && offerta.cluster_cliente !== cluster) {
+      throw new Error('Offerta non coerente con il cluster selezionato');
+    }
 
+    let opzione = null;
     if (opzioneId) {
       opzione = await fetchEntityById({
         supabase,
@@ -375,14 +310,14 @@ exports.handler = async (event) => {
 
       const opzioneCategoriaOk = !opzione.categoria_id || opzione.categoria_id === categoriaId;
       const opzioneOffertaOk = !opzione.offerta_id || opzione.offerta_id === offertaId;
+      const opzioneClusterOk = !opzione.cluster_cliente || opzione.cluster_cliente === cluster;
 
-      if (!opzioneCategoriaOk || !opzioneOffertaOk) {
-        throw new Error('Opzione non coerente con categoria/offerta selezionate');
+      if (!opzioneCategoriaOk || !opzioneOffertaOk || !opzioneClusterOk) {
+        throw new Error('Opzione non coerente con categoria/offerta/cluster selezionati');
       }
     }
 
     let reload = null;
-
     if (reloadId) {
       reload = await fetchEntityById({
         supabase,
@@ -393,11 +328,10 @@ exports.handler = async (event) => {
       });
     }
 
-    // 5) Calcolo punteggi snapshot lato server (no fiducia sul front-end).
-    const punteggioOfferta = toNumber(offerta.punteggio_default, 0);
-    const punteggioOpzione = opzione ? toNumber(opzione.punteggio_default, 0) : 0;
-    const punteggioExtra = 0;
-    const punteggioTotale = Number((punteggioOfferta + punteggioOpzione + punteggioExtra).toFixed(2));
+    const punteggioGaraOfferta = toNumber(offerta.punteggio_gara, 0);
+    const punteggioGaraOpzione = opzione ? toNumber(opzione.punteggio_gara, 0) : 0;
+    const punteggioExtraGaraOfferta = toNumber(offerta.punteggio_extra_gara, 0);
+    const punteggioExtraGaraOpzione = opzione ? toNumber(opzione.punteggio_extra_gara, 0) : 0;
 
     const contrattoPayload = {
       pratica_id: pratica.id,
@@ -417,10 +351,15 @@ exports.handler = async (event) => {
       nome_opzione_snapshot: opzione ? opzione.nome_opzione : null,
       nome_reload_snapshot: reload ? reload.nome : null,
 
-      punteggio_offerta: punteggioOfferta,
-      punteggio_opzione: punteggioOpzione,
-      punteggio_extra: punteggioExtra,
-      punteggio_totale: punteggioTotale,
+      punteggio_gara_offerta: punteggioGaraOfferta,
+      punteggio_gara_opzione: punteggioGaraOpzione,
+      punteggio_extra_gara_offerta: punteggioExtraGaraOfferta,
+      punteggio_extra_gara_opzione: punteggioExtraGaraOpzione,
+
+      // Campi legacy mantenuti per compatibilità con viste/test già esistenti.
+      punteggio_offerta: punteggioGaraOfferta,
+      punteggio_opzione: punteggioGaraOpzione,
+      punteggio_extra: 0,
 
       tipo_attivazione: tipoAttivazione,
       apri_chiudi: apriChiudi,
@@ -458,9 +397,6 @@ exports.handler = async (event) => {
       contratto
     });
   } catch (error) {
-    return response(500, {
-      success: false,
-      error: readableError(error)
-    });
+    return response(500, { success: false, error: readableError(error) });
   }
 };
