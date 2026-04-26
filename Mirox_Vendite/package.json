@@ -1,0 +1,10 @@
+{
+  "name": "konahub-netlify-functions",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Serverless functions per CRM KonaHub/Mirox",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "busboy": "^1.6.0"
+  }
+}
