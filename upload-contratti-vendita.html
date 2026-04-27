@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Contratti Vendita</title>
+  <style>
+    :root {
+      --bg: #f4f6fa;
+      --card: #ffffff;
+      --border: #d7deea;
+      --text: #0f172a;
+      --muted: #5b6477;
+      --primary: #0f172a;
+      --ok: #047857;
+      --err: #b91c1c;
+      --info: #1d4ed8;
+      --shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      width: min(1120px, 94vw);
+      margin: 22px auto 30px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .header {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .home-link {
+      margin-top: 6px;
+      display: inline-block;
+      color: #1d4ed8;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .home-link:hover {
+      text-decoration: underline;
+    }
+
+    .cart-btn {
+      border: 1px solid #cfd8ea;
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .cart-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: #111827;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .badge {
+      min-width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      background: #111827;
+      color: #fff;
+      padding: 0 6px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .hint {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field.half {
+      grid-column: span 2;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    button,
+    textarea {
+      border: 1px solid #c8d3e6;
+      border-radius: 6px;
+      padding: 9px 10px;
+      font-size: 14px;
+      background: #fff;
+      color: #0f172a;
+    }
+
+    input[type="file"] {
+      padding: 7px;
+      background: #fbfdff;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      font-weight: 700;
+      background: var(--primary);
+      color: #fff;
+    }
+
+    button.secondary {
+      background: #4b5563;
+    }
+
+    button.alt {
+      background: #1d4ed8;
+    }
+
+    button.ghost {
+      background: #fff;
+      color: #0f172a;
+      border: 1px solid #c8d3e6;
+    }
+
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) auto;
+      gap: 8px;
+    }
+
+    .subsection {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #d7deea;
+    }
+
+    .subsection h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .inline-box {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
+      padding: 9px 10px;
+      border: 1px solid #d6deec;
+      border-radius: 6px;
+      background: #fbfdff;
+      font-size: 13px;
+    }
+
+    .inline-box strong {
+      font-size: 14px;
+    }
+
+    .message {
+      min-height: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .message.ok {
+      color: var(--ok);
+    }
+
+    .message.err {
+      color: var(--err);
+    }
+
+    .message.info {
+      color: var(--info);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .cart-empty {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .cart-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .cart-item {
+      border: 1px solid #d7deea;
+      border-radius: 8px;
+      background: #fbfdff;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .cart-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .cart-title {
+      font-weight: 700;
+      font-size: 15px;
+      margin: 0;
+    }
+
+    .chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #d3dcf0;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #fff;
+    }
+
+    .chip.score {
+      border-color: #bfd2ff;
+      color: #1d4ed8;
+    }
+
+    .chip.warn {
+      border-color: #f5c184;
+      color: #9a3412;
+    }
+
+    .chip.doc {
+      border-color: #bbf7d0;
+      color: #047857;
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 10px;
+      font-size: 13px;
+    }
+
+    .details b {
+      font-size: 13px;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 10px;
+      overflow: auto;
+      max-height: 320px;
+      font-size: 12px;
+      margin: 10px 0 0;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 660px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field.half {
+        grid-column: 1 / -1;
+      }
+
+      .details {
+        grid-template-columns: 1fr;
+      }
+
+      .search-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="header">
+      <div>
+        <h1>Upload Contratti Vendita</h1>
+        <a href="/index.html" class="home-link">Torna alla home test</a>
+      </div>
+      <button id="btnOpenCarrelloTop" type="button" class="cart-btn">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="9" cy="20" r="1.5"></circle>
+          <circle cx="18" cy="20" r="1.5"></circle>
+          <path d="M2 3h3l2.2 11.2a1 1 0 0 0 1 .8h10.4a1 1 0 0 0 1-.8l1.4-7.2H6.2"></path>
+        </svg>
+        <span>Carrello</span>
+        <span id="cartBadgeTop" class="badge">0</span>
+      </button>
+    </section>
+
+    <section class="card">
+      <h2>Dati Cliente</h2>
+      <div class="grid">
+        <div class="field half">
+          <label for="cf_piva">CF/P.IVA *</label>
+          <div class="search-row">
+            <input id="cf_piva" autocomplete="off">
+            <button id="btnCercaCliente" type="button" class="alt">Cerca cliente</button>
+          </div>
+          <p class="hint">La ricerca compila i campi se trova anagrafica, ma puoi sempre modificarli.</p>
+        </div>
+
+        <div class="field">
+          <label for="cluster_cliente">Cluster *</label>
+          <select id="cluster_cliente">
+            <option value="Consumer">Consumer</option>
+            <option value="Business">Business</option>
+          </select>
+        </div>
+
+        <div class="field half">
+          <label for="ragione_sociale">Ragione Sociale *</label>
+          <input id="ragione_sociale" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="nome_referente">Nome Referente</label>
+          <input id="nome_referente" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="cellulare">Cellulare</label>
+          <input id="cellulare" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="provincia">Provincia</label>
+          <input id="provincia" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="comune">Comune</label>
+          <input id="comune" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="via">Via</label>
+          <input id="via" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="civico">Civico</label>
+          <input id="civico" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="origine_pratica">Origine Pratica</label>
+          <select id="origine_pratica">
+            <option value="spontaneo">spontaneo</option>
+            <option value="appuntamento_callcenter">appuntamento_callcenter</option>
+            <option value="contatto_callcenter_entro_10_giorni">contatto_callcenter_entro_10_giorni</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="operatore_id">Operatore ID (uuid, opzionale)</label>
+          <input id="operatore_id" placeholder="es. 00000000-0000-0000-0000-000000000000" autocomplete="off">
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Contratto</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="categoria_id">Categoria *</label>
+          <select id="categoria_id"></select>
+        </div>
+
+        <div class="field">
+          <label id="labelOfferta" for="offerta_id">Offerta *</label>
+          <select id="offerta_id"></select>
+        </div>
+
+        <div id="fieldOpzione" class="field hidden">
+          <label for="opzione_id">Opzione</label>
+          <select id="opzione_id"></select>
+        </div>
+
+        <div id="fieldReload" class="field hidden">
+          <label for="reload_id">Reload</label>
+          <select id="reload_id"></select>
+        </div>
+
+        <div id="fieldTipoAttivazione" class="field hidden">
+          <label for="tipo_attivazione">Tipo Attivazione</label>
+          <select id="tipo_attivazione">
+            <option value="">Seleziona</option>
+            <option value="Nuova Attivazione">Nuova Attivazione</option>
+            <option value="Portabilita">Portabilita</option>
+          </select>
+        </div>
+
+        <div id="fieldApriChiudi" class="field hidden">
+          <label for="apri_chiudi">Apri/Chiudi</label>
+          <select id="apri_chiudi">
+            <option value="">Seleziona</option>
+            <option value="Si">Si</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+
+        <div id="fieldIntestatario" class="field hidden">
+          <label for="intestatario">Intestatario</label>
+          <select id="intestatario">
+            <option value="">Seleziona</option>
+            <option value="Stesso intestatario">Stesso intestatario</option>
+            <option value="Intestatario diverso">Intestatario diverso</option>
+          </select>
+        </div>
+
+        <div id="fieldSwitchSim" class="field hidden">
+          <label for="switch_sim">Switch SIM</label>
+          <select id="switch_sim">
+            <option value="">Seleziona</option>
+            <option value="Si">Si</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+
+        <div id="fieldModalitaPagamento" class="field hidden">
+          <label for="modalita_pagamento">Modalita Pagamento</label>
+          <select id="modalita_pagamento">
+            <option value="">Seleziona</option>
+            <option value="Finanziamento">Finanziamento</option>
+            <option value="Anticipo">Anticipo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Punteggi Contratto</h3>
+        <div class="inline-box">
+          <strong>Gara:</strong>
+          <span id="scoreGara">0</span>
+          <strong>Extra Gara:</strong>
+          <span id="scoreExtra">0</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="deviceSection" class="card hidden">
+      <h2>Smartphone / Dispositivo</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="dispositivo_associato">E stato associato un dispositivo?</label>
+          <select id="dispositivo_associato">
+            <option value="false">No</option>
+            <option value="true">Si</option>
+          </select>
+        </div>
+
+        <div id="fieldImei" class="field hidden">
+          <label for="imei">IMEI (15 cifre)</label>
+          <input id="imei" inputmode="numeric" autocomplete="off" maxlength="15">
+        </div>
+
+        <div id="fieldFasciaPrezzo" class="field hidden">
+          <label for="fascia_prezzo">Fascia Prezzo</label>
+          <select id="fascia_prezzo">
+            <option value="">Seleziona</option>
+            <option value="0-249">0-249</option>
+            <option value="250-599">250-599</option>
+            <option value="600-1200">600-1200</option>
+            <option value="superiore-1200">superiore-1200</option>
+          </select>
+        </div>
+
+        <div id="fieldTipoAcquisto" class="field hidden">
+          <label for="tipo_acquisto">Tipo Acquisto</label>
+          <select id="tipo_acquisto">
+            <option value="">Seleziona</option>
+            <option value="VAR">VAR</option>
+            <option value="Finanziamento">Finanziamento</option>
+          </select>
+        </div>
+
+        <div id="fieldFinanziaria" class="field hidden">
+          <label for="finanziaria">Finanziaria</label>
+          <select id="finanziaria">
+            <option value="">Seleziona</option>
+            <option value="Findomestic">Findomestic</option>
+            <option value="Compass">Compass</option>
+          </select>
+        </div>
+
+        <div id="fieldKolme" class="field hidden">
+          <label for="kolme">Kolme</label>
+          <select id="kolme">
+            <option value="">Seleziona</option>
+            <option value="true">Si</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Upload Documenti</h2>
+      <div class="grid">
+        <div class="field half">
+          <label for="file_documento_identita">Documento identita (solo 1 volta per pratica, sul primo contratto)</label>
+          <input id="file_documento_identita" type="file" accept="application/pdf">
+        </div>
+
+        <div class="field half">
+          <label for="file_contratto_pdf">Contratto PDF (opzionale)</label>
+          <input id="file_contratto_pdf" type="file" accept="application/pdf">
+        </div>
+
+        <div id="fieldFileMnp" class="field half hidden">
+          <label for="file_copia_sim_mnp">Copia SIM MNP</label>
+          <input id="file_copia_sim_mnp" type="file" accept="application/pdf">
+        </div>
+
+        <div id="fieldFileBolletta" class="field half hidden">
+          <label for="file_copia_bolletta">Copia bolletta</label>
+          <input id="file_copia_bolletta" type="file" accept="application/pdf">
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="actions">
+        <button id="btnAddToCart" type="button">Aggiungi contratto al carrello</button>
+        <button id="btnOpenCarrello" type="button" class="alt">Vai al carrello</button>
+        <button id="btnSvuotaCarrello" type="button" class="secondary">Svuota carrello</button>
+        <button id="btnInviaPratica" type="button">Invia pratica</button>
+      </div>
+      <p class="message info" id="messageBox">Pronto</p>
+    </section>
+
+    <section id="carrelloSection" class="card">
+      <h2>Carrello Contratti</h2>
+      <p class="hint">Puoi inserire piu contratti nella stessa pratica. La anagrafica viene creata/aggiornata solo al click su "Invia pratica".</p>
+      <div id="cartSummary" class="inline-box">
+        <strong>Contratti:</strong>
+        <span id="cartCount">0</span>
+        <strong>Documento identita:</strong>
+        <span id="identityStatus">non caricato</span>
+      </div>
+      <div id="cartList" class="cart-list" style="margin-top:10px;"></div>
+      <p id="cartEmpty" class="cart-empty">Nessun contratto nel carrello.</p>
+      <pre id="resultBox">In attesa...</pre>
+    </section>
+  </main>
+
+  <script src="/js/vendita-storage-helper.js"></script>
+  <script>
+    const state = {
+      categorie: [],
+      offerte: [],
+      opzioni: [],
+      reload: [],
+      cart: {
+        cliente: null,
+        contratti: [],
+        documentoIdentitaFile: null
+      }
+    };
+
+    const refs = {
+      messageBox: document.getElementById('messageBox'),
+      resultBox: document.getElementById('resultBox'),
+      cartList: document.getElementById('cartList'),
+      cartEmpty: document.getElementById('cartEmpty'),
+      cartCount: document.getElementById('cartCount'),
+      cartBadgeTop: document.getElementById('cartBadgeTop'),
+      identityStatus: document.getElementById('identityStatus'),
+      labelOfferta: document.getElementById('labelOfferta'),
+
+      cluster: document.getElementById('cluster_cliente'),
+      cfPiva: document.getElementById('cf_piva'),
+      ragioneSociale: document.getElementById('ragione_sociale'),
+      nomeReferente: document.getElementById('nome_referente'),
+      cellulare: document.getElementById('cellulare'),
+      provincia: document.getElementById('provincia'),
+      comune: document.getElementById('comune'),
+      via: document.getElementById('via'),
+      civico: document.getElementById('civico'),
+      originePratica: document.getElementById('origine_pratica'),
+      operatoreId: document.getElementById('operatore_id'),
+
+      categoria: document.getElementById('categoria_id'),
+      offerta: document.getElementById('offerta_id'),
+      opzione: document.getElementById('opzione_id'),
+      reload: document.getElementById('reload_id'),
+      tipoAttivazione: document.getElementById('tipo_attivazione'),
+      apriChiudi: document.getElementById('apri_chiudi'),
+      intestatario: document.getElementById('intestatario'),
+      switchSim: document.getElementById('switch_sim'),
+      modalitaPagamento: document.getElementById('modalita_pagamento'),
+
+      dispositivoAssociato: document.getElementById('dispositivo_associato'),
+      imei: document.getElementById('imei'),
+      fasciaPrezzo: document.getElementById('fascia_prezzo'),
+      tipoAcquisto: document.getElementById('tipo_acquisto'),
+      finanziaria: document.getElementById('finanziaria'),
+      kolme: document.getElementById('kolme'),
+
+      scoreGara: document.getElementById('scoreGara'),
+      scoreExtra: document.getElementById('scoreExtra'),
+
+      fieldOpzione: document.getElementById('fieldOpzione'),
+      fieldReload: document.getElementById('fieldReload'),
+      fieldTipoAttivazione: document.getElementById('fieldTipoAttivazione'),
+      fieldApriChiudi: document.getElementById('fieldApriChiudi'),
+      fieldIntestatario: document.getElementById('fieldIntestatario'),
+      fieldSwitchSim: document.getElementById('fieldSwitchSim'),
+      fieldModalitaPagamento: document.getElementById('fieldModalitaPagamento'),
+
+      deviceSection: document.getElementById('deviceSection'),
+      fieldImei: document.getElementById('fieldImei'),
+      fieldFasciaPrezzo: document.getElementById('fieldFasciaPrezzo'),
+      fieldTipoAcquisto: document.getElementById('fieldTipoAcquisto'),
+      fieldFinanziaria: document.getElementById('fieldFinanziaria'),
+      fieldKolme: document.getElementById('fieldKolme'),
+
+      fileDocumentoIdentita: document.getElementById('file_documento_identita'),
+      fileContrattoPdf: document.getElementById('file_contratto_pdf'),
+      fileCopiaSimMnp: document.getElementById('file_copia_sim_mnp'),
+      fileCopiaBolletta: document.getElementById('file_copia_bolletta'),
+      fieldFileMnp: document.getElementById('fieldFileMnp'),
+      fieldFileBolletta: document.getElementById('fieldFileBolletta'),
+
+      btnCercaCliente: document.getElementById('btnCercaCliente'),
+      btnAddToCart: document.getElementById('btnAddToCart'),
+      btnOpenCarrello: document.getElementById('btnOpenCarrello'),
+      btnOpenCarrelloTop: document.getElementById('btnOpenCarrelloTop'),
+      btnSvuotaCarrello: document.getElementById('btnSvuotaCarrello'),
+      btnInviaPratica: document.getElementById('btnInviaPratica'),
+      carrelloSection: document.getElementById('carrelloSection')
+    };
+
+    function setMessage(message, type = 'info') {
+      refs.messageBox.textContent = message || '';
+      refs.messageBox.className = `message ${type}`;
+    }
+
+    function setResult(data) {
+      refs.resultBox.textContent = JSON.stringify(data, null, 2);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function normalizeText(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    }
+
+    function normalizeSiNo(value) {
+      if (!value) return null;
+      const raw = normalizeText(value);
+      if (raw === 'si') return 'Si';
+      if (raw === 'no') return 'No';
+      return value;
+    }
+
+    function toNumber(value, fallback = 0) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    function optionHtml(value, label) {
+      return `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
+    }
+
+    function getSelectedCategoria() {
+      return state.categorie.find((row) => row.id === refs.categoria.value) || null;
+    }
+
+    function getSelectedOfferta() {
+      return state.offerte.find((row) => row.id === refs.offerta.value) || null;
+    }
+
+    function getSelectedOpzione() {
+      return state.opzioni.find((row) => row.id === refs.opzione.value) || null;
+    }
+
+    function getSelectedReload() {
+      return state.reload.find((row) => row.id === refs.reload.value) || null;
+    }
+
+    function getCategoriaName() {
+      return getSelectedCategoria()?.nome || '';
+    }
+
+    function getOffertaName() {
+      return getSelectedOfferta()?.nome_offerta || '';
+    }
+
+    function isCategory(nome, expected) {
+      return normalizeText(nome) === normalizeText(expected);
+    }
+
+    function containsFragment(value, fragments) {
+      const normalized = normalizeText(value);
+      return fragments.some((fragment) => normalized.includes(normalizeText(fragment)));
+    }
+
+    function filteredOfferte() {
+      const categoriaId = refs.categoria.value;
+      const cluster = refs.cluster.value;
+
+      return state.offerte.filter((row) => {
+        const categoriaOk = row.categoria_id === categoriaId;
+        const clusterOk = !row.cluster_cliente || row.cluster_cliente === cluster;
+        return categoriaOk && clusterOk;
+      });
+    }
+
+    function filteredOpzioni() {
+      const categoriaId = refs.categoria.value;
+      const offertaId = refs.offerta.value;
+      const cluster = refs.cluster.value;
+
+      return state.opzioni.filter((row) => {
+        const categoriaOk = !row.categoria_id || row.categoria_id === categoriaId;
+        const offertaOk = !row.offerta_id || row.offerta_id === offertaId;
+        const clusterOk = !row.cluster_cliente || row.cluster_cliente === cluster;
+        return categoriaOk && offertaOk && clusterOk;
+      });
+    }
+
+    function renderCategorie() {
+      if (state.categorie.length === 0) {
+        refs.categoria.innerHTML = optionHtml('', 'Nessuna categoria disponibile');
+        return;
+      }
+
+      refs.categoria.innerHTML = state.categorie
+        .map((item) => optionHtml(item.id, item.nome || item.id))
+        .join('');
+    }
+
+    function renderOfferte() {
+      const currentValue = refs.offerta.value;
+      const rows = filteredOfferte();
+
+      if (rows.length === 0) {
+        refs.offerta.innerHTML = optionHtml('', 'Nessuna offerta disponibile');
+        refs.offerta.value = '';
+        return;
+      }
+
+      refs.offerta.innerHTML = rows
+        .map((item) => optionHtml(item.id, item.nome_offerta || item.id))
+        .join('');
+
+      const hasCurrent = rows.some((item) => item.id === currentValue);
+      if (hasCurrent) {
+        refs.offerta.value = currentValue;
+      }
+    }
+
+    function renderOpzioni() {
+      const rows = filteredOpzioni();
+      refs.opzione.innerHTML = [optionHtml('', 'Nessuna opzione')]
+        .concat(rows.map((item) => optionHtml(item.id, item.nome_opzione || item.id)))
+        .join('');
+    }
+
+    function renderReload() {
+      refs.reload.innerHTML = [optionHtml('', 'Nessun reload')]
+        .concat(state.reload.map((item) => optionHtml(item.id, item.nome || item.id)))
+        .join('');
+    }
+
+    function shouldShowReload(categoriaNome, offertaNome) {
+      if (isCategory(categoriaNome, 'Mobile')) return true;
+      if (isCategory(categoriaNome, 'Customer Base')) {
+        return containsFragment(offertaNome, ['telefono', 'telefono incluso']);
+      }
+      return false;
+    }
+
+    function shouldShowDevice(categoriaNome, offertaNome) {
+      if (isCategory(categoriaNome, 'Mobile')) {
+        return !containsFragment(offertaNome, ['untied', 'smart security']);
+      }
+
+      if (isCategory(categoriaNome, 'Customer Base')) {
+        return containsFragment(offertaNome, ['telefono', 'telefono incluso']);
+      }
+
+      if (isCategory(categoriaNome, 'Fisso')) {
+        return containsFragment(offertaNome, ['fwa', 'fttc']);
+      }
+
+      return false;
+    }
+
+    function shouldShowOpzione(categoriaNome, availableOptions) {
+      if (isCategory(categoriaNome, 'Mobile')) return true;
+      if (isCategory(categoriaNome, 'Customer Base')) return availableOptions.length > 0;
+      return false;
+    }
+
+    function isMnpRequired(categoriaNome, opzioneNome) {
+      return isCategory(categoriaNome, 'Mobile') && containsFragment(opzioneNome, ['mnp']);
+    }
+
+    function shouldShowKolme(categoriaNome) {
+      return isCategory(categoriaNome, 'Mobile') || isCategory(categoriaNome, 'Customer Base');
+    }
+
+    function updateScorePreview() {
+      const offerta = getSelectedOfferta();
+      const opzione = getSelectedOpzione();
+
+      const gara = toNumber(offerta?.punteggio_gara, 0) + toNumber(opzione?.punteggio_gara, 0);
+      const extra = toNumber(offerta?.punteggio_extra_gara, 0) + toNumber(opzione?.punteggio_extra_gara, 0);
+
+      refs.scoreGara.textContent = gara.toFixed(2);
+      refs.scoreExtra.textContent = extra.toFixed(2);
+    }
+
+    function resetContractFields() {
+      refs.opzione.value = '';
+      refs.reload.value = '';
+      refs.tipoAttivazione.value = '';
+      refs.apriChiudi.value = '';
+      refs.intestatario.value = '';
+      refs.switchSim.value = '';
+      refs.modalitaPagamento.value = '';
+      refs.dispositivoAssociato.value = 'false';
+      refs.imei.value = '';
+      refs.fasciaPrezzo.value = '';
+      refs.tipoAcquisto.value = '';
+      refs.finanziaria.value = '';
+      refs.kolme.value = '';
+      refs.fileContrattoPdf.value = '';
+      refs.fileCopiaSimMnp.value = '';
+      refs.fileCopiaBolletta.value = '';
+      refs.fieldFinanziaria.classList.add('hidden');
+    }
+
+    function renderDynamicSections() {
+      const categoriaNome = getCategoriaName();
+      const offertaNome = getOffertaName();
+      const opzioniDisponibili = filteredOpzioni();
+      const opzioneNome = getSelectedOpzione()?.nome_opzione || '';
+      const reloadVisible = shouldShowReload(categoriaNome, offertaNome);
+      const deviceVisible = shouldShowDevice(categoriaNome, offertaNome);
+      const opzioneVisible = shouldShowOpzione(categoriaNome, opzioniDisponibili);
+      const mnpVisible = isMnpRequired(categoriaNome, opzioneNome);
+      const bollettaVisible = isCategory(categoriaNome, 'Energia');
+
+      refs.labelOfferta.textContent = isCategory(categoriaNome, 'Fisso') ? 'Tecnologia *' : 'Offerta *';
+
+      refs.fieldOpzione.classList.toggle('hidden', !opzioneVisible);
+      refs.fieldReload.classList.toggle('hidden', !reloadVisible);
+      refs.fieldSwitchSim.classList.toggle('hidden', !isCategory(categoriaNome, 'Mobile'));
+      refs.fieldTipoAttivazione.classList.toggle('hidden', !isCategory(categoriaNome, 'Fisso'));
+      refs.fieldApriChiudi.classList.toggle('hidden', !isCategory(categoriaNome, 'Fisso'));
+      refs.fieldModalitaPagamento.classList.toggle('hidden', !isCategory(categoriaNome, 'Allarmi'));
+
+      if (!opzioneVisible) refs.opzione.value = '';
+      if (!reloadVisible) refs.reload.value = '';
+      if (!isCategory(categoriaNome, 'Mobile')) refs.switchSim.value = '';
+      if (!isCategory(categoriaNome, 'Fisso')) {
+        refs.tipoAttivazione.value = '';
+        refs.apriChiudi.value = '';
+        refs.intestatario.value = '';
+      }
+      if (!isCategory(categoriaNome, 'Allarmi')) refs.modalitaPagamento.value = '';
+
+      const showIntestatario = isCategory(categoriaNome, 'Fisso') && normalizeSiNo(refs.apriChiudi.value) === 'Si';
+      refs.fieldIntestatario.classList.toggle('hidden', !showIntestatario);
+      if (!showIntestatario) refs.intestatario.value = '';
+
+      refs.deviceSection.classList.toggle('hidden', !deviceVisible);
+      if (!deviceVisible) {
+        refs.dispositivoAssociato.value = 'false';
+        refs.imei.value = '';
+        refs.fasciaPrezzo.value = '';
+        refs.tipoAcquisto.value = '';
+        refs.finanziaria.value = '';
+        refs.kolme.value = '';
+      }
+
+      const hasDevice = deviceVisible && refs.dispositivoAssociato.value === 'true';
+      refs.fieldImei.classList.toggle('hidden', !hasDevice);
+      refs.fieldFasciaPrezzo.classList.toggle('hidden', !hasDevice);
+      refs.fieldTipoAcquisto.classList.toggle('hidden', !hasDevice);
+      refs.fieldFinanziaria.classList.toggle('hidden', !(hasDevice && refs.tipoAcquisto.value === 'Finanziamento'));
+      refs.fieldKolme.classList.toggle('hidden', !(hasDevice && shouldShowKolme(categoriaNome)));
+      if (!hasDevice) {
+        refs.imei.value = '';
+        refs.fasciaPrezzo.value = '';
+        refs.tipoAcquisto.value = '';
+        refs.finanziaria.value = '';
+        refs.kolme.value = '';
+      }
+
+      refs.fieldFileMnp.classList.toggle('hidden', !mnpVisible);
+      refs.fieldFileBolletta.classList.toggle('hidden', !bollettaVisible);
+
+      if (!mnpVisible) refs.fileCopiaSimMnp.value = '';
+      if (!bollettaVisible) refs.fileCopiaBolletta.value = '';
+
+      updateScorePreview();
+    }
+
+    function getClienteFormData() {
+      return {
+        cf_piva: refs.cfPiva.value.trim(),
+        cluster: refs.cluster.value,
+        ragione_sociale: refs.ragioneSociale.value.trim(),
+        nome_referente: refs.nomeReferente.value.trim() || null,
+        cellulare: refs.cellulare.value.trim() || null,
+        provincia: refs.provincia.value.trim() || null,
+        comune: refs.comune.value.trim() || null,
+        via: refs.via.value.trim() || null,
+        civico: refs.civico.value.trim() || null
+      };
+    }
+
+    function validateClienteData(cliente) {
+      if (!cliente.cf_piva) {
+        throw new Error('Compila il campo cliente CF/P.IVA');
+      }
+
+      if (!cliente.ragione_sociale) {
+        throw new Error('Compila il campo cliente Ragione Sociale');
+      }
+
+      if (cliente.cluster !== 'Consumer' && cliente.cluster !== 'Business') {
+        throw new Error('Cluster cliente non valido');
+      }
+    }
+
+    function collectContractDraft() {
+      const categoria = getSelectedCategoria();
+      const offerta = getSelectedOfferta();
+      const opzione = getSelectedOpzione();
+      const reload = getSelectedReload();
+      const categoriaNome = categoria?.nome || '';
+      const offertaNome = offerta?.nome_offerta || '';
+      const opzioneNome = opzione?.nome_opzione || '';
+      const isFisso = isCategory(categoriaNome, 'Fisso');
+      const isAllarmi = isCategory(categoriaNome, 'Allarmi');
+      const deviceVisible = shouldShowDevice(categoriaNome, offertaNome);
+      const hasDevice = deviceVisible && refs.dispositivoAssociato.value === 'true';
+      const mnpRequired = isMnpRequired(categoriaNome, opzioneNome);
+      const bollettaVisible = isCategory(categoriaNome, 'Energia');
+
+      if (!categoria?.id) throw new Error('Seleziona una categoria');
+      if (!offerta?.id) throw new Error('Seleziona una offerta valida');
+
+      if (!refs.fieldOpzione.classList.contains('hidden') && refs.opzione.value && !opzione?.id) {
+        throw new Error('Opzione non valida per categoria/offerta selezionata');
+      }
+
+      if (isFisso && !refs.tipoAttivazione.value) {
+        throw new Error('Per Fisso seleziona tipo attivazione');
+      }
+
+      if (isFisso && !refs.apriChiudi.value) {
+        throw new Error('Per Fisso seleziona apri/chiudi');
+      }
+
+      if (isFisso && normalizeSiNo(refs.apriChiudi.value) === 'Si' && !refs.intestatario.value) {
+        throw new Error('Se apri/chiudi = Si, seleziona intestatario');
+      }
+
+      if (isAllarmi && !refs.modalitaPagamento.value) {
+        throw new Error('Per Allarmi seleziona modalita pagamento');
+      }
+
+      if (hasDevice) {
+        const imei = refs.imei.value.trim();
+
+        if (!/^\d{15}$/.test(imei)) {
+          throw new Error('IMEI obbligatorio e valido (15 cifre) quando dispositivo associato = Si');
+        }
+
+        if (!refs.fasciaPrezzo.value) {
+          throw new Error('Se dispositivo associato = Si, seleziona fascia prezzo');
+        }
+
+        if (!refs.tipoAcquisto.value) {
+          throw new Error('Se dispositivo associato = Si, seleziona tipo acquisto');
+        }
+
+        if (refs.tipoAcquisto.value === 'Finanziamento' && !refs.finanziaria.value) {
+          throw new Error('Con tipo acquisto Finanziamento devi selezionare la finanziaria');
+        }
+
+        if (shouldShowKolme(categoriaNome) && refs.kolme.value === '') {
+          throw new Error('Seleziona Kolme (Si/No)');
+        }
+      }
+
+      const contrattoFile = refs.fileContrattoPdf.files[0] || null;
+      const mnpFile = refs.fileCopiaSimMnp.files[0] || null;
+      const bollettaFile = refs.fileCopiaBolletta.files[0] || null;
+
+      if (mnpRequired && !mnpFile) {
+        throw new Error('Per Mobile con opzione MNP devi caricare la copia SIM MNP');
+      }
+
+      if (bollettaVisible && !bollettaFile) {
+        throw new Error('Per Energia devi caricare la copia bolletta');
+      }
+
+      const punteggioGara = toNumber(offerta.punteggio_gara, 0) + toNumber(opzione?.punteggio_gara, 0);
+      const punteggioExtra = toNumber(offerta.punteggio_extra_gara, 0) + toNumber(opzione?.punteggio_extra_gara, 0);
+
+      return {
+        temp_id: `temp_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+        categoria_id: categoria.id,
+        offerta_id: offerta.id,
+        opzione_id: opzione?.id || null,
+        reload_id: refs.fieldReload.classList.contains('hidden') ? null : (reload?.id || null),
+        tipo_attivazione: isFisso ? refs.tipoAttivazione.value || null : null,
+        apri_chiudi: isFisso ? normalizeSiNo(refs.apriChiudi.value) : null,
+        intestatario: isFisso && normalizeSiNo(refs.apriChiudi.value) === 'Si' ? refs.intestatario.value || null : null,
+        switch_sim: isCategory(categoriaNome, 'Mobile') ? normalizeSiNo(refs.switchSim.value) : null,
+        modalita_pagamento: isAllarmi ? refs.modalitaPagamento.value || null : null,
+        dispositivo_associato: hasDevice,
+        imei: hasDevice ? refs.imei.value.trim() : null,
+        fascia_prezzo: hasDevice ? refs.fasciaPrezzo.value || null : null,
+        tipo_acquisto: hasDevice ? refs.tipoAcquisto.value || null : null,
+        finanziaria: hasDevice && refs.tipoAcquisto.value === 'Finanziamento' ? refs.finanziaria.value || null : null,
+        kolme: hasDevice && shouldShowKolme(categoriaNome)
+          ? (refs.kolme.value === '' ? null : refs.kolme.value === 'true')
+          : null,
+        score: {
+          punteggio_gara: Number(punteggioGara.toFixed(2)),
+          punteggio_extra_gara: Number(punteggioExtra.toFixed(2))
+        },
+        snapshot: {
+          categoria: categoriaNome,
+          offerta: offertaNome,
+          opzione: opzioneNome || null,
+          reload: reload?.nome || null
+        },
+        files: {
+          contratto_pdf: contrattoFile,
+          copia_sim_mnp: mnpFile,
+          copia_bolletta: bollettaFile
+        },
+        flags: {
+          mnp_required: mnpRequired,
+          bolletta_required: bollettaVisible
+        }
+      };
+    }
+
+    function renderCarrello() {
+      refs.cartCount.textContent = String(state.cart.contratti.length);
+      refs.cartBadgeTop.textContent = String(state.cart.contratti.length);
+      refs.identityStatus.textContent = state.cart.documentoIdentitaFile
+        ? `caricato (${state.cart.documentoIdentitaFile.name})`
+        : 'non caricato';
+
+      if (state.cart.contratti.length === 0) {
+        refs.cartList.innerHTML = '';
+        refs.cartEmpty.classList.remove('hidden');
+        return;
+      }
+
+      refs.cartEmpty.classList.add('hidden');
+
+      refs.cartList.innerHTML = state.cart.contratti
+        .map((item, idx) => {
+          const docs = [];
+          if (item.files.contratto_pdf) docs.push(`contratto: ${item.files.contratto_pdf.name}`);
+          if (item.files.copia_sim_mnp) docs.push(`copia_sim_mnp: ${item.files.copia_sim_mnp.name}`);
+          if (item.files.copia_bolletta) docs.push(`copia_bolletta: ${item.files.copia_bolletta.name}`);
+
+          const chips = [
+            `<span class="chip score">Gara ${item.score.punteggio_gara.toFixed(2)}</span>`,
+            `<span class="chip score">Extra ${item.score.punteggio_extra_gara.toFixed(2)}</span>`
+          ];
+
+          if (item.dispositivo_associato) chips.push('<span class="chip warn">Dispositivo Si</span>');
+          if (item.flags.mnp_required) chips.push('<span class="chip warn">MNP</span>');
+          if (item.flags.bolletta_required) chips.push('<span class="chip warn">Bolletta</span>');
+          if (docs.length > 0) chips.push('<span class="chip doc">Documenti caricati</span>');
+
+          return `
+            <article class="cart-item">
+              <div class="cart-top">
+                <p class="cart-title">Contratto ${idx + 1} - ${escapeHtml(item.snapshot.categoria)}</p>
+                <button type="button" class="ghost" onclick="removeCartContract('${escapeHtml(item.temp_id)}')">Elimina contratto</button>
+              </div>
+              <div class="chips">${chips.join('')}</div>
+              <div class="details">
+                <div><b>Offerta:</b> ${escapeHtml(item.snapshot.offerta || '-')}</div>
+                <div><b>Opzione:</b> ${escapeHtml(item.snapshot.opzione || '-')}</div>
+                <div><b>Reload:</b> ${escapeHtml(item.snapshot.reload || '-')}</div>
+                <div><b>Switch SIM:</b> ${escapeHtml(item.switch_sim || '-')}</div>
+                <div><b>Tipo attivazione:</b> ${escapeHtml(item.tipo_attivazione || '-')}</div>
+                <div><b>Apri/Chiudi:</b> ${escapeHtml(item.apri_chiudi || '-')}</div>
+                <div><b>Intestatario:</b> ${escapeHtml(item.intestatario || '-')}</div>
+                <div><b>Modalita pagamento:</b> ${escapeHtml(item.modalita_pagamento || '-')}</div>
+                <div><b>IMEI:</b> ${escapeHtml(item.imei || '-')}</div>
+                <div><b>Tipo acquisto:</b> ${escapeHtml(item.tipo_acquisto || '-')}</div>
+                <div><b>Finanziaria:</b> ${escapeHtml(item.finanziaria || '-')}</div>
+                <div><b>Kolme:</b> ${item.kolme === null ? '-' : (item.kolme ? 'Si' : 'No')}</div>
+                <div class="field full"><b>File:</b> ${docs.length ? escapeHtml(docs.join(' | ')) : '-'}</div>
+              </div>
+            </article>
+          `;
+        })
+        .join('');
+    }
+
+    function updateCartClienteSnapshot() {
+      state.cart.cliente = getClienteFormData();
+    }
+
+    async function loadConfig() {
+      setMessage('Caricamento configurazione vendita...', 'info');
+      const response = await fetch('/.netlify/functions/vendita-config');
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Errore nel caricamento configurazione');
+      }
+
+      state.categorie = data.categorie || [];
+      state.offerte = data.offerte || [];
+      state.opzioni = data.opzioni || [];
+      state.reload = data.reload || [];
+
+      if (state.categorie.length === 0) {
+        throw new Error('Nessuna categoria attiva disponibile');
+      }
+
+      renderCategorie();
+      renderOfferte();
+      renderOpzioni();
+      renderReload();
+      renderDynamicSections();
+      setMessage('Configurazione caricata', 'ok');
+    }
+
+    async function cercaCliente() {
+      const cfPiva = refs.cfPiva.value.trim();
+
+      if (!cfPiva) {
+        setMessage('Inserisci CF/P.IVA prima di cercare anagrafica', 'err');
+        return;
+      }
+
+      setMessage('Ricerca anagrafica in corso...', 'info');
+
+      const response = await fetch(`/.netlify/functions/search-anagrafica?cf_piva=${encodeURIComponent(cfPiva)}`);
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Errore ricerca anagrafica');
+      }
+
+      if (!data.found) {
+        setMessage('Cliente non trovato: puoi compilare manualmente i campi', 'info');
+        return;
+      }
+
+      const found = data.data || {};
+      if (found.cluster === 'Consumer' || found.cluster === 'Business') refs.cluster.value = found.cluster;
+      refs.ragioneSociale.value = found.ragione_sociale || refs.ragioneSociale.value;
+      refs.nomeReferente.value = found.nome_referente || refs.nomeReferente.value;
+      refs.cellulare.value = found.cellulare || refs.cellulare.value;
+      refs.provincia.value = found.provincia || refs.provincia.value;
+      refs.comune.value = found.comune || refs.comune.value;
+      refs.via.value = found.via || refs.via.value;
+      refs.civico.value = found.civico || refs.civico.value;
+
+      renderOfferte();
+      renderOpzioni();
+      renderDynamicSections();
+      setMessage('Cliente trovato e campi compilati. Puoi modificare i dati prima di inviare.', 'ok');
+    }
+
+    async function addContrattoToCart() {
+      try {
+        const cliente = getClienteFormData();
+        validateClienteData(cliente);
+
+        if (state.cart.contratti.length === 0 && !refs.fileDocumentoIdentita.files[0] && !state.cart.documentoIdentitaFile) {
+          throw new Error('Sul primo contratto devi caricare il documento identita della pratica');
+        }
+
+        const draft = collectContractDraft();
+
+        if (state.cart.contratti.length === 0 && refs.fileDocumentoIdentita.files[0]) {
+          state.cart.documentoIdentitaFile = refs.fileDocumentoIdentita.files[0];
+        }
+
+        state.cart.contratti.push(draft);
+        updateCartClienteSnapshot();
+        renderCarrello();
+        setMessage('Contratto aggiunto al carrello', 'ok');
+
+        resetContractFields();
+        renderOpzioni();
+        renderDynamicSections();
+      } catch (error) {
+        setMessage(error.message, 'err');
+      }
+    }
+
+    window.removeCartContract = function (tempId) {
+      const index = state.cart.contratti.findIndex((item) => item.temp_id === tempId);
+      if (index < 0) return;
+
+      const confirmed = window.confirm('Eliminare questo contratto dal carrello?');
+      if (!confirmed) return;
+
+      state.cart.contratti.splice(index, 1);
+
+      if (state.cart.contratti.length === 0) {
+        state.cart.documentoIdentitaFile = null;
+      }
+
+      renderCarrello();
+      setMessage('Contratto rimosso dal carrello', 'info');
+    };
+
+    function clearCart() {
+      const confirmed = window.confirm('Svuotare completamente il carrello?');
+      if (!confirmed) return;
+
+      state.cart.contratti = [];
+      state.cart.documentoIdentitaFile = null;
+      refs.fileDocumentoIdentita.value = '';
+      renderCarrello();
+      setMessage('Carrello svuotato', 'info');
+    }
+
+    function buildInvioPayload() {
+      const cliente = getClienteFormData();
+      validateClienteData(cliente);
+
+      if (state.cart.contratti.length === 0) {
+        throw new Error('Aggiungi almeno un contratto al carrello prima di inviare');
+      }
+
+      if (!state.cart.documentoIdentitaFile) {
+        throw new Error('Documento identita mancante: richiesto una sola volta per pratica');
+      }
+
+      const contratti = state.cart.contratti.map((item, idx) => {
+        if (item.flags.mnp_required && !item.files.copia_sim_mnp) {
+          throw new Error(`Contratto ${idx + 1}: copia SIM MNP mancante`);
+        }
+        if (item.flags.bolletta_required && !item.files.copia_bolletta) {
+          throw new Error(`Contratto ${idx + 1}: copia bolletta mancante`);
+        }
+
+        return {
+          temp_id: item.temp_id,
+          categoria_id: item.categoria_id,
+          offerta_id: item.offerta_id,
+          opzione_id: item.opzione_id,
+          reload_id: item.reload_id,
+          tipo_attivazione: item.tipo_attivazione,
+          apri_chiudi: item.apri_chiudi,
+          intestatario: item.intestatario,
+          switch_sim: item.switch_sim,
+          modalita_pagamento: item.modalita_pagamento,
+          dispositivo_associato: item.dispositivo_associato,
+          imei: item.imei,
+          fascia_prezzo: item.fascia_prezzo,
+          tipo_acquisto: item.tipo_acquisto,
+          finanziaria: item.finanziaria,
+          kolme: item.kolme
+        };
+      });
+
+      return {
+        cliente,
+        pratica: {
+          origine_pratica: refs.originePratica.value || 'spontaneo',
+          appuntamento_id: null,
+          chiamata_id: null,
+          operatore_id: refs.operatoreId.value.trim() || null
+        },
+        contratti
+      };
+    }
+
+    async function inviaPratica() {
+      refs.btnInviaPratica.disabled = true;
+      refs.btnAddToCart.disabled = true;
+
+      try {
+        const payload = buildInvioPayload();
+        setMessage('Creazione pratica e contratti in corso...', 'info');
+
+        const createResponse = await fetch('/.netlify/functions/crea-vendita-pratica-carrello', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const createResult = await createResponse.json();
+
+        if (!createResponse.ok || !createResult.success) {
+          throw new Error(createResult.error || 'Errore creazione pratica carrello');
+        }
+
+        const contractsByTempId = new Map((createResult.contratti || []).map((item) => [item.temp_id, item]));
+        const uploadResults = [];
+        const firstContract = createResult.contratti?.[0] || null;
+
+        setMessage('Pratica creata. Upload documento identita...', 'info');
+
+        const identityUpload = await uploadVenditaDocumento({
+          file: state.cart.documentoIdentitaFile,
+          pratica_id: createResult.pratica_id,
+          contratto_id: firstContract ? firstContract.contratto_id : null,
+          anagrafica_id: createResult.anagrafica_id,
+          tipo_documento: 'documento_identita',
+          storage_base_path: createResult.storage_base_path,
+          nome_cartella_storage: createResult.nome_cartella_storage
+        });
+
+        uploadResults.push({ tipo_documento: 'documento_identita', result: identityUpload });
+
+        for (let idx = 0; idx < state.cart.contratti.length; idx += 1) {
+          const cartItem = state.cart.contratti[idx];
+          const created = contractsByTempId.get(cartItem.temp_id);
+
+          if (!created?.contratto_id) {
+            throw new Error(`Contratto ${idx + 1}: mapping temp_id non trovato in risposta server`);
+          }
+
+          if (cartItem.files.contratto_pdf) {
+            setMessage(`Upload contratto PDF ${idx + 1}/${state.cart.contratti.length}...`, 'info');
+            const result = await uploadVenditaDocumento({
+              file: cartItem.files.contratto_pdf,
+              pratica_id: createResult.pratica_id,
+              contratto_id: created.contratto_id,
+              anagrafica_id: createResult.anagrafica_id,
+              tipo_documento: 'contratto',
+              categoria_snapshot: created.categoria_snapshot,
+              storage_base_path: createResult.storage_base_path,
+              nome_cartella_storage: createResult.nome_cartella_storage
+            });
+
+            uploadResults.push({
+              tipo_documento: 'contratto',
+              contratto_id: created.contratto_id,
+              result
+            });
+          }
+
+          if (cartItem.files.copia_sim_mnp) {
+            setMessage(`Upload copia SIM MNP ${idx + 1}/${state.cart.contratti.length}...`, 'info');
+            const result = await uploadVenditaDocumento({
+              file: cartItem.files.copia_sim_mnp,
+              pratica_id: createResult.pratica_id,
+              contratto_id: created.contratto_id,
+              anagrafica_id: createResult.anagrafica_id,
+              tipo_documento: 'copia_sim_mnp',
+              storage_base_path: createResult.storage_base_path,
+              nome_cartella_storage: createResult.nome_cartella_storage
+            });
+
+            uploadResults.push({
+              tipo_documento: 'copia_sim_mnp',
+              contratto_id: created.contratto_id,
+              result
+            });
+          }
+
+          if (cartItem.files.copia_bolletta) {
+            setMessage(`Upload copia bolletta ${idx + 1}/${state.cart.contratti.length}...`, 'info');
+            const result = await uploadVenditaDocumento({
+              file: cartItem.files.copia_bolletta,
+              pratica_id: createResult.pratica_id,
+              contratto_id: created.contratto_id,
+              anagrafica_id: createResult.anagrafica_id,
+              tipo_documento: 'copia_bolletta',
+              storage_base_path: createResult.storage_base_path,
+              nome_cartella_storage: createResult.nome_cartella_storage
+            });
+
+            uploadResults.push({
+              tipo_documento: 'copia_bolletta',
+              contratto_id: created.contratto_id,
+              result
+            });
+          }
+        }
+
+        setResult({
+          success: true,
+          createResult,
+          uploadResults
+        });
+
+        setMessage('Pratica inviata con successo', 'ok');
+
+        state.cart.contratti = [];
+        state.cart.documentoIdentitaFile = null;
+        refs.fileDocumentoIdentita.value = '';
+        refs.fileContrattoPdf.value = '';
+        refs.fileCopiaSimMnp.value = '';
+        refs.fileCopiaBolletta.value = '';
+        renderCarrello();
+      } catch (error) {
+        setMessage(error.message, 'err');
+        setResult({ success: false, error: error.message });
+      } finally {
+        refs.btnInviaPratica.disabled = false;
+        refs.btnAddToCart.disabled = false;
+      }
+    }
+
+    function scrollToCarrello() {
+      refs.carrelloSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    refs.cluster.addEventListener('change', () => {
+      renderOfferte();
+      renderOpzioni();
+      renderDynamicSections();
+    });
+
+    refs.categoria.addEventListener('change', () => {
+      renderOfferte();
+      renderOpzioni();
+      renderDynamicSections();
+    });
+
+    refs.offerta.addEventListener('change', () => {
+      renderOpzioni();
+      renderDynamicSections();
+    });
+
+    refs.opzione.addEventListener('change', renderDynamicSections);
+    refs.apriChiudi.addEventListener('change', renderDynamicSections);
+    refs.dispositivoAssociato.addEventListener('change', renderDynamicSections);
+    refs.tipoAcquisto.addEventListener('change', renderDynamicSections);
+
+    refs.btnCercaCliente.addEventListener('click', async () => {
+      try {
+        await cercaCliente();
+      } catch (error) {
+        setMessage(error.message, 'err');
+      }
+    });
+
+    refs.btnAddToCart.addEventListener('click', addContrattoToCart);
+    refs.btnOpenCarrello.addEventListener('click', scrollToCarrello);
+    refs.btnOpenCarrelloTop.addEventListener('click', scrollToCarrello);
+    refs.btnSvuotaCarrello.addEventListener('click', clearCart);
+    refs.btnInviaPratica.addEventListener('click', inviaPratica);
+
+    (async function init() {
+      renderCarrello();
+      setResult({ init: true });
+      try {
+        await loadConfig();
+      } catch (error) {
+        setMessage(error.message, 'err');
+        setResult({ success: false, error: error.message });
+      }
+    })();
+  </script>
+</body>
+</html>
