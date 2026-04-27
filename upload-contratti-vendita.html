@@ -590,13 +590,13 @@
     <section class="card">
       <h2>Upload Documenti</h2>
       <div class="grid">
-        <div class="field half">
-          <label for="file_documento_identita">Documento identita (solo 1 volta per pratica, sul primo contratto)</label>
+        <div id="fieldDocumentoIdentita" class="field half">
+          <label for="file_documento_identita">Documento identita *</label>
           <input id="file_documento_identita" type="file" accept="application/pdf">
         </div>
 
         <div class="field half">
-          <label for="file_contratto_pdf">Contratto PDF (opzionale)</label>
+          <label for="file_contratto_pdf">Contratto PDF *</label>
           <input id="file_contratto_pdf" type="file" accept="application/pdf">
         </div>
 
@@ -714,6 +714,7 @@
       fileContrattoPdf: document.getElementById('file_contratto_pdf'),
       fileCopiaSimMnp: document.getElementById('file_copia_sim_mnp'),
       fileCopiaBolletta: document.getElementById('file_copia_bolletta'),
+      fieldDocumentoIdentita: document.getElementById('fieldDocumentoIdentita'),
       fieldFileMnp: document.getElementById('fieldFileMnp'),
       fieldFileBolletta: document.getElementById('fieldFileBolletta'),
 
@@ -818,6 +819,14 @@
       if (file.type && file.type !== 'application/pdf') {
         throw new Error(`${label}: il file deve essere PDF`);
       }
+    }
+
+    function updateUploadVisibility() {
+      const hasIdentity = Boolean(praticaFiles.documento_identita);
+      const hasContracts = state.cart.contratti.length > 0;
+
+      refs.fieldDocumentoIdentita.classList.toggle('hidden', hasIdentity || hasContracts);
+      // Contratto PDF sempre visibile.
     }
 
     function normalizeSiNo(value) {
@@ -1005,6 +1014,7 @@
       refs.fileCopiaSimMnp.value = '';
       refs.fileCopiaBolletta.value = '';
       refs.fieldFinanziaria.classList.add('hidden');
+      updateUploadVisibility();
     }
 
     function renderDynamicSections() {
@@ -1168,6 +1178,10 @@
       const mnpFile = selectedFiles.sim_mnp || null;
       const bollettaFile = selectedFiles.bolletta || null;
 
+      if (!contrattoFile) {
+        throw new Error('Carica il PDF contratto per questo contratto');
+      }
+
       if (mnpRequired && !mnpFile) {
         throw new Error('Per Mobile con opzione MNP devi caricare la copia SIM MNP');
       }
@@ -1229,12 +1243,13 @@
       refs.cartCount.textContent = String(state.cart.contratti.length);
       refs.cartBadgeTop.textContent = String(state.cart.contratti.length);
       refs.identityStatus.textContent = praticaFiles.documento_identita
-        ? `caricato (${praticaFiles.documento_identita.name})`
+        ? `caricato: ${praticaFiles.documento_identita.name}`
         : 'non caricato';
 
       if (state.cart.contratti.length === 0) {
         refs.cartList.innerHTML = '';
         refs.cartEmpty.classList.remove('hidden');
+        updateUploadVisibility();
         return;
       }
 
@@ -1283,6 +1298,7 @@
           `;
         })
         .join('');
+      updateUploadVisibility();
     }
 
     function updateCartClienteSnapshot() {
@@ -1366,6 +1382,10 @@
 
         const selectedDocumentoIdentita = refs.fileDocumentoIdentita.files[0] || null;
 
+        if (!selectedContractFiles.contratto) {
+          throw new Error('Carica il PDF contratto per questo contratto');
+        }
+
         if (selectedDocumentoIdentita) {
           assertValidFile(selectedDocumentoIdentita, 'Documento identita pratica');
         }
@@ -1397,6 +1417,7 @@
         resetContractFields();
         renderOpzioni();
         renderDynamicSections();
+        updateUploadVisibility();
       } catch (error) {
         setMessage(error.message, 'err');
       }
@@ -1417,6 +1438,7 @@
       }
 
       renderCarrello();
+      updateUploadVisibility();
       setMessage('Contratto rimosso dal carrello', 'info');
     };
 
@@ -1428,6 +1450,7 @@
       praticaFiles.documento_identita = null;
       refs.fileDocumentoIdentita.value = '';
       renderCarrello();
+      updateUploadVisibility();
       setMessage('Carrello svuotato', 'info');
     }
 
@@ -1442,6 +1465,12 @@
       if (!praticaFiles.documento_identita) {
         throw new Error('Documento identita mancante: richiesto una sola volta per pratica');
       }
+
+      state.cart.contratti.forEach((item, idx) => {
+        if (!item.files || !item.files.contratto) {
+          throw new Error(`Contratto ${idx + 1}: PDF contratto mancante`);
+        }
+      });
 
       const contratti = state.cart.contratti.map((item, idx) => {
         if (item.flags.mnp_required && !item.files.sim_mnp) {
@@ -1686,6 +1715,7 @@
         refs.fileCopiaSimMnp.value = '';
         refs.fileCopiaBolletta.value = '';
         renderCarrello();
+        updateUploadVisibility();
       } catch (error) {
         setMessage(error.message, 'err');
         setResult({
@@ -1742,6 +1772,7 @@
 
     (async function init() {
       renderCarrello();
+      updateUploadVisibility();
       setResult({ init: true });
       try {
         await loadConfig();
