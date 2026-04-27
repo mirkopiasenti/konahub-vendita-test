@@ -805,6 +805,21 @@
       return `${safeBase}_${progressive}.pdf`;
     }
 
+    function assertValidFile(file, label) {
+      if (!(file instanceof File)) {
+        throw new Error(`${label}: file non valido o non disponibile`);
+      }
+      if (!file.name) {
+        throw new Error(`${label}: nome file mancante`);
+      }
+      if (!file.size || file.size <= 0) {
+        throw new Error(`${label}: file vuoto`);
+      }
+      if (file.type && file.type !== 'application/pdf') {
+        throw new Error(`${label}: il file deve essere PDF`);
+      }
+    }
+
     function normalizeSiNo(value) {
       if (!value) return null;
       const raw = normalizeText(value);
@@ -1351,6 +1366,19 @@
 
         const selectedDocumentoIdentita = refs.fileDocumentoIdentita.files[0] || null;
 
+        if (selectedDocumentoIdentita) {
+          assertValidFile(selectedDocumentoIdentita, 'Documento identita pratica');
+        }
+        if (selectedContractFiles.contratto) {
+          assertValidFile(selectedContractFiles.contratto, 'PDF contratto');
+        }
+        if (selectedContractFiles.sim_mnp) {
+          assertValidFile(selectedContractFiles.sim_mnp, 'Copia SIM MNP');
+        }
+        if (selectedContractFiles.bolletta) {
+          assertValidFile(selectedContractFiles.bolletta, 'Copia bolletta');
+        }
+
         if (state.cart.contratti.length === 0 && !selectedDocumentoIdentita && !praticaFiles.documento_identita) {
           throw new Error('Sul primo contratto devi caricare il documento identita della pratica');
         }
@@ -1458,6 +1486,8 @@
     async function inviaPratica() {
       refs.btnInviaPratica.disabled = true;
       refs.btnAddToCart.disabled = true;
+      const uploadResults = [];
+      const uploadDebug = [];
 
       try {
         const payload = buildInvioPayload();
@@ -1476,13 +1506,34 @@
         }
 
         const contractsByTempId = new Map((createResult.contratti || []).map((item) => [item.temp_id, item]));
-        const uploadResults = [];
         const firstContract = createResult.contratti?.[0] || null;
 
         setMessage('Pratica creata. Upload documento identita...', 'info');
+        const identityFile = praticaFiles.documento_identita;
+
+        if (!(identityFile instanceof File)) {
+          throw new Error('Documento identità non valido o non più disponibile nel carrello');
+        }
+
+        assertValidFile(identityFile, 'Documento identita');
+
+        const identityDebug = {
+          tipo_documento: 'documento_identita',
+          contratto_id: firstContract ? firstContract.contratto_id : null,
+          fileName: identityFile.name,
+          fileSize: identityFile.size,
+          fileType: identityFile.type,
+          pratica_id: createResult.pratica_id,
+          anagrafica_id: createResult.anagrafica_id,
+          storage_base_path: createResult.storage_base_path,
+          categoria_snapshot: null,
+          file_name: null
+        };
+        console.log('[UPLOAD DEBUG]', identityDebug);
+        uploadDebug.push(identityDebug);
 
         const identityUpload = await uploadVenditaDocumento({
-          file: praticaFiles.documento_identita,
+          file: identityFile,
           pratica_id: createResult.pratica_id,
           contratto_id: firstContract ? firstContract.contratto_id : null,
           anagrafica_id: createResult.anagrafica_id,
@@ -1503,10 +1554,25 @@
           }
 
           if (cartItem.files.contratto) {
+            assertValidFile(cartItem.files.contratto, `Contratto ${idx + 1} PDF contratto`);
             const contractFileName = getProgressiveContractFileName(
               { ...cartItem, categoria_snapshot: categoriaSnapshot },
               state.cart.contratti
             );
+            const contractDebug = {
+              tipo_documento: 'contratto',
+              contratto_id: created.contratto_id,
+              fileName: cartItem.files.contratto.name,
+              fileSize: cartItem.files.contratto.size,
+              fileType: cartItem.files.contratto.type,
+              pratica_id: createResult.pratica_id,
+              anagrafica_id: createResult.anagrafica_id,
+              storage_base_path: createResult.storage_base_path,
+              categoria_snapshot: categoriaSnapshot,
+              file_name: contractFileName
+            };
+            console.log('[UPLOAD DEBUG]', contractDebug);
+            uploadDebug.push(contractDebug);
 
             setMessage(`Upload contratto PDF ${idx + 1}/${state.cart.contratti.length}...`, 'info');
             const result = await uploadVenditaDocumento({
@@ -1530,7 +1596,22 @@
           }
 
           if (cartItem.files.sim_mnp) {
+            assertValidFile(cartItem.files.sim_mnp, `Contratto ${idx + 1} copia SIM MNP`);
             const simFileName = getProgressiveDocumentFileName(cartItem, state.cart.contratti, 'sim_mnp', 'copia_sim_mnp');
+            const simDebug = {
+              tipo_documento: 'copia_sim_mnp',
+              contratto_id: created.contratto_id,
+              fileName: cartItem.files.sim_mnp.name,
+              fileSize: cartItem.files.sim_mnp.size,
+              fileType: cartItem.files.sim_mnp.type,
+              pratica_id: createResult.pratica_id,
+              anagrafica_id: createResult.anagrafica_id,
+              storage_base_path: createResult.storage_base_path,
+              categoria_snapshot: categoriaSnapshot,
+              file_name: simFileName
+            };
+            console.log('[UPLOAD DEBUG]', simDebug);
+            uploadDebug.push(simDebug);
             setMessage(`Upload copia SIM MNP ${idx + 1}/${state.cart.contratti.length}...`, 'info');
             const result = await uploadVenditaDocumento({
               file: cartItem.files.sim_mnp,
@@ -1552,7 +1633,22 @@
           }
 
           if (cartItem.files.bolletta) {
+            assertValidFile(cartItem.files.bolletta, `Contratto ${idx + 1} copia bolletta`);
             const bollettaFileName = getProgressiveDocumentFileName(cartItem, state.cart.contratti, 'bolletta', 'copia_bolletta');
+            const bollettaDebug = {
+              tipo_documento: 'copia_bolletta',
+              contratto_id: created.contratto_id,
+              fileName: cartItem.files.bolletta.name,
+              fileSize: cartItem.files.bolletta.size,
+              fileType: cartItem.files.bolletta.type,
+              pratica_id: createResult.pratica_id,
+              anagrafica_id: createResult.anagrafica_id,
+              storage_base_path: createResult.storage_base_path,
+              categoria_snapshot: categoriaSnapshot,
+              file_name: bollettaFileName
+            };
+            console.log('[UPLOAD DEBUG]', bollettaDebug);
+            uploadDebug.push(bollettaDebug);
             setMessage(`Upload copia bolletta ${idx + 1}/${state.cart.contratti.length}...`, 'info');
             const result = await uploadVenditaDocumento({
               file: cartItem.files.bolletta,
@@ -1577,7 +1673,8 @@
         setResult({
           success: true,
           createResult,
-          uploadResults
+          uploadResults,
+          uploadDebug
         });
 
         setMessage('Pratica inviata con successo', 'ok');
@@ -1591,7 +1688,12 @@
         renderCarrello();
       } catch (error) {
         setMessage(error.message, 'err');
-        setResult({ success: false, error: error.message });
+        setResult({
+          success: false,
+          error: error.message,
+          uploadResults,
+          uploadDebug
+        });
       } finally {
         refs.btnInviaPratica.disabled = false;
         refs.btnAddToCart.disabled = false;
