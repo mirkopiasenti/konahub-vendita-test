@@ -646,9 +646,11 @@
       reload: [],
       cart: {
         cliente: null,
-        contratti: [],
-        documentoIdentitaFile: null
+        contratti: []
       }
+    };
+    let praticaFiles = {
+      documento_identita: null
     };
 
     const refs = {
@@ -748,6 +750,59 @@
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
         .trim();
+    }
+
+    function normalizeForFileName(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .toLowerCase();
+    }
+
+    function getItemCategoriaSlug(item) {
+      const raw = item?.categoria_nome || item?.categoria_snapshot || item?.snapshot?.categoria || 'generico';
+      return normalizeForFileName(raw) || 'generico';
+    }
+
+    function getProgressiveContractFileName(cartItem, cartItemsBeforeOrAll) {
+      const items = Array.isArray(cartItemsBeforeOrAll) ? cartItemsBeforeOrAll : [];
+      const categoriaSlug = getItemCategoriaSlug(cartItem);
+      let progressive = 0;
+
+      for (let i = 0; i < items.length; i += 1) {
+        const current = items[i];
+        if (getItemCategoriaSlug(current) !== categoriaSlug) continue;
+        progressive += 1;
+        if (current.temp_id === cartItem.temp_id) break;
+      }
+
+      if (progressive <= 1) {
+        return `contratto_${categoriaSlug}.pdf`;
+      }
+
+      return `contratto_${categoriaSlug}_${progressive}.pdf`;
+    }
+
+    function getProgressiveDocumentFileName(cartItem, cartItemsBeforeOrAll, fileKey, baseName) {
+      const items = Array.isArray(cartItemsBeforeOrAll) ? cartItemsBeforeOrAll : [];
+      const safeBase = normalizeForFileName(baseName) || 'documento';
+      let progressive = 0;
+
+      for (let i = 0; i < items.length; i += 1) {
+        const current = items[i];
+        if (!current?.files?.[fileKey]) continue;
+        progressive += 1;
+        if (current.temp_id === cartItem.temp_id) break;
+      }
+
+      if (progressive <= 1) {
+        return `${safeBase}.pdf`;
+      }
+
+      return `${safeBase}_${progressive}.pdf`;
     }
 
     function normalizeSiNo(value) {
@@ -1032,7 +1087,7 @@
       }
     }
 
-    function collectContractDraft() {
+    function collectContractDraft(selectedFiles = {}) {
       const categoria = getSelectedCategoria();
       const offerta = getSelectedOfferta();
       const opzione = getSelectedOpzione();
@@ -1094,9 +1149,9 @@
         }
       }
 
-      const contrattoFile = refs.fileContrattoPdf.files[0] || null;
-      const mnpFile = refs.fileCopiaSimMnp.files[0] || null;
-      const bollettaFile = refs.fileCopiaBolletta.files[0] || null;
+      const contrattoFile = selectedFiles.contratto || null;
+      const mnpFile = selectedFiles.sim_mnp || null;
+      const bollettaFile = selectedFiles.bolletta || null;
 
       if (mnpRequired && !mnpFile) {
         throw new Error('Per Mobile con opzione MNP devi caricare la copia SIM MNP');
@@ -1115,6 +1170,11 @@
         offerta_id: offerta.id,
         opzione_id: opzione?.id || null,
         reload_id: refs.fieldReload.classList.contains('hidden') ? null : (reload?.id || null),
+        categoria_nome: categoriaNome,
+        offerta_nome: offertaNome,
+        opzione_nome: opzioneNome || null,
+        reload_nome: reload?.nome || null,
+        categoria_snapshot: categoriaNome,
         tipo_attivazione: isFisso ? refs.tipoAttivazione.value || null : null,
         apri_chiudi: isFisso ? normalizeSiNo(refs.apriChiudi.value) : null,
         intestatario: isFisso && normalizeSiNo(refs.apriChiudi.value) === 'Si' ? refs.intestatario.value || null : null,
@@ -1139,9 +1199,9 @@
           reload: reload?.nome || null
         },
         files: {
-          contratto_pdf: contrattoFile,
-          copia_sim_mnp: mnpFile,
-          copia_bolletta: bollettaFile
+          contratto: contrattoFile,
+          sim_mnp: mnpFile,
+          bolletta: bollettaFile
         },
         flags: {
           mnp_required: mnpRequired,
@@ -1153,8 +1213,8 @@
     function renderCarrello() {
       refs.cartCount.textContent = String(state.cart.contratti.length);
       refs.cartBadgeTop.textContent = String(state.cart.contratti.length);
-      refs.identityStatus.textContent = state.cart.documentoIdentitaFile
-        ? `caricato (${state.cart.documentoIdentitaFile.name})`
+      refs.identityStatus.textContent = praticaFiles.documento_identita
+        ? `caricato (${praticaFiles.documento_identita.name})`
         : 'non caricato';
 
       if (state.cart.contratti.length === 0) {
@@ -1168,9 +1228,9 @@
       refs.cartList.innerHTML = state.cart.contratti
         .map((item, idx) => {
           const docs = [];
-          if (item.files.contratto_pdf) docs.push(`contratto: ${item.files.contratto_pdf.name}`);
-          if (item.files.copia_sim_mnp) docs.push(`copia_sim_mnp: ${item.files.copia_sim_mnp.name}`);
-          if (item.files.copia_bolletta) docs.push(`copia_bolletta: ${item.files.copia_bolletta.name}`);
+          if (item.files.contratto) docs.push(`contratto: ${item.files.contratto.name}`);
+          if (item.files.sim_mnp) docs.push(`copia_sim_mnp: ${item.files.sim_mnp.name}`);
+          if (item.files.bolletta) docs.push(`copia_bolletta: ${item.files.bolletta.name}`);
 
           const chips = [
             `<span class="chip score">Gara ${item.score.punteggio_gara.toFixed(2)}</span>`,
@@ -1185,14 +1245,14 @@
           return `
             <article class="cart-item">
               <div class="cart-top">
-                <p class="cart-title">Contratto ${idx + 1} - ${escapeHtml(item.snapshot.categoria)}</p>
+                <p class="cart-title">Contratto ${idx + 1} - ${escapeHtml(item.categoria_nome || item.snapshot.categoria)}</p>
                 <button type="button" class="ghost" onclick="removeCartContract('${escapeHtml(item.temp_id)}')">Elimina contratto</button>
               </div>
               <div class="chips">${chips.join('')}</div>
               <div class="details">
-                <div><b>Offerta:</b> ${escapeHtml(item.snapshot.offerta || '-')}</div>
-                <div><b>Opzione:</b> ${escapeHtml(item.snapshot.opzione || '-')}</div>
-                <div><b>Reload:</b> ${escapeHtml(item.snapshot.reload || '-')}</div>
+                <div><b>Offerta:</b> ${escapeHtml(item.offerta_nome || item.snapshot.offerta || '-')}</div>
+                <div><b>Opzione:</b> ${escapeHtml(item.opzione_nome || item.snapshot.opzione || '-')}</div>
+                <div><b>Reload:</b> ${escapeHtml(item.reload_nome || item.snapshot.reload || '-')}</div>
                 <div><b>Switch SIM:</b> ${escapeHtml(item.switch_sim || '-')}</div>
                 <div><b>Tipo attivazione:</b> ${escapeHtml(item.tipo_attivazione || '-')}</div>
                 <div><b>Apri/Chiudi:</b> ${escapeHtml(item.apri_chiudi || '-')}</div>
@@ -1283,14 +1343,22 @@
         const cliente = getClienteFormData();
         validateClienteData(cliente);
 
-        if (state.cart.contratti.length === 0 && !refs.fileDocumentoIdentita.files[0] && !state.cart.documentoIdentitaFile) {
+        const selectedContractFiles = {
+          contratto: refs.fileContrattoPdf.files[0] || null,
+          sim_mnp: refs.fileCopiaSimMnp.files[0] || null,
+          bolletta: refs.fileCopiaBolletta.files[0] || null
+        };
+
+        const selectedDocumentoIdentita = refs.fileDocumentoIdentita.files[0] || null;
+
+        if (state.cart.contratti.length === 0 && !selectedDocumentoIdentita && !praticaFiles.documento_identita) {
           throw new Error('Sul primo contratto devi caricare il documento identita della pratica');
         }
 
-        const draft = collectContractDraft();
+        const draft = collectContractDraft(selectedContractFiles);
 
-        if (state.cart.contratti.length === 0 && refs.fileDocumentoIdentita.files[0]) {
-          state.cart.documentoIdentitaFile = refs.fileDocumentoIdentita.files[0];
+        if (selectedDocumentoIdentita) {
+          praticaFiles.documento_identita = selectedDocumentoIdentita;
         }
 
         state.cart.contratti.push(draft);
@@ -1316,7 +1384,8 @@
       state.cart.contratti.splice(index, 1);
 
       if (state.cart.contratti.length === 0) {
-        state.cart.documentoIdentitaFile = null;
+        praticaFiles.documento_identita = null;
+        refs.fileDocumentoIdentita.value = '';
       }
 
       renderCarrello();
@@ -1328,7 +1397,7 @@
       if (!confirmed) return;
 
       state.cart.contratti = [];
-      state.cart.documentoIdentitaFile = null;
+      praticaFiles.documento_identita = null;
       refs.fileDocumentoIdentita.value = '';
       renderCarrello();
       setMessage('Carrello svuotato', 'info');
@@ -1342,15 +1411,15 @@
         throw new Error('Aggiungi almeno un contratto al carrello prima di inviare');
       }
 
-      if (!state.cart.documentoIdentitaFile) {
+      if (!praticaFiles.documento_identita) {
         throw new Error('Documento identita mancante: richiesto una sola volta per pratica');
       }
 
       const contratti = state.cart.contratti.map((item, idx) => {
-        if (item.flags.mnp_required && !item.files.copia_sim_mnp) {
+        if (item.flags.mnp_required && !item.files.sim_mnp) {
           throw new Error(`Contratto ${idx + 1}: copia SIM MNP mancante`);
         }
-        if (item.flags.bolletta_required && !item.files.copia_bolletta) {
+        if (item.flags.bolletta_required && !item.files.bolletta) {
           throw new Error(`Contratto ${idx + 1}: copia bolletta mancante`);
         }
 
@@ -1413,7 +1482,7 @@
         setMessage('Pratica creata. Upload documento identita...', 'info');
 
         const identityUpload = await uploadVenditaDocumento({
-          file: state.cart.documentoIdentitaFile,
+          file: praticaFiles.documento_identita,
           pratica_id: createResult.pratica_id,
           contratto_id: firstContract ? firstContract.contratto_id : null,
           anagrafica_id: createResult.anagrafica_id,
@@ -1427,20 +1496,27 @@
         for (let idx = 0; idx < state.cart.contratti.length; idx += 1) {
           const cartItem = state.cart.contratti[idx];
           const created = contractsByTempId.get(cartItem.temp_id);
+          const categoriaSnapshot = created?.categoria_snapshot || cartItem.categoria_nome || cartItem.categoria_snapshot || 'generico';
 
           if (!created?.contratto_id) {
             throw new Error(`Contratto ${idx + 1}: mapping temp_id non trovato in risposta server`);
           }
 
-          if (cartItem.files.contratto_pdf) {
+          if (cartItem.files.contratto) {
+            const contractFileName = getProgressiveContractFileName(
+              { ...cartItem, categoria_snapshot: categoriaSnapshot },
+              state.cart.contratti
+            );
+
             setMessage(`Upload contratto PDF ${idx + 1}/${state.cart.contratti.length}...`, 'info');
             const result = await uploadVenditaDocumento({
-              file: cartItem.files.contratto_pdf,
+              file: cartItem.files.contratto,
               pratica_id: createResult.pratica_id,
               contratto_id: created.contratto_id,
               anagrafica_id: createResult.anagrafica_id,
               tipo_documento: 'contratto',
-              categoria_snapshot: created.categoria_snapshot,
+              categoria_snapshot: categoriaSnapshot,
+              file_name: contractFileName,
               storage_base_path: createResult.storage_base_path,
               nome_cartella_storage: createResult.nome_cartella_storage
             });
@@ -1448,18 +1524,21 @@
             uploadResults.push({
               tipo_documento: 'contratto',
               contratto_id: created.contratto_id,
+              file_name: contractFileName,
               result
             });
           }
 
-          if (cartItem.files.copia_sim_mnp) {
+          if (cartItem.files.sim_mnp) {
+            const simFileName = getProgressiveDocumentFileName(cartItem, state.cart.contratti, 'sim_mnp', 'copia_sim_mnp');
             setMessage(`Upload copia SIM MNP ${idx + 1}/${state.cart.contratti.length}...`, 'info');
             const result = await uploadVenditaDocumento({
-              file: cartItem.files.copia_sim_mnp,
+              file: cartItem.files.sim_mnp,
               pratica_id: createResult.pratica_id,
               contratto_id: created.contratto_id,
               anagrafica_id: createResult.anagrafica_id,
               tipo_documento: 'copia_sim_mnp',
+              file_name: simFileName,
               storage_base_path: createResult.storage_base_path,
               nome_cartella_storage: createResult.nome_cartella_storage
             });
@@ -1467,18 +1546,21 @@
             uploadResults.push({
               tipo_documento: 'copia_sim_mnp',
               contratto_id: created.contratto_id,
+              file_name: simFileName,
               result
             });
           }
 
-          if (cartItem.files.copia_bolletta) {
+          if (cartItem.files.bolletta) {
+            const bollettaFileName = getProgressiveDocumentFileName(cartItem, state.cart.contratti, 'bolletta', 'copia_bolletta');
             setMessage(`Upload copia bolletta ${idx + 1}/${state.cart.contratti.length}...`, 'info');
             const result = await uploadVenditaDocumento({
-              file: cartItem.files.copia_bolletta,
+              file: cartItem.files.bolletta,
               pratica_id: createResult.pratica_id,
               contratto_id: created.contratto_id,
               anagrafica_id: createResult.anagrafica_id,
               tipo_documento: 'copia_bolletta',
+              file_name: bollettaFileName,
               storage_base_path: createResult.storage_base_path,
               nome_cartella_storage: createResult.nome_cartella_storage
             });
@@ -1486,6 +1568,7 @@
             uploadResults.push({
               tipo_documento: 'copia_bolletta',
               contratto_id: created.contratto_id,
+              file_name: bollettaFileName,
               result
             });
           }
@@ -1500,7 +1583,7 @@
         setMessage('Pratica inviata con successo', 'ok');
 
         state.cart.contratti = [];
-        state.cart.documentoIdentitaFile = null;
+        praticaFiles.documento_identita = null;
         refs.fileDocumentoIdentita.value = '';
         refs.fileContrattoPdf.value = '';
         refs.fileCopiaSimMnp.value = '';
