@@ -28,6 +28,10 @@ function cleanString(value) {
   return trimmed || null;
 }
 
+function normalizeCfPiva(value) {
+  return String(value || '').trim().toUpperCase();
+}
+
 function isBlank(value) {
   return value === undefined || value === null || String(value).trim() === '';
 }
@@ -170,7 +174,7 @@ exports.handler = async (event) => {
     });
   }
 
-  const cfPiva = cleanString(payload.cf_piva);
+  const cfPiva = normalizeCfPiva(payload.cf_piva);
   let cluster;
 
   try {
@@ -240,15 +244,17 @@ exports.handler = async (event) => {
     let anagraficaId;
 
     // 1) Cerca anagrafica esistente per cf_piva (evita doppioni).
-    const { data: anagraficaEsistente, error: anagraficaLookupError } = await supabase
+    const { data: anagraficaRows, error: anagraficaLookupError } = await supabase
       .from('anagrafica')
       .select('id, cf_piva, cluster, ragione_sociale, nome_referente, cellulare, provincia, comune, via, civico')
-      .eq('cf_piva', cfPiva)
-      .maybeSingle();
+      .ilike('cf_piva', cfPiva)
+      .limit(1);
 
     if (anagraficaLookupError) {
       throw new Error(readableError(anagraficaLookupError, 'Errore ricerca anagrafica'));
     }
+
+    const anagraficaEsistente = Array.isArray(anagraficaRows) ? anagraficaRows[0] || null : null;
 
     if (anagraficaEsistente) {
       anagraficaId = anagraficaEsistente.id;
@@ -265,6 +271,10 @@ exports.handler = async (event) => {
         via,
         civico
       };
+
+      if (cleanString(anagraficaEsistente.cf_piva) !== cfPiva) {
+        updates.cf_piva = cfPiva;
+      }
 
       Object.entries(candidateFields).forEach(([column, newValue]) => {
         if (isBlank(newValue)) return;

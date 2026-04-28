@@ -21,6 +21,10 @@ function cleanString(value) {
   return trimmed || null;
 }
 
+function normalizeCfPiva(value) {
+  return String(value || '').trim().toUpperCase();
+}
+
 function readableError(error, fallback = 'Errore ricerca anagrafica') {
   if (!error) return fallback;
   if (typeof error === 'string') return error;
@@ -46,12 +50,12 @@ exports.handler = async (event) => {
     });
   }
 
-  const cfPiva = cleanString(event.queryStringParameters?.cf_piva);
+  const normalizedCfPiva = normalizeCfPiva(event.queryStringParameters?.cf_piva);
 
-  if (!cfPiva) {
+  if (!normalizedCfPiva) {
     return response(400, {
       success: false,
-      error: 'Parametro obbligatorio mancante: cf_piva'
+      error: 'Parametro obbligatorio mancante o vuoto: cf_piva'
     });
   }
 
@@ -63,8 +67,8 @@ exports.handler = async (event) => {
     const { data, error } = await supabase
       .from('anagrafica')
       .select('id, cf_piva, cluster, ragione_sociale, nome_referente, cellulare, provincia, comune, via, civico, created_at, updated_at')
-      .eq('cf_piva', cfPiva)
-      .maybeSingle();
+      .ilike('cf_piva', normalizedCfPiva)
+      .limit(1);
 
     if (error) {
       return response(500, {
@@ -73,7 +77,9 @@ exports.handler = async (event) => {
       });
     }
 
-    if (!data) {
+    const foundRow = Array.isArray(data) ? data[0] || null : null;
+
+    if (!foundRow) {
       return response(200, {
         success: true,
         found: false
@@ -83,7 +89,7 @@ exports.handler = async (event) => {
     return response(200, {
       success: true,
       found: true,
-      data
+      data: foundRow
     });
   } catch (error) {
     return response(500, {

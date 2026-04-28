@@ -446,6 +446,81 @@
       font-size: 12px;
     }
 
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(15, 23, 42, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .loading-modal {
+      width: min(460px, 94vw);
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      box-shadow: 0 14px 32px rgba(15, 23, 42, 0.22);
+      padding: 22px 18px;
+      display: grid;
+      gap: 10px;
+      text-align: center;
+      justify-items: center;
+    }
+
+    .loading-spinner {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      border: 4px solid #fde4cf;
+      border-top-color: var(--primary);
+      animation: spin 0.9s linear infinite;
+    }
+
+    .loading-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .loading-icon.success {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .loading-icon.error {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .loading-title {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .loading-text {
+      margin: 0;
+      font-size: 14px;
+      color: #4b5563;
+      line-height: 1.5;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     .hidden {
       display: none !important;
     }
@@ -797,6 +872,16 @@
     </section>
   </main>
 
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loading-modal">
+      <div id="loadingSpinner" class="loading-spinner"></div>
+      <div id="loadingIcon" class="loading-icon hidden">✓</div>
+      <h3 id="loadingTitle" class="loading-title">Caricamento in corso</h3>
+      <p id="loadingText" class="loading-text">Attendere...</p>
+      <button id="loadingCloseBtn" type="button" class="hidden">Chiudi</button>
+    </div>
+  </div>
+
   <script src="/js/vendita-storage-helper.js"></script>
   <script>
     const state = {
@@ -815,6 +900,11 @@
     const uiState = {
       view: 'wizard',
       step: 1
+    };
+    const runtimeState = {
+      isSubmitting: false,
+      lastAutoSearchCfPiva: '',
+      lastAutoSearchTs: 0
     };
 
     const refs = {
@@ -901,7 +991,13 @@
       step3Actions: document.getElementById('step3Actions'),
       stepItem1: document.getElementById('stepItem1'),
       stepItem2: document.getElementById('stepItem2'),
-      stepItem3: document.getElementById('stepItem3')
+      stepItem3: document.getElementById('stepItem3'),
+      loadingOverlay: document.getElementById('loadingOverlay'),
+      loadingSpinner: document.getElementById('loadingSpinner'),
+      loadingIcon: document.getElementById('loadingIcon'),
+      loadingTitle: document.getElementById('loadingTitle'),
+      loadingText: document.getElementById('loadingText'),
+      loadingCloseBtn: document.getElementById('loadingCloseBtn')
     };
 
     function setMessage(message, type = 'info') {
@@ -928,6 +1024,23 @@
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
         .trim();
+    }
+
+    function normalizeCfPiva(value) {
+      return String(value || '').trim().toUpperCase();
+    }
+
+    // Supabase salva timestamptz in UTC (+00).
+    // Nel CRM mostriamo le date in Europe/Rome solo lato interfaccia.
+    function formatCrmDateTime(value) {
+      if (!value) return '-';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return new Intl.DateTimeFormat('it-IT', {
+        timeZone: 'Europe/Rome',
+        dateStyle: 'short',
+        timeStyle: 'short'
+      }).format(date);
     }
 
     function normalizeForFileName(value) {
@@ -996,6 +1109,56 @@
       if (file.type && file.type !== 'application/pdf') {
         throw new Error(`${label}: il file deve essere PDF`);
       }
+    }
+
+    function showLoadingOverlay(title, text) {
+      refs.loadingTitle.textContent = title || 'Caricamento in corso';
+      refs.loadingText.textContent = text || 'Attendere...';
+      refs.loadingSpinner.classList.remove('hidden');
+      refs.loadingIcon.classList.add('hidden');
+      refs.loadingIcon.classList.remove('success', 'error');
+      refs.loadingCloseBtn.classList.add('hidden');
+      refs.loadingCloseBtn.textContent = 'Chiudi';
+      refs.loadingOverlay.classList.remove('hidden');
+    }
+
+    function updateLoadingOverlay(title, text) {
+      if (refs.loadingOverlay.classList.contains('hidden')) {
+        showLoadingOverlay(title, text);
+        return;
+      }
+      refs.loadingTitle.textContent = title || refs.loadingTitle.textContent;
+      refs.loadingText.textContent = text || refs.loadingText.textContent;
+    }
+
+    function showSuccessOverlay(title, text) {
+      refs.loadingTitle.textContent = title || 'Pratica inviata con successo';
+      refs.loadingText.textContent = text || 'La pratica è stata salvata e i documenti sono stati caricati correttamente.';
+      refs.loadingSpinner.classList.add('hidden');
+      refs.loadingIcon.textContent = '✓';
+      refs.loadingIcon.classList.remove('hidden');
+      refs.loadingIcon.classList.remove('error');
+      refs.loadingIcon.classList.add('success');
+      refs.loadingCloseBtn.textContent = 'Nuova pratica';
+      refs.loadingCloseBtn.classList.remove('hidden');
+      refs.loadingOverlay.classList.remove('hidden');
+    }
+
+    function showErrorOverlay(title, text) {
+      refs.loadingTitle.textContent = title || 'Errore durante l\'invio';
+      refs.loadingText.textContent = text || 'Si è verificato un errore inatteso.';
+      refs.loadingSpinner.classList.add('hidden');
+      refs.loadingIcon.textContent = '!';
+      refs.loadingIcon.classList.remove('hidden');
+      refs.loadingIcon.classList.remove('success');
+      refs.loadingIcon.classList.add('error');
+      refs.loadingCloseBtn.textContent = 'Chiudi';
+      refs.loadingCloseBtn.classList.remove('hidden');
+      refs.loadingOverlay.classList.remove('hidden');
+    }
+
+    function hideLoadingOverlay() {
+      refs.loadingOverlay.classList.add('hidden');
     }
 
     function updateUploadVisibility() {
@@ -1364,8 +1527,10 @@
     }
 
     function getClienteFormData() {
+      const normalizedCfPiva = normalizeCfPiva(refs.cfPiva.value);
+      refs.cfPiva.value = normalizedCfPiva;
       return {
-        cf_piva: refs.cfPiva.value.trim(),
+        cf_piva: normalizedCfPiva,
         cluster: refs.cluster.value,
         ragione_sociale: refs.ragioneSociale.value.trim(),
         nome_referente: refs.nomeReferente.value.trim() || null,
@@ -1621,7 +1786,8 @@
     }
 
     async function cercaCliente() {
-      const cfPiva = refs.cfPiva.value.trim();
+      refs.cfPiva.value = normalizeCfPiva(refs.cfPiva.value);
+      const cfPiva = refs.cfPiva.value;
 
       if (!cfPiva) {
         setMessage('Inserisci CF/P.IVA prima di cercare anagrafica', 'err');
@@ -1809,14 +1975,21 @@
     }
 
     async function inviaPratica() {
+      if (runtimeState.isSubmitting) {
+        return;
+      }
+
+      runtimeState.isSubmitting = true;
       refs.btnInviaPratica.disabled = true;
       refs.btnAddToCart.disabled = true;
       const uploadResults = [];
       const uploadDebug = [];
+      showLoadingOverlay('Caricamento in corso', 'Creazione pratica e contratti...');
 
       try {
         const payload = buildInvioPayload();
         setMessage('Creazione pratica e contratti in corso...', 'info');
+        updateLoadingOverlay('Caricamento in corso', 'Creazione pratica e contratti...');
 
         const createResponse = await fetch('/.netlify/functions/crea-vendita-pratica-carrello', {
           method: 'POST',
@@ -1834,6 +2007,7 @@
         const firstContract = createResult.contratti?.[0] || null;
 
         setMessage('Pratica creata. Upload documento identita...', 'info');
+        updateLoadingOverlay('Caricamento in corso', 'Upload documento identità...');
         const identityFile = praticaFiles.documento_identita;
 
         if (!(identityFile instanceof File)) {
@@ -1900,6 +2074,10 @@
             uploadDebug.push(contractDebug);
 
             setMessage(`Upload contratto PDF ${idx + 1}/${state.cart.contratti.length}...`, 'info');
+            updateLoadingOverlay(
+              'Caricamento in corso',
+              `Upload contratto ${idx + 1} di ${state.cart.contratti.length}...`
+            );
             const result = await uploadVenditaDocumento({
               file: cartItem.files.contratto,
               pratica_id: createResult.pratica_id,
@@ -1938,6 +2116,7 @@
             console.log('[UPLOAD DEBUG]', simDebug);
             uploadDebug.push(simDebug);
             setMessage(`Upload copia SIM MNP ${idx + 1}/${state.cart.contratti.length}...`, 'info');
+            updateLoadingOverlay('Caricamento in corso', `Upload copia SIM MNP contratto ${idx + 1}...`);
             const result = await uploadVenditaDocumento({
               file: cartItem.files.sim_mnp,
               pratica_id: createResult.pratica_id,
@@ -1975,6 +2154,7 @@
             console.log('[UPLOAD DEBUG]', bollettaDebug);
             uploadDebug.push(bollettaDebug);
             setMessage(`Upload copia bolletta ${idx + 1}/${state.cart.contratti.length}...`, 'info');
+            updateLoadingOverlay('Caricamento in corso', `Upload copia bolletta contratto ${idx + 1}...`);
             const result = await uploadVenditaDocumento({
               file: cartItem.files.bolletta,
               pratica_id: createResult.pratica_id,
@@ -2004,6 +2184,10 @@
 
         setMessage('Pratica inviata con successo', 'ok');
         resetFullPracticeForm();
+        showSuccessOverlay(
+          'Pratica inviata con successo',
+          'La pratica è stata salvata e i documenti sono stati caricati correttamente.'
+        );
       } catch (error) {
         setMessage(error.message, 'err');
         setResult({
@@ -2012,9 +2196,11 @@
           uploadResults,
           uploadDebug
         });
+        showErrorOverlay('Errore durante l\'invio', error.message);
       } finally {
         refs.btnInviaPratica.disabled = false;
         refs.btnAddToCart.disabled = false;
+        runtimeState.isSubmitting = false;
       }
     }
 
@@ -2040,6 +2226,23 @@
     refs.dispositivoAssociato.addEventListener('change', renderDynamicSections);
     refs.tipoAcquisto.addEventListener('change', renderDynamicSections);
 
+    async function normalizeAndAutoSearchCfPiva() {
+      refs.cfPiva.value = normalizeCfPiva(refs.cfPiva.value);
+      const normalizedValue = refs.cfPiva.value;
+      if (!normalizedValue) return;
+
+      const now = Date.now();
+      const isDuplicateAutoSearch =
+        normalizedValue === runtimeState.lastAutoSearchCfPiva &&
+        now - runtimeState.lastAutoSearchTs < 1200;
+
+      if (isDuplicateAutoSearch) return;
+
+      runtimeState.lastAutoSearchCfPiva = normalizedValue;
+      runtimeState.lastAutoSearchTs = now;
+      await cercaCliente();
+    }
+
     refs.btnCercaCliente.addEventListener('click', async () => {
       try {
         await cercaCliente();
@@ -2049,9 +2252,20 @@
     });
 
     refs.cfPiva.addEventListener('change', async () => {
-      if (!refs.cfPiva.value.trim()) return;
       try {
-        await cercaCliente();
+        await normalizeAndAutoSearchCfPiva();
+      } catch (error) {
+        setMessage(error.message, 'err');
+      }
+    });
+
+    refs.cfPiva.addEventListener('input', () => {
+      refs.cfPiva.value = normalizeCfPiva(refs.cfPiva.value);
+    });
+
+    refs.cfPiva.addEventListener('blur', async () => {
+      try {
+        await normalizeAndAutoSearchCfPiva();
       } catch (error) {
         setMessage(error.message, 'err');
       }
@@ -2093,6 +2307,7 @@
     refs.btnBackToStep2.addEventListener('click', () => goToStep(2));
     refs.btnSvuotaCarrello.addEventListener('click', clearCart);
     refs.btnInviaPratica.addEventListener('click', inviaPratica);
+    refs.loadingCloseBtn.addEventListener('click', hideLoadingOverlay);
 
     (async function init() {
       renderCarrello();
