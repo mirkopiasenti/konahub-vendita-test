@@ -1159,12 +1159,23 @@
     };
     const runtimeState = {
       isSubmitting: false,
-      lastAutoSearchCfPiva: '',
-      lastAutoSearchTs: 0,
       editingTempId: null,
       fileFallback: {},
-      uploadBoxes: {}
+      uploadBoxes: {},
+      overlayActions: {
+        primary: null,
+        secondary: null
+      },
+      search: {
+        inProgress: false,
+        lastCompletedCfPiva: '',
+        lastRequestedCfPiva: ''
+      },
+      draftSuspended: false,
+      draftSaveTimer: null,
+      restoreNeedsFileReselection: false
     };
+    const DRAFT_SESSION_KEY = 'vendita_wizard_draft_v1';
 
     const refs = {
       messageBox: document.getElementById('messageBox'),
@@ -1274,17 +1285,35 @@
     function setMessage(message, type = 'info') {
       refs.messageBox.textContent = message || '';
       refs.messageBox.className = `message ${type}`;
-      if (type === 'err') {
-        setConnectionStatus('error', 'Errore');
-        return;
-      }
-      if (type === 'ok') {
-        setConnectionStatus('connected', 'Connesso');
-        return;
-      }
-      if (/(caricamento|ricerca|upload|creazione|verifica)/i.test(String(message || ''))) {
-        setConnectionStatus('checking', 'Verifica...');
-      }
+    }
+
+    function markTechnicalChecking(label = 'Verifica...') {
+      setConnectionStatus('checking', label);
+    }
+
+    function markTechnicalConnected(label = 'Connesso') {
+      setConnectionStatus('connected', label);
+    }
+
+    function markTechnicalError(label = 'Errore') {
+      setConnectionStatus('error', label);
+    }
+
+    function createTechnicalError(message, details = '') {
+      const err = new Error(message);
+      err.isTechnicalError = true;
+      err.technicalDetails = details || '';
+      return err;
+    }
+
+    function isTechnicalError(error) {
+      return Boolean(error && error.isTechnicalError);
+    }
+
+    function showUserError(message, title = 'Verifica dati') {
+      const safeMessage = String(message || 'Si è verificato un errore');
+      setMessage(safeMessage, 'err');
+      showErrorOverlay(title, safeMessage);
     }
 
     function setResult(data) {
@@ -1458,6 +1487,47 @@
       refs.loadingDetails.classList.remove('hidden');
     }
 
+    function resetOverlayActions() {
+      runtimeState.overlayActions.primary = null;
+      runtimeState.overlayActions.secondary = null;
+    }
+
+    function setOverlayActions(config = {}) {
+      const primary = config.primary || null;
+      const secondary = config.secondary || null;
+
+      resetOverlayActions();
+
+      if (secondary) {
+        refs.loadingSecondaryBtn.textContent = secondary.label || 'Chiudi';
+        refs.loadingSecondaryBtn.classList.remove('hidden');
+        runtimeState.overlayActions.secondary = typeof secondary.onClick === 'function' ? secondary.onClick : null;
+      } else {
+        refs.loadingSecondaryBtn.classList.add('hidden');
+      }
+
+      if (primary) {
+        refs.loadingCloseBtn.textContent = primary.label || 'Chiudi';
+        refs.loadingCloseBtn.classList.remove('hidden');
+        runtimeState.overlayActions.primary = typeof primary.onClick === 'function' ? primary.onClick : null;
+      } else {
+        refs.loadingCloseBtn.classList.add('hidden');
+      }
+    }
+
+    function handleOverlayAction(kind) {
+      const action = kind === 'primary'
+        ? runtimeState.overlayActions.primary
+        : runtimeState.overlayActions.secondary;
+
+      if (typeof action === 'function') {
+        action();
+        return;
+      }
+
+      hideLoadingOverlay();
+    }
+
     function showLoadingOverlay(title, text) {
       refs.loadingTitle.textContent = title || 'Caricamento in corso';
       refs.loadingText.textContent = text || 'Attendere...';
@@ -1466,10 +1536,7 @@
       refs.loadingIcon.classList.remove('success', 'error');
       renderOverlaySummary([]);
       renderOverlayTechnical('');
-      refs.loadingSecondaryBtn.classList.add('hidden');
-      refs.loadingSecondaryBtn.textContent = 'Chiudi';
-      refs.loadingCloseBtn.classList.add('hidden');
-      refs.loadingCloseBtn.textContent = 'Chiudi';
+      setOverlayActions({});
       refs.loadingOverlay.classList.remove('hidden');
     }
 
@@ -1492,10 +1559,10 @@
       refs.loadingIcon.classList.add('success');
       renderOverlaySummary(summaryRows);
       renderOverlayTechnical('');
-      refs.loadingSecondaryBtn.textContent = 'Chiudi';
-      refs.loadingSecondaryBtn.classList.remove('hidden');
-      refs.loadingCloseBtn.textContent = 'Nuova pratica';
-      refs.loadingCloseBtn.classList.remove('hidden');
+      setOverlayActions({
+        secondary: { label: 'Chiudi', onClick: () => hideLoadingOverlay() },
+        primary: { label: 'Nuova pratica', onClick: () => hideLoadingOverlay() }
+      });
       refs.loadingOverlay.classList.remove('hidden');
     }
 
@@ -1509,14 +1576,63 @@
       refs.loadingIcon.classList.add('error');
       renderOverlaySummary([]);
       renderOverlayTechnical(technicalText);
-      refs.loadingSecondaryBtn.classList.add('hidden');
-      refs.loadingCloseBtn.textContent = 'Chiudi';
-      refs.loadingCloseBtn.classList.remove('hidden');
+      setOverlayActions({
+        primary: { label: 'Chiudi', onClick: () => hideLoadingOverlay() }
+      });
+      refs.loadingOverlay.classList.remove('hidden');
+    }
+
+    function showInfoOverlay(title, text) {
+      refs.loadingTitle.textContent = title || 'Informazione';
+      refs.loadingText.textContent = text || '';
+      refs.loadingSpinner.classList.add('hidden');
+      refs.loadingIcon.textContent = 'i';
+      refs.loadingIcon.classList.remove('hidden');
+      refs.loadingIcon.classList.remove('success', 'error');
+      renderOverlaySummary([]);
+      renderOverlayTechnical('');
+      setOverlayActions({
+        primary: { label: 'Chiudi', onClick: () => hideLoadingOverlay() }
+      });
       refs.loadingOverlay.classList.remove('hidden');
     }
 
     function hideLoadingOverlay() {
+      resetOverlayActions();
       refs.loadingOverlay.classList.add('hidden');
+    }
+
+    function showDraftRestorePrompt(draftSummary = {}, onRestore, onDiscard) {
+      refs.loadingTitle.textContent = 'Pratica non inviata trovata';
+      refs.loadingText.textContent = 'Vuoi ripristinare la pratica in corso?';
+      refs.loadingSpinner.classList.add('hidden');
+      refs.loadingIcon.textContent = '↺';
+      refs.loadingIcon.classList.remove('hidden');
+      refs.loadingIcon.classList.remove('error');
+      refs.loadingIcon.classList.add('success');
+      renderOverlaySummary([
+        { label: 'Cliente', value: draftSummary.cliente || '-' },
+        { label: 'Contratti in bozza', value: String(draftSummary.contratti || 0) },
+        { label: 'Ultimo salvataggio', value: draftSummary.savedAt || '-' }
+      ]);
+      renderOverlayTechnical('');
+      setOverlayActions({
+        secondary: {
+          label: 'Scarta',
+          onClick: () => {
+            hideLoadingOverlay();
+            if (typeof onDiscard === 'function') onDiscard();
+          }
+        },
+        primary: {
+          label: 'Ripristina',
+          onClick: () => {
+            hideLoadingOverlay();
+            if (typeof onRestore === 'function') onRestore();
+          }
+        }
+      });
+      refs.loadingOverlay.classList.remove('hidden');
     }
 
     function refreshUploadBox(input) {
@@ -1593,7 +1709,7 @@
           if (!file) return;
           if (file.type && file.type !== 'application/pdf') {
             box.classList.add('error');
-            setMessage('Il file deve essere PDF', 'err');
+            showUserError('Il file deve essere PDF', 'Upload documento');
             return;
           }
           setInputFile(item.input, file);
@@ -1613,8 +1729,9 @@
     function updateUploadVisibility() {
       const hasIdentity = Boolean(praticaFiles.documento_identita);
       const hasContracts = state.cart.contratti.length > 0;
+      const needsIdentityReselection = runtimeState.restoreNeedsFileReselection && !hasIdentity;
 
-      refs.fieldDocumentoIdentita.classList.toggle('hidden', hasIdentity || hasContracts);
+      refs.fieldDocumentoIdentita.classList.toggle('hidden', !needsIdentityReselection && (hasIdentity || hasContracts));
       // Contratto PDF sempre visibile.
     }
 
@@ -1666,6 +1783,7 @@
       uiState.step = Math.max(1, Math.min(3, Number(step) || 1));
       renderDynamicSections();
       renderWizardLayout();
+      queueDraftSave();
     }
 
     function openCartView() {
@@ -1673,6 +1791,7 @@
       renderCarrello();
       uiState.view = 'cart';
       renderWizardLayout();
+      queueDraftSave();
     }
 
     function normalizeSiNo(value) {
@@ -1869,6 +1988,10 @@
       state.cart.cliente = null;
       state.cart.contratti = [];
       runtimeState.editingTempId = null;
+      runtimeState.search.inProgress = false;
+      runtimeState.search.lastRequestedCfPiva = '';
+      runtimeState.search.lastCompletedCfPiva = '';
+      runtimeState.restoreNeedsFileReselection = false;
 
       praticaFiles.documento_identita = null;
 
@@ -1906,6 +2029,7 @@
       updateUploadVisibility();
       updateStep3ActionsLabels();
       goToStep(1);
+      clearDraftFromSession();
     }
 
     function renderDynamicSections() {
@@ -2146,9 +2270,13 @@
     function renderCarrello() {
       refs.cartCount.textContent = String(state.cart.contratti.length);
       refs.cartBadgeTop.textContent = String(state.cart.contratti.length);
-      refs.identityStatus.textContent = praticaFiles.documento_identita
-        ? `caricato: ${praticaFiles.documento_identita.name}`
-        : 'non caricato';
+      if (praticaFiles.documento_identita) {
+        refs.identityStatus.textContent = `caricato: ${praticaFiles.documento_identita.name}`;
+      } else if (runtimeState.restoreNeedsFileReselection) {
+        refs.identityStatus.textContent = 'da riselezionare dopo refresh';
+      } else {
+        refs.identityStatus.textContent = 'non caricato';
+      }
 
       const cliente = state.cart.cliente || getClienteFormData();
       refs.cartClienteBox.innerHTML = `
@@ -2172,9 +2300,21 @@
       refs.cartList.innerHTML = state.cart.contratti
         .map((item, idx) => {
           const docs = [];
-          if (item.files.contratto) docs.push(`contratto: ${item.files.contratto.name}`);
-          if (item.files.sim_mnp) docs.push(`copia_sim_mnp: ${item.files.sim_mnp.name}`);
-          if (item.files.bolletta) docs.push(`copia_bolletta: ${item.files.bolletta.name}`);
+          if (item.files?.contratto) {
+            docs.push(`contratto: ${item.files.contratto.name}`);
+          } else if (item.file_meta?.contratto?.name) {
+            docs.push(`contratto: ${item.file_meta.contratto.name} (da riselezionare)`);
+          }
+          if (item.files?.sim_mnp) {
+            docs.push(`copia_sim_mnp: ${item.files.sim_mnp.name}`);
+          } else if (item.file_meta?.sim_mnp?.name) {
+            docs.push(`copia_sim_mnp: ${item.file_meta.sim_mnp.name} (da riselezionare)`);
+          }
+          if (item.files?.bolletta) {
+            docs.push(`copia_bolletta: ${item.files.bolletta.name}`);
+          } else if (item.file_meta?.bolletta?.name) {
+            docs.push(`copia_bolletta: ${item.file_meta.bolletta.name} (da riselezionare)`);
+          }
 
           const chips = [];
           if (item.dispositivo_associato) chips.push('<span class="chip warn">Dispositivo Si</span>');
@@ -2216,16 +2356,58 @@
 
     function updateCartClienteSnapshot() {
       state.cart.cliente = getClienteFormData();
+      queueDraftSave();
+    }
+
+    function shouldSearchCfPiva(nextCfPiva, options = {}) {
+      const value = normalizeCfPiva(nextCfPiva);
+      const force = Boolean(options.force);
+      if (!value) return false;
+      if (runtimeState.search.inProgress) return false;
+      if (force) return true;
+      if (runtimeState.search.lastCompletedCfPiva === value) return false;
+      if (runtimeState.search.lastRequestedCfPiva === value) return false;
+      return true;
+    }
+
+    async function fetchJsonOrTechnicalError(url, fetchOptions = {}, fallbackMessage = 'Errore richiesta') {
+      let response;
+      try {
+        response = await fetch(url, fetchOptions);
+      } catch (networkError) {
+        throw createTechnicalError(`${fallbackMessage}: errore di rete`, String(networkError?.message || networkError || ''));
+      }
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        throw createTechnicalError(`${fallbackMessage}: risposta non valida`, String(parseError?.message || parseError || ''));
+      }
+
+      if (!response.ok || !data?.success) {
+        throw createTechnicalError(data?.error || fallbackMessage);
+      }
+
+      return data;
+    }
+
+    async function uploadDocumentoOrTechnicalError(payload, fallbackMessage = 'Errore upload documento') {
+      try {
+        return await uploadVenditaDocumento(payload);
+      } catch (uploadError) {
+        throw createTechnicalError(fallbackMessage, String(uploadError?.message || uploadError || ''));
+      }
     }
 
     async function loadConfig() {
       setMessage('Caricamento configurazione vendita...', 'info');
-      const response = await fetch('/.netlify/functions/vendita-config');
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Errore nel caricamento configurazione');
-      }
+      markTechnicalChecking('Verifica...');
+      const data = await fetchJsonOrTechnicalError(
+        '/.netlify/functions/vendita-config',
+        {},
+        'Errore nel caricamento configurazione'
+      );
 
       state.categorie = data.categorie || [];
       state.offerte = data.offerte || [];
@@ -2243,32 +2425,43 @@
       renderDynamicSections();
       renderWizardLayout();
       setMessage('Configurazione caricata', 'ok');
+      markTechnicalConnected('Connesso');
     }
 
-    async function cercaCliente() {
+    async function cercaCliente(options = {}) {
       refs.cfPiva.value = normalizeCfPiva(refs.cfPiva.value);
       const cfPiva = refs.cfPiva.value;
+      const force = Boolean(options.force);
 
       if (!cfPiva) {
-        setMessage('Inserisci CF/P.IVA prima di cercare anagrafica', 'err');
-        return;
+        showUserError('Inserisci CF/P.IVA prima di cercare anagrafica', 'Ricerca anagrafica');
+        return false;
       }
 
+      if (!shouldSearchCfPiva(cfPiva, { force })) {
+        return false;
+      }
+
+      runtimeState.search.inProgress = true;
+      runtimeState.search.lastRequestedCfPiva = cfPiva;
       let completed = false;
       showLoadingOverlay('Ricerca anagrafica in corso', 'Attendere...');
       setMessage('Ricerca anagrafica in corso...', 'info');
+      markTechnicalChecking('Verifica...');
       try {
-        const response = await fetch(`/.netlify/functions/search-anagrafica?cf_piva=${encodeURIComponent(cfPiva)}`);
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-          throw new Error(data.error || 'Errore ricerca anagrafica');
-        }
+        const data = await fetchJsonOrTechnicalError(
+          `/.netlify/functions/search-anagrafica?cf_piva=${encodeURIComponent(cfPiva)}`,
+          {},
+          'Errore ricerca anagrafica'
+        );
 
         if (!data.found) {
           completed = true;
+          runtimeState.search.lastCompletedCfPiva = cfPiva;
           setMessage('Cliente non trovato: puoi compilare manualmente i campi', 'info');
-          return;
+          markTechnicalConnected('Connesso');
+          queueDraftSave();
+          return true;
         }
 
         const found = data.data || {};
@@ -2285,11 +2478,17 @@
         renderOpzioni();
         renderDynamicSections();
         completed = true;
+        runtimeState.search.lastCompletedCfPiva = cfPiva;
         setMessage('Cliente trovato e campi compilati. Puoi modificare i dati prima di inviare.', 'ok');
+        markTechnicalConnected('Connesso');
+        queueDraftSave();
+        return true;
       } catch (error) {
-        showErrorOverlay('Errore ricerca anagrafica', error.message);
+        markTechnicalError('Errore');
+        showErrorOverlay('Errore ricerca anagrafica', error.message, error.technicalDetails || '');
         throw error;
       } finally {
+        runtimeState.search.inProgress = false;
         if (completed) {
           hideLoadingOverlay();
         }
@@ -2337,6 +2536,7 @@
 
         if (selectedDocumentoIdentita) {
           praticaFiles.documento_identita = selectedDocumentoIdentita;
+          runtimeState.restoreNeedsFileReselection = false;
         }
 
         const editingIndex = runtimeState.editingTempId
@@ -2360,13 +2560,14 @@
         renderOpzioni();
         renderDynamicSections();
         updateUploadVisibility();
+        queueDraftSave();
         if (goToCart) {
           openCartView();
         } else {
           goToStep(2);
         }
       } catch (error) {
-        setMessage(error.message, 'err');
+        showUserError(error.message, 'Verifica contratto');
       }
     }
 
@@ -2428,8 +2629,10 @@
 
       if (state.cart.contratti.length === 0) {
         praticaFiles.documento_identita = null;
+        runtimeState.restoreNeedsFileReselection = false;
         clearInputFile(refs.fileDocumentoIdentita);
       }
+      queueDraftSave();
 
       renderCarrello();
       updateUploadVisibility();
@@ -2443,6 +2646,7 @@
       state.cart.contratti = [];
       runtimeState.editingTempId = null;
       praticaFiles.documento_identita = null;
+      runtimeState.restoreNeedsFileReselection = false;
       clearInputFile(refs.fileDocumentoIdentita);
       resetContractFields();
       renderCarrello();
@@ -2450,6 +2654,7 @@
       updateStep3ActionsLabels();
       renderWizardLayout();
       setMessage('Carrello svuotato', 'info');
+      queueDraftSave();
     }
 
     function buildInvioPayload() {
@@ -2526,18 +2731,17 @@
         const payload = buildInvioPayload();
         setMessage('Creazione pratica e contratti in corso...', 'info');
         updateLoadingOverlay('Caricamento in corso', 'Creazione pratica e contratti...');
+        markTechnicalChecking('Verifica...');
 
-        const createResponse = await fetch('/.netlify/functions/crea-vendita-pratica-carrello', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        const createResult = await createResponse.json();
-
-        if (!createResponse.ok || !createResult.success) {
-          throw new Error(createResult.error || 'Errore creazione pratica carrello');
-        }
+        const createResult = await fetchJsonOrTechnicalError(
+          '/.netlify/functions/crea-vendita-pratica-carrello',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          },
+          'Errore creazione pratica carrello'
+        );
 
         const contractsByTempId = new Map((createResult.contratti || []).map((item) => [item.temp_id, item]));
         const firstContract = createResult.contratti?.[0] || null;
@@ -2567,7 +2771,7 @@
         console.log('[UPLOAD DEBUG]', identityDebug);
         uploadDebug.push(identityDebug);
 
-        const identityUpload = await uploadVenditaDocumento({
+        const identityUpload = await uploadDocumentoOrTechnicalError({
           file: identityFile,
           pratica_id: createResult.pratica_id,
           contratto_id: firstContract ? firstContract.contratto_id : null,
@@ -2575,7 +2779,7 @@
           tipo_documento: 'documento_identita',
           storage_base_path: createResult.storage_base_path,
           nome_cartella_storage: createResult.nome_cartella_storage
-        });
+        }, 'Errore upload documento identità');
 
         uploadResults.push({ tipo_documento: 'documento_identita', result: identityUpload });
 
@@ -2614,7 +2818,7 @@
               'Caricamento in corso',
               `Upload contratto ${idx + 1} di ${state.cart.contratti.length}...`
             );
-            const result = await uploadVenditaDocumento({
+            const result = await uploadDocumentoOrTechnicalError({
               file: cartItem.files.contratto,
               pratica_id: createResult.pratica_id,
               contratto_id: created.contratto_id,
@@ -2624,7 +2828,7 @@
               file_name: contractFileName,
               storage_base_path: createResult.storage_base_path,
               nome_cartella_storage: createResult.nome_cartella_storage
-            });
+            }, `Errore upload PDF contratto ${idx + 1}`);
 
             uploadResults.push({
               tipo_documento: 'contratto',
@@ -2653,7 +2857,7 @@
             uploadDebug.push(simDebug);
             setMessage(`Upload copia SIM MNP ${idx + 1}/${state.cart.contratti.length}...`, 'info');
             updateLoadingOverlay('Caricamento in corso', `Upload copia SIM MNP contratto ${idx + 1}...`);
-            const result = await uploadVenditaDocumento({
+            const result = await uploadDocumentoOrTechnicalError({
               file: cartItem.files.sim_mnp,
               pratica_id: createResult.pratica_id,
               contratto_id: created.contratto_id,
@@ -2662,7 +2866,7 @@
               file_name: simFileName,
               storage_base_path: createResult.storage_base_path,
               nome_cartella_storage: createResult.nome_cartella_storage
-            });
+            }, `Errore upload copia SIM MNP contratto ${idx + 1}`);
 
             uploadResults.push({
               tipo_documento: 'copia_sim_mnp',
@@ -2691,7 +2895,7 @@
             uploadDebug.push(bollettaDebug);
             setMessage(`Upload copia bolletta ${idx + 1}/${state.cart.contratti.length}...`, 'info');
             updateLoadingOverlay('Caricamento in corso', `Upload copia bolletta contratto ${idx + 1}...`);
-            const result = await uploadVenditaDocumento({
+            const result = await uploadDocumentoOrTechnicalError({
               file: cartItem.files.bolletta,
               pratica_id: createResult.pratica_id,
               contratto_id: created.contratto_id,
@@ -2700,7 +2904,7 @@
               file_name: bollettaFileName,
               storage_base_path: createResult.storage_base_path,
               nome_cartella_storage: createResult.nome_cartella_storage
-            });
+            }, `Errore upload copia bolletta contratto ${idx + 1}`);
 
             uploadResults.push({
               tipo_documento: 'copia_bolletta',
@@ -2725,14 +2929,20 @@
         ];
 
         setMessage('Pratica inviata con successo', 'ok');
+        clearDraftFromSession();
         resetFullPracticeForm();
+        markTechnicalConnected('Connesso');
         showSuccessOverlay(
           'Pratica inviata con successo',
           'La pratica è stata salvata e i documenti sono stati caricati correttamente.',
           successSummaryRows
         );
       } catch (error) {
+        const technical = isTechnicalError(error);
         setMessage(error.message, 'err');
+        if (technical) {
+          markTechnicalError('Errore');
+        }
         setResult({
           success: false,
           error: error.message,
@@ -2742,7 +2952,7 @@
         showErrorOverlay(
           'Errore durante l\'invio',
           error.message,
-          JSON.stringify({ uploadResults, uploadDebug }, null, 2)
+          technical ? JSON.stringify({ uploadResults, uploadDebug }, null, 2) : ''
         );
       } finally {
         refs.btnInviaPratica.disabled = false;
@@ -2772,23 +2982,6 @@
     refs.apriChiudi.addEventListener('change', renderDynamicSections);
     refs.dispositivoAssociato.addEventListener('change', renderDynamicSections);
     refs.tipoAcquisto.addEventListener('change', renderDynamicSections);
-
-    async function normalizeAndAutoSearchCfPiva() {
-      refs.cfPiva.value = normalizeCfPiva(refs.cfPiva.value);
-      const normalizedValue = refs.cfPiva.value;
-      if (!normalizedValue) return;
-
-      const now = Date.now();
-      const isDuplicateAutoSearch =
-        normalizedValue === runtimeState.lastAutoSearchCfPiva &&
-        now - runtimeState.lastAutoSearchTs < 1200;
-
-      if (isDuplicateAutoSearch) return;
-
-      runtimeState.lastAutoSearchCfPiva = normalizedValue;
-      runtimeState.lastAutoSearchTs = now;
-      await cercaCliente();
-    }
 
     function hasUnsavedContractFields() {
       return Boolean(
@@ -2831,8 +3024,257 @@
       return hasUnsavedContractFields();
     }
 
+    function getFileMeta(file) {
+      if (!(file instanceof File)) return null;
+      return {
+        name: file.name || '',
+        size: Number(file.size || 0),
+        type: file.type || ''
+      };
+    }
+
+    function serializeContractForDraft(item) {
+      const fileMeta = {
+        contratto: getFileMeta(item?.files?.contratto) || item?.file_meta?.contratto || null,
+        sim_mnp: getFileMeta(item?.files?.sim_mnp) || item?.file_meta?.sim_mnp || null,
+        bolletta: getFileMeta(item?.files?.bolletta) || item?.file_meta?.bolletta || null
+      };
+
+      return {
+        ...item,
+        files: {
+          contratto: null,
+          sim_mnp: null,
+          bolletta: null
+        },
+        file_meta: fileMeta
+      };
+    }
+
+    function getContractFormDraft() {
+      return {
+        categoria_id: refs.categoria.value || '',
+        offerta_id: refs.offerta.value || '',
+        opzione_id: refs.opzione.value || '',
+        reload_id: refs.reload.value || '',
+        tipo_attivazione: refs.tipoAttivazione.value || '',
+        apri_chiudi: refs.apriChiudi.value || '',
+        intestatario: refs.intestatario.value || '',
+        switch_sim: refs.switchSim.value || '',
+        modalita_pagamento: refs.modalitaPagamento.value || '',
+        dispositivo_associato: refs.dispositivoAssociato.value || 'false',
+        imei: refs.imei.value || '',
+        fascia_prezzo: refs.fasciaPrezzo.value || '',
+        tipo_acquisto: refs.tipoAcquisto.value || '',
+        finanziaria: refs.finanziaria.value || '',
+        kolme: refs.kolme.value || ''
+      };
+    }
+
+    function serializeDraftState() {
+      return {
+        version: 1,
+        saved_at: new Date().toISOString(),
+        ui: {
+          view: uiState.view,
+          step: uiState.step
+        },
+        editing_temp_id: runtimeState.editingTempId || null,
+        restore_needs_file_reselection: runtimeState.restoreNeedsFileReselection,
+        cliente_form: getClienteFormData(),
+        pratica: {
+          origine_pratica: refs.originePratica.value || 'spontaneo',
+          operatore_id: refs.operatoreId.value.trim() || ''
+        },
+        contract_form: getContractFormDraft(),
+        pratica_files: {
+          documento_identita: getFileMeta(praticaFiles.documento_identita)
+        },
+        cart: {
+          cliente: state.cart.cliente ? { ...state.cart.cliente } : null,
+          contratti: state.cart.contratti.map(serializeContractForDraft)
+        }
+      };
+    }
+
+    function clearDraftFromSession() {
+      try {
+        sessionStorage.removeItem(DRAFT_SESSION_KEY);
+      } catch (error) {
+        // Ignore storage failures in browser sandboxed contexts.
+      }
+    }
+
+    function saveDraftToSession() {
+      if (runtimeState.draftSuspended) return;
+
+      if (!hasUnsavedWork()) {
+        clearDraftFromSession();
+        return;
+      }
+
+      try {
+        const payload = serializeDraftState();
+        sessionStorage.setItem(DRAFT_SESSION_KEY, JSON.stringify(payload));
+      } catch (error) {
+        // Ignore quota/storage errors; non blocca il flusso operativo.
+      }
+    }
+
+    function queueDraftSave() {
+      if (runtimeState.draftSuspended) return;
+      if (runtimeState.draftSaveTimer) {
+        clearTimeout(runtimeState.draftSaveTimer);
+      }
+      runtimeState.draftSaveTimer = setTimeout(() => {
+        runtimeState.draftSaveTimer = null;
+        saveDraftToSession();
+      }, 120);
+    }
+
+    function loadDraftFromSession() {
+      try {
+        const raw = sessionStorage.getItem(DRAFT_SESSION_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return null;
+        return parsed;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function restoreContractFormDraft(contractForm = {}) {
+      if (!contractForm || typeof contractForm !== 'object') return;
+
+      if (contractForm.categoria_id) {
+        refs.categoria.value = contractForm.categoria_id;
+      }
+      renderOfferte();
+      if (contractForm.offerta_id) {
+        refs.offerta.value = contractForm.offerta_id;
+      }
+      renderOpzioni();
+      if (contractForm.opzione_id !== undefined) {
+        refs.opzione.value = contractForm.opzione_id || '';
+      }
+      renderReload();
+      if (contractForm.reload_id !== undefined) {
+        refs.reload.value = contractForm.reload_id || '';
+      }
+
+      refs.tipoAttivazione.value = contractForm.tipo_attivazione || '';
+      refs.apriChiudi.value = contractForm.apri_chiudi || '';
+      refs.intestatario.value = contractForm.intestatario || '';
+      refs.switchSim.value = contractForm.switch_sim || '';
+      refs.modalitaPagamento.value = contractForm.modalita_pagamento || '';
+      refs.dispositivoAssociato.value = contractForm.dispositivo_associato || 'false';
+      refs.imei.value = contractForm.imei || '';
+      refs.fasciaPrezzo.value = contractForm.fascia_prezzo || '';
+      refs.tipoAcquisto.value = contractForm.tipo_acquisto || '';
+      refs.finanziaria.value = contractForm.finanziaria || '';
+      refs.kolme.value = contractForm.kolme || '';
+      renderDynamicSections();
+    }
+
+    function restoreDraftState(draft) {
+      if (!draft || typeof draft !== 'object') return false;
+
+      runtimeState.draftSuspended = true;
+      try {
+        const cliente = draft.cliente_form || {};
+        refs.cfPiva.value = normalizeCfPiva(cliente.cf_piva || '');
+        refs.cluster.value = cliente.cluster === 'Business' ? 'Business' : 'Consumer';
+        refs.ragioneSociale.value = cliente.ragione_sociale || '';
+        refs.nomeReferente.value = cliente.nome_referente || '';
+        refs.cellulare.value = cliente.cellulare || '';
+        refs.provincia.value = cliente.provincia || '';
+        refs.comune.value = cliente.comune || '';
+        refs.via.value = cliente.via || '';
+        refs.civico.value = cliente.civico || '';
+
+        refs.originePratica.value = draft.pratica?.origine_pratica || 'spontaneo';
+        refs.operatoreId.value = draft.pratica?.operatore_id || '';
+
+        state.cart.cliente = draft.cart?.cliente ? { ...draft.cart.cliente } : null;
+        state.cart.contratti = (draft.cart?.contratti || []).map((item) => ({
+          ...item,
+          files: {
+            contratto: null,
+            sim_mnp: null,
+            bolletta: null
+          },
+          file_meta: {
+            contratto: item?.file_meta?.contratto || null,
+            sim_mnp: item?.file_meta?.sim_mnp || null,
+            bolletta: item?.file_meta?.bolletta || null
+          }
+        }));
+
+        praticaFiles.documento_identita = null;
+        runtimeState.restoreNeedsFileReselection = Boolean(
+          draft?.pratica_files?.documento_identita || state.cart.contratti.length > 0
+        );
+
+        runtimeState.editingTempId = draft.editing_temp_id || null;
+
+        restoreContractFormDraft(draft.contract_form || {});
+
+        const nextView = draft.ui?.view === 'cart' ? 'cart' : 'wizard';
+        const nextStep = Number(draft.ui?.step || 1);
+        uiState.view = nextView;
+        uiState.step = Number.isFinite(nextStep) ? Math.max(1, Math.min(3, nextStep)) : 1;
+
+        renderCarrello();
+        updateStep3ActionsLabels();
+        renderWizardLayout();
+        updateUploadVisibility();
+        clearInputFile(refs.fileDocumentoIdentita);
+        clearInputFile(refs.fileContrattoPdf);
+        clearInputFile(refs.fileCopiaSimMnp);
+        clearInputFile(refs.fileCopiaBolletta);
+        return true;
+      } finally {
+        runtimeState.draftSuspended = false;
+      }
+    }
+
+    async function promptRestoreDraftIfNeeded() {
+      const draft = loadDraftFromSession();
+      if (!draft) return false;
+
+      const summary = {
+        cliente: draft?.cliente_form?.ragione_sociale || draft?.cart?.cliente?.ragione_sociale || '-',
+        contratti: Array.isArray(draft?.cart?.contratti) ? draft.cart.contratti.length : 0,
+        savedAt: formatCrmDateTime(draft?.saved_at)
+      };
+
+      return await new Promise((resolve) => {
+        showDraftRestorePrompt(
+          summary,
+          () => {
+            const restored = restoreDraftState(draft);
+            if (restored) {
+              setMessage('Bozza ripristinata', 'info');
+              showInfoOverlay(
+                'Bozza ripristinata',
+                'I dati sono stati ripristinati. Gli allegati PDF devono essere selezionati di nuovo.'
+              );
+            }
+            resolve(restored);
+          },
+          () => {
+            clearDraftFromSession();
+            setMessage('Bozza scartata', 'info');
+            resolve(false);
+          }
+        );
+      });
+    }
+
     function handleBeforeUnload(event) {
       if (!hasUnsavedWork()) return;
+      saveDraftToSession();
       event.preventDefault();
       event.returnValue = '';
     }
@@ -2841,27 +3283,26 @@
       try {
         await cercaCliente();
       } catch (error) {
-        setMessage(error.message, 'err');
-      }
-    });
-
-    refs.cfPiva.addEventListener('change', async () => {
-      try {
-        await normalizeAndAutoSearchCfPiva();
-      } catch (error) {
-        setMessage(error.message, 'err');
+        if (isTechnicalError(error)) {
+          markTechnicalError('Errore');
+        }
       }
     });
 
     refs.cfPiva.addEventListener('input', () => {
       refs.cfPiva.value = normalizeCfPiva(refs.cfPiva.value);
+      queueDraftSave();
     });
 
-    refs.cfPiva.addEventListener('blur', async () => {
+    refs.cfPiva.addEventListener('keydown', async (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
       try {
-        await normalizeAndAutoSearchCfPiva();
+        await cercaCliente();
       } catch (error) {
-        setMessage(error.message, 'err');
+        if (isTechnicalError(error)) {
+          markTechnicalError('Errore');
+        }
       }
     });
 
@@ -2872,7 +3313,7 @@
         updateCartClienteSnapshot();
         goToStep(2);
       } catch (error) {
-        setMessage(error.message, 'err');
+        showUserError(error.message, 'Verifica anagrafica');
       }
     });
 
@@ -2885,7 +3326,7 @@
         collectContractDraft({}, { skipFileValidation: true });
         goToStep(3);
       } catch (error) {
-        setMessage(error.message, 'err');
+        showUserError(error.message, 'Verifica contratto');
       }
     });
 
@@ -2899,22 +3340,67 @@
     refs.btnBackToStep2.addEventListener('click', () => goToStep(2));
     refs.btnSvuotaCarrello.addEventListener('click', clearCart);
     refs.btnInviaPratica.addEventListener('click', inviaPratica);
-    refs.loadingCloseBtn.addEventListener('click', hideLoadingOverlay);
-    refs.loadingSecondaryBtn.addEventListener('click', hideLoadingOverlay);
+    refs.loadingCloseBtn.addEventListener('click', () => handleOverlayAction('primary'));
+    refs.loadingSecondaryBtn.addEventListener('click', () => handleOverlayAction('secondary'));
     window.addEventListener('beforeunload', handleBeforeUnload);
+
+    [
+      refs.cluster,
+      refs.ragioneSociale,
+      refs.nomeReferente,
+      refs.cellulare,
+      refs.provincia,
+      refs.comune,
+      refs.via,
+      refs.civico,
+      refs.originePratica,
+      refs.operatoreId,
+      refs.categoria,
+      refs.offerta,
+      refs.opzione,
+      refs.reload,
+      refs.tipoAttivazione,
+      refs.apriChiudi,
+      refs.intestatario,
+      refs.switchSim,
+      refs.modalitaPagamento,
+      refs.dispositivoAssociato,
+      refs.imei,
+      refs.fasciaPrezzo,
+      refs.tipoAcquisto,
+      refs.finanziaria,
+      refs.kolme,
+      refs.fileDocumentoIdentita,
+      refs.fileContrattoPdf,
+      refs.fileCopiaSimMnp,
+      refs.fileCopiaBolletta
+    ].forEach((el) => {
+      if (!el) return;
+      el.addEventListener('change', queueDraftSave);
+      if (el.tagName === 'INPUT' && el.type !== 'file') {
+        el.addEventListener('input', queueDraftSave);
+      }
+    });
 
     (async function init() {
       initUploadBoxes();
       updateStep3ActionsLabels();
-      setConnectionStatus('checking', 'Verifica...');
+      markTechnicalChecking('Verifica...');
       renderCarrello();
       renderWizardLayout();
       updateUploadVisibility();
       setResult({ init: true });
       try {
         await loadConfig();
+        await promptRestoreDraftIfNeeded();
       } catch (error) {
         setMessage(error.message, 'err');
+        if (isTechnicalError(error)) {
+          markTechnicalError('Errore');
+          showErrorOverlay('Errore tecnico', error.message, error.technicalDetails || '');
+        } else {
+          showUserError(error.message);
+        }
         setResult({ success: false, error: error.message });
       }
     })();
