@@ -58,6 +58,13 @@
       flex-wrap: wrap;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .header h1 {
       margin: 0;
       font-size: 25px;
@@ -120,6 +127,45 @@
       background: var(--primary);
       color: #fff;
       padding: 0 6px;
+    }
+
+    .status-badge {
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: currentColor;
+      opacity: 0.9;
+    }
+
+    .status-badge.connected {
+      color: #15803d;
+      background: #ecfdf5;
+      border-color: #bbf7d0;
+    }
+
+    .status-badge.checking {
+      color: #b45309;
+      background: #fffbeb;
+      border-color: #fcd34d;
+    }
+
+    .status-badge.error {
+      color: #b91c1c;
+      background: #fef2f2;
+      border-color: #fecaca;
     }
 
     .wizard-shell {
@@ -324,6 +370,7 @@
       font-size: 13px;
       font-weight: 600;
       margin-top: 4px;
+      display: none;
     }
 
     .message.ok { color: var(--ok); }
@@ -336,6 +383,7 @@
       justify-content: space-between;
       gap: 8px;
       flex-wrap: wrap;
+      min-height: 52px;
     }
 
     .wizard-actions-right {
@@ -343,10 +391,41 @@
       gap: 8px;
       flex-wrap: wrap;
       justify-content: flex-end;
+      align-items: center;
     }
 
-    .actions-spacer {
-      min-height: 1px;
+    #step1Actions {
+      justify-content: flex-end;
+    }
+
+    #step2Actions,
+    #step3Actions {
+      justify-content: space-between;
+    }
+
+    .cta-secondary {
+      background: #fff;
+      border: 1px solid #d8dee7;
+      color: #374151;
+      font-weight: 700;
+      padding: 11px 14px;
+    }
+
+    .cta-secondary:hover {
+      background: #f9fafb;
+      border-color: #cbd5e1;
+    }
+
+    .cta-primary {
+      padding: 11px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      border: 1px solid #e55a00;
+      box-shadow: 0 8px 16px rgba(255, 102, 0, 0.2);
+    }
+
+    .cta-primary:hover {
+      box-shadow: 0 10px 18px rgba(229, 90, 0, 0.24);
     }
 
     .cart-toolbar {
@@ -470,6 +549,173 @@
       justify-items: center;
     }
 
+    .loading-summary {
+      width: 100%;
+      text-align: left;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: #334155;
+      display: grid;
+      gap: 6px;
+    }
+
+    .loading-summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .loading-summary-row b {
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .loading-details {
+      width: 100%;
+      text-align: left;
+      font-size: 12px;
+      color: #334155;
+    }
+
+    .loading-details summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 8px;
+    }
+
+    .loading-details pre {
+      margin: 0;
+      max-height: 180px;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 11px;
+    }
+
+    .loading-actions {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .loading-actions button {
+      min-width: 120px;
+    }
+
+    .loading-secondary {
+      background: #fff;
+      color: #374151;
+      border: 1px solid #d8dee7;
+    }
+
+    .loading-secondary:hover {
+      background: #f9fafb;
+      border-color: #cbd5e1;
+    }
+
+    .upload-input-native {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 1px;
+      height: 1px;
+    }
+
+    .upload-box {
+      border: 1px dashed #d1d5db;
+      border-radius: 12px;
+      padding: 14px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: var(--transition);
+      cursor: pointer;
+      min-height: 84px;
+    }
+
+    .upload-box:hover {
+      border-color: #ffb383;
+      background: #fff8f2;
+    }
+
+    .upload-box.drag-over {
+      border-color: var(--primary);
+      background: #fff3e8;
+      box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.12);
+    }
+
+    .upload-box.has-file {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+    }
+
+    .upload-box.error {
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+
+    .upload-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: #fff3e8;
+      color: #c2410c;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .upload-content {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+
+    .upload-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .upload-hint {
+      margin: 0;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .upload-file {
+      margin: 0;
+      font-size: 12px;
+      color: #334155;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .upload-clear {
+      margin-left: auto;
+      border: 1px solid #d8dee7;
+      background: #fff;
+      color: #374151;
+      font-size: 12px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .upload-clear:hover {
+      background: #f9fafb;
+      border-color: #cbd5e1;
+    }
+
     .loading-spinner {
       width: 42px;
       height: 42px;
@@ -576,15 +822,18 @@
         <h1>Upload Contratti Vendita</h1>
         <a href="/index.html" class="home-link">Torna alla home test</a>
       </div>
-      <button id="btnOpenCarrelloTop" type="button" class="cart-btn">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="9" cy="20" r="1.5"></circle>
-          <circle cx="18" cy="20" r="1.5"></circle>
-          <path d="M2 3h3l2.2 11.2a1 1 0 0 0 1 .8h10.4a1 1 0 0 0 1-.8l1.4-7.2H6.2"></path>
-        </svg>
-        <span>Carrello</span>
-        <span id="cartBadgeTop" class="badge">0</span>
-      </button>
+      <div class="header-actions">
+        <span id="connectionBadge" class="status-badge checking">Verifica...</span>
+        <button id="btnOpenCarrelloTop" type="button" class="cart-btn">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="9" cy="20" r="1.5"></circle>
+            <circle cx="18" cy="20" r="1.5"></circle>
+            <path d="M2 3h3l2.2 11.2a1 1 0 0 0 1 .8h10.4a1 1 0 0 0 1-.8l1.4-7.2H6.2"></path>
+          </svg>
+          <span>Carrello</span>
+          <span id="cartBadgeTop" class="badge">0</span>
+        </button>
+      </div>
     </section>
 
     <section class="wizard-shell">
@@ -827,7 +1076,6 @@
 
       <section id="wizardActions" class="card panel">
         <div id="step1Actions" class="wizard-actions">
-          <span class="actions-spacer"></span>
           <button id="btnStep1Next" type="button">Avanti</button>
         </div>
 
@@ -839,8 +1087,8 @@
         <div id="step3Actions" class="wizard-actions hidden">
           <button id="btnStep3Back" type="button" class="ghost">Indietro</button>
           <div class="wizard-actions-right">
-            <button id="btnAddToCart" type="button">Aggiungi un altro contratto</button>
-            <button id="btnOpenCarrello" type="button" class="alt">Salva e vai al carrello</button>
+            <button id="btnAddToCart" type="button" class="cta-secondary">Aggiungi un altro contratto</button>
+            <button id="btnOpenCarrello" type="button" class="cta-primary">Vai al carrello</button>
           </div>
         </div>
 
@@ -878,7 +1126,15 @@
       <div id="loadingIcon" class="loading-icon hidden">✓</div>
       <h3 id="loadingTitle" class="loading-title">Caricamento in corso</h3>
       <p id="loadingText" class="loading-text">Attendere...</p>
-      <button id="loadingCloseBtn" type="button" class="hidden">Chiudi</button>
+      <div id="loadingSummary" class="loading-summary hidden"></div>
+      <details id="loadingDetails" class="loading-details hidden">
+        <summary>Dettagli tecnici</summary>
+        <pre id="loadingDetailsText"></pre>
+      </details>
+      <div class="loading-actions">
+        <button id="loadingSecondaryBtn" type="button" class="loading-secondary hidden">Chiudi</button>
+        <button id="loadingCloseBtn" type="button" class="hidden">Chiudi</button>
+      </div>
     </div>
   </div>
 
@@ -904,7 +1160,10 @@
     const runtimeState = {
       isSubmitting: false,
       lastAutoSearchCfPiva: '',
-      lastAutoSearchTs: 0
+      lastAutoSearchTs: 0,
+      editingTempId: null,
+      fileFallback: {},
+      uploadBoxes: {}
     };
 
     const refs = {
@@ -914,6 +1173,7 @@
       cartEmpty: document.getElementById('cartEmpty'),
       cartCount: document.getElementById('cartCount'),
       cartBadgeTop: document.getElementById('cartBadgeTop'),
+      connectionBadge: document.getElementById('connectionBadge'),
       identityStatus: document.getElementById('identityStatus'),
       cartClienteBox: document.getElementById('cartClienteBox'),
       labelOfferta: document.getElementById('labelOfferta'),
@@ -997,12 +1257,34 @@
       loadingIcon: document.getElementById('loadingIcon'),
       loadingTitle: document.getElementById('loadingTitle'),
       loadingText: document.getElementById('loadingText'),
-      loadingCloseBtn: document.getElementById('loadingCloseBtn')
+      loadingCloseBtn: document.getElementById('loadingCloseBtn'),
+      loadingSecondaryBtn: document.getElementById('loadingSecondaryBtn'),
+      loadingSummary: document.getElementById('loadingSummary'),
+      loadingDetails: document.getElementById('loadingDetails'),
+      loadingDetailsText: document.getElementById('loadingDetailsText')
     };
+
+    function setConnectionStatus(status = 'checking', text = 'Verifica...') {
+      if (!refs.connectionBadge) return;
+      refs.connectionBadge.textContent = text;
+      refs.connectionBadge.classList.remove('connected', 'checking', 'error');
+      refs.connectionBadge.classList.add(status);
+    }
 
     function setMessage(message, type = 'info') {
       refs.messageBox.textContent = message || '';
       refs.messageBox.className = `message ${type}`;
+      if (type === 'err') {
+        setConnectionStatus('error', 'Errore');
+        return;
+      }
+      if (type === 'ok') {
+        setConnectionStatus('connected', 'Connesso');
+        return;
+      }
+      if (/(caricamento|ricerca|upload|creazione|verifica)/i.test(String(message || ''))) {
+        setConnectionStatus('checking', 'Verifica...');
+      }
     }
 
     function setResult(data) {
@@ -1111,12 +1393,81 @@
       }
     }
 
+    function formatFileSize(bytes) {
+      const value = Number(bytes || 0);
+      if (!Number.isFinite(value) || value <= 0) return '';
+      if (value < 1024) return `${value} B`;
+      if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+      return `${(value / (1024 * 1024)).toFixed(2)} MB`;
+    }
+
+    function setInputFile(input, file) {
+      if (!input) return;
+      runtimeState.fileFallback[input.id] = file || null;
+
+      if (!file) {
+        input.value = '';
+        refreshUploadBox(input);
+        return;
+      }
+
+      try {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+      } catch (error) {
+        // Fallback runtime map già valorizzata.
+      }
+      refreshUploadBox(input);
+    }
+
+    function getInputFile(input) {
+      if (!input) return null;
+      if (input.files && input.files[0]) {
+        runtimeState.fileFallback[input.id] = input.files[0];
+        return input.files[0];
+      }
+      return runtimeState.fileFallback[input.id] || null;
+    }
+
+    function clearInputFile(input) {
+      setInputFile(input, null);
+    }
+
+    function renderOverlaySummary(summaryRows = []) {
+      if (!Array.isArray(summaryRows) || summaryRows.length === 0) {
+        refs.loadingSummary.innerHTML = '';
+        refs.loadingSummary.classList.add('hidden');
+        return;
+      }
+
+      refs.loadingSummary.innerHTML = summaryRows
+        .map((row) => `<div class="loading-summary-row"><b>${escapeHtml(row.label)}</b><span>${escapeHtml(row.value)}</span></div>`)
+        .join('');
+      refs.loadingSummary.classList.remove('hidden');
+    }
+
+    function renderOverlayTechnical(technicalText) {
+      const text = String(technicalText || '').trim();
+      if (!text) {
+        refs.loadingDetails.classList.add('hidden');
+        refs.loadingDetailsText.textContent = '';
+        return;
+      }
+      refs.loadingDetailsText.textContent = text;
+      refs.loadingDetails.classList.remove('hidden');
+    }
+
     function showLoadingOverlay(title, text) {
       refs.loadingTitle.textContent = title || 'Caricamento in corso';
       refs.loadingText.textContent = text || 'Attendere...';
       refs.loadingSpinner.classList.remove('hidden');
       refs.loadingIcon.classList.add('hidden');
       refs.loadingIcon.classList.remove('success', 'error');
+      renderOverlaySummary([]);
+      renderOverlayTechnical('');
+      refs.loadingSecondaryBtn.classList.add('hidden');
+      refs.loadingSecondaryBtn.textContent = 'Chiudi';
       refs.loadingCloseBtn.classList.add('hidden');
       refs.loadingCloseBtn.textContent = 'Chiudi';
       refs.loadingOverlay.classList.remove('hidden');
@@ -1131,7 +1482,7 @@
       refs.loadingText.textContent = text || refs.loadingText.textContent;
     }
 
-    function showSuccessOverlay(title, text) {
+    function showSuccessOverlay(title, text, summaryRows = []) {
       refs.loadingTitle.textContent = title || 'Pratica inviata con successo';
       refs.loadingText.textContent = text || 'La pratica è stata salvata e i documenti sono stati caricati correttamente.';
       refs.loadingSpinner.classList.add('hidden');
@@ -1139,12 +1490,16 @@
       refs.loadingIcon.classList.remove('hidden');
       refs.loadingIcon.classList.remove('error');
       refs.loadingIcon.classList.add('success');
+      renderOverlaySummary(summaryRows);
+      renderOverlayTechnical('');
+      refs.loadingSecondaryBtn.textContent = 'Chiudi';
+      refs.loadingSecondaryBtn.classList.remove('hidden');
       refs.loadingCloseBtn.textContent = 'Nuova pratica';
       refs.loadingCloseBtn.classList.remove('hidden');
       refs.loadingOverlay.classList.remove('hidden');
     }
 
-    function showErrorOverlay(title, text) {
+    function showErrorOverlay(title, text, technicalText = '') {
       refs.loadingTitle.textContent = title || 'Errore durante l\'invio';
       refs.loadingText.textContent = text || 'Si è verificato un errore inatteso.';
       refs.loadingSpinner.classList.add('hidden');
@@ -1152,6 +1507,9 @@
       refs.loadingIcon.classList.remove('hidden');
       refs.loadingIcon.classList.remove('success');
       refs.loadingIcon.classList.add('error');
+      renderOverlaySummary([]);
+      renderOverlayTechnical(technicalText);
+      refs.loadingSecondaryBtn.classList.add('hidden');
       refs.loadingCloseBtn.textContent = 'Chiudi';
       refs.loadingCloseBtn.classList.remove('hidden');
       refs.loadingOverlay.classList.remove('hidden');
@@ -1161,12 +1519,109 @@
       refs.loadingOverlay.classList.add('hidden');
     }
 
+    function refreshUploadBox(input) {
+      if (!input) return;
+      const ui = runtimeState.uploadBoxes[input.id];
+      if (!ui) return;
+
+      const file = getInputFile(input);
+      ui.box.classList.remove('error');
+      ui.box.classList.toggle('has-file', Boolean(file));
+
+      if (file) {
+        ui.fileInfo.textContent = `${file.name} (${formatFileSize(file.size)})`;
+        ui.clearBtn.classList.remove('hidden');
+      } else {
+        ui.fileInfo.textContent = 'Nessun file selezionato';
+        ui.clearBtn.classList.add('hidden');
+      }
+    }
+
+    function initUploadBoxes() {
+      const uploadConfig = [
+        { input: refs.fileDocumentoIdentita, title: 'Documento identita *', hint: 'Trascina il PDF qui o clicca per selezionarlo', icon: '🪪' },
+        { input: refs.fileContrattoPdf, title: 'Contratto PDF *', hint: 'Trascina il PDF qui o clicca per selezionarlo', icon: '📄' },
+        { input: refs.fileCopiaSimMnp, title: 'Copia SIM MNP', hint: 'Trascina il PDF qui o clicca per selezionarlo', icon: '📄' },
+        { input: refs.fileCopiaBolletta, title: 'Copia bolletta', hint: 'Trascina il PDF qui o clicca per selezionarlo', icon: '📄' }
+      ];
+
+      uploadConfig.forEach((item) => {
+        if (!item.input || item.input.dataset.uploadReady === 'true') return;
+        item.input.dataset.uploadReady = 'true';
+        item.input.classList.add('upload-input-native');
+
+        const box = document.createElement('div');
+        box.className = 'upload-box';
+        box.setAttribute('role', 'button');
+        box.setAttribute('tabindex', '0');
+        box.innerHTML = `
+          <span class="upload-icon">${item.icon}</span>
+          <div class="upload-content">
+            <p class="upload-title">${escapeHtml(item.title)}</p>
+            <p class="upload-hint">${escapeHtml(item.hint)}</p>
+            <p class="upload-file">Nessun file selezionato</p>
+          </div>
+          <button type="button" class="upload-clear hidden">Rimuovi</button>
+        `;
+        item.input.insertAdjacentElement('afterend', box);
+
+        const fileInfo = box.querySelector('.upload-file');
+        const clearBtn = box.querySelector('.upload-clear');
+        runtimeState.uploadBoxes[item.input.id] = { box, fileInfo, clearBtn };
+
+        box.addEventListener('click', (event) => {
+          if (event.target === clearBtn) return;
+          item.input.click();
+        });
+        box.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            item.input.click();
+          }
+        });
+        box.addEventListener('dragover', (event) => {
+          event.preventDefault();
+          box.classList.add('drag-over');
+        });
+        box.addEventListener('dragleave', () => {
+          box.classList.remove('drag-over');
+        });
+        box.addEventListener('drop', (event) => {
+          event.preventDefault();
+          box.classList.remove('drag-over');
+          const file = event.dataTransfer?.files?.[0] || null;
+          if (!file) return;
+          if (file.type && file.type !== 'application/pdf') {
+            box.classList.add('error');
+            setMessage('Il file deve essere PDF', 'err');
+            return;
+          }
+          setInputFile(item.input, file);
+        });
+        item.input.addEventListener('change', () => {
+          runtimeState.fileFallback[item.input.id] = item.input.files[0] || null;
+          refreshUploadBox(item.input);
+        });
+        clearBtn.addEventListener('click', (event) => {
+          event.stopPropagation();
+          clearInputFile(item.input);
+        });
+        refreshUploadBox(item.input);
+      });
+    }
+
     function updateUploadVisibility() {
       const hasIdentity = Boolean(praticaFiles.documento_identita);
       const hasContracts = state.cart.contratti.length > 0;
 
       refs.fieldDocumentoIdentita.classList.toggle('hidden', hasIdentity || hasContracts);
       // Contratto PDF sempre visibile.
+    }
+
+    function updateStep3ActionsLabels() {
+      const editing = Boolean(runtimeState.editingTempId);
+      refs.btnAddToCart.textContent = editing ? 'Salva modifiche e nuovo contratto' : 'Aggiungi un altro contratto';
+      refs.btnOpenCarrello.textContent = editing ? 'Salva modifiche e vai al carrello' : 'Vai al carrello';
     }
 
     function renderStepIndicator() {
@@ -1403,9 +1858,9 @@
       refs.tipoAcquisto.value = '';
       refs.finanziaria.value = '';
       refs.kolme.value = '';
-      refs.fileContrattoPdf.value = '';
-      refs.fileCopiaSimMnp.value = '';
-      refs.fileCopiaBolletta.value = '';
+      clearInputFile(refs.fileContrattoPdf);
+      clearInputFile(refs.fileCopiaSimMnp);
+      clearInputFile(refs.fileCopiaBolletta);
       refs.fieldFinanziaria.classList.add('hidden');
       updateUploadVisibility();
     }
@@ -1413,6 +1868,7 @@
     function resetFullPracticeForm() {
       state.cart.cliente = null;
       state.cart.contratti = [];
+      runtimeState.editingTempId = null;
 
       praticaFiles.documento_identita = null;
 
@@ -1436,10 +1892,10 @@
 
       resetContractFields();
 
-      refs.fileDocumentoIdentita.value = '';
-      refs.fileContrattoPdf.value = '';
-      refs.fileCopiaSimMnp.value = '';
-      refs.fileCopiaBolletta.value = '';
+      clearInputFile(refs.fileDocumentoIdentita);
+      clearInputFile(refs.fileContrattoPdf);
+      clearInputFile(refs.fileCopiaSimMnp);
+      clearInputFile(refs.fileCopiaBolletta);
 
       renderOfferte();
       renderOpzioni();
@@ -1448,6 +1904,7 @@
 
       renderCarrello();
       updateUploadVisibility();
+      updateStep3ActionsLabels();
       goToStep(1);
     }
 
@@ -1512,8 +1969,8 @@
       refs.fieldFileMnp.classList.toggle('hidden', !mnpVisible);
       refs.fieldFileBolletta.classList.toggle('hidden', !bollettaVisible);
 
-      if (!mnpVisible) refs.fileCopiaSimMnp.value = '';
-      if (!bollettaVisible) refs.fileCopiaBolletta.value = '';
+      if (!mnpVisible) clearInputFile(refs.fileCopiaSimMnp);
+      if (!bollettaVisible) clearInputFile(refs.fileCopiaBolletta);
 
       if (uiState.view !== 'wizard' || uiState.step !== 2) {
         refs.deviceSection.classList.add('hidden');
@@ -1641,7 +2098,7 @@
       const punteggioExtra = toNumber(offerta.punteggio_extra_gara, 0) + toNumber(opzione?.punteggio_extra_gara, 0);
 
       return {
-        temp_id: `temp_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+        temp_id: options.tempId || `temp_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
         categoria_id: categoria.id,
         offerta_id: offerta.id,
         opzione_id: opzione?.id || null,
@@ -1729,7 +2186,10 @@
             <article class="cart-item">
               <div class="cart-top">
                 <p class="cart-title">Contratto ${idx + 1} - ${escapeHtml(item.categoria_nome || item.snapshot.categoria)}</p>
-                <button type="button" class="ghost" onclick="removeCartContract('${escapeHtml(item.temp_id)}')">Elimina contratto</button>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button type="button" class="ghost" onclick="editCartContract('${escapeHtml(item.temp_id)}')">Modifica</button>
+                  <button type="button" class="ghost" onclick="removeCartContract('${escapeHtml(item.temp_id)}')">Elimina contratto</button>
+                </div>
               </div>
               ${chips.length ? `<div class="chips">${chips.join('')}</div>` : ''}
               <div class="details">
@@ -1794,34 +2254,46 @@
         return;
       }
 
+      let completed = false;
+      showLoadingOverlay('Ricerca anagrafica in corso', 'Attendere...');
       setMessage('Ricerca anagrafica in corso...', 'info');
+      try {
+        const response = await fetch(`/.netlify/functions/search-anagrafica?cf_piva=${encodeURIComponent(cfPiva)}`);
+        const data = await response.json();
 
-      const response = await fetch(`/.netlify/functions/search-anagrafica?cf_piva=${encodeURIComponent(cfPiva)}`);
-      const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Errore ricerca anagrafica');
+        }
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Errore ricerca anagrafica');
+        if (!data.found) {
+          completed = true;
+          setMessage('Cliente non trovato: puoi compilare manualmente i campi', 'info');
+          return;
+        }
+
+        const found = data.data || {};
+        if (found.cluster === 'Consumer' || found.cluster === 'Business') refs.cluster.value = found.cluster;
+        refs.ragioneSociale.value = found.ragione_sociale || refs.ragioneSociale.value;
+        refs.nomeReferente.value = found.nome_referente || refs.nomeReferente.value;
+        refs.cellulare.value = found.cellulare || refs.cellulare.value;
+        refs.provincia.value = found.provincia || refs.provincia.value;
+        refs.comune.value = found.comune || refs.comune.value;
+        refs.via.value = found.via || refs.via.value;
+        refs.civico.value = found.civico || refs.civico.value;
+
+        renderOfferte();
+        renderOpzioni();
+        renderDynamicSections();
+        completed = true;
+        setMessage('Cliente trovato e campi compilati. Puoi modificare i dati prima di inviare.', 'ok');
+      } catch (error) {
+        showErrorOverlay('Errore ricerca anagrafica', error.message);
+        throw error;
+      } finally {
+        if (completed) {
+          hideLoadingOverlay();
+        }
       }
-
-      if (!data.found) {
-        setMessage('Cliente non trovato: puoi compilare manualmente i campi', 'info');
-        return;
-      }
-
-      const found = data.data || {};
-      if (found.cluster === 'Consumer' || found.cluster === 'Business') refs.cluster.value = found.cluster;
-      refs.ragioneSociale.value = found.ragione_sociale || refs.ragioneSociale.value;
-      refs.nomeReferente.value = found.nome_referente || refs.nomeReferente.value;
-      refs.cellulare.value = found.cellulare || refs.cellulare.value;
-      refs.provincia.value = found.provincia || refs.provincia.value;
-      refs.comune.value = found.comune || refs.comune.value;
-      refs.via.value = found.via || refs.via.value;
-      refs.civico.value = found.civico || refs.civico.value;
-
-      renderOfferte();
-      renderOpzioni();
-      renderDynamicSections();
-      setMessage('Cliente trovato e campi compilati. Puoi modificare i dati prima di inviare.', 'ok');
     }
 
     async function addContrattoToCart(options = {}) {
@@ -1831,12 +2303,12 @@
         validateClienteData(cliente);
 
         const selectedContractFiles = {
-          contratto: refs.fileContrattoPdf.files[0] || null,
-          sim_mnp: refs.fileCopiaSimMnp.files[0] || null,
-          bolletta: refs.fileCopiaBolletta.files[0] || null
+          contratto: getInputFile(refs.fileContrattoPdf),
+          sim_mnp: getInputFile(refs.fileCopiaSimMnp),
+          bolletta: getInputFile(refs.fileCopiaBolletta)
         };
 
-        const selectedDocumentoIdentita = refs.fileDocumentoIdentita.files[0] || null;
+        const selectedDocumentoIdentita = getInputFile(refs.fileDocumentoIdentita);
 
         if (!selectedContractFiles.contratto) {
           throw new Error('Carica il PDF contratto per questo contratto');
@@ -1859,16 +2331,30 @@
           throw new Error('Sul primo contratto devi caricare il documento identita della pratica');
         }
 
-        const draft = collectContractDraft(selectedContractFiles);
+        const draft = collectContractDraft(selectedContractFiles, {
+          tempId: runtimeState.editingTempId || null
+        });
 
         if (selectedDocumentoIdentita) {
           praticaFiles.documento_identita = selectedDocumentoIdentita;
         }
 
-        state.cart.contratti.push(draft);
+        const editingIndex = runtimeState.editingTempId
+          ? state.cart.contratti.findIndex((item) => item.temp_id === runtimeState.editingTempId)
+          : -1;
+
+        if (editingIndex >= 0) {
+          state.cart.contratti[editingIndex] = draft;
+          setMessage('Contratto aggiornato nel carrello', 'ok');
+        } else {
+          state.cart.contratti.push(draft);
+          setMessage('Contratto aggiunto al carrello', 'ok');
+        }
+
+        runtimeState.editingTempId = null;
         updateCartClienteSnapshot();
         renderCarrello();
-        setMessage('Contratto aggiunto al carrello', 'ok');
+        updateStep3ActionsLabels();
 
         resetContractFields();
         renderOpzioni();
@@ -1884,6 +2370,48 @@
       }
     }
 
+    function loadCartContractInForm(item) {
+      refs.categoria.value = item.categoria_id || refs.categoria.value;
+      renderOfferte();
+      refs.offerta.value = item.offerta_id || '';
+      renderOpzioni();
+      refs.opzione.value = item.opzione_id || '';
+      renderReload();
+      refs.reload.value = item.reload_id || '';
+
+      refs.tipoAttivazione.value = item.tipo_attivazione || '';
+      refs.apriChiudi.value = item.apri_chiudi || '';
+      refs.intestatario.value = item.intestatario || '';
+      refs.switchSim.value = item.switch_sim || '';
+      refs.modalitaPagamento.value = item.modalita_pagamento || '';
+
+      refs.dispositivoAssociato.value = item.dispositivo_associato ? 'true' : 'false';
+      refs.imei.value = item.imei || '';
+      refs.fasciaPrezzo.value = item.fascia_prezzo || '';
+      refs.tipoAcquisto.value = item.tipo_acquisto || '';
+      refs.finanziaria.value = item.finanziaria || '';
+      refs.kolme.value = item.kolme === null ? '' : (item.kolme ? 'true' : 'false');
+      renderDynamicSections();
+
+      setInputFile(refs.fileContrattoPdf, item.files?.contratto || null);
+      setInputFile(refs.fileCopiaSimMnp, item.files?.sim_mnp || null);
+      setInputFile(refs.fileCopiaBolletta, item.files?.bolletta || null);
+      if (praticaFiles.documento_identita) {
+        setInputFile(refs.fileDocumentoIdentita, praticaFiles.documento_identita);
+      }
+      updateUploadVisibility();
+    }
+
+    window.editCartContract = function (tempId) {
+      const item = state.cart.contratti.find((row) => row.temp_id === tempId);
+      if (!item) return;
+
+      runtimeState.editingTempId = tempId;
+      updateStep3ActionsLabels();
+      loadCartContractInForm(item);
+      goToStep(2);
+    };
+
     window.removeCartContract = function (tempId) {
       const index = state.cart.contratti.findIndex((item) => item.temp_id === tempId);
       if (index < 0) return;
@@ -1893,9 +2421,14 @@
 
       state.cart.contratti.splice(index, 1);
 
+      if (runtimeState.editingTempId === tempId) {
+        runtimeState.editingTempId = null;
+        updateStep3ActionsLabels();
+      }
+
       if (state.cart.contratti.length === 0) {
         praticaFiles.documento_identita = null;
-        refs.fileDocumentoIdentita.value = '';
+        clearInputFile(refs.fileDocumentoIdentita);
       }
 
       renderCarrello();
@@ -1908,10 +2441,13 @@
       if (!confirmed) return;
 
       state.cart.contratti = [];
+      runtimeState.editingTempId = null;
       praticaFiles.documento_identita = null;
-      refs.fileDocumentoIdentita.value = '';
+      clearInputFile(refs.fileDocumentoIdentita);
+      resetContractFields();
       renderCarrello();
       updateUploadVisibility();
+      updateStep3ActionsLabels();
       renderWizardLayout();
       setMessage('Carrello svuotato', 'info');
     }
@@ -2182,11 +2718,18 @@
           uploadDebug
         });
 
+        const successSummaryRows = [
+          { label: 'Cliente', value: payload?.cliente?.ragione_sociale || '-' },
+          { label: 'Contratti inviati', value: String(state.cart.contratti.length) },
+          { label: 'ID pratica', value: createResult?.pratica_id || '-' }
+        ];
+
         setMessage('Pratica inviata con successo', 'ok');
         resetFullPracticeForm();
         showSuccessOverlay(
           'Pratica inviata con successo',
-          'La pratica è stata salvata e i documenti sono stati caricati correttamente.'
+          'La pratica è stata salvata e i documenti sono stati caricati correttamente.',
+          successSummaryRows
         );
       } catch (error) {
         setMessage(error.message, 'err');
@@ -2196,7 +2739,11 @@
           uploadResults,
           uploadDebug
         });
-        showErrorOverlay('Errore durante l\'invio', error.message);
+        showErrorOverlay(
+          'Errore durante l\'invio',
+          error.message,
+          JSON.stringify({ uploadResults, uploadDebug }, null, 2)
+        );
       } finally {
         refs.btnInviaPratica.disabled = false;
         refs.btnAddToCart.disabled = false;
@@ -2243,6 +2790,53 @@
       await cercaCliente();
     }
 
+    function hasUnsavedContractFields() {
+      return Boolean(
+        refs.tipoAttivazione.value ||
+        refs.apriChiudi.value ||
+        refs.intestatario.value ||
+        refs.switchSim.value ||
+        refs.modalitaPagamento.value ||
+        refs.imei.value.trim() ||
+        refs.fasciaPrezzo.value ||
+        refs.tipoAcquisto.value ||
+        refs.finanziaria.value ||
+        refs.kolme.value
+      );
+    }
+
+    function hasUnsavedWork() {
+      if (runtimeState.isSubmitting) return true;
+      if (runtimeState.editingTempId) return true;
+      if (state.cart.contratti.length > 0) return true;
+      if (praticaFiles.documento_identita) return true;
+      if (getInputFile(refs.fileDocumentoIdentita)) return true;
+      if (getInputFile(refs.fileContrattoPdf)) return true;
+      if (getInputFile(refs.fileCopiaSimMnp)) return true;
+      if (getInputFile(refs.fileCopiaBolletta)) return true;
+
+      const hasClienteData = [
+        refs.cfPiva.value,
+        refs.ragioneSociale.value,
+        refs.nomeReferente.value,
+        refs.cellulare.value,
+        refs.provincia.value,
+        refs.comune.value,
+        refs.via.value,
+        refs.civico.value,
+        refs.operatoreId.value
+      ].some((value) => String(value || '').trim() !== '');
+
+      if (hasClienteData) return true;
+      return hasUnsavedContractFields();
+    }
+
+    function handleBeforeUnload(event) {
+      if (!hasUnsavedWork()) return;
+      event.preventDefault();
+      event.returnValue = '';
+    }
+
     refs.btnCercaCliente.addEventListener('click', async () => {
       try {
         await cercaCliente();
@@ -2277,7 +2871,6 @@
         validateClienteData(cliente);
         updateCartClienteSnapshot();
         goToStep(2);
-        setMessage('Compila i dati del contratto', 'info');
       } catch (error) {
         setMessage(error.message, 'err');
       }
@@ -2291,7 +2884,6 @@
       try {
         collectContractDraft({}, { skipFileValidation: true });
         goToStep(3);
-        setMessage('Carica i documenti del contratto corrente', 'info');
       } catch (error) {
         setMessage(error.message, 'err');
       }
@@ -2308,8 +2900,13 @@
     refs.btnSvuotaCarrello.addEventListener('click', clearCart);
     refs.btnInviaPratica.addEventListener('click', inviaPratica);
     refs.loadingCloseBtn.addEventListener('click', hideLoadingOverlay);
+    refs.loadingSecondaryBtn.addEventListener('click', hideLoadingOverlay);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     (async function init() {
+      initUploadBoxes();
+      updateStep3ActionsLabels();
+      setConnectionStatus('checking', 'Verifica...');
       renderCarrello();
       renderWizardLayout();
       updateUploadVisibility();
