@@ -46,7 +46,7 @@ exports.handler = async (event) => {
     });
 
     // Restituiamo solo record attivi e solo i campi punteggio nuovi.
-    const [categorieRes, offerteRes, opzioniRes, reloadRes] = await Promise.all([
+    const [categorieRes, offerteRes, opzioniRes, reloadRes, regoleRes] = await Promise.all([
       supabase
         .from('vendita_categorie')
         .select('id, nome, descrizione, attiva, ordine, created_at, updated_at')
@@ -68,14 +68,20 @@ exports.handler = async (event) => {
         .select('id, nome, attivo, ordine, created_at, updated_at')
         .eq('attivo', true)
         .order('ordine', { ascending: true })
-        .order('nome', { ascending: true })
+        .order('nome', { ascending: true }),
+      supabase
+        .from('vendita_documenti_regole')
+        .select('id, categoria_id, offerta_id, opzione_id, tipo_documento, obbligatorio, attiva, campo_condizione, valore_condizione, created_at, updated_at')
+        .eq('attiva', true)
+        .order('created_at', { ascending: false })
     ]);
 
     const firstError =
       categorieRes.error ||
       offerteRes.error ||
       opzioniRes.error ||
-      reloadRes.error;
+      reloadRes.error ||
+      regoleRes.error;
 
     if (firstError) {
       return response(500, {
@@ -89,7 +95,8 @@ exports.handler = async (event) => {
       categorie: categorieRes.data || [],
       offerte: offerteRes.data || [],
       opzioni: opzioniRes.data || [],
-      reload: reloadRes.data || []
+      reload: reloadRes.data || [],
+      documenti_regole: regoleRes.data || []
     });
   } catch (error) {
     return response(500, {

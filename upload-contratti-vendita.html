@@ -525,6 +525,17 @@
       font-size: 12px;
     }
 
+    #technicalDetails {
+      font-size: 13px;
+      color: #475569;
+    }
+
+    #technicalDetails summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #475569;
+    }
+
     .loading-overlay {
       position: fixed;
       inset: 0;
@@ -697,7 +708,8 @@
       font-size: 12px;
       color: #334155;
       font-weight: 600;
-      word-break: break-all;
+      word-break: break-word;
+      white-space: pre-line;
     }
 
     .upload-clear {
@@ -1054,22 +1066,22 @@
         <div class="grid">
           <div id="fieldDocumentoIdentita" class="field half">
             <label for="file_documento_identita">Documento identita *</label>
-            <input id="file_documento_identita" type="file" accept="application/pdf">
+            <input id="file_documento_identita" type="file" accept="application/pdf" multiple>
           </div>
 
-          <div class="field half">
+          <div id="fieldContrattoPdf" class="field half">
             <label for="file_contratto_pdf">Contratto PDF *</label>
             <input id="file_contratto_pdf" type="file" accept="application/pdf">
           </div>
 
           <div id="fieldFileMnp" class="field half hidden">
             <label for="file_copia_sim_mnp">Copia SIM MNP</label>
-            <input id="file_copia_sim_mnp" type="file" accept="application/pdf">
+            <input id="file_copia_sim_mnp" type="file" accept="application/pdf" multiple>
           </div>
 
           <div id="fieldFileBolletta" class="field half hidden">
             <label for="file_copia_bolletta">Copia bolletta</label>
-            <input id="file_copia_bolletta" type="file" accept="application/pdf">
+            <input id="file_copia_bolletta" type="file" accept="application/pdf" multiple>
           </div>
         </div>
       </section>
@@ -1116,7 +1128,10 @@
         <div id="cartClienteBox" class="inline-box" style="margin-top:10px;"></div>
         <div id="cartList" class="cart-list" style="margin-top:10px;"></div>
         <p id="cartEmpty" class="cart-empty">Nessun contratto nel carrello.</p>
-        <pre id="resultBox">In attesa...</pre>
+        <details id="technicalDetails" class="hidden" style="margin-top:10px;">
+          <summary>Mostra dettagli tecnici</summary>
+          <pre id="resultBox">In attesa...</pre>
+        </details>
       </section>
     </section>
   </main>
@@ -1146,13 +1161,14 @@
       offerte: [],
       opzioni: [],
       reload: [],
+      documenti_regole: [],
       cart: {
         cliente: null,
         contratti: []
       }
     };
     let praticaFiles = {
-      documento_identita: null
+      documento_identita: []
     };
     const uiState = {
       view: 'wizard',
@@ -1175,6 +1191,12 @@
       draftSuspended: false,
       draftSaveTimer: null,
       restoreNeedsFileReselection: false
+    };
+    const DOC_TYPES = {
+      DOCUMENTO_IDENTITA: 'documento_identita',
+      CONTRATTO: 'contratto',
+      COPIA_BOLLETTA: 'copia_bolletta',
+      COPIA_SIM_MNP: 'copia_sim_mnp'
     };
     const DRAFT_SESSION_KEY = 'vendita_wizard_draft_v1';
 
@@ -1239,6 +1261,7 @@
       fileCopiaSimMnp: document.getElementById('file_copia_sim_mnp'),
       fileCopiaBolletta: document.getElementById('file_copia_bolletta'),
       fieldDocumentoIdentita: document.getElementById('fieldDocumentoIdentita'),
+      fieldContrattoPdf: document.getElementById('fieldContrattoPdf'),
       fieldFileMnp: document.getElementById('fieldFileMnp'),
       fieldFileBolletta: document.getElementById('fieldFileBolletta'),
 
@@ -1397,7 +1420,11 @@
 
       for (let i = 0; i < items.length; i += 1) {
         const current = items[i];
-        if (!current?.files?.[fileKey]) continue;
+        const currentValue = current?.files?.[fileKey];
+        const hasFiles = Array.isArray(currentValue)
+          ? currentValue.length > 0
+          : Boolean(currentValue);
+        if (!hasFiles) continue;
         progressive += 1;
         if (current.temp_id === cartItem.temp_id) break;
       }
@@ -1432,37 +1459,56 @@
       return `${(value / (1024 * 1024)).toFixed(2)} MB`;
     }
 
-    function setInputFile(input, file) {
+    function normalizeFilesArray(value) {
+      if (!value) return [];
+      if (Array.isArray(value)) return value.filter((item) => item instanceof File);
+      if (value instanceof File) return [value];
+      return [];
+    }
+
+    function setInputFiles(input, files) {
       if (!input) return;
-      runtimeState.fileFallback[input.id] = file || null;
+      const safeFiles = normalizeFilesArray(files);
+      runtimeState.fileFallback[input.id] = safeFiles;
 
-      if (!file) {
-        input.value = '';
-        refreshUploadBox(input);
-        return;
+      input.value = '';
+      if (safeFiles.length > 0) {
+        try {
+          const dt = new DataTransfer();
+          safeFiles.forEach((file) => dt.items.add(file));
+          input.files = dt.files;
+        } catch (error) {
+          // Fallback runtime map già valorizzata.
+        }
       }
 
-      try {
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        input.files = dt.files;
-      } catch (error) {
-        // Fallback runtime map già valorizzata.
-      }
       refreshUploadBox(input);
     }
 
-    function getInputFile(input) {
-      if (!input) return null;
-      if (input.files && input.files[0]) {
-        runtimeState.fileFallback[input.id] = input.files[0];
-        return input.files[0];
+    function setInputFile(input, file) {
+      setInputFiles(input, file ? [file] : []);
+    }
+
+    function getInputFiles(input) {
+      if (!input) return [];
+      if (input.files && input.files.length > 0) {
+        const files = Array.from(input.files);
+        runtimeState.fileFallback[input.id] = files;
+        return files;
       }
-      return runtimeState.fileFallback[input.id] || null;
+      return normalizeFilesArray(runtimeState.fileFallback[input.id]);
+    }
+
+    function getInputFile(input) {
+      return getInputFiles(input)[0] || null;
+    }
+
+    function clearInputFiles(input) {
+      setInputFiles(input, []);
     }
 
     function clearInputFile(input) {
-      setInputFile(input, null);
+      clearInputFiles(input);
     }
 
     function renderOverlaySummary(summaryRows = []) {
@@ -1692,12 +1738,17 @@
       const ui = runtimeState.uploadBoxes[input.id];
       if (!ui) return;
 
-      const file = getInputFile(input);
+      const files = getInputFiles(input);
       ui.box.classList.remove('error');
-      ui.box.classList.toggle('has-file', Boolean(file));
+      ui.box.classList.toggle('has-file', files.length > 0);
 
-      if (file) {
-        ui.fileInfo.textContent = `${file.name} (${formatFileSize(file.size)})`;
+      if (files.length > 0) {
+        const preview = files
+          .slice(0, 3)
+          .map((file) => `• ${file.name} (${formatFileSize(file.size)})`)
+          .join('\n');
+        const suffix = files.length > 3 ? `\n+ altri ${files.length - 3} file` : '';
+        ui.fileInfo.textContent = preview + suffix;
         ui.clearBtn.classList.remove('hidden');
       } else {
         ui.fileInfo.textContent = 'Nessun file selezionato';
@@ -1707,16 +1758,17 @@
 
     function initUploadBoxes() {
       const uploadConfig = [
-        { input: refs.fileDocumentoIdentita, title: 'Documento identita *', hint: 'Trascina il PDF qui o clicca per selezionarlo', icon: '🪪' },
-        { input: refs.fileContrattoPdf, title: 'Contratto PDF *', hint: 'Trascina il PDF qui o clicca per selezionarlo', icon: '📄' },
-        { input: refs.fileCopiaSimMnp, title: 'Copia SIM MNP', hint: 'Trascina il PDF qui o clicca per selezionarlo', icon: '📄' },
-        { input: refs.fileCopiaBolletta, title: 'Copia bolletta', hint: 'Trascina il PDF qui o clicca per selezionarlo', icon: '📄' }
+        { input: refs.fileDocumentoIdentita, title: 'Documento identita', hint: 'Trascina i PDF qui o clicca per selezionare', icon: '🪪', multiple: true },
+        { input: refs.fileContrattoPdf, title: 'Contratto PDF *', hint: 'Trascina il PDF qui o clicca per selezionarlo', icon: '📄', multiple: false },
+        { input: refs.fileCopiaSimMnp, title: 'Fotocopia SIM', hint: 'Trascina i PDF qui o clicca per selezionare', icon: '📄', multiple: true },
+        { input: refs.fileCopiaBolletta, title: 'Copia bolletta', hint: 'Trascina i PDF qui o clicca per selezionare', icon: '📄', multiple: true }
       ];
 
       uploadConfig.forEach((item) => {
         if (!item.input || item.input.dataset.uploadReady === 'true') return;
         item.input.dataset.uploadReady = 'true';
         item.input.classList.add('upload-input-native');
+        item.input.multiple = item.multiple === true;
 
         const box = document.createElement('div');
         box.className = 'upload-box';
@@ -1757,17 +1809,26 @@
         box.addEventListener('drop', (event) => {
           event.preventDefault();
           box.classList.remove('drag-over');
-          const file = event.dataTransfer?.files?.[0] || null;
-          if (!file) return;
-          if (file.type && file.type !== 'application/pdf') {
+          const droppedFiles = Array.from(event.dataTransfer?.files || []);
+          if (droppedFiles.length === 0) return;
+
+          const invalidFile = droppedFiles.find((file) => file.type && file.type !== 'application/pdf');
+          if (invalidFile) {
             box.classList.add('error');
-            showUserError('Il file deve essere PDF', 'Upload documento');
+            showUserError('I file devono essere PDF', 'Upload documento');
             return;
           }
-          setInputFile(item.input, file);
+
+          if (!item.multiple && droppedFiles.length > 1) {
+            showUserError('Per questo campo puoi caricare un solo PDF', 'Upload documento');
+            setInputFile(item.input, droppedFiles[0]);
+            return;
+          }
+
+          setInputFiles(item.input, item.multiple ? droppedFiles : [droppedFiles[0]]);
         });
         item.input.addEventListener('change', () => {
-          runtimeState.fileFallback[item.input.id] = item.input.files[0] || null;
+          runtimeState.fileFallback[item.input.id] = Array.from(item.input.files || []);
           refreshUploadBox(item.input);
         });
         clearBtn.addEventListener('click', (event) => {
@@ -1779,12 +1840,14 @@
     }
 
     function updateUploadVisibility() {
-      const hasIdentity = Boolean(praticaFiles.documento_identita);
+      const requirements = getCurrentDocumentRequirements();
+      const hasIdentity = Array.isArray(praticaFiles.documento_identita) && praticaFiles.documento_identita.length > 0;
       const hasContracts = state.cart.contratti.length > 0;
-      const needsIdentityReselection = runtimeState.restoreNeedsFileReselection && !hasIdentity;
+      const needsIdentityReselection = runtimeState.restoreNeedsFileReselection && !hasIdentity && requirements.documento_identita;
+      const mustHideIdentity = !requirements.documento_identita || (hasIdentity || hasContracts);
 
-      refs.fieldDocumentoIdentita.classList.toggle('hidden', !needsIdentityReselection && (hasIdentity || hasContracts));
-      // Contratto PDF sempre visibile.
+      refs.fieldDocumentoIdentita.classList.toggle('hidden', !needsIdentityReselection && mustHideIdentity);
+      refs.fieldContrattoPdf.classList.toggle('hidden', !requirements.contratto);
     }
 
     function updateStep3ActionsLabels() {
@@ -1994,8 +2057,34 @@
       return false;
     }
 
-    function isMnpRequired(categoriaNome, opzioneNome) {
-      return isCategory(categoriaNome, 'Mobile') && containsFragment(opzioneNome, ['mnp']);
+    function getActiveDocumentRules() {
+      return (state.documenti_regole || []).filter((rule) => rule && rule.attiva === true);
+    }
+
+    function hasOffertaDocumentRule(offertaId, tipoDocumento) {
+      if (!offertaId || !tipoDocumento) return false;
+      return getActiveDocumentRules().some((rule) =>
+        rule.offerta_id === offertaId && !rule.opzione_id && rule.tipo_documento === tipoDocumento
+      );
+    }
+
+    function hasOpzioneDocumentRule(opzioneId, tipoDocumento) {
+      if (!opzioneId || !tipoDocumento) return false;
+      return getActiveDocumentRules().some((rule) =>
+        rule.opzione_id === opzioneId && rule.tipo_documento === tipoDocumento
+      );
+    }
+
+    function getCurrentDocumentRequirements() {
+      const offertaId = refs.offerta.value;
+      const opzioneId = refs.opzione.value;
+
+      return {
+        documento_identita: hasOffertaDocumentRule(offertaId, DOC_TYPES.DOCUMENTO_IDENTITA),
+        contratto: hasOffertaDocumentRule(offertaId, DOC_TYPES.CONTRATTO),
+        copia_bolletta: hasOffertaDocumentRule(offertaId, DOC_TYPES.COPIA_BOLLETTA),
+        copia_sim_mnp: hasOpzioneDocumentRule(opzioneId, DOC_TYPES.COPIA_SIM_MNP)
+      };
     }
 
     function shouldShowKolme(categoriaNome) {
@@ -2088,12 +2177,12 @@
       const categoriaNome = getCategoriaName();
       const offertaNome = getOffertaName();
       const opzioniDisponibili = filteredOpzioni();
-      const opzioneNome = getSelectedOpzione()?.nome_opzione || '';
       const reloadVisible = shouldShowReload(categoriaNome, offertaNome);
       const deviceVisible = shouldShowDevice(categoriaNome, offertaNome);
       const opzioneVisible = shouldShowOpzione(categoriaNome, opzioniDisponibili);
-      const mnpVisible = isMnpRequired(categoriaNome, opzioneNome);
-      const bollettaVisible = isCategory(categoriaNome, 'Energia');
+      const requirements = getCurrentDocumentRequirements();
+      const mnpVisible = requirements.copia_sim_mnp;
+      const bollettaVisible = requirements.copia_bolletta;
 
       refs.labelOfferta.textContent = isCategory(categoriaNome, 'Fisso') ? 'Tecnologia *' : 'Offerta *';
 
@@ -2144,9 +2233,11 @@
 
       refs.fieldFileMnp.classList.toggle('hidden', !mnpVisible);
       refs.fieldFileBolletta.classList.toggle('hidden', !bollettaVisible);
+      refs.fieldContrattoPdf.classList.toggle('hidden', !requirements.contratto);
 
-      if (!mnpVisible) clearInputFile(refs.fileCopiaSimMnp);
-      if (!bollettaVisible) clearInputFile(refs.fileCopiaBolletta);
+      if (!requirements.contratto) clearInputFile(refs.fileContrattoPdf);
+      if (!mnpVisible) clearInputFiles(refs.fileCopiaSimMnp);
+      if (!bollettaVisible) clearInputFiles(refs.fileCopiaBolletta);
 
       if (uiState.view !== 'wizard' || uiState.step !== 2) {
         refs.deviceSection.classList.add('hidden');
@@ -2202,8 +2293,7 @@
       const isAllarmi = isCategory(categoriaNome, 'Allarmi');
       const deviceVisible = shouldShowDevice(categoriaNome, offertaNome);
       const hasDevice = deviceVisible && refs.dispositivoAssociato.value === 'true';
-      const mnpRequired = isMnpRequired(categoriaNome, opzioneNome);
-      const bollettaVisible = isCategory(categoriaNome, 'Energia');
+      const documentRequirements = getCurrentDocumentRequirements();
 
       if (!categoria?.id) throw new Error('Seleziona una categoria');
       if (!offerta?.id) throw new Error('Seleziona una offerta valida');
@@ -2253,20 +2343,20 @@
       }
 
       const contrattoFile = selectedFiles.contratto || null;
-      const mnpFile = selectedFiles.sim_mnp || null;
-      const bollettaFile = selectedFiles.bolletta || null;
+      const mnpFiles = normalizeFilesArray(selectedFiles.sim_mnp);
+      const bollettaFiles = normalizeFilesArray(selectedFiles.bolletta);
 
       if (!skipFileValidation) {
-        if (!contrattoFile) {
+        if (documentRequirements.contratto && !contrattoFile) {
           throw new Error('Carica il PDF contratto per questo contratto');
         }
 
-        if (mnpRequired && !mnpFile) {
-          throw new Error('Per Mobile con opzione MNP devi caricare la copia SIM MNP');
+        if (documentRequirements.copia_sim_mnp && mnpFiles.length === 0) {
+          throw new Error('Per questa opzione devi caricare almeno una fotocopia SIM');
         }
 
-        if (bollettaVisible && !bollettaFile) {
-          throw new Error('Per Energia devi caricare la copia bolletta');
+        if (documentRequirements.copia_bolletta && bollettaFiles.length === 0) {
+          throw new Error('Per questa offerta devi caricare almeno una bolletta');
         }
       }
 
@@ -2309,12 +2399,14 @@
         },
         files: {
           contratto: contrattoFile,
-          sim_mnp: mnpFile,
-          bolletta: bollettaFile
+          sim_mnp: mnpFiles,
+          bolletta: bollettaFiles
         },
         flags: {
-          mnp_required: mnpRequired,
-          bolletta_required: bollettaVisible
+          documento_identita_required: documentRequirements.documento_identita,
+          contratto_required: documentRequirements.contratto,
+          sim_mnp_required: documentRequirements.copia_sim_mnp,
+          bolletta_required: documentRequirements.copia_bolletta
         }
       };
     }
@@ -2322,8 +2414,12 @@
     function renderCarrello() {
       refs.cartCount.textContent = String(state.cart.contratti.length);
       refs.cartBadgeTop.textContent = String(state.cart.contratti.length);
-      if (praticaFiles.documento_identita) {
-        refs.identityStatus.textContent = `caricato: ${praticaFiles.documento_identita.name}`;
+      if (Array.isArray(praticaFiles.documento_identita) && praticaFiles.documento_identita.length > 0) {
+        if (praticaFiles.documento_identita.length === 1) {
+          refs.identityStatus.textContent = `caricato: ${praticaFiles.documento_identita[0].name}`;
+        } else {
+          refs.identityStatus.textContent = `caricati: ${praticaFiles.documento_identita.length} file`;
+        }
       } else if (runtimeState.restoreNeedsFileReselection) {
         refs.identityStatus.textContent = 'da riselezionare dopo refresh';
       } else {
@@ -2357,20 +2453,23 @@
           } else if (item.file_meta?.contratto?.name) {
             docs.push(`contratto: ${item.file_meta.contratto.name} (da riselezionare)`);
           }
-          if (item.files?.sim_mnp) {
-            docs.push(`copia_sim_mnp: ${item.files.sim_mnp.name}`);
-          } else if (item.file_meta?.sim_mnp?.name) {
-            docs.push(`copia_sim_mnp: ${item.file_meta.sim_mnp.name} (da riselezionare)`);
+          const simFiles = Array.isArray(item.files?.sim_mnp) ? item.files.sim_mnp : [];
+          const bollettaFiles = Array.isArray(item.files?.bolletta) ? item.files.bolletta : [];
+
+          if (simFiles.length > 0) {
+            docs.push(`copia_sim_mnp: ${simFiles.length} file`);
+          } else if (Array.isArray(item.file_meta?.sim_mnp) && item.file_meta.sim_mnp.length > 0) {
+            docs.push(`copia_sim_mnp: ${item.file_meta.sim_mnp.length} file (da riselezionare)`);
           }
-          if (item.files?.bolletta) {
-            docs.push(`copia_bolletta: ${item.files.bolletta.name}`);
-          } else if (item.file_meta?.bolletta?.name) {
-            docs.push(`copia_bolletta: ${item.file_meta.bolletta.name} (da riselezionare)`);
+          if (bollettaFiles.length > 0) {
+            docs.push(`copia_bolletta: ${bollettaFiles.length} file`);
+          } else if (Array.isArray(item.file_meta?.bolletta) && item.file_meta.bolletta.length > 0) {
+            docs.push(`copia_bolletta: ${item.file_meta.bolletta.length} file (da riselezionare)`);
           }
 
           const chips = [];
           if (item.dispositivo_associato) chips.push('<span class="chip warn">Dispositivo Si</span>');
-          if (item.flags.mnp_required) chips.push('<span class="chip warn">MNP</span>');
+          if (item.flags.sim_mnp_required) chips.push('<span class="chip warn">Fotocopia SIM</span>');
           if (item.flags.bolletta_required) chips.push('<span class="chip warn">Bolletta</span>');
           if (docs.length > 0) chips.push('<span class="chip doc">Documenti caricati</span>');
 
@@ -2465,6 +2564,7 @@
       state.offerte = data.offerte || [];
       state.opzioni = data.opzioni || [];
       state.reload = data.reload || [];
+      state.documenti_regole = data.documenti_regole || [];
 
       if (state.categorie.length === 0) {
         throw new Error('Nessuna categoria attiva disponibile');
@@ -2551,30 +2651,42 @@
 
         const selectedContractFiles = {
           contratto: getInputFile(refs.fileContrattoPdf),
-          sim_mnp: getInputFile(refs.fileCopiaSimMnp),
-          bolletta: getInputFile(refs.fileCopiaBolletta)
+          sim_mnp: getInputFiles(refs.fileCopiaSimMnp),
+          bolletta: getInputFiles(refs.fileCopiaBolletta)
         };
+        const currentDocumentRequirements = getCurrentDocumentRequirements();
 
-        const selectedDocumentoIdentita = getInputFile(refs.fileDocumentoIdentita);
+        const selectedDocumentoIdentita = getInputFiles(refs.fileDocumentoIdentita);
 
-        if (!selectedContractFiles.contratto) {
+        if (currentDocumentRequirements.contratto && !selectedContractFiles.contratto) {
           throw new Error('Carica il PDF contratto per questo contratto');
         }
 
-        if (selectedDocumentoIdentita) {
-          assertValidFile(selectedDocumentoIdentita, 'Documento identita pratica');
+        if (selectedDocumentoIdentita.length > 0) {
+          selectedDocumentoIdentita.forEach((file, idx) => {
+            assertValidFile(file, `Documento identita pratica ${idx + 1}`);
+          });
         }
         if (selectedContractFiles.contratto) {
           assertValidFile(selectedContractFiles.contratto, 'PDF contratto');
         }
-        if (selectedContractFiles.sim_mnp) {
-          assertValidFile(selectedContractFiles.sim_mnp, 'Copia SIM MNP');
+        if (selectedContractFiles.sim_mnp.length > 0) {
+          selectedContractFiles.sim_mnp.forEach((file, idx) => {
+            assertValidFile(file, `Fotocopia SIM ${idx + 1}`);
+          });
         }
-        if (selectedContractFiles.bolletta) {
-          assertValidFile(selectedContractFiles.bolletta, 'Copia bolletta');
+        if (selectedContractFiles.bolletta.length > 0) {
+          selectedContractFiles.bolletta.forEach((file, idx) => {
+            assertValidFile(file, `Copia bolletta ${idx + 1}`);
+          });
         }
 
-        if (state.cart.contratti.length === 0 && !selectedDocumentoIdentita && !praticaFiles.documento_identita) {
+        if (
+          state.cart.contratti.length === 0 &&
+          getCurrentDocumentRequirements().documento_identita &&
+          selectedDocumentoIdentita.length === 0 &&
+          (!Array.isArray(praticaFiles.documento_identita) || praticaFiles.documento_identita.length === 0)
+        ) {
           throw new Error('Sul primo contratto devi caricare il documento identita della pratica');
         }
 
@@ -2582,7 +2694,7 @@
           tempId: runtimeState.editingTempId || null
         });
 
-        if (selectedDocumentoIdentita) {
+        if (selectedDocumentoIdentita.length > 0) {
           praticaFiles.documento_identita = selectedDocumentoIdentita;
           runtimeState.restoreNeedsFileReselection = false;
         }
@@ -2643,10 +2755,10 @@
       renderDynamicSections();
 
       setInputFile(refs.fileContrattoPdf, item.files?.contratto || null);
-      setInputFile(refs.fileCopiaSimMnp, item.files?.sim_mnp || null);
-      setInputFile(refs.fileCopiaBolletta, item.files?.bolletta || null);
-      if (praticaFiles.documento_identita) {
-        setInputFile(refs.fileDocumentoIdentita, praticaFiles.documento_identita);
+      setInputFiles(refs.fileCopiaSimMnp, item.files?.sim_mnp || []);
+      setInputFiles(refs.fileCopiaBolletta, item.files?.bolletta || []);
+      if (Array.isArray(praticaFiles.documento_identita) && praticaFiles.documento_identita.length > 0) {
+        setInputFiles(refs.fileDocumentoIdentita, praticaFiles.documento_identita);
       }
       updateUploadVisibility();
     }
@@ -2726,21 +2838,23 @@
         throw new Error('Aggiungi almeno un contratto al carrello prima di inviare');
       }
 
-      if (!praticaFiles.documento_identita) {
+      const identityRequiredByCart = state.cart.contratti.some((item) => item.flags?.documento_identita_required);
+      const identityFiles = Array.isArray(praticaFiles.documento_identita) ? praticaFiles.documento_identita : [];
+      if (identityRequiredByCart && identityFiles.length === 0) {
         throw new Error('Documento identita mancante: richiesto una sola volta per pratica');
       }
 
       state.cart.contratti.forEach((item, idx) => {
-        if (!item.files || !item.files.contratto) {
+        if (item.flags?.contratto_required && (!item.files || !item.files.contratto)) {
           throw new Error(`Contratto ${idx + 1}: PDF contratto mancante`);
         }
       });
 
       const contratti = state.cart.contratti.map((item, idx) => {
-        if (item.flags.mnp_required && !item.files.sim_mnp) {
-          throw new Error(`Contratto ${idx + 1}: copia SIM MNP mancante`);
+        if (item.flags.sim_mnp_required && (!Array.isArray(item.files.sim_mnp) || item.files.sim_mnp.length === 0)) {
+          throw new Error(`Contratto ${idx + 1}: fotocopia SIM mancante`);
         }
-        if (item.flags.bolletta_required && !item.files.bolletta) {
+        if (item.flags.bolletta_required && (!Array.isArray(item.files.bolletta) || item.files.bolletta.length === 0)) {
           throw new Error(`Contratto ${idx + 1}: copia bolletta mancante`);
         }
 
@@ -2807,42 +2921,51 @@
         const contractsByTempId = new Map((createResult.contratti || []).map((item) => [item.temp_id, item]));
         const firstContract = createResult.contratti?.[0] || null;
 
-        setMessage('Pratica creata. Upload documento identita...', 'info');
-        updateLoadingOverlay('Caricamento in corso', 'Upload documento identità...');
-        const identityFile = praticaFiles.documento_identita;
-
-        if (!(identityFile instanceof File)) {
-          throw new Error('Documento identità non valido o non più disponibile nel carrello');
+        const identityFiles = Array.isArray(praticaFiles.documento_identita) ? praticaFiles.documento_identita : [];
+        if (identityFiles.length > 0) {
+          setMessage('Pratica creata. Upload documento identita...', 'info');
+          updateLoadingOverlay('Caricamento in corso', 'Upload documento identità...');
         }
 
-        assertValidFile(identityFile, 'Documento identita');
+        for (let identityIndex = 0; identityIndex < identityFiles.length; identityIndex += 1) {
+          const identityFile = identityFiles[identityIndex];
+          assertValidFile(identityFile, `Documento identita ${identityIndex + 1}`);
+          const identityFileName = identityIndex === 0
+            ? 'documento_identita.pdf'
+            : `documento_identita_${identityIndex + 1}.pdf`;
 
-        const identityDebug = {
-          tipo_documento: 'documento_identita',
-          contratto_id: firstContract ? firstContract.contratto_id : null,
-          fileName: identityFile.name,
-          fileSize: identityFile.size,
-          fileType: identityFile.type,
-          pratica_id: createResult.pratica_id,
-          anagrafica_id: createResult.anagrafica_id,
-          storage_base_path: createResult.storage_base_path,
-          categoria_snapshot: null,
-          file_name: null
-        };
-        console.log('[UPLOAD DEBUG]', identityDebug);
-        uploadDebug.push(identityDebug);
+          const identityDebug = {
+            tipo_documento: 'documento_identita',
+            contratto_id: firstContract ? firstContract.contratto_id : null,
+            fileName: identityFile.name,
+            fileSize: identityFile.size,
+            fileType: identityFile.type,
+            pratica_id: createResult.pratica_id,
+            anagrafica_id: createResult.anagrafica_id,
+            storage_base_path: createResult.storage_base_path,
+            categoria_snapshot: null,
+            file_name: identityFileName
+          };
+          console.log('[UPLOAD DEBUG]', identityDebug);
+          uploadDebug.push(identityDebug);
 
-        const identityUpload = await uploadDocumentoOrTechnicalError({
-          file: identityFile,
-          pratica_id: createResult.pratica_id,
-          contratto_id: firstContract ? firstContract.contratto_id : null,
-          anagrafica_id: createResult.anagrafica_id,
-          tipo_documento: 'documento_identita',
-          storage_base_path: createResult.storage_base_path,
-          nome_cartella_storage: createResult.nome_cartella_storage
-        }, 'Errore upload documento identità');
+          const identityUpload = await uploadDocumentoOrTechnicalError({
+            file: identityFile,
+            pratica_id: createResult.pratica_id,
+            contratto_id: firstContract ? firstContract.contratto_id : null,
+            anagrafica_id: createResult.anagrafica_id,
+            tipo_documento: 'documento_identita',
+            file_name: identityFileName,
+            storage_base_path: createResult.storage_base_path,
+            nome_cartella_storage: createResult.nome_cartella_storage
+          }, 'Errore upload documento identità');
 
-        uploadResults.push({ tipo_documento: 'documento_identita', result: identityUpload });
+          uploadResults.push({
+            tipo_documento: 'documento_identita',
+            file_name: identityFileName,
+            result: identityUpload
+          });
+        }
 
         for (let idx = 0; idx < state.cart.contratti.length; idx += 1) {
           const cartItem = state.cart.contratti[idx];
@@ -2899,15 +3022,19 @@
             });
           }
 
-          if (cartItem.files.sim_mnp) {
-            assertValidFile(cartItem.files.sim_mnp, `Contratto ${idx + 1} copia SIM MNP`);
-            const simFileName = getProgressiveDocumentFileName(cartItem, state.cart.contratti, 'sim_mnp', 'copia_sim_mnp');
+          const simFiles = Array.isArray(cartItem.files.sim_mnp) ? cartItem.files.sim_mnp : [];
+          for (let simIndex = 0; simIndex < simFiles.length; simIndex += 1) {
+            const simFile = simFiles[simIndex];
+            assertValidFile(simFile, `Contratto ${idx + 1} fotocopia SIM ${simIndex + 1}`);
+            const simFileName = simIndex === 0
+              ? getProgressiveDocumentFileName(cartItem, state.cart.contratti, 'sim_mnp', 'copia_sim_mnp')
+              : `copia_sim_mnp_${idx + 1}_${simIndex + 1}.pdf`;
             const simDebug = {
               tipo_documento: 'copia_sim_mnp',
               contratto_id: created.contratto_id,
-              fileName: cartItem.files.sim_mnp.name,
-              fileSize: cartItem.files.sim_mnp.size,
-              fileType: cartItem.files.sim_mnp.type,
+              fileName: simFile.name,
+              fileSize: simFile.size,
+              fileType: simFile.type,
               pratica_id: createResult.pratica_id,
               anagrafica_id: createResult.anagrafica_id,
               storage_base_path: createResult.storage_base_path,
@@ -2916,10 +3043,10 @@
             };
             console.log('[UPLOAD DEBUG]', simDebug);
             uploadDebug.push(simDebug);
-            setMessage(`Upload copia SIM MNP ${idx + 1}/${state.cart.contratti.length}...`, 'info');
-            updateLoadingOverlay('Caricamento in corso', `Upload copia SIM MNP contratto ${idx + 1}...`);
+            setMessage(`Upload fotocopia SIM ${idx + 1}/${state.cart.contratti.length}...`, 'info');
+            updateLoadingOverlay('Caricamento in corso', `Upload fotocopia SIM contratto ${idx + 1}...`);
             const result = await uploadDocumentoOrTechnicalError({
-              file: cartItem.files.sim_mnp,
+              file: simFile,
               pratica_id: createResult.pratica_id,
               contratto_id: created.contratto_id,
               anagrafica_id: createResult.anagrafica_id,
@@ -2927,7 +3054,7 @@
               file_name: simFileName,
               storage_base_path: createResult.storage_base_path,
               nome_cartella_storage: createResult.nome_cartella_storage
-            }, `Errore upload copia SIM MNP contratto ${idx + 1}`);
+            }, `Errore upload fotocopia SIM contratto ${idx + 1}`);
 
             uploadResults.push({
               tipo_documento: 'copia_sim_mnp',
@@ -2937,15 +3064,19 @@
             });
           }
 
-          if (cartItem.files.bolletta) {
-            assertValidFile(cartItem.files.bolletta, `Contratto ${idx + 1} copia bolletta`);
-            const bollettaFileName = getProgressiveDocumentFileName(cartItem, state.cart.contratti, 'bolletta', 'copia_bolletta');
+          const bollettaFiles = Array.isArray(cartItem.files.bolletta) ? cartItem.files.bolletta : [];
+          for (let bollettaIndex = 0; bollettaIndex < bollettaFiles.length; bollettaIndex += 1) {
+            const bollettaFile = bollettaFiles[bollettaIndex];
+            assertValidFile(bollettaFile, `Contratto ${idx + 1} copia bolletta ${bollettaIndex + 1}`);
+            const bollettaFileName = bollettaIndex === 0
+              ? getProgressiveDocumentFileName(cartItem, state.cart.contratti, 'bolletta', 'copia_bolletta')
+              : `copia_bolletta_${idx + 1}_${bollettaIndex + 1}.pdf`;
             const bollettaDebug = {
               tipo_documento: 'copia_bolletta',
               contratto_id: created.contratto_id,
-              fileName: cartItem.files.bolletta.name,
-              fileSize: cartItem.files.bolletta.size,
-              fileType: cartItem.files.bolletta.type,
+              fileName: bollettaFile.name,
+              fileSize: bollettaFile.size,
+              fileType: bollettaFile.type,
               pratica_id: createResult.pratica_id,
               anagrafica_id: createResult.anagrafica_id,
               storage_base_path: createResult.storage_base_path,
@@ -2957,7 +3088,7 @@
             setMessage(`Upload copia bolletta ${idx + 1}/${state.cart.contratti.length}...`, 'info');
             updateLoadingOverlay('Caricamento in corso', `Upload copia bolletta contratto ${idx + 1}...`);
             const result = await uploadDocumentoOrTechnicalError({
-              file: cartItem.files.bolletta,
+              file: bollettaFile,
               pratica_id: createResult.pratica_id,
               contratto_id: created.contratto_id,
               anagrafica_id: createResult.anagrafica_id,
@@ -3063,11 +3194,11 @@
       if (runtimeState.isSubmitting) return true;
       if (runtimeState.editingTempId) return true;
       if (state.cart.contratti.length > 0) return true;
-      if (praticaFiles.documento_identita) return true;
-      if (getInputFile(refs.fileDocumentoIdentita)) return true;
+      if (Array.isArray(praticaFiles.documento_identita) && praticaFiles.documento_identita.length > 0) return true;
+      if (getInputFiles(refs.fileDocumentoIdentita).length > 0) return true;
       if (getInputFile(refs.fileContrattoPdf)) return true;
-      if (getInputFile(refs.fileCopiaSimMnp)) return true;
-      if (getInputFile(refs.fileCopiaBolletta)) return true;
+      if (getInputFiles(refs.fileCopiaSimMnp).length > 0) return true;
+      if (getInputFiles(refs.fileCopiaBolletta).length > 0) return true;
 
       const hasClienteData = [
         refs.cfPiva.value,
@@ -3094,19 +3225,32 @@
       };
     }
 
+    function getFileMetaArray(value) {
+      if (!Array.isArray(value)) return [];
+      return value
+        .map((item) => getFileMeta(item))
+        .filter(Boolean);
+    }
+
     function serializeContractForDraft(item) {
+      const currentSimMeta = getFileMetaArray(item?.files?.sim_mnp);
+      const currentBollettaMeta = getFileMetaArray(item?.files?.bolletta);
       const fileMeta = {
         contratto: getFileMeta(item?.files?.contratto) || item?.file_meta?.contratto || null,
-        sim_mnp: getFileMeta(item?.files?.sim_mnp) || item?.file_meta?.sim_mnp || null,
-        bolletta: getFileMeta(item?.files?.bolletta) || item?.file_meta?.bolletta || null
+        sim_mnp: currentSimMeta.length > 0
+          ? currentSimMeta
+          : (Array.isArray(item?.file_meta?.sim_mnp) ? item.file_meta.sim_mnp : []),
+        bolletta: currentBollettaMeta.length > 0
+          ? currentBollettaMeta
+          : (Array.isArray(item?.file_meta?.bolletta) ? item.file_meta.bolletta : [])
       };
 
       return {
         ...item,
         files: {
           contratto: null,
-          sim_mnp: null,
-          bolletta: null
+          sim_mnp: [],
+          bolletta: []
         },
         file_meta: fileMeta
       };
@@ -3149,7 +3293,7 @@
         },
         contract_form: getContractFormDraft(),
         pratica_files: {
-          documento_identita: getFileMeta(praticaFiles.documento_identita)
+          documento_identita: getFileMetaArray(praticaFiles.documento_identita)
         },
         cart: {
           cliente: state.cart.cliente ? { ...state.cart.cliente } : null,
@@ -3262,19 +3406,20 @@
           ...item,
           files: {
             contratto: null,
-            sim_mnp: null,
-            bolletta: null
+            sim_mnp: [],
+            bolletta: []
           },
           file_meta: {
             contratto: item?.file_meta?.contratto || null,
-            sim_mnp: item?.file_meta?.sim_mnp || null,
-            bolletta: item?.file_meta?.bolletta || null
+            sim_mnp: Array.isArray(item?.file_meta?.sim_mnp) ? item.file_meta.sim_mnp : [],
+            bolletta: Array.isArray(item?.file_meta?.bolletta) ? item.file_meta.bolletta : []
           }
         }));
 
-        praticaFiles.documento_identita = null;
+        praticaFiles.documento_identita = [];
         runtimeState.restoreNeedsFileReselection = Boolean(
-          draft?.pratica_files?.documento_identita || state.cart.contratti.length > 0
+          (Array.isArray(draft?.pratica_files?.documento_identita) && draft.pratica_files.documento_identita.length > 0) ||
+          state.cart.contratti.length > 0
         );
 
         runtimeState.editingTempId = draft.editing_temp_id || null;

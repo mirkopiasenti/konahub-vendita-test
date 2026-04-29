@@ -8,6 +8,19 @@ const CORS_HEADERS = {
 };
 
 const CLUSTER_AMMESSI = new Set(['Consumer', 'Business']);
+const DOC_TIPO = {
+  DOCUMENTO_IDENTITA: 'documento_identita',
+  CONTRATTO: 'contratto',
+  COPIA_BOLLETTA: 'copia_bolletta',
+  COPIA_SIM_MNP: 'copia_sim_mnp'
+};
+const DOC_TIPI_OFFERTA = [
+  DOC_TIPO.DOCUMENTO_IDENTITA,
+  DOC_TIPO.CONTRATTO,
+  DOC_TIPO.COPIA_BOLLETTA
+];
+const DOC_TIPI_OPZIONE = [DOC_TIPO.COPIA_SIM_MNP];
+const DOC_CAMPO_CONDIZIONE_ADMIN = 'admin_config';
 
 function response(statusCode, payload) {
   return {
@@ -86,6 +99,179 @@ function readableError(error, fallback = 'Errore configurazione vendita') {
   return error.message || error.error_description || error.details || fallback;
 }
 
+function normalizeDocumentSelectionOfferta(payload = {}) {
+  return {
+    documento_identita: parseBoolean(payload.doc_documento_identita, false) === true,
+    contratto: parseBoolean(payload.doc_contratto, true) === true,
+    copia_bolletta: parseBoolean(payload.doc_copia_bolletta, false) === true
+  };
+}
+
+function normalizeDocumentSelectionOpzione(payload = {}) {
+  return {
+    copia_sim_mnp: parseBoolean(payload.doc_copia_sim_mnp, false) === true
+  };
+}
+
+function getOffertaDocumentRulesMap(documentSelection = {}) {
+  const rules = [];
+
+  if (documentSelection.documento_identita) {
+    rules.push({
+      tipo_documento: DOC_TIPO.DOCUMENTO_IDENTITA,
+      obbligatorio: true
+    });
+  }
+
+  if (documentSelection.contratto) {
+    rules.push({
+      tipo_documento: DOC_TIPO.CONTRATTO,
+      obbligatorio: true
+    });
+  }
+
+  if (documentSelection.copia_bolletta) {
+    rules.push({
+      tipo_documento: DOC_TIPO.COPIA_BOLLETTA,
+      obbligatorio: true
+    });
+  }
+
+  return rules;
+}
+
+function getOpzioneDocumentRulesMap(documentSelection = {}) {
+  const rules = [];
+
+  if (documentSelection.copia_sim_mnp) {
+    rules.push({
+      tipo_documento: DOC_TIPO.COPIA_SIM_MNP,
+      obbligatorio: true
+    });
+  }
+
+  return rules;
+}
+
+function safeInFilterValues(values = []) {
+  return values.filter(Boolean);
+}
+
+async function replaceOffertaDocumentRules(supabase, offertaRecord, documentSelection) {
+  if (!offertaRecord?.id) return;
+
+  const managedTypes = safeInFilterValues(DOC_TIPI_OFFERTA);
+  if (managedTypes.length > 0) {
+    const { error: deleteError } = await supabase
+      .from('vendita_documenti_regole')
+      .delete()
+      .eq('offerta_id', offertaRecord.id)
+      .in('tipo_documento', managedTypes);
+
+    if (deleteError) {
+      throw new Error(readableError(deleteError, 'Errore pulizia regole documentali offerta'));
+    }
+  }
+
+  const ruleRows = getOffertaDocumentRulesMap(documentSelection).map((rule) => ({
+    categoria_id: offertaRecord.categoria_id,
+    offerta_id: offertaRecord.id,
+    opzione_id: null,
+    campo_condizione: DOC_CAMPO_CONDIZIONE_ADMIN,
+    valore_condizione: 'true',
+    tipo_documento: rule.tipo_documento,
+    obbligatorio: rule.obbligatorio,
+    attiva: true
+  }));
+
+  if (ruleRows.length === 0) return;
+
+  const { error: insertError } = await supabase
+    .from('vendita_documenti_regole')
+    .insert(ruleRows);
+
+  if (insertError) {
+    throw new Error(readableError(insertError, 'Errore salvataggio regole documentali offerta'));
+  }
+}
+
+async function replaceOpzioneDocumentRules(supabase, opzioneRecord, documentSelection) {
+  if (!opzioneRecord?.id) return;
+
+  const managedTypes = safeInFilterValues(DOC_TIPI_OPZIONE);
+  if (managedTypes.length > 0) {
+    const { error: deleteError } = await supabase
+      .from('vendita_documenti_regole')
+      .delete()
+      .eq('opzione_id', opzioneRecord.id)
+      .in('tipo_documento', managedTypes);
+
+    if (deleteError) {
+      throw new Error(readableError(deleteError, 'Errore pulizia regole documentali opzione'));
+    }
+  }
+
+  const ruleRows = getOpzioneDocumentRulesMap(documentSelection).map((rule) => ({
+    categoria_id: opzioneRecord.categoria_id,
+    offerta_id: null,
+    opzione_id: opzioneRecord.id,
+    campo_condizione: DOC_CAMPO_CONDIZIONE_ADMIN,
+    valore_condizione: 'true',
+    tipo_documento: rule.tipo_documento,
+    obbligatorio: rule.obbligatorio,
+    attiva: true
+  }));
+
+  if (ruleRows.length === 0) return;
+
+  const { error: insertError } = await supabase
+    .from('vendita_documenti_regole')
+    .insert(ruleRows);
+
+  if (insertError) {
+    throw new Error(readableError(insertError, 'Errore salvataggio regole documentali opzione'));
+  }
+}
+
+function enrichWithDocumentRules(config) {
+  const rules = Array.isArray(config?.documenti_regole) ? config.documenti_regole : [];
+
+  const offertaMap = new Map();
+  const opzioneMap = new Map();
+
+  rules.forEach((rule) => {
+    if (!rule?.attiva) return;
+    const tipoDocumento = cleanString(rule.tipo_documento);
+    if (!tipoDocumento) return;
+
+    if (rule.offerta_id) {
+      if (!offertaMap.has(rule.offerta_id)) offertaMap.set(rule.offerta_id, new Set());
+      offertaMap.get(rule.offerta_id).add(tipoDocumento);
+    }
+
+    if (rule.opzione_id) {
+      if (!opzioneMap.has(rule.opzione_id)) opzioneMap.set(rule.opzione_id, new Set());
+      opzioneMap.get(rule.opzione_id).add(tipoDocumento);
+    }
+  });
+
+  const offerte = (config.offerte || []).map((offerta) => ({
+    ...offerta,
+    documenti_attivi: Array.from(offertaMap.get(offerta.id) || [])
+  }));
+
+  const opzioni = (config.opzioni || []).map((opzione) => ({
+    ...opzione,
+    documenti_attivi: Array.from(opzioneMap.get(opzione.id) || [])
+  }));
+
+  return {
+    ...config,
+    offerte,
+    opzioni
+  };
+}
+
 function getSupabaseClient() {
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -121,7 +307,8 @@ async function loadFullConfig(supabase) {
       .order('nome', { ascending: true }),
     supabase
       .from('vendita_documenti_regole')
-      .select('*')
+      .select('id, categoria_id, offerta_id, opzione_id, campo_condizione, valore_condizione, tipo_documento, obbligatorio, attiva, created_at, updated_at')
+      .eq('attiva', true)
       .order('created_at', { ascending: false })
   ]);
 
@@ -136,13 +323,15 @@ async function loadFullConfig(supabase) {
     throw new Error(readableError(firstError, 'Errore lettura configurazione vendita'));
   }
 
-  return {
+  const config = {
     categorie: categorieRes.data || [],
     offerte: offerteRes.data || [],
     opzioni: opzioniRes.data || [],
     reload: reloadRes.data || [],
     documenti_regole: regoleRes.data || []
   };
+
+  return enrichWithDocumentRules(config);
 }
 
 function assertRequired(value, fieldName) {
@@ -181,6 +370,9 @@ async function createOfferta(supabase, payload) {
 
   if (error) throw new Error(readableError(error, 'Errore creazione offerta'));
 
+  const documentSelection = normalizeDocumentSelectionOfferta(payload);
+  await replaceOffertaDocumentRules(supabase, data, documentSelection);
+
   return data;
 }
 
@@ -216,6 +408,9 @@ async function updateOfferta(supabase, payload) {
 
   if (error) throw new Error(readableError(error, 'Errore aggiornamento offerta'));
   if (!data) throw new Error('Offerta non trovata');
+
+  const documentSelection = normalizeDocumentSelectionOfferta(payload);
+  await replaceOffertaDocumentRules(supabase, data, documentSelection);
 
   return data;
 }
@@ -274,6 +469,9 @@ async function createOpzione(supabase, payload) {
 
   if (error) throw new Error(readableError(error, 'Errore creazione opzione'));
 
+  const documentSelection = normalizeDocumentSelectionOpzione(payload);
+  await replaceOpzioneDocumentRules(supabase, data, documentSelection);
+
   return data;
 }
 
@@ -311,6 +509,9 @@ async function updateOpzione(supabase, payload) {
 
   if (error) throw new Error(readableError(error, 'Errore aggiornamento opzione'));
   if (!data) throw new Error('Opzione non trovata');
+
+  const documentSelection = normalizeDocumentSelectionOpzione(payload);
+  await replaceOpzioneDocumentRules(supabase, data, documentSelection);
 
   return data;
 }
