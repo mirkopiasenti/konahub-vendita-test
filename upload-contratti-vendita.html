@@ -1099,6 +1099,7 @@
         <div class="cart-toolbar">
           <button id="btnBackToStep2" type="button" class="ghost">Aggiungi altro contratto</button>
           <div class="cart-toolbar-right">
+            <button id="btnNuovaPratica" type="button" class="ghost">Nuova pratica</button>
             <button id="btnSvuotaCarrello" type="button" class="secondary">Svuota carrello</button>
             <button id="btnInviaPratica" type="button">Invia pratica</button>
           </div>
@@ -1246,6 +1247,7 @@
       btnOpenCarrello: document.getElementById('btnOpenCarrello'),
       btnOpenCarrelloTop: document.getElementById('btnOpenCarrelloTop'),
       btnBackToStep2: document.getElementById('btnBackToStep2'),
+      btnNuovaPratica: document.getElementById('btnNuovaPratica'),
       btnStep1Next: document.getElementById('btnStep1Next'),
       btnStep2Back: document.getElementById('btnStep2Back'),
       btnStep2Next: document.getElementById('btnStep2Next'),
@@ -1593,6 +1595,56 @@
       renderOverlayTechnical('');
       setOverlayActions({
         primary: { label: 'Chiudi', onClick: () => hideLoadingOverlay() }
+      });
+      refs.loadingOverlay.classList.remove('hidden');
+    }
+
+    function showLookupOutcomeOverlay(found) {
+      const isFound = Boolean(found);
+      refs.loadingTitle.textContent = isFound ? 'Anagrafica trovata' : 'Anagrafica non trovata';
+      refs.loadingText.textContent = isFound
+        ? 'Verifica se i dati sono corretti'
+        : 'Procedi con l’inserimento dei dati';
+      refs.loadingSpinner.classList.add('hidden');
+      refs.loadingIcon.textContent = isFound ? '✓' : 'i';
+      refs.loadingIcon.classList.remove('hidden');
+      refs.loadingIcon.classList.toggle('success', isFound);
+      refs.loadingIcon.classList.remove('error');
+      renderOverlaySummary([]);
+      renderOverlayTechnical('');
+      setOverlayActions({
+        primary: {
+          label: 'Continua',
+          onClick: () => hideLoadingOverlay()
+        }
+      });
+      refs.loadingOverlay.classList.remove('hidden');
+    }
+
+    function showConfirmOverlay({ title, text, confirmLabel = 'Conferma', cancelLabel = 'Annulla', onConfirm, onCancel }) {
+      refs.loadingTitle.textContent = title || 'Conferma';
+      refs.loadingText.textContent = text || '';
+      refs.loadingSpinner.classList.add('hidden');
+      refs.loadingIcon.textContent = '!';
+      refs.loadingIcon.classList.remove('hidden');
+      refs.loadingIcon.classList.remove('success', 'error');
+      renderOverlaySummary([]);
+      renderOverlayTechnical('');
+      setOverlayActions({
+        secondary: {
+          label: cancelLabel,
+          onClick: () => {
+            hideLoadingOverlay();
+            if (typeof onCancel === 'function') onCancel();
+          }
+        },
+        primary: {
+          label: confirmLabel,
+          onClick: () => {
+            hideLoadingOverlay();
+            if (typeof onConfirm === 'function') onConfirm();
+          }
+        }
       });
       refs.loadingOverlay.classList.remove('hidden');
     }
@@ -2444,7 +2496,6 @@
 
       runtimeState.search.inProgress = true;
       runtimeState.search.lastRequestedCfPiva = cfPiva;
-      let completed = false;
       showLoadingOverlay('Ricerca anagrafica in corso', 'Attendere...');
       setMessage('Ricerca anagrafica in corso...', 'info');
       markTechnicalChecking('Verifica...');
@@ -2456,11 +2507,11 @@
         );
 
         if (!data.found) {
-          completed = true;
           runtimeState.search.lastCompletedCfPiva = cfPiva;
           setMessage('Cliente non trovato: puoi compilare manualmente i campi', 'info');
           markTechnicalConnected('Connesso');
           queueDraftSave();
+          showLookupOutcomeOverlay(false);
           return true;
         }
 
@@ -2477,11 +2528,11 @@
         renderOfferte();
         renderOpzioni();
         renderDynamicSections();
-        completed = true;
         runtimeState.search.lastCompletedCfPiva = cfPiva;
         setMessage('Cliente trovato e campi compilati. Puoi modificare i dati prima di inviare.', 'ok');
         markTechnicalConnected('Connesso');
         queueDraftSave();
+        showLookupOutcomeOverlay(true);
         return true;
       } catch (error) {
         markTechnicalError('Errore');
@@ -2489,9 +2540,6 @@
         throw error;
       } finally {
         runtimeState.search.inProgress = false;
-        if (completed) {
-          hideLoadingOverlay();
-        }
       }
     }
 
@@ -2655,6 +2703,19 @@
       renderWizardLayout();
       setMessage('Carrello svuotato', 'info');
       queueDraftSave();
+    }
+
+    function startNuovaPraticaFromCart() {
+      showConfirmOverlay({
+        title: 'Avviare una nuova pratica?',
+        text: 'La pratica attuale non inviata verrà cancellata.',
+        cancelLabel: 'Annulla',
+        confirmLabel: 'Conferma',
+        onConfirm: () => {
+          resetFullPracticeForm();
+          setMessage('Nuova pratica pronta', 'info');
+        }
+      });
     }
 
     function buildInvioPayload() {
@@ -3338,6 +3399,7 @@
     refs.btnOpenCarrello.addEventListener('click', () => addContrattoToCart({ goToCart: true }));
     refs.btnOpenCarrelloTop.addEventListener('click', openCartView);
     refs.btnBackToStep2.addEventListener('click', () => goToStep(2));
+    refs.btnNuovaPratica.addEventListener('click', startNuovaPraticaFromCart);
     refs.btnSvuotaCarrello.addEventListener('click', clearCart);
     refs.btnInviaPratica.addEventListener('click', inviaPratica);
     refs.loadingCloseBtn.addEventListener('click', () => handleOverlayAction('primary'));
