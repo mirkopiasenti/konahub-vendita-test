@@ -1162,6 +1162,8 @@
       opzioni: [],
       reload: [],
       documenti_regole: [],
+      offerte_opzioni: [],
+      offerte_reload: [],
       cart: {
         cliente: null,
         contratti: []
@@ -1959,6 +1961,22 @@
       return fragments.some((fragment) => normalized.includes(normalizeText(fragment)));
     }
 
+    function getLinkedOpzioniIdsForOfferta(offertaId) {
+      if (!offertaId) return [];
+      const rows = (state.offerte_opzioni || [])
+        .filter((row) => row?.offerta_id === offertaId && row?.opzione_id)
+        .sort((a, b) => Number(a.ordine || 0) - Number(b.ordine || 0));
+      return Array.from(new Set(rows.map((row) => row.opzione_id)));
+    }
+
+    function getLinkedReloadIdsForOfferta(offertaId) {
+      if (!offertaId) return [];
+      const rows = (state.offerte_reload || [])
+        .filter((row) => row?.offerta_id === offertaId && row?.reload_id)
+        .sort((a, b) => Number(a.ordine || 0) - Number(b.ordine || 0));
+      return Array.from(new Set(rows.map((row) => row.reload_id)));
+    }
+
     function filteredOfferte() {
       const categoriaId = refs.categoria.value;
       const cluster = refs.cluster.value;
@@ -1971,16 +1989,24 @@
     }
 
     function filteredOpzioni() {
-      const categoriaId = refs.categoria.value;
       const offertaId = refs.offerta.value;
-      const cluster = refs.cluster.value;
+      if (!offertaId) return [];
+      const linkedIds = getLinkedOpzioniIdsForOfferta(offertaId);
+      if (linkedIds.length === 0) return [];
+      const allowed = new Set(linkedIds);
+      return state.opzioni.filter((row) => allowed.has(row.id));
+    }
 
-      return state.opzioni.filter((row) => {
-        const categoriaOk = !row.categoria_id || row.categoria_id === categoriaId;
-        const offertaOk = !row.offerta_id || row.offerta_id === offertaId;
-        const clusterOk = !row.cluster_cliente || row.cluster_cliente === cluster;
-        return categoriaOk && offertaOk && clusterOk;
-      });
+    function filteredReload() {
+      const offertaId = refs.offerta.value;
+      const linkedIds = getLinkedReloadIdsForOfferta(offertaId);
+
+      if (linkedIds.length > 0) {
+        const allowed = new Set(linkedIds);
+        return state.reload.filter((row) => allowed.has(row.id));
+      }
+
+      return [];
     }
 
     function renderCategorie() {
@@ -2022,9 +2048,16 @@
     }
 
     function renderReload() {
+      const currentValue = refs.reload.value;
+      const rows = filteredReload();
+
       refs.reload.innerHTML = [optionHtml('', 'Nessun reload')]
-        .concat(state.reload.map((item) => optionHtml(item.id, item.nome || item.id)))
+        .concat(rows.map((item) => optionHtml(item.id, item.nome || item.id)))
         .join('');
+
+      if (!rows.some((item) => item.id === currentValue)) {
+        refs.reload.value = '';
+      }
     }
 
     function shouldShowReload(categoriaNome, offertaNome) {
@@ -2052,9 +2085,7 @@
     }
 
     function shouldShowOpzione(categoriaNome, availableOptions) {
-      if (isCategory(categoriaNome, 'Mobile')) return true;
-      if (isCategory(categoriaNome, 'Customer Base')) return availableOptions.length > 0;
-      return false;
+      return availableOptions.length > 0;
     }
 
     function getActiveDocumentRules() {
@@ -2091,12 +2122,20 @@
       return isCategory(categoriaNome, 'Mobile') || isCategory(categoriaNome, 'Customer Base');
     }
 
+    function getPuntiBase(record) {
+      return toNumber(record?.punti_base, toNumber(record?.punteggio_gara, 0));
+    }
+
+    function getPuntiExtraPiva(record) {
+      return toNumber(record?.punti_extra_piva, toNumber(record?.punteggio_extra_gara, 0));
+    }
+
     function updateScorePreview() {
       const offerta = getSelectedOfferta();
       const opzione = getSelectedOpzione();
 
-      const gara = toNumber(offerta?.punteggio_gara, 0) + toNumber(opzione?.punteggio_gara, 0);
-      const extra = toNumber(offerta?.punteggio_extra_gara, 0) + toNumber(opzione?.punteggio_extra_gara, 0);
+      const gara = getPuntiBase(offerta) + getPuntiBase(opzione);
+      const extra = getPuntiExtraPiva(offerta) + getPuntiExtraPiva(opzione);
 
       return {
         punteggio_gara: Number(gara.toFixed(2)),
@@ -2177,7 +2216,9 @@
       const categoriaNome = getCategoriaName();
       const offertaNome = getOffertaName();
       const opzioniDisponibili = filteredOpzioni();
-      const reloadVisible = shouldShowReload(categoriaNome, offertaNome);
+      renderReload();
+      const reloadDisponibili = filteredReload();
+      const reloadVisible = reloadDisponibili.length > 0;
       const deviceVisible = shouldShowDevice(categoriaNome, offertaNome);
       const opzioneVisible = shouldShowOpzione(categoriaNome, opzioniDisponibili);
       const requirements = getCurrentDocumentRequirements();
@@ -2360,8 +2401,8 @@
         }
       }
 
-      const punteggioGara = toNumber(offerta.punteggio_gara, 0) + toNumber(opzione?.punteggio_gara, 0);
-      const punteggioExtra = toNumber(offerta.punteggio_extra_gara, 0) + toNumber(opzione?.punteggio_extra_gara, 0);
+      const punteggioGara = getPuntiBase(offerta) + getPuntiBase(opzione);
+      const punteggioExtra = getPuntiExtraPiva(offerta) + getPuntiExtraPiva(opzione);
 
       return {
         temp_id: options.tempId || `temp_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
@@ -2565,6 +2606,8 @@
       state.opzioni = data.opzioni || [];
       state.reload = data.reload || [];
       state.documenti_regole = data.documenti_regole || [];
+      state.offerte_opzioni = data.offerte_opzioni || [];
+      state.offerte_reload = data.offerte_reload || [];
 
       if (state.categorie.length === 0) {
         throw new Error('Nessuna categoria attiva disponibile');
@@ -3156,17 +3199,20 @@
     refs.cluster.addEventListener('change', () => {
       renderOfferte();
       renderOpzioni();
+      renderReload();
       renderDynamicSections();
     });
 
     refs.categoria.addEventListener('change', () => {
       renderOfferte();
       renderOpzioni();
+      renderReload();
       renderDynamicSections();
     });
 
     refs.offerta.addEventListener('change', () => {
       renderOpzioni();
+      renderReload();
       renderDynamicSections();
     });
 

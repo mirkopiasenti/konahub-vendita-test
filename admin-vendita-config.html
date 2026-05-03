@@ -31,7 +31,7 @@
     }
 
     .container {
-      width: min(1280px, 95vw);
+      width: min(1320px, 95vw);
       margin: 24px auto 36px;
       display: grid;
       gap: 16px;
@@ -110,6 +110,10 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .field {
@@ -258,6 +262,30 @@
       cursor: pointer;
     }
 
+    .association-box {
+      border: 1px solid #e5eaf1;
+      border-radius: 12px;
+      background: #fcfdff;
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .association-box h4 {
+      margin: 0;
+      font-size: 13px;
+      color: #334155;
+    }
+
+    .association-list {
+      display: grid;
+      gap: 8px;
+      max-height: 210px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
     .table-wrap {
       width: 100%;
       overflow: auto;
@@ -326,6 +354,12 @@
       border-color: #fed7aa;
     }
 
+    .chip.assoc {
+      background: #eef2ff;
+      color: #3730a3;
+      border-color: #c7d2fe;
+    }
+
     .table-actions {
       display: flex;
       gap: 6px;
@@ -345,6 +379,7 @@
 
     @media (max-width: 760px) {
       .grid,
+      .grid.two,
       .checkbox-grid {
         grid-template-columns: 1fr;
       }
@@ -356,7 +391,7 @@
     <header class="header">
       <div>
         <h1>Admin Configurazione Vendita</h1>
-        <p>Gestione categorie, offerte, opzioni, reload e documenti richiesti</p>
+        <p>Cataloghi opzioni/reload e associazioni dirette nella scheda offerta</p>
       </div>
       <div class="header-actions">
         <button id="btnLoad" type="button">Ricarica configurazione</button>
@@ -386,7 +421,7 @@
 
       <section class="card">
         <h2>Offerte</h2>
-        <p class="subtle">Crea o aggiorna offerte e definisci i documenti richiesti per offerta.</p>
+        <p class="subtle">L'offerta seleziona direttamente quali opzioni e quali reload sono disponibili.</p>
 
         <form id="formOfferta" class="row">
           <input type="hidden" id="offerta_id">
@@ -423,13 +458,13 @@
             </div>
 
             <div class="field">
-              <label for="offerta_punteggio_gara">Punteggio Gara *</label>
-              <input id="offerta_punteggio_gara" type="number" step="0.01" required value="0">
+              <label for="offerta_punti_base">Punti Base *</label>
+              <input id="offerta_punti_base" type="number" step="0.01" required value="0">
             </div>
 
             <div class="field">
-              <label for="offerta_punteggio_extra_gara">Punteggio Extra Gara</label>
-              <input id="offerta_punteggio_extra_gara" type="number" step="0.01" placeholder="0">
+              <label for="offerta_punti_extra_piva">Punti Extra P.iva</label>
+              <input id="offerta_punti_extra_piva" type="number" step="0.01" placeholder="0">
             </div>
           </div>
 
@@ -451,6 +486,17 @@
             </div>
           </div>
 
+          <div class="grid two">
+            <div class="association-box">
+              <h4>Opzioni disponibili</h4>
+              <div id="offertaOpzioniChecklist" class="association-list"></div>
+            </div>
+            <div class="association-box">
+              <h4>Reload disponibili</h4>
+              <div id="offertaReloadChecklist" class="association-list"></div>
+            </div>
+          </div>
+
           <div class="actions">
             <button type="submit">Salva offerta</button>
             <button type="button" id="btnResetOfferta" class="secondary">Nuova offerta</button>
@@ -467,8 +513,10 @@
                 <th>Categoria</th>
                 <th>Cluster</th>
                 <th>Nome offerta</th>
-                <th>P. Gara</th>
-                <th>P. Extra</th>
+                <th>Punti Base</th>
+                <th>Punti Extra P.iva</th>
+                <th>Opzioni</th>
+                <th>Reload</th>
                 <th>Documenti</th>
                 <th>Stato</th>
                 <th>Azioni</th>
@@ -480,38 +528,30 @@
       </section>
 
       <section class="card">
-        <h2>Opzioni</h2>
-        <p class="subtle">Crea o aggiorna opzioni e definisci la richiesta Fotocopia SIM.</p>
+        <h2>Opzioni (catalogo)</h2>
+        <p class="subtle">Catalogo semplice: i punti sono intrinseci e sempre uguali.</p>
 
         <form id="formOpzione" class="row">
           <input type="hidden" id="opzione_id">
           <div class="grid">
-            <div class="field">
-              <label for="opzione_categoria_id">Categoria *</label>
-              <select id="opzione_categoria_id" required></select>
+            <div class="field full">
+              <label for="opzione_nome">Nome opzione *</label>
+              <input id="opzione_nome" required>
             </div>
 
             <div class="field">
-              <label for="opzione_offerta_id">Offerta *</label>
-              <select id="opzione_offerta_id" required></select>
+              <label for="opzione_punti_base">Punti Base *</label>
+              <input id="opzione_punti_base" type="number" step="0.01" required value="0">
             </div>
 
             <div class="field">
-              <label for="opzione_cluster">Cluster cliente</label>
-              <select id="opzione_cluster">
-                <option value="Consumer">Consumer</option>
-                <option value="Business">Business</option>
-              </select>
+              <label for="opzione_punti_extra_piva">Punti Extra P.iva</label>
+              <input id="opzione_punti_extra_piva" type="number" step="0.01" placeholder="0">
             </div>
 
             <div class="field">
-              <label for="opzione_punteggio_gara">Punteggio Gara *</label>
-              <input id="opzione_punteggio_gara" type="number" step="0.01" required value="0">
-            </div>
-
-            <div class="field">
-              <label for="opzione_punteggio_extra_gara">Punteggio Extra Gara</label>
-              <input id="opzione_punteggio_extra_gara" type="number" step="0.01" placeholder="0">
+              <label for="opzione_ordine">Ordine</label>
+              <input id="opzione_ordine" type="number" step="1" value="0">
             </div>
 
             <div class="field">
@@ -520,11 +560,6 @@
                 <option value="true">Attiva</option>
                 <option value="false">Non attiva</option>
               </select>
-            </div>
-
-            <div class="field full">
-              <label for="opzione_nome">Nome opzione *</label>
-              <input id="opzione_nome" required>
             </div>
 
             <div class="field full">
@@ -556,12 +591,10 @@
           <table>
             <thead>
               <tr>
-                <th>Categoria</th>
-                <th>Offerta</th>
-                <th>Cluster</th>
                 <th>Nome opzione</th>
-                <th>P. Gara</th>
-                <th>P. Extra</th>
+                <th>Punti Base</th>
+                <th>Punti Extra P.iva</th>
+                <th>Ordine</th>
                 <th>Documenti</th>
                 <th>Stato</th>
                 <th>Azioni</th>
@@ -573,14 +606,25 @@
       </section>
 
       <section class="card">
-        <h2>Reload</h2>
-        <p class="subtle">Gestione voci reload attive/inattive.</p>
+        <h2>Reload (catalogo)</h2>
+        <p class="subtle">Catalogo semplice: punti intrinseci e associazione alle offerte via checkbox.</p>
+
         <form id="formReload" class="row">
           <input type="hidden" id="reload_id">
           <div class="grid">
-            <div class="field">
-              <label for="reload_nome">Nome *</label>
+            <div class="field full">
+              <label for="reload_nome">Nome reload *</label>
               <input id="reload_nome" required>
+            </div>
+
+            <div class="field">
+              <label for="reload_punti_base">Punti Base *</label>
+              <input id="reload_punti_base" type="number" step="0.01" required value="0">
+            </div>
+
+            <div class="field">
+              <label for="reload_punti_extra_piva">Punti Extra P.iva</label>
+              <input id="reload_punti_extra_piva" type="number" step="0.01" placeholder="0">
             </div>
 
             <div class="field">
@@ -610,7 +654,9 @@
           <table>
             <thead>
               <tr>
-                <th>Nome</th>
+                <th>Nome reload</th>
+                <th>Punti Base</th>
+                <th>Punti Extra P.iva</th>
                 <th>Ordine</th>
                 <th>Stato</th>
                 <th>Azioni</th>
@@ -644,11 +690,12 @@
       offerte: [],
       opzioni: [],
       reload: [],
-      documenti_regole: []
+      documenti_regole: [],
+      offerte_opzioni: [],
+      offerte_reload: []
     };
 
     const messageBox = document.getElementById('message');
-
     const tbodyCategorie = document.getElementById('tbodyCategorie');
     const tbodyOfferte = document.getElementById('tbodyOfferte');
     const tbodyOpzioni = document.getElementById('tbodyOpzioni');
@@ -659,26 +706,28 @@
     const offertaCluster = document.getElementById('offerta_cluster');
     const offertaNome = document.getElementById('offerta_nome');
     const offertaDescrizione = document.getElementById('offerta_descrizione');
-    const offertaPunteggioGara = document.getElementById('offerta_punteggio_gara');
-    const offertaPunteggioExtraGara = document.getElementById('offerta_punteggio_extra_gara');
+    const offertaPuntiBase = document.getElementById('offerta_punti_base');
+    const offertaPuntiExtraPiva = document.getElementById('offerta_punti_extra_piva');
     const offertaAttiva = document.getElementById('offerta_attiva');
     const offertaDocDocumentoIdentita = document.getElementById('offerta_doc_documento_identita');
     const offertaDocContratto = document.getElementById('offerta_doc_contratto');
     const offertaDocBollette = document.getElementById('offerta_doc_bollette');
+    const offertaOpzioniChecklist = document.getElementById('offertaOpzioniChecklist');
+    const offertaReloadChecklist = document.getElementById('offertaReloadChecklist');
 
     const opzioneIdInput = document.getElementById('opzione_id');
-    const opzioneCategoriaId = document.getElementById('opzione_categoria_id');
-    const opzioneOffertaId = document.getElementById('opzione_offerta_id');
-    const opzioneCluster = document.getElementById('opzione_cluster');
     const opzioneNome = document.getElementById('opzione_nome');
     const opzioneDescrizione = document.getElementById('opzione_descrizione');
-    const opzionePunteggioGara = document.getElementById('opzione_punteggio_gara');
-    const opzionePunteggioExtraGara = document.getElementById('opzione_punteggio_extra_gara');
+    const opzionePuntiBase = document.getElementById('opzione_punti_base');
+    const opzionePuntiExtraPiva = document.getElementById('opzione_punti_extra_piva');
+    const opzioneOrdine = document.getElementById('opzione_ordine');
     const opzioneAttiva = document.getElementById('opzione_attiva');
     const opzioneDocSim = document.getElementById('opzione_doc_sim');
 
     const reloadIdInput = document.getElementById('reload_id');
     const reloadNome = document.getElementById('reload_nome');
+    const reloadPuntiBase = document.getElementById('reload_punti_base');
+    const reloadPuntiExtraPiva = document.getElementById('reload_punti_extra_piva');
     const reloadOrdine = document.getElementById('reload_ordine');
     const reloadAttivo = document.getElementById('reload_attivo');
     const reloadSubmitButton = document.getElementById('btnSubmitReload');
@@ -708,25 +757,35 @@
       return 'Consumer';
     }
 
+    function toNumber(value, fallback = 0) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    }
+
+    function getPuntiBase(item) {
+      return toNumber(item?.punti_base, toNumber(item?.punteggio_gara, 0));
+    }
+
+    function getPuntiExtraPiva(item) {
+      return toNumber(item?.punti_extra_piva, toNumber(item?.punteggio_extra_gara, 0));
+    }
+
     function categoriaName(id) {
       const found = state.categorie.find((c) => c.id === id);
       return found ? found.nome : '-';
-    }
-
-    function offertaName(id) {
-      const found = state.offerte.find((o) => o.id === id);
-      return found ? found.nome_offerta : '-';
     }
 
     function uniqueTypes(types = []) {
       return Array.from(new Set((types || []).filter(Boolean)));
     }
 
+    function uniqueIds(values = []) {
+      return Array.from(new Set((values || []).filter(Boolean)));
+    }
+
     function getDocumentRulesForOfferta(offertaId) {
       const byModel = state.offerte.find((item) => item.id === offertaId)?.documenti_attivi;
-      if (Array.isArray(byModel) && byModel.length > 0) {
-        return uniqueTypes(byModel);
-      }
+      if (Array.isArray(byModel) && byModel.length > 0) return uniqueTypes(byModel);
 
       return uniqueTypes(
         state.documenti_regole
@@ -737,9 +796,7 @@
 
     function getDocumentRulesForOpzione(opzioneId) {
       const byModel = state.opzioni.find((item) => item.id === opzioneId)?.documenti_attivi;
-      if (Array.isArray(byModel) && byModel.length > 0) {
-        return uniqueTypes(byModel);
-      }
+      if (Array.isArray(byModel) && byModel.length > 0) return uniqueTypes(byModel);
 
       return uniqueTypes(
         state.documenti_regole
@@ -750,25 +807,42 @@
 
     function renderDocumentChips(types = []) {
       const list = uniqueTypes(types);
-      if (list.length === 0) {
-        return '<span class="empty">Nessuno</span>';
-      }
-
+      if (list.length === 0) return '<span class="empty">Nessuno</span>';
       return list
         .map((type) => `<span class="chip doc">${escapeHtml(DOC_LABELS[type] || type)}</span>`)
         .join('');
     }
 
-    function setOffertaDocumentCheckboxesByTypes(types = []) {
-      const set = new Set(uniqueTypes(types));
-      offertaDocDocumentoIdentita.checked = set.has(DOC_TYPES.DOCUMENTO_IDENTITA);
-      offertaDocContratto.checked = set.has(DOC_TYPES.CONTRATTO);
-      offertaDocBollette.checked = set.has(DOC_TYPES.COPIA_BOLLETTA);
+    function renderAssocChips(labels = []) {
+      const list = uniqueIds(labels);
+      if (list.length === 0) return '<span class="empty">Nessuna</span>';
+      return list
+        .map((label) => `<span class="chip assoc">${escapeHtml(label)}</span>`)
+        .join('');
     }
 
-    function setOpzioneDocumentCheckboxesByTypes(types = []) {
-      const set = new Set(uniqueTypes(types));
-      opzioneDocSim.checked = set.has(DOC_TYPES.COPIA_SIM_MNP);
+    function getOpzioniLinkedIdsByOfferta(offertaId) {
+      const offer = state.offerte.find((item) => item.id === offertaId);
+      if (Array.isArray(offer?.opzioni_ids)) return uniqueIds(offer.opzioni_ids);
+
+      return uniqueIds(
+        state.offerte_opzioni
+          .filter((row) => row.offerta_id === offertaId)
+          .sort((a, b) => Number(a.ordine || 0) - Number(b.ordine || 0))
+          .map((row) => row.opzione_id)
+      );
+    }
+
+    function getReloadLinkedIdsByOfferta(offertaId) {
+      const offer = state.offerte.find((item) => item.id === offertaId);
+      if (Array.isArray(offer?.reload_ids)) return uniqueIds(offer.reload_ids);
+
+      return uniqueIds(
+        state.offerte_reload
+          .filter((row) => row.offerta_id === offertaId)
+          .sort((a, b) => Number(a.ordine || 0) - Number(b.ordine || 0))
+          .map((row) => row.reload_id)
+      );
     }
 
     async function apiGetConfig() {
@@ -794,23 +868,49 @@
       return result.data;
     }
 
-    function fillCategoriaSelects() {
+    function fillCategoriaSelect() {
       const options = state.categorie
         .map((c) => `<option value="${c.id}">${escapeHtml(c.nome)}${c.attiva ? '' : ' (non attiva)'}</option>`)
         .join('');
-      offertaCategoriaId.innerHTML = options;
-      opzioneCategoriaId.innerHTML = options;
+      offertaCategoriaId.innerHTML = options || '<option value="">Nessuna categoria</option>';
     }
 
-    function fillOfferteByCategoriaForOpzioni() {
-      const categoriaId = opzioneCategoriaId.value;
+    function renderOffertaChecklists(selectedOpzioni = [], selectedReload = []) {
+      const selectedOpzioniSet = new Set(uniqueIds(selectedOpzioni));
+      const selectedReloadSet = new Set(uniqueIds(selectedReload));
 
-      const options = state.offerte
-        .filter((o) => o.categoria_id === categoriaId)
-        .map((o) => `<option value="${o.id}">${escapeHtml(o.nome_offerta)}${o.attiva ? '' : ' (non attiva)'}</option>`)
-        .join('');
+      const activeOpzioni = state.opzioni
+        .filter((item) => item.attiva)
+        .sort((a, b) => Number(a.ordine || 0) - Number(b.ordine || 0) || (a.nome_opzione || '').localeCompare(b.nome_opzione || ''));
+      const activeReload = state.reload
+        .filter((item) => item.attivo)
+        .sort((a, b) => Number(a.ordine || 0) - Number(b.ordine || 0) || (a.nome || '').localeCompare(b.nome || ''));
 
-      opzioneOffertaId.innerHTML = options || '<option value="">Nessuna offerta disponibile</option>';
+      offertaOpzioniChecklist.innerHTML = activeOpzioni.length === 0
+        ? '<span class="empty">Nessuna opzione attiva disponibile</span>'
+        : activeOpzioni.map((item) => `
+            <div class="check-row">
+              <input id="offerta_opzione_${item.id}" type="checkbox" name="offerta_opzioni_ids" value="${item.id}" ${selectedOpzioniSet.has(item.id) ? 'checked' : ''}>
+              <label for="offerta_opzione_${item.id}">${escapeHtml(item.nome_opzione)} (Base ${getPuntiBase(item).toFixed(2)} / Extra ${getPuntiExtraPiva(item).toFixed(2)})</label>
+            </div>
+          `).join('');
+
+      offertaReloadChecklist.innerHTML = activeReload.length === 0
+        ? '<span class="empty">Nessun reload attivo disponibile</span>'
+        : activeReload.map((item) => `
+            <div class="check-row">
+              <input id="offerta_reload_${item.id}" type="checkbox" name="offerta_reload_ids" value="${item.id}" ${selectedReloadSet.has(item.id) ? 'checked' : ''}>
+              <label for="offerta_reload_${item.id}">${escapeHtml(item.nome)} (Base ${getPuntiBase(item).toFixed(2)} / Extra ${getPuntiExtraPiva(item).toFixed(2)})</label>
+            </div>
+          `).join('');
+    }
+
+    function getSelectedChecklistIds(container, name) {
+      if (!container) return [];
+      return uniqueIds(
+        Array.from(container.querySelectorAll(`input[name="${name}"]:checked`))
+          .map((input) => input.value)
+      );
     }
 
     function renderCategorie() {
@@ -832,46 +932,60 @@
 
     function renderOfferte() {
       if (state.offerte.length === 0) {
-        tbodyOfferte.innerHTML = '<tr><td colspan="8" class="empty">Nessuna offerta trovata</td></tr>';
+        tbodyOfferte.innerHTML = '<tr><td colspan="10" class="empty">Nessuna offerta trovata</td></tr>';
         return;
       }
 
       tbodyOfferte.innerHTML = state.offerte
-        .map((o) => `
-          <tr>
-            <td>${escapeHtml(categoriaName(o.categoria_id))}</td>
-            <td>${escapeHtml(o.cluster_cliente || '-')}</td>
-            <td class="wrap">${escapeHtml(o.nome_offerta || '-')}</td>
-            <td>${Number(o.punteggio_gara || 0).toFixed(2)}</td>
-            <td>${Number(o.punteggio_extra_gara || 0).toFixed(2)}</td>
-            <td class="wrap">${renderDocumentChips(getDocumentRulesForOfferta(o.id))}</td>
-            <td>${statusChip(!!o.attiva)}</td>
-            <td>
-              <div class="table-actions">
-                <button type="button" class="ghost" onclick="editOfferta('${o.id}')">Modifica</button>
-                <button type="button" onclick="toggleOfferta('${o.id}', ${o.attiva ? 'false' : 'true'})">${o.attiva ? 'Disattiva' : 'Attiva'}</button>
-              </div>
-            </td>
-          </tr>
-        `)
+        .map((o) => {
+          const opzioniNomi = Array.isArray(o.opzioni_nomi) && o.opzioni_nomi.length > 0
+            ? o.opzioni_nomi
+            : getOpzioniLinkedIdsByOfferta(o.id)
+              .map((id) => state.opzioni.find((item) => item.id === id)?.nome_opzione || null)
+              .filter(Boolean);
+
+          const reloadNomi = Array.isArray(o.reload_nomi) && o.reload_nomi.length > 0
+            ? o.reload_nomi
+            : getReloadLinkedIdsByOfferta(o.id)
+              .map((id) => state.reload.find((item) => item.id === id)?.nome || null)
+              .filter(Boolean);
+
+          return `
+            <tr>
+              <td>${escapeHtml(categoriaName(o.categoria_id))}</td>
+              <td>${escapeHtml(o.cluster_cliente || '-')}</td>
+              <td class="wrap">${escapeHtml(o.nome_offerta || '-')}</td>
+              <td>${toNumber(o.punteggio_gara, 0).toFixed(2)}</td>
+              <td>${toNumber(o.punteggio_extra_gara, 0).toFixed(2)}</td>
+              <td class="wrap">${renderAssocChips(opzioniNomi)}</td>
+              <td class="wrap">${renderAssocChips(reloadNomi)}</td>
+              <td class="wrap">${renderDocumentChips(getDocumentRulesForOfferta(o.id))}</td>
+              <td>${statusChip(!!o.attiva)}</td>
+              <td>
+                <div class="table-actions">
+                  <button type="button" class="ghost" onclick="editOfferta('${o.id}')">Modifica</button>
+                  <button type="button" onclick="toggleOfferta('${o.id}', ${o.attiva ? 'false' : 'true'})">${o.attiva ? 'Disattiva' : 'Attiva'}</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        })
         .join('');
     }
 
     function renderOpzioni() {
       if (state.opzioni.length === 0) {
-        tbodyOpzioni.innerHTML = '<tr><td colspan="9" class="empty">Nessuna opzione trovata</td></tr>';
+        tbodyOpzioni.innerHTML = '<tr><td colspan="7" class="empty">Nessuna opzione trovata</td></tr>';
         return;
       }
 
       tbodyOpzioni.innerHTML = state.opzioni
         .map((o) => `
           <tr>
-            <td>${escapeHtml(categoriaName(o.categoria_id))}</td>
-            <td class="wrap">${escapeHtml(offertaName(o.offerta_id))}</td>
-            <td>${escapeHtml(o.cluster_cliente || '-')}</td>
             <td class="wrap">${escapeHtml(o.nome_opzione || '-')}</td>
-            <td>${Number(o.punteggio_gara || 0).toFixed(2)}</td>
-            <td>${Number(o.punteggio_extra_gara || 0).toFixed(2)}</td>
+            <td>${getPuntiBase(o).toFixed(2)}</td>
+            <td>${getPuntiExtraPiva(o).toFixed(2)}</td>
+            <td>${Number(o.ordine || 0)}</td>
             <td class="wrap">${renderDocumentChips(getDocumentRulesForOpzione(o.id))}</td>
             <td>${statusChip(!!o.attiva)}</td>
             <td>
@@ -887,15 +1001,17 @@
 
     function renderReload() {
       if (state.reload.length === 0) {
-        tbodyReload.innerHTML = '<tr><td colspan="4" class="empty">Nessun reload trovato</td></tr>';
+        tbodyReload.innerHTML = '<tr><td colspan="6" class="empty">Nessun reload trovato</td></tr>';
         return;
       }
 
       tbodyReload.innerHTML = state.reload
         .map((r) => `
           <tr>
-            <td>${escapeHtml(r.nome || '-')}</td>
-            <td>${r.ordine ?? 0}</td>
+            <td class="wrap">${escapeHtml(r.nome || '-')}</td>
+            <td>${getPuntiBase(r).toFixed(2)}</td>
+            <td>${getPuntiExtraPiva(r).toFixed(2)}</td>
+            <td>${Number(r.ordine || 0)}</td>
             <td>${statusChip(!!r.attivo)}</td>
             <td>
               <div class="table-actions">
@@ -913,26 +1029,31 @@
       offertaCluster.value = 'Consumer';
       offertaNome.value = '';
       offertaDescrizione.value = '';
-      offertaPunteggioGara.value = '0';
-      offertaPunteggioExtraGara.value = '';
+      offertaPuntiBase.value = '0';
+      offertaPuntiExtraPiva.value = '';
       offertaAttiva.value = 'true';
-      setOffertaDocumentCheckboxesByTypes([DOC_TYPES.CONTRATTO]);
+      offertaDocDocumentoIdentita.checked = false;
+      offertaDocContratto.checked = true;
+      offertaDocBollette.checked = false;
+      renderOffertaChecklists([], []);
     }
 
     function resetOpzioneForm() {
       opzioneIdInput.value = '';
-      opzioneCluster.value = 'Consumer';
       opzioneNome.value = '';
       opzioneDescrizione.value = '';
-      opzionePunteggioGara.value = '0';
-      opzionePunteggioExtraGara.value = '';
+      opzionePuntiBase.value = '0';
+      opzionePuntiExtraPiva.value = '';
+      opzioneOrdine.value = '0';
       opzioneAttiva.value = 'true';
-      setOpzioneDocumentCheckboxesByTypes([]);
+      opzioneDocSim.checked = false;
     }
 
     function resetReloadForm() {
       reloadIdInput.value = '';
       reloadNome.value = '';
+      reloadPuntiBase.value = '0';
+      reloadPuntiExtraPiva.value = '';
       reloadOrdine.value = '0';
       reloadAttivo.value = 'true';
       reloadSubmitButton.textContent = 'Crea reload';
@@ -944,9 +1065,11 @@
       state.opzioni = config.opzioni || [];
       state.reload = config.reload || [];
       state.documenti_regole = config.documenti_regole || [];
+      state.offerte_opzioni = config.offerte_opzioni || [];
+      state.offerte_reload = config.offerte_reload || [];
 
-      fillCategoriaSelects();
-      fillOfferteByCategoriaForOpzioni();
+      fillCategoriaSelect();
+      renderOffertaChecklists([], []);
       renderCategorie();
       renderOfferte();
       renderOpzioni();
@@ -969,10 +1092,20 @@
       offertaCluster.value = normalizeClusterSelectValue(item.cluster_cliente);
       offertaNome.value = item.nome_offerta || '';
       offertaDescrizione.value = item.descrizione || '';
-      offertaPunteggioGara.value = Number(item.punteggio_gara || 0);
-      offertaPunteggioExtraGara.value = Number(item.punteggio_extra_gara || 0);
+      offertaPuntiBase.value = toNumber(item.punteggio_gara, 0);
+      offertaPuntiExtraPiva.value = toNumber(item.punteggio_extra_gara, 0);
       offertaAttiva.value = item.attiva ? 'true' : 'false';
-      setOffertaDocumentCheckboxesByTypes(getDocumentRulesForOfferta(item.id));
+
+      const docTypes = new Set(getDocumentRulesForOfferta(item.id));
+      offertaDocDocumentoIdentita.checked = docTypes.has(DOC_TYPES.DOCUMENTO_IDENTITA);
+      offertaDocContratto.checked = docTypes.has(DOC_TYPES.CONTRATTO);
+      offertaDocBollette.checked = docTypes.has(DOC_TYPES.COPIA_BOLLETTA);
+
+      renderOffertaChecklists(
+        getOpzioniLinkedIdsByOfferta(item.id),
+        getReloadLinkedIdsByOfferta(item.id)
+      );
+
       setMessage('Offerta caricata in modifica', 'info');
     };
 
@@ -992,16 +1125,13 @@
       if (!item) return;
 
       opzioneIdInput.value = item.id;
-      opzioneCategoriaId.value = item.categoria_id || '';
-      fillOfferteByCategoriaForOpzioni();
-      opzioneOffertaId.value = item.offerta_id || '';
-      opzioneCluster.value = normalizeClusterSelectValue(item.cluster_cliente);
       opzioneNome.value = item.nome_opzione || '';
       opzioneDescrizione.value = item.descrizione || '';
-      opzionePunteggioGara.value = Number(item.punteggio_gara || 0);
-      opzionePunteggioExtraGara.value = Number(item.punteggio_extra_gara || 0);
+      opzionePuntiBase.value = getPuntiBase(item);
+      opzionePuntiExtraPiva.value = getPuntiExtraPiva(item);
+      opzioneOrdine.value = Number(item.ordine || 0);
       opzioneAttiva.value = item.attiva ? 'true' : 'false';
-      setOpzioneDocumentCheckboxesByTypes(getDocumentRulesForOpzione(item.id));
+      opzioneDocSim.checked = getDocumentRulesForOpzione(item.id).includes(DOC_TYPES.COPIA_SIM_MNP);
       setMessage('Opzione caricata in modifica', 'info');
     };
 
@@ -1022,7 +1152,9 @@
 
       reloadIdInput.value = item.id;
       reloadNome.value = item.nome || '';
-      reloadOrdine.value = item.ordine ?? 0;
+      reloadPuntiBase.value = getPuntiBase(item);
+      reloadPuntiExtraPiva.value = getPuntiExtraPiva(item);
+      reloadOrdine.value = Number(item.ordine || 0);
       reloadAttivo.value = item.attivo ? 'true' : 'false';
       reloadSubmitButton.textContent = 'Aggiorna reload';
       setMessage('Reload caricato in modifica', 'info');
@@ -1062,15 +1194,11 @@
       setMessage('Form reload resettato', 'info');
     });
 
-    opzioneCategoriaId.addEventListener('change', () => {
-      fillOfferteByCategoriaForOpzioni();
-    });
-
     document.getElementById('formOfferta').addEventListener('submit', async (event) => {
       event.preventDefault();
-
       const id = offertaIdInput.value;
-      const punteggioExtraRaw = offertaPunteggioExtraGara.value.trim();
+      const puntiExtraRaw = offertaPuntiExtraPiva.value.trim();
+
       const payload = {
         action: id ? 'update_offerta' : 'create_offerta',
         id: id || undefined,
@@ -1078,12 +1206,14 @@
         cluster_cliente: offertaCluster.value || null,
         nome_offerta: offertaNome.value,
         descrizione: offertaDescrizione.value || null,
-        punteggio_gara: Number(offertaPunteggioGara.value),
-        punteggio_extra_gara: punteggioExtraRaw === '' ? null : Number(punteggioExtraRaw),
+        punti_base: Number(offertaPuntiBase.value),
+        punti_extra_piva: puntiExtraRaw === '' ? null : Number(puntiExtraRaw),
         attiva: offertaAttiva.value === 'true',
         doc_documento_identita: offertaDocDocumentoIdentita.checked,
         doc_contratto: offertaDocContratto.checked,
-        doc_copia_bolletta: offertaDocBollette.checked
+        doc_copia_bolletta: offertaDocBollette.checked,
+        opzioni_ids: getSelectedChecklistIds(offertaOpzioniChecklist, 'offerta_opzioni_ids'),
+        reload_ids: getSelectedChecklistIds(offertaReloadChecklist, 'offerta_reload_ids')
       };
 
       try {
@@ -1099,19 +1229,17 @@
 
     document.getElementById('formOpzione').addEventListener('submit', async (event) => {
       event.preventDefault();
-
       const id = opzioneIdInput.value;
-      const punteggioExtraRaw = opzionePunteggioExtraGara.value.trim();
+      const puntiExtraRaw = opzionePuntiExtraPiva.value.trim();
+
       const payload = {
         action: id ? 'update_opzione' : 'create_opzione',
         id: id || undefined,
-        categoria_id: opzioneCategoriaId.value,
-        offerta_id: opzioneOffertaId.value,
-        cluster_cliente: opzioneCluster.value || null,
         nome_opzione: opzioneNome.value,
         descrizione: opzioneDescrizione.value || null,
-        punteggio_gara: Number(opzionePunteggioGara.value),
-        punteggio_extra_gara: punteggioExtraRaw === '' ? null : Number(punteggioExtraRaw),
+        punti_base: Number(opzionePuntiBase.value),
+        punti_extra_piva: puntiExtraRaw === '' ? null : Number(puntiExtraRaw),
+        ordine: Number(opzioneOrdine.value || 0),
         attiva: opzioneAttiva.value === 'true',
         doc_copia_sim_mnp: opzioneDocSim.checked
       };
@@ -1121,6 +1249,7 @@
         await apiAction(payload);
         await loadConfig();
         resetOpzioneForm();
+        resetOffertaForm();
         setMessage(id ? 'Opzione aggiornata' : 'Opzione creata', 'ok');
       } catch (error) {
         setMessage(error.message, 'error');
@@ -1129,12 +1258,15 @@
 
     document.getElementById('formReload').addEventListener('submit', async (event) => {
       event.preventDefault();
-
       const id = reloadIdInput.value;
+      const puntiExtraRaw = reloadPuntiExtraPiva.value.trim();
+
       const payload = {
         action: id ? 'update_reload' : 'create_reload',
         id: id || undefined,
         nome: reloadNome.value,
+        punti_base: Number(reloadPuntiBase.value),
+        punti_extra_piva: puntiExtraRaw === '' ? null : Number(puntiExtraRaw),
         ordine: Number(reloadOrdine.value || 0),
         attivo: reloadAttivo.value === 'true'
       };
@@ -1144,6 +1276,7 @@
         await apiAction(payload);
         await loadConfig();
         resetReloadForm();
+        resetOffertaForm();
         setMessage(id ? 'Reload aggiornato' : 'Reload creato', 'ok');
       } catch (error) {
         setMessage(error.message, 'error');

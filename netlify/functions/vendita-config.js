@@ -45,8 +45,15 @@ exports.handler = async (event) => {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    // Restituiamo solo record attivi e solo i campi punteggio nuovi.
-    const [categorieRes, offerteRes, opzioniRes, reloadRes, regoleRes] = await Promise.all([
+    const [
+      categorieRes,
+      offerteRes,
+      opzioniRes,
+      reloadRes,
+      regoleRes,
+      offerteOpzioniRes,
+      offerteReloadRes
+    ] = await Promise.all([
       supabase
         .from('vendita_categorie')
         .select('id, nome, descrizione, attiva, ordine, created_at, updated_at')
@@ -60,12 +67,12 @@ exports.handler = async (event) => {
         .order('nome_offerta', { ascending: true }),
       supabase
         .from('vendita_opzioni')
-        .select('id, categoria_id, offerta_id, cluster_cliente, nome_opzione, descrizione, punteggio_gara, punteggio_extra_gara, attiva, valid_from, valid_to, created_at, updated_at')
+        .select('*')
         .eq('attiva', true)
-        .order('nome_opzione', { ascending: true }),
+        .order('created_at', { ascending: false }),
       supabase
         .from('vendita_reload')
-        .select('id, nome, attivo, ordine, created_at, updated_at')
+        .select('*')
         .eq('attivo', true)
         .order('ordine', { ascending: true })
         .order('nome', { ascending: true }),
@@ -73,7 +80,15 @@ exports.handler = async (event) => {
         .from('vendita_documenti_regole')
         .select('id, categoria_id, offerta_id, opzione_id, tipo_documento, obbligatorio, attiva, campo_condizione, valore_condizione, created_at, updated_at')
         .eq('attiva', true)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('vendita_offerte_opzioni')
+        .select('id, offerta_id, opzione_id, ordine, created_at')
+        .order('ordine', { ascending: true }),
+      supabase
+        .from('vendita_offerte_reload')
+        .select('id, offerta_id, reload_id, ordine, created_at')
+        .order('ordine', { ascending: true })
     ]);
 
     const firstError =
@@ -81,7 +96,9 @@ exports.handler = async (event) => {
       offerteRes.error ||
       opzioniRes.error ||
       reloadRes.error ||
-      regoleRes.error;
+      regoleRes.error ||
+      offerteOpzioniRes.error ||
+      offerteReloadRes.error;
 
     if (firstError) {
       return response(500, {
@@ -96,7 +113,9 @@ exports.handler = async (event) => {
       offerte: offerteRes.data || [],
       opzioni: opzioniRes.data || [],
       reload: reloadRes.data || [],
-      documenti_regole: regoleRes.data || []
+      documenti_regole: regoleRes.data || [],
+      offerte_opzioni: offerteOpzioniRes.data || [],
+      offerte_reload: offerteReloadRes.data || []
     });
   } catch (error) {
     return response(500, {
