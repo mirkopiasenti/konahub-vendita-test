@@ -381,7 +381,7 @@ async function loadFullConfig(supabase) {
       .order('nome', { ascending: true }),
     supabase
       .from('vendita_offerte')
-      .select('id, categoria_id, cluster_cliente, nome_offerta, descrizione, punteggio_gara, punteggio_extra_gara, attiva, valid_from, valid_to, created_at, updated_at')
+      .select('id, categoria_id, cluster_cliente, nome_offerta, descrizione, punteggio_gara, punteggio_extra_gara, abilita_dispositivo, attiva, valid_from, valid_to, created_at, updated_at')
       .order('created_at', { ascending: false }),
     supabase
       .from('vendita_opzioni')
@@ -458,7 +458,8 @@ async function createOfferta(supabase, payload) {
     descrizione: cleanString(payload.descrizione),
     punteggio_gara: puntiBase,
     punteggio_extra_gara: puntiExtraPiva,
-    attiva: parseBoolean(payload.attiva, true)
+    attiva: parseBoolean(payload.attiva, true),
+    abilita_dispositivo: parseBoolean(payload.abilita_dispositivo, false)
   };
 
   const { data, error } = await supabase
@@ -500,7 +501,8 @@ async function updateOfferta(supabase, payload) {
     descrizione: cleanString(payload.descrizione),
     punteggio_gara: puntiBase,
     punteggio_extra_gara: puntiExtraPiva,
-    attiva: parseBoolean(payload.attiva, true)
+    attiva: parseBoolean(payload.attiva, true),
+    abilita_dispositivo: parseBoolean(payload.abilita_dispositivo, false)
   };
 
   const { data, error } = await supabase

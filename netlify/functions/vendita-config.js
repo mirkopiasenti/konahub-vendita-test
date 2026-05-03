@@ -62,7 +62,7 @@ exports.handler = async (event) => {
         .order('nome', { ascending: true }),
       supabase
         .from('vendita_offerte')
-        .select('id, categoria_id, cluster_cliente, nome_offerta, descrizione, punteggio_gara, punteggio_extra_gara, attiva, valid_from, valid_to, created_at, updated_at')
+        .select('id, categoria_id, cluster_cliente, nome_offerta, descrizione, punteggio_gara, punteggio_extra_gara, abilita_dispositivo, attiva, valid_from, valid_to, created_at, updated_at')
         .eq('attiva', true)
         .order('nome_offerta', { ascending: true }),
       supabase

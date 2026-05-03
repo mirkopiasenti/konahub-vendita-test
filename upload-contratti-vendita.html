@@ -2068,20 +2068,12 @@
       return false;
     }
 
-    function shouldShowDevice(categoriaNome, offertaNome) {
-      if (isCategory(categoriaNome, 'Mobile')) {
-        return !containsFragment(offertaNome, ['untied', 'smart security']);
-      }
-
-      if (isCategory(categoriaNome, 'Customer Base')) {
-        return containsFragment(offertaNome, ['telefono', 'telefono incluso']);
-      }
-
-      if (isCategory(categoriaNome, 'Fisso')) {
-        return containsFragment(offertaNome, ['fwa', 'fttc']);
-      }
-
-      return false;
+    function shouldShowDevice() {
+      const offerta = getSelectedOfferta();
+      if (!offerta) return false;
+      return offerta.abilita_dispositivo === true
+        || offerta.abilita_dispositivo === 'true'
+        || offerta.abilita_dispositivo === 1;
     }
 
     function shouldShowOpzione(categoriaNome, availableOptions) {
@@ -2116,10 +2108,6 @@
         copia_bolletta: hasOffertaDocumentRule(offertaId, DOC_TYPES.COPIA_BOLLETTA),
         copia_sim_mnp: hasOpzioneDocumentRule(opzioneId, DOC_TYPES.COPIA_SIM_MNP)
       };
-    }
-
-    function shouldShowKolme(categoriaNome) {
-      return isCategory(categoriaNome, 'Mobile') || isCategory(categoriaNome, 'Customer Base');
     }
 
     function getPuntiBase(record) {
@@ -2219,7 +2207,7 @@
       renderReload();
       const reloadDisponibili = filteredReload();
       const reloadVisible = reloadDisponibili.length > 0;
-      const deviceVisible = shouldShowDevice(categoriaNome, offertaNome);
+      const deviceVisible = shouldShowDevice();
       const opzioneVisible = shouldShowOpzione(categoriaNome, opzioniDisponibili);
       const requirements = getCurrentDocumentRequirements();
       const mnpVisible = requirements.copia_sim_mnp;
@@ -2263,7 +2251,7 @@
       refs.fieldFasciaPrezzo.classList.toggle('hidden', !hasDevice);
       refs.fieldTipoAcquisto.classList.toggle('hidden', !hasDevice);
       refs.fieldFinanziaria.classList.toggle('hidden', !(hasDevice && refs.tipoAcquisto.value === 'Finanziamento'));
-      refs.fieldKolme.classList.toggle('hidden', !(hasDevice && shouldShowKolme(categoriaNome)));
+      refs.fieldKolme.classList.toggle('hidden', !hasDevice);
       if (!hasDevice) {
         refs.imei.value = '';
         refs.fasciaPrezzo.value = '';
@@ -2332,7 +2320,7 @@
       const opzioneNome = opzione?.nome_opzione || '';
       const isFisso = isCategory(categoriaNome, 'Fisso');
       const isAllarmi = isCategory(categoriaNome, 'Allarmi');
-      const deviceVisible = shouldShowDevice(categoriaNome, offertaNome);
+      const deviceVisible = shouldShowDevice();
       const hasDevice = deviceVisible && refs.dispositivoAssociato.value === 'true';
       const documentRequirements = getCurrentDocumentRequirements();
 
@@ -2378,7 +2366,7 @@
           throw new Error('Con tipo acquisto Finanziamento devi selezionare la finanziaria');
         }
 
-        if (shouldShowKolme(categoriaNome) && refs.kolme.value === '') {
+        if (refs.kolme.value === '') {
           throw new Error('Seleziona Kolme (Si/No)');
         }
       }
@@ -2425,7 +2413,7 @@
         fascia_prezzo: hasDevice ? refs.fasciaPrezzo.value || null : null,
         tipo_acquisto: hasDevice ? refs.tipoAcquisto.value || null : null,
         finanziaria: hasDevice && refs.tipoAcquisto.value === 'Finanziamento' ? refs.finanziaria.value || null : null,
-        kolme: hasDevice && shouldShowKolme(categoriaNome)
+        kolme: hasDevice
           ? (refs.kolme.value === '' ? null : refs.kolme.value === 'true')
           : null,
         score: {

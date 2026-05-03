@@ -469,6 +469,15 @@
           </div>
 
           <div class="doc-box">
+            <p class="doc-box-title">Smartphone / Dispositivo</p>
+            <div class="check-row">
+              <input id="offerta_abilita_dispositivo" type="checkbox">
+              <label for="offerta_abilita_dispositivo">Abilita Smartphone / Dispositivo</label>
+            </div>
+            <p class="subtle">Se attivo, nell'upload contratti comparirà il blocco dispositivo con IMEI, fascia prezzo, tipo acquisto, finanziaria e kolme.</p>
+          </div>
+
+          <div class="doc-box">
             <p class="doc-box-title">Documenti richiesti (offerta)</p>
             <div class="checkbox-grid">
               <div class="check-row">
@@ -518,6 +527,7 @@
                 <th>Opzioni</th>
                 <th>Reload</th>
                 <th>Documenti</th>
+                <th>Dispositivo</th>
                 <th>Stato</th>
                 <th>Azioni</th>
               </tr>
@@ -709,6 +719,7 @@
     const offertaPuntiBase = document.getElementById('offerta_punti_base');
     const offertaPuntiExtraPiva = document.getElementById('offerta_punti_extra_piva');
     const offertaAttiva = document.getElementById('offerta_attiva');
+    const offertaAbilitaDispositivo = document.getElementById('offerta_abilita_dispositivo');
     const offertaDocDocumentoIdentita = document.getElementById('offerta_doc_documento_identita');
     const offertaDocContratto = document.getElementById('offerta_doc_contratto');
     const offertaDocBollette = document.getElementById('offerta_doc_bollette');
@@ -932,7 +943,7 @@
 
     function renderOfferte() {
       if (state.offerte.length === 0) {
-        tbodyOfferte.innerHTML = '<tr><td colspan="10" class="empty">Nessuna offerta trovata</td></tr>';
+        tbodyOfferte.innerHTML = '<tr><td colspan="11" class="empty">Nessuna offerta trovata</td></tr>';
         return;
       }
 
@@ -960,6 +971,7 @@
               <td class="wrap">${renderAssocChips(opzioniNomi)}</td>
               <td class="wrap">${renderAssocChips(reloadNomi)}</td>
               <td class="wrap">${renderDocumentChips(getDocumentRulesForOfferta(o.id))}</td>
+              <td>${(o.abilita_dispositivo === true || o.abilita_dispositivo === 'true' || o.abilita_dispositivo === 1) ? '<span class="chip on">Abilitato</span>' : '<span class="chip off">No</span>'}</td>
               <td>${statusChip(!!o.attiva)}</td>
               <td>
                 <div class="table-actions">
@@ -1032,6 +1044,7 @@
       offertaPuntiBase.value = '0';
       offertaPuntiExtraPiva.value = '';
       offertaAttiva.value = 'true';
+      offertaAbilitaDispositivo.checked = false;
       offertaDocDocumentoIdentita.checked = false;
       offertaDocContratto.checked = true;
       offertaDocBollette.checked = false;
@@ -1095,6 +1108,7 @@
       offertaPuntiBase.value = toNumber(item.punteggio_gara, 0);
       offertaPuntiExtraPiva.value = toNumber(item.punteggio_extra_gara, 0);
       offertaAttiva.value = item.attiva ? 'true' : 'false';
+      offertaAbilitaDispositivo.checked = item.abilita_dispositivo === true || item.abilita_dispositivo === 'true' || item.abilita_dispositivo === 1;
 
       const docTypes = new Set(getDocumentRulesForOfferta(item.id));
       offertaDocDocumentoIdentita.checked = docTypes.has(DOC_TYPES.DOCUMENTO_IDENTITA);
@@ -1209,6 +1223,7 @@
         punti_base: Number(offertaPuntiBase.value),
         punti_extra_piva: puntiExtraRaw === '' ? null : Number(puntiExtraRaw),
         attiva: offertaAttiva.value === 'true',
+        abilita_dispositivo: offertaAbilitaDispositivo.checked,
         doc_documento_identita: offertaDocDocumentoIdentita.checked,
         doc_contratto: offertaDocContratto.checked,
         doc_copia_bolletta: offertaDocBollette.checked,

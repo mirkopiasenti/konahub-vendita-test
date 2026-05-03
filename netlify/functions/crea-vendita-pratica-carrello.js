@@ -158,24 +158,8 @@ function normalizeContractInput(contract, index) {
     throw new Error(`Campo obbligatorio mancante: contratti[${index}].offerta_id`);
   }
 
-  if (dispositivoAssociato) {
-    if (!imei || !/^\d{15}$/.test(imei)) {
-      throw new Error(`IMEI non valido per contratti[${index}]: richieste 15 cifre`);
-    }
-  }
-
   const tipoAcquisto = cleanString(contract?.tipo_acquisto);
   const finanziaria = cleanString(contract?.finanziaria);
-
-  if (dispositivoAssociato && tipoAcquisto && tipoAcquisto.toLowerCase() === 'finanziamento') {
-    if (!finanziaria) {
-      throw new Error(`Campo obbligatorio mancante: contratti[${index}].finanziaria`);
-    }
-
-    if (!['Findomestic', 'Compass'].includes(finanziaria)) {
-      throw new Error(`Finanziaria non valida per contratti[${index}]`);
-    }
-  }
 
   return {
     temp_id: tempId,
@@ -205,15 +189,8 @@ function normalizeCategoryName(value) {
     .toLowerCase();
 }
 
-function containsAny(value, fragments) {
-  const normalized = normalizeCategoryName(value);
-  return fragments.some((fragment) => normalized.includes(fragment));
-}
-
-function validateCategorySpecificRules({ contract, category, offerName, index }) {
+function validateCategorySpecificRules({ contract, category, offer, index }) {
   const categoryName = normalizeCategoryName(category?.nome);
-  const offerHasTelefono = containsAny(offerName, ['telefono', 'telefono incluso']);
-  const offerHasFwaOrFttc = containsAny(offerName, ['fwa', 'fttc']);
 
   if (categoryName === 'fisso') {
     const tipoAttivazione = normalizeTextArrayValue(
@@ -249,6 +226,20 @@ function validateCategorySpecificRules({ contract, category, offerName, index })
     );
   }
 
+  const deviceEnabledForOffer = parseBoolean(offer?.abilita_dispositivo, false) === true;
+
+  if (!deviceEnabledForOffer) {
+    if (contract.dispositivo_associato) {
+      throw new Error(`Dispositivo non ammesso per contratti[${index}]: offerta non abilitata alla gestione dispositivo`);
+    }
+    contract.imei = null;
+    contract.fascia_prezzo = null;
+    contract.tipo_acquisto = null;
+    contract.finanziaria = null;
+    contract.kolme = null;
+    return;
+  }
+
   if (!contract.dispositivo_associato) {
     contract.imei = null;
     contract.fascia_prezzo = null;
@@ -258,28 +249,32 @@ function validateCategorySpecificRules({ contract, category, offerName, index })
     return;
   }
 
-  if (categoryName === 'customer base' && !offerHasTelefono) {
-    throw new Error(`Dispositivo non ammesso per contratti[${index}] categoria Customer Base con questa offerta`);
+  if (!contract.imei || !/^\d{15}$/.test(contract.imei)) {
+    throw new Error(`IMEI non valido per contratti[${index}]: richieste 15 cifre`);
   }
 
-  if (categoryName === 'fisso' && !offerHasFwaOrFttc) {
-    throw new Error(`Dispositivo non ammesso per contratti[${index}] categoria Fisso con questa tecnologia`);
+  if (!contract.fascia_prezzo) {
+    throw new Error(`Campo obbligatorio mancante: contratti[${index}].fascia_prezzo`);
   }
 
-  if (categoryName === 'energia') {
-    throw new Error(`Dispositivo non ammesso per contratti[${index}] categoria Energia`);
+  if (!contract.tipo_acquisto) {
+    throw new Error(`Campo obbligatorio mancante: contratti[${index}].tipo_acquisto`);
   }
 
-  if (categoryName === 'mobile' && containsAny(offerName, ['untied', 'smart security'])) {
-    throw new Error(`Dispositivo non ammesso per contratti[${index}] con questa offerta Mobile`);
+  if (contract.tipo_acquisto && contract.tipo_acquisto.toLowerCase() === 'finanziamento') {
+    if (!contract.finanziaria) {
+      throw new Error(`Campo obbligatorio mancante: contratti[${index}].finanziaria`);
+    }
+
+    if (!['Findomestic', 'Compass'].includes(contract.finanziaria)) {
+      throw new Error(`Finanziaria non valida per contratti[${index}]`);
+    }
+  } else {
+    contract.finanziaria = null;
   }
 
-  if (categoryName === 'assicurazioni') {
-    throw new Error(`Dispositivo non ammesso per contratti[${index}] categoria Assicurazioni`);
-  }
-
-  if (categoryName === 'allarmi') {
-    throw new Error(`Dispositivo non ammesso per contratti[${index}] categoria Allarmi`);
+  if (contract.kolme === null) {
+    throw new Error(`Campo obbligatorio mancante: contratti[${index}].kolme`);
   }
 }
 
@@ -599,7 +594,7 @@ exports.handler = async (event) => {
       validateCategorySpecificRules({
         contract: item,
         category: categoria,
-        offerName: offerta.nome_offerta || '',
+        offer: offerta,
         index
       });
 
