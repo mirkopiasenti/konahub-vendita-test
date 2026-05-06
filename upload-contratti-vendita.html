@@ -879,6 +879,7 @@
           <div class="field">
             <label for="cluster_cliente">Cluster *</label>
             <select id="cluster_cliente">
+              <option value="">Seleziona...</option>
               <option value="Consumer">Consumer</option>
               <option value="Business">Business</option>
             </select>
@@ -1011,6 +1012,7 @@
           <div class="field">
             <label for="dispositivo_associato">E stato associato un dispositivo?</label>
             <select id="dispositivo_associato">
+              <option value="">Seleziona...</option>
               <option value="false">No</option>
               <option value="true">Si</option>
             </select>
@@ -1345,6 +1347,17 @@
 
     function setResult(data) {
       refs.resultBox.textContent = JSON.stringify(data, null, 2);
+    }
+
+    function logUploadStateDebug(context) {
+      console.log('[UPLOAD STATE DEBUG]', {
+        context,
+        categoriaValue: refs.categoria?.value || '',
+        offertaValue: refs.offerta?.value || '',
+        selectedOfferta: getSelectedOfferta(),
+        shouldShowSwitchSim: shouldShowSwitchSim(),
+        isEditMode: Boolean(runtimeState.editingTempId)
+      });
     }
 
     function escapeHtml(value) {
@@ -1933,7 +1946,13 @@
     }
 
     function getSelectedOfferta() {
-      return state.offerte.find((row) => row.id === refs.offerta.value) || null;
+      const selectedId = refs.offerta.value;
+      if (!selectedId) return null;
+      const offerta = state.offerte.find((row) => row.id === selectedId) || null;
+      if (!offerta) return null;
+      const allowed = filteredOfferte();
+      if (!allowed.some((row) => row.id === selectedId)) return null;
+      return offerta;
     }
 
     function getSelectedOpzione() {
@@ -2010,54 +2029,64 @@
     }
 
     function renderCategorie() {
+      const currentValue = refs.categoria.value;
       if (state.categorie.length === 0) {
         refs.categoria.innerHTML = optionHtml('', 'Nessuna categoria disponibile');
+        refs.categoria.value = '';
         return;
       }
 
-      refs.categoria.innerHTML = state.categorie
-        .map((item) => optionHtml(item.id, item.nome || item.id))
+      refs.categoria.innerHTML = [optionHtml('', 'Seleziona...')]
+        .concat(state.categorie.map((item) => optionHtml(item.id, item.nome || item.id)))
         .join('');
+
+      const hasCurrent = state.categorie.some((item) => item.id === currentValue);
+      refs.categoria.value = hasCurrent ? currentValue : '';
     }
 
-    function renderOfferte() {
-      const currentValue = refs.offerta.value;
+    function renderOfferte(options = {}) {
+      const preserveCurrent = options.preserveCurrent === true;
+      const currentValue = preserveCurrent ? refs.offerta.value : '';
       const rows = filteredOfferte();
 
       if (rows.length === 0) {
-        refs.offerta.innerHTML = optionHtml('', 'Nessuna offerta disponibile');
+        refs.offerta.innerHTML = optionHtml('', 'Seleziona...');
         refs.offerta.value = '';
+        logUploadStateDebug('renderOfferte:no_rows');
         return;
       }
 
-      refs.offerta.innerHTML = rows
-        .map((item) => optionHtml(item.id, item.nome_offerta || item.id))
+      refs.offerta.innerHTML = [optionHtml('', 'Seleziona...')]
+        .concat(rows.map((item) => optionHtml(item.id, item.nome_offerta || item.id)))
         .join('');
 
       const hasCurrent = rows.some((item) => item.id === currentValue);
-      if (hasCurrent) {
-        refs.offerta.value = currentValue;
-      }
+      refs.offerta.value = (preserveCurrent && hasCurrent) ? currentValue : '';
+      logUploadStateDebug(`renderOfferte:preserve=${preserveCurrent ? 'yes' : 'no'}`);
     }
 
-    function renderOpzioni() {
+    function renderOpzioni(options = {}) {
+      const preserveCurrent = options.preserveCurrent === true;
+      const currentValue = preserveCurrent ? refs.opzione.value : '';
       const rows = filteredOpzioni();
-      refs.opzione.innerHTML = [optionHtml('', 'Nessuna opzione')]
+      refs.opzione.innerHTML = [optionHtml('', 'Seleziona...')]
         .concat(rows.map((item) => optionHtml(item.id, item.nome_opzione || item.id)))
         .join('');
+      const hasCurrent = rows.some((item) => item.id === currentValue);
+      refs.opzione.value = (preserveCurrent && hasCurrent) ? currentValue : '';
     }
 
-    function renderReload() {
-      const currentValue = refs.reload.value;
+    function renderReload(options = {}) {
+      const preserveCurrent = options.preserveCurrent === true;
+      const currentValue = preserveCurrent ? refs.reload.value : '';
       const rows = filteredReload();
 
-      refs.reload.innerHTML = [optionHtml('', 'Nessun reload')]
+      refs.reload.innerHTML = [optionHtml('', 'Seleziona...')]
         .concat(rows.map((item) => optionHtml(item.id, item.nome || item.id)))
         .join('');
 
-      if (!rows.some((item) => item.id === currentValue)) {
-        refs.reload.value = '';
-      }
+      const hasCurrent = rows.some((item) => item.id === currentValue);
+      refs.reload.value = (preserveCurrent && hasCurrent) ? currentValue : '';
     }
 
     function shouldShowReload(categoriaNome, offertaNome) {
@@ -2068,12 +2097,22 @@
       return false;
     }
 
+    function isOfferFlagEnabled(offerta, key) {
+      if (!offerta || !key) return false;
+      const value = offerta[key];
+      return value === true || value === 'true' || value === 1;
+    }
+
     function shouldShowDevice() {
       const offerta = getSelectedOfferta();
+      return isOfferFlagEnabled(offerta, 'abilita_dispositivo');
+    }
+
+    function shouldShowSwitchSim() {
+      if (!refs.offerta.value) return false;
+      const offerta = getSelectedOfferta();
       if (!offerta) return false;
-      return offerta.abilita_dispositivo === true
-        || offerta.abilita_dispositivo === 'true'
-        || offerta.abilita_dispositivo === 1;
+      return isOfferFlagEnabled(offerta, 'abilita_switch_sim');
     }
 
     function shouldShowOpzione(categoriaNome, availableOptions) {
@@ -2132,6 +2171,7 @@
     }
 
     function resetContractFields() {
+      refs.offerta.value = '';
       refs.opzione.value = '';
       refs.reload.value = '';
       refs.tipoAttivazione.value = '';
@@ -2139,7 +2179,7 @@
       refs.intestatario.value = '';
       refs.switchSim.value = '';
       refs.modalitaPagamento.value = '';
-      refs.dispositivoAssociato.value = 'false';
+      refs.dispositivoAssociato.value = '';
       refs.imei.value = '';
       refs.fasciaPrezzo.value = '';
       refs.tipoAcquisto.value = '';
@@ -2164,7 +2204,7 @@
       praticaFiles.documento_identita = null;
 
       refs.cfPiva.value = '';
-      refs.cluster.value = 'Consumer';
+      refs.cluster.value = '';
       refs.ragioneSociale.value = '';
       refs.nomeReferente.value = '';
       refs.cellulare.value = '';
@@ -2175,11 +2215,7 @@
       refs.originePratica.value = 'spontaneo';
       refs.operatoreId.value = '';
 
-      if (state.categorie.length > 0) {
-        refs.categoria.value = state.categorie[0].id;
-      } else {
-        refs.categoria.value = '';
-      }
+      refs.categoria.value = '';
 
       resetContractFields();
 
@@ -2204,10 +2240,11 @@
       const categoriaNome = getCategoriaName();
       const offertaNome = getOffertaName();
       const opzioniDisponibili = filteredOpzioni();
-      renderReload();
+      renderReload({ preserveCurrent: true });
       const reloadDisponibili = filteredReload();
       const reloadVisible = reloadDisponibili.length > 0;
       const deviceVisible = shouldShowDevice();
+      const switchSimVisible = shouldShowSwitchSim();
       const opzioneVisible = shouldShowOpzione(categoriaNome, opzioniDisponibili);
       const requirements = getCurrentDocumentRequirements();
       const mnpVisible = requirements.copia_sim_mnp;
@@ -2217,14 +2254,14 @@
 
       refs.fieldOpzione.classList.toggle('hidden', !opzioneVisible);
       refs.fieldReload.classList.toggle('hidden', !reloadVisible);
-      refs.fieldSwitchSim.classList.toggle('hidden', !isCategory(categoriaNome, 'Mobile'));
+      refs.fieldSwitchSim.classList.toggle('hidden', !switchSimVisible);
       refs.fieldTipoAttivazione.classList.toggle('hidden', !isCategory(categoriaNome, 'Fisso'));
       refs.fieldApriChiudi.classList.toggle('hidden', !isCategory(categoriaNome, 'Fisso'));
       refs.fieldModalitaPagamento.classList.toggle('hidden', !isCategory(categoriaNome, 'Allarmi'));
 
       if (!opzioneVisible) refs.opzione.value = '';
       if (!reloadVisible) refs.reload.value = '';
-      if (!isCategory(categoriaNome, 'Mobile')) refs.switchSim.value = '';
+      if (!switchSimVisible) refs.switchSim.value = '';
       if (!isCategory(categoriaNome, 'Fisso')) {
         refs.tipoAttivazione.value = '';
         refs.apriChiudi.value = '';
@@ -2238,7 +2275,7 @@
 
       refs.deviceSection.classList.toggle('hidden', !deviceVisible);
       if (!deviceVisible) {
-        refs.dispositivoAssociato.value = 'false';
+        refs.dispositivoAssociato.value = '';
         refs.imei.value = '';
         refs.fasciaPrezzo.value = '';
         refs.tipoAcquisto.value = '';
@@ -2276,6 +2313,7 @@
         refs.fieldFileBolletta.classList.add('hidden');
       }
 
+      logUploadStateDebug('renderDynamicSections');
       updateScorePreview();
     }
 
@@ -2320,6 +2358,7 @@
       const opzioneNome = opzione?.nome_opzione || '';
       const isFisso = isCategory(categoriaNome, 'Fisso');
       const isAllarmi = isCategory(categoriaNome, 'Allarmi');
+      const switchSimVisible = shouldShowSwitchSim();
       const deviceVisible = shouldShowDevice();
       const hasDevice = deviceVisible && refs.dispositivoAssociato.value === 'true';
       const documentRequirements = getCurrentDocumentRequirements();
@@ -2406,7 +2445,7 @@
         tipo_attivazione: isFisso ? refs.tipoAttivazione.value || null : null,
         apri_chiudi: isFisso ? normalizeSiNo(refs.apriChiudi.value) : null,
         intestatario: isFisso && normalizeSiNo(refs.apriChiudi.value) === 'Si' ? refs.intestatario.value || null : null,
-        switch_sim: isCategory(categoriaNome, 'Mobile') ? normalizeSiNo(refs.switchSim.value) : null,
+        switch_sim: switchSimVisible ? normalizeSiNo(refs.switchSim.value) : null,
         modalita_pagamento: isAllarmi ? refs.modalitaPagamento.value || null : null,
         dispositivo_associato: hasDevice,
         imei: hasDevice ? refs.imei.value.trim() : null,
@@ -3185,23 +3224,37 @@
     }
 
     refs.cluster.addEventListener('change', () => {
+      refs.offerta.value = '';
+      refs.opzione.value = '';
+      refs.reload.value = '';
+      refs.switchSim.value = '';
       renderOfferte();
       renderOpzioni();
       renderReload();
       renderDynamicSections();
+      logUploadStateDebug('cluster:change');
     });
 
     refs.categoria.addEventListener('change', () => {
+      refs.offerta.value = '';
+      refs.opzione.value = '';
+      refs.reload.value = '';
+      refs.switchSim.value = '';
       renderOfferte();
       renderOpzioni();
       renderReload();
       renderDynamicSections();
+      logUploadStateDebug('categoria:change');
     });
 
     refs.offerta.addEventListener('change', () => {
+      refs.opzione.value = '';
+      refs.reload.value = '';
+      refs.switchSim.value = '';
       renderOpzioni();
       renderReload();
       renderDynamicSections();
+      logUploadStateDebug('offerta:change');
     });
 
     refs.opzione.addEventListener('change', renderDynamicSections);
@@ -3301,7 +3354,7 @@
         intestatario: refs.intestatario.value || '',
         switch_sim: refs.switchSim.value || '',
         modalita_pagamento: refs.modalitaPagamento.value || '',
-        dispositivo_associato: refs.dispositivoAssociato.value || 'false',
+        dispositivo_associato: refs.dispositivoAssociato.value || '',
         imei: refs.imei.value || '',
         fascia_prezzo: refs.fasciaPrezzo.value || '',
         tipo_acquisto: refs.tipoAcquisto.value || '',
@@ -3407,7 +3460,7 @@
       refs.intestatario.value = contractForm.intestatario || '';
       refs.switchSim.value = contractForm.switch_sim || '';
       refs.modalitaPagamento.value = contractForm.modalita_pagamento || '';
-      refs.dispositivoAssociato.value = contractForm.dispositivo_associato || 'false';
+      refs.dispositivoAssociato.value = contractForm.dispositivo_associato || '';
       refs.imei.value = contractForm.imei || '';
       refs.fasciaPrezzo.value = contractForm.fascia_prezzo || '';
       refs.tipoAcquisto.value = contractForm.tipo_acquisto || '';
@@ -3423,7 +3476,9 @@
       try {
         const cliente = draft.cliente_form || {};
         refs.cfPiva.value = normalizeCfPiva(cliente.cf_piva || '');
-        refs.cluster.value = cliente.cluster === 'Business' ? 'Business' : 'Consumer';
+        refs.cluster.value = cliente.cluster === 'Business' || cliente.cluster === 'Consumer'
+          ? cliente.cluster
+          : '';
         refs.ragioneSociale.value = cliente.ragione_sociale || '';
         refs.nomeReferente.value = cliente.nome_referente || '';
         refs.cellulare.value = cliente.cellulare || '';
