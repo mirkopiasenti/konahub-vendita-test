@@ -1349,17 +1349,6 @@
       refs.resultBox.textContent = JSON.stringify(data, null, 2);
     }
 
-    function logUploadStateDebug(context) {
-      console.log('[UPLOAD STATE DEBUG]', {
-        context,
-        categoriaValue: refs.categoria?.value || '',
-        offertaValue: refs.offerta?.value || '',
-        selectedOfferta: getSelectedOfferta(),
-        shouldShowSwitchSim: shouldShowSwitchSim(),
-        isEditMode: Boolean(runtimeState.editingTempId)
-      });
-    }
-
     function escapeHtml(value) {
       return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -1941,6 +1930,18 @@
       return `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
     }
 
+    function isFieldVisible(el) {
+      if (!el) return false;
+      if (el.classList.contains('hidden')) return false;
+      if (el.closest('.hidden')) return false;
+
+      const style = window.getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden') return false;
+      if (style.opacity === '0') return false;
+
+      return true;
+    }
+
     function getSelectedCategoria() {
       return state.categorie.find((row) => row.id === refs.categoria.value) || null;
     }
@@ -1973,11 +1974,6 @@
 
     function isCategory(nome, expected) {
       return normalizeText(nome) === normalizeText(expected);
-    }
-
-    function containsFragment(value, fragments) {
-      const normalized = normalizeText(value);
-      return fragments.some((fragment) => normalized.includes(normalizeText(fragment)));
     }
 
     function getLinkedOpzioniIdsForOfferta(offertaId) {
@@ -2052,7 +2048,6 @@
       if (rows.length === 0) {
         refs.offerta.innerHTML = optionHtml('', 'Seleziona...');
         refs.offerta.value = '';
-        logUploadStateDebug('renderOfferte:no_rows');
         return;
       }
 
@@ -2062,7 +2057,6 @@
 
       const hasCurrent = rows.some((item) => item.id === currentValue);
       refs.offerta.value = (preserveCurrent && hasCurrent) ? currentValue : '';
-      logUploadStateDebug(`renderOfferte:preserve=${preserveCurrent ? 'yes' : 'no'}`);
     }
 
     function renderOpzioni(options = {}) {
@@ -2087,14 +2081,6 @@
 
       const hasCurrent = rows.some((item) => item.id === currentValue);
       refs.reload.value = (preserveCurrent && hasCurrent) ? currentValue : '';
-    }
-
-    function shouldShowReload(categoriaNome, offertaNome) {
-      if (isCategory(categoriaNome, 'Mobile')) return true;
-      if (isCategory(categoriaNome, 'Customer Base')) {
-        return containsFragment(offertaNome, ['telefono', 'telefono incluso']);
-      }
-      return false;
     }
 
     function isOfferFlagEnabled(offerta, key) {
@@ -2313,7 +2299,6 @@
         refs.fieldFileBolletta.classList.add('hidden');
       }
 
-      logUploadStateDebug('renderDynamicSections');
       updateScorePreview();
     }
 
@@ -2358,32 +2343,73 @@
       const opzioneNome = opzione?.nome_opzione || '';
       const isFisso = isCategory(categoriaNome, 'Fisso');
       const isAllarmi = isCategory(categoriaNome, 'Allarmi');
-      const switchSimVisible = shouldShowSwitchSim();
-      const deviceVisible = shouldShowDevice();
+      const opzioneVisible = isFieldVisible(refs.fieldOpzione);
+      const reloadVisible = isFieldVisible(refs.fieldReload);
+      const switchSimVisible = isFieldVisible(refs.fieldSwitchSim);
+      const tipoAttivazioneVisible = isFieldVisible(refs.fieldTipoAttivazione);
+      const apriChiudiVisible = isFieldVisible(refs.fieldApriChiudi);
+      const intestatarioVisible = isFieldVisible(refs.fieldIntestatario);
+      const modalitaPagamentoVisible = isFieldVisible(refs.fieldModalitaPagamento);
+      const deviceVisible = isFieldVisible(refs.deviceSection);
       const hasDevice = deviceVisible && refs.dispositivoAssociato.value === 'true';
       const documentRequirements = getCurrentDocumentRequirements();
+
+      console.log('[STEP2 VALIDATION DEBUG]', {
+        categoria: refs.categoria.value,
+        offerta: refs.offerta.value,
+        opzioneVisible,
+        opzioneValue: refs.opzione.value,
+        reloadVisible,
+        reloadValue: refs.reload.value,
+        switchSimVisible,
+        switchSimValue: refs.switchSim.value,
+        deviceVisible,
+        dispositivoAssociato: refs.dispositivoAssociato.value
+      });
 
       if (!categoria?.id) throw new Error('Seleziona una categoria');
       if (!offerta?.id) throw new Error('Seleziona una offerta valida');
 
-      if (!refs.fieldOpzione.classList.contains('hidden') && refs.opzione.value && !opzione?.id) {
-        throw new Error('Opzione non valida per categoria/offerta selezionata');
+      if (opzioneVisible) {
+        if (!refs.opzione.value) {
+          throw new Error('Seleziona una opzione');
+        }
+        if (!opzione?.id) {
+          throw new Error('Opzione non valida per categoria/offerta selezionata');
+        }
       }
 
-      if (isFisso && !refs.tipoAttivazione.value) {
-        throw new Error('Per Fisso seleziona tipo attivazione');
+      if (reloadVisible) {
+        if (!refs.reload.value) {
+          throw new Error('Seleziona una reload');
+        }
+        if (!reload?.id) {
+          throw new Error('Reload non valida per offerta selezionata');
+        }
       }
 
-      if (isFisso && !refs.apriChiudi.value) {
-        throw new Error('Per Fisso seleziona apri/chiudi');
+      if (tipoAttivazioneVisible && !refs.tipoAttivazione.value) {
+        throw new Error('Compila il campo Tipo Attivazione');
       }
 
-      if (isFisso && normalizeSiNo(refs.apriChiudi.value) === 'Si' && !refs.intestatario.value) {
-        throw new Error('Se apri/chiudi = Si, seleziona intestatario');
+      if (apriChiudiVisible && !refs.apriChiudi.value) {
+        throw new Error('Seleziona Apri/Chiudi');
       }
 
-      if (isAllarmi && !refs.modalitaPagamento.value) {
-        throw new Error('Per Allarmi seleziona modalita pagamento');
+      if (intestatarioVisible && !refs.intestatario.value) {
+        throw new Error('Seleziona Intestatario');
+      }
+
+      if (switchSimVisible && !refs.switchSim.value) {
+        throw new Error('Seleziona Switch SIM');
+      }
+
+      if (modalitaPagamentoVisible && !refs.modalitaPagamento.value) {
+        throw new Error('Seleziona Modalita Pagamento');
+      }
+
+      if (deviceVisible && refs.dispositivoAssociato.value === '') {
+        throw new Error('Seleziona se è stato associato un dispositivo');
       }
 
       if (hasDevice) {
@@ -2436,7 +2462,7 @@
         categoria_id: categoria.id,
         offerta_id: offerta.id,
         opzione_id: opzione?.id || null,
-        reload_id: refs.fieldReload.classList.contains('hidden') ? null : (reload?.id || null),
+        reload_id: reloadVisible ? (reload?.id || null) : null,
         categoria_nome: categoriaNome,
         offerta_nome: offertaNome,
         opzione_nome: opzioneNome || null,
@@ -3016,7 +3042,6 @@
             categoria_snapshot: null,
             file_name: identityFileName
           };
-          console.log('[UPLOAD DEBUG]', identityDebug);
           uploadDebug.push(identityDebug);
 
           const identityUpload = await uploadDocumentoOrTechnicalError({
@@ -3064,7 +3089,6 @@
               categoria_snapshot: categoriaSnapshot,
               file_name: contractFileName
             };
-            console.log('[UPLOAD DEBUG]', contractDebug);
             uploadDebug.push(contractDebug);
 
             setMessage(`Upload contratto PDF ${idx + 1}/${state.cart.contratti.length}...`, 'info');
@@ -3111,7 +3135,6 @@
               categoria_snapshot: categoriaSnapshot,
               file_name: simFileName
             };
-            console.log('[UPLOAD DEBUG]', simDebug);
             uploadDebug.push(simDebug);
             setMessage(`Upload fotocopia SIM ${idx + 1}/${state.cart.contratti.length}...`, 'info');
             updateLoadingOverlay('Caricamento in corso', `Upload fotocopia SIM contratto ${idx + 1}...`);
@@ -3153,7 +3176,6 @@
               categoria_snapshot: categoriaSnapshot,
               file_name: bollettaFileName
             };
-            console.log('[UPLOAD DEBUG]', bollettaDebug);
             uploadDebug.push(bollettaDebug);
             setMessage(`Upload copia bolletta ${idx + 1}/${state.cart.contratti.length}...`, 'info');
             updateLoadingOverlay('Caricamento in corso', `Upload copia bolletta contratto ${idx + 1}...`);
@@ -3223,39 +3245,36 @@
       }
     }
 
-    refs.cluster.addEventListener('change', () => {
-      refs.offerta.value = '';
-      refs.opzione.value = '';
-      refs.reload.value = '';
-      refs.switchSim.value = '';
-      renderOfferte();
-      renderOpzioni();
-      renderReload();
-      renderDynamicSections();
-      logUploadStateDebug('cluster:change');
-    });
+      refs.cluster.addEventListener('change', () => {
+        refs.offerta.value = '';
+        refs.opzione.value = '';
+        refs.reload.value = '';
+        refs.switchSim.value = '';
+        renderOfferte();
+        renderOpzioni();
+        renderReload();
+        renderDynamicSections();
+      });
 
-    refs.categoria.addEventListener('change', () => {
-      refs.offerta.value = '';
-      refs.opzione.value = '';
-      refs.reload.value = '';
-      refs.switchSim.value = '';
-      renderOfferte();
-      renderOpzioni();
-      renderReload();
-      renderDynamicSections();
-      logUploadStateDebug('categoria:change');
-    });
+      refs.categoria.addEventListener('change', () => {
+        refs.offerta.value = '';
+        refs.opzione.value = '';
+        refs.reload.value = '';
+        refs.switchSim.value = '';
+        renderOfferte();
+        renderOpzioni();
+        renderReload();
+        renderDynamicSections();
+      });
 
-    refs.offerta.addEventListener('change', () => {
-      refs.opzione.value = '';
-      refs.reload.value = '';
-      refs.switchSim.value = '';
-      renderOpzioni();
-      renderReload();
-      renderDynamicSections();
-      logUploadStateDebug('offerta:change');
-    });
+      refs.offerta.addEventListener('change', () => {
+        refs.opzione.value = '';
+        refs.reload.value = '';
+        refs.switchSim.value = '';
+        renderOpzioni();
+        renderReload();
+        renderDynamicSections();
+      });
 
     refs.opzione.addEventListener('change', renderDynamicSections);
     refs.apriChiudi.addEventListener('change', renderDynamicSections);
