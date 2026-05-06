@@ -940,12 +940,12 @@
         <h2>Dati Contratto</h2>
         <div class="grid">
           <div class="field">
-            <label for="categoria_id">Categoria *</label>
+            <label for="categoria_id">Categoria</label>
             <select id="categoria_id"></select>
           </div>
 
           <div class="field">
-            <label id="labelOfferta" for="offerta_id">Offerta *</label>
+            <label id="labelOfferta" for="offerta_id">Offerta</label>
             <select id="offerta_id"></select>
           </div>
 
@@ -2236,7 +2236,7 @@
       const mnpVisible = requirements.copia_sim_mnp;
       const bollettaVisible = requirements.copia_bolletta;
 
-      refs.labelOfferta.textContent = isCategory(categoriaNome, 'Fisso') ? 'Tecnologia *' : 'Offerta *';
+      refs.labelOfferta.textContent = isCategory(categoriaNome, 'Fisso') ? 'Tecnologia' : 'Offerta';
 
       refs.fieldOpzione.classList.toggle('hidden', !opzioneVisible);
       refs.fieldReload.classList.toggle('hidden', !reloadVisible);
