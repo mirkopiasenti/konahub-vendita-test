@@ -352,6 +352,21 @@
       gap: 8px;
     }
 
+    .identify-card {
+      display: grid;
+      gap: 12px;
+      max-width: 760px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .identify-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
     .inline-box {
       display: flex;
       align-items: center;
@@ -849,7 +864,7 @@
     </section>
 
     <section class="wizard-shell">
-      <div class="stepper">
+      <div id="stepper" class="stepper">
         <div id="stepItem1" class="step-item active">
           <span class="step-index">1</span>
           <span class="step-label">Anagrafica</span>
@@ -864,6 +879,17 @@
         </div>
       </div>
 
+      <section id="identifySection" class="card panel">
+        <div class="identify-card">
+          <h2>Inserisci codice fiscale - partita IVA - passaporto</h2>
+          <div class="identify-row">
+            <input id="initial_identifier" autocomplete="off" placeholder="Inserisci codice fiscale - partita IVA - passaporto">
+            <button id="btnInitialContinue" type="button">Continua</button>
+          </div>
+          <p class="hint">Premi Invio oppure Continua per avviare la ricerca.</p>
+        </div>
+      </section>
+
       <section id="step1Section" class="card panel">
         <h2>Dati Anagrafici Cliente</h2>
         <div class="grid">
@@ -876,12 +902,13 @@
             <p class="hint">Se l'anagrafica esiste i campi si compilano in automatico, ma restano modificabili.</p>
           </div>
 
-          <div class="field">
+          <div id="fieldCluster" class="field">
             <label for="cluster_cliente">Cluster *</label>
             <select id="cluster_cliente">
               <option value="">Seleziona...</option>
               <option value="Consumer">Consumer</option>
               <option value="Business">Business</option>
+              <option value="Turista">Turista</option>
             </select>
           </div>
 
@@ -900,22 +927,22 @@
             <input id="cellulare" autocomplete="off">
           </div>
 
-          <div class="field">
+          <div id="fieldProvincia" class="field">
             <label for="provincia">Provincia</label>
             <input id="provincia" autocomplete="off">
           </div>
 
-          <div class="field">
+          <div id="fieldComune" class="field">
             <label for="comune">Comune</label>
             <input id="comune" autocomplete="off">
           </div>
 
-          <div class="field">
+          <div id="fieldVia" class="field">
             <label for="via">Via</label>
             <input id="via" autocomplete="off">
           </div>
 
-          <div class="field">
+          <div id="fieldCivico" class="field">
             <label for="civico">Civico</label>
             <input id="civico" autocomplete="off">
           </div>
@@ -1192,6 +1219,10 @@
         lastCompletedCfPiva: '',
         lastRequestedCfPiva: ''
       },
+      identificationCompleted: false,
+      clusterLocked: false,
+      identifierType: null,
+      turistaDefaults: null,
       draftSuspended: false,
       draftSaveTimer: null,
       restoreNeedsFileReselection: false
@@ -1201,6 +1232,15 @@
       CONTRATTO: 'contratto',
       COPIA_BOLLETTA: 'copia_bolletta',
       COPIA_SIM_MNP: 'copia_sim_mnp'
+    };
+    const CLUSTERS = {
+      CONSUMER: 'Consumer',
+      BUSINESS: 'Business',
+      TURISTA: 'Turista'
+    };
+    const TURISTA_DEFAULTS = {
+      CATEGORIA: 'Mobile',
+      OFFERTA: 'Untied - Call Your Country'
     };
     const DRAFT_SESSION_KEY = 'vendita_wizard_draft_v1';
 
@@ -1215,6 +1255,10 @@
       identityStatus: document.getElementById('identityStatus'),
       cartClienteBox: document.getElementById('cartClienteBox'),
       labelOfferta: document.getElementById('labelOfferta'),
+      stepper: document.getElementById('stepper'),
+      identifySection: document.getElementById('identifySection'),
+      initialIdentifier: document.getElementById('initial_identifier'),
+      btnInitialContinue: document.getElementById('btnInitialContinue'),
 
       cluster: document.getElementById('cluster_cliente'),
       cfPiva: document.getElementById('cf_piva'),
@@ -1252,6 +1296,11 @@
       fieldIntestatario: document.getElementById('fieldIntestatario'),
       fieldSwitchSim: document.getElementById('fieldSwitchSim'),
       fieldModalitaPagamento: document.getElementById('fieldModalitaPagamento'),
+      fieldCluster: document.getElementById('fieldCluster'),
+      fieldProvincia: document.getElementById('fieldProvincia'),
+      fieldComune: document.getElementById('fieldComune'),
+      fieldVia: document.getElementById('fieldVia'),
+      fieldCivico: document.getElementById('fieldCivico'),
 
       deviceSection: document.getElementById('deviceSection'),
       fieldImei: document.getElementById('fieldImei'),
@@ -1368,6 +1417,56 @@
 
     function normalizeCfPiva(value) {
       return String(value || '').trim().toUpperCase();
+    }
+
+    function normalizeCompact(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '')
+        .toLowerCase()
+        .trim();
+    }
+
+    function isTuristaCluster(value) {
+      return String(value || '').trim().toLowerCase() === CLUSTERS.TURISTA.toLowerCase();
+    }
+
+    function normalizeClusterValue(value) {
+      const raw = String(value || '').trim().toLowerCase();
+      if (raw === CLUSTERS.CONSUMER.toLowerCase()) return CLUSTERS.CONSUMER;
+      if (raw === CLUSTERS.BUSINESS.toLowerCase()) return CLUSTERS.BUSINESS;
+      if (raw === CLUSTERS.TURISTA.toLowerCase()) return CLUSTERS.TURISTA;
+      return '';
+    }
+
+    function setClusterValue(value, { lock = false } = {}) {
+      const normalized = normalizeClusterValue(value);
+      refs.cluster.value = normalized || '';
+      runtimeState.clusterLocked = lock === true;
+      refs.cluster.disabled = runtimeState.clusterLocked;
+    }
+
+    function isItalianVatNumber(value) {
+      const input = String(value || '').trim();
+      if (!/^\d{11}$/.test(input)) return false;
+
+      let sum = 0;
+      for (let i = 0; i < 10; i += 1) {
+        let digit = Number(input[i]);
+        if ((i + 1) % 2 === 0) {
+          digit *= 2;
+          if (digit > 9) digit -= 9;
+        }
+        sum += digit;
+      }
+      const control = (10 - (sum % 10)) % 10;
+      return control === Number(input[10]);
+    }
+
+    function isItalianFiscalCode(value) {
+      const input = normalizeCfPiva(value);
+      return /^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$/.test(input);
     }
 
     // Supabase salva timestamptz in UTC (+00).
@@ -1860,6 +1959,83 @@
       refs.btnOpenCarrello.textContent = editing ? 'Salva modifiche e vai al carrello' : 'Vai al carrello';
     }
 
+    function applyClusterFieldVisibility() {
+      const turista = isTuristaCluster(refs.cluster.value);
+      refs.fieldProvincia.classList.toggle('hidden', turista);
+      refs.fieldComune.classList.toggle('hidden', turista);
+      refs.fieldVia.classList.toggle('hidden', turista);
+      refs.fieldCivico.classList.toggle('hidden', turista);
+
+      if (turista) {
+        refs.provincia.value = '';
+        refs.comune.value = '';
+        refs.via.value = '';
+        refs.civico.value = '';
+      }
+    }
+
+    function getTuristaDefaultContractSelection() {
+      if (runtimeState.turistaDefaults?.categoria?.id && runtimeState.turistaDefaults?.offerta?.id) {
+        return runtimeState.turistaDefaults;
+      }
+
+      const categoria = (state.categorie || []).find((item) =>
+        normalizeCompact(item?.nome) === normalizeCompact(TURISTA_DEFAULTS.CATEGORIA)
+      ) || null;
+
+      if (!categoria) {
+        throw new Error(`Configurazione mancante: categoria "${TURISTA_DEFAULTS.CATEGORIA}" non trovata`);
+      }
+
+      const targetName = normalizeCompact(TURISTA_DEFAULTS.OFFERTA);
+      const allCandidates = (state.offerte || []).filter((item) =>
+        item?.categoria_id === categoria.id &&
+        normalizeCompact(item?.nome_offerta) === targetName
+      );
+
+      const offerPreferredOrder = [
+        CLUSTERS.TURISTA,
+        null,
+        '',
+        CLUSTERS.CONSUMER,
+        CLUSTERS.BUSINESS
+      ];
+
+      let offerta = null;
+      for (let i = 0; i < offerPreferredOrder.length; i += 1) {
+        const expectedCluster = offerPreferredOrder[i];
+        offerta = allCandidates.find((row) => {
+          const rowCluster = String(row?.cluster_cliente || '').trim();
+          if (expectedCluster === null || expectedCluster === '') {
+            return !rowCluster;
+          }
+          return String(rowCluster || '').toLowerCase() === expectedCluster.toLowerCase();
+        }) || null;
+        if (offerta) break;
+      }
+
+      if (!offerta) {
+        offerta = allCandidates[0] || null;
+      }
+
+      if (!offerta) {
+        throw new Error(`Configurazione mancante: offerta "${TURISTA_DEFAULTS.OFFERTA}" non trovata`);
+      }
+
+      runtimeState.turistaDefaults = { categoria, offerta };
+      return runtimeState.turistaDefaults;
+    }
+
+    function applyTuristaContractDefaults() {
+      const defaults = getTuristaDefaultContractSelection();
+      refs.categoria.value = defaults.categoria.id;
+      renderOfferte();
+      refs.offerta.value = defaults.offerta.id;
+      renderOpzioni();
+      renderReload();
+      renderDynamicSections();
+    }
+
     function renderStepIndicator() {
       const currentStep = uiState.view === 'wizard' ? uiState.step : 3;
       const items = [refs.stepItem1, refs.stepItem2, refs.stepItem3];
@@ -1874,17 +2050,37 @@
     }
 
     function renderWizardLayout() {
+      const showInitialIdentification = !runtimeState.identificationCompleted;
+      refs.identifySection.classList.toggle('hidden', !showInitialIdentification);
+      refs.stepper.classList.toggle('hidden', showInitialIdentification);
+
+      if (showInitialIdentification) {
+        refs.carrelloSection.classList.add('hidden');
+        refs.step1Section.classList.add('hidden');
+        refs.step2Section.classList.add('hidden');
+        refs.step3Section.classList.add('hidden');
+        refs.wizardActions.classList.add('hidden');
+        refs.deviceSection.classList.add('hidden');
+        refs.step1Actions.classList.add('hidden');
+        refs.step2Actions.classList.add('hidden');
+        refs.step3Actions.classList.add('hidden');
+        return;
+      }
+
       const inWizard = uiState.view === 'wizard';
-      const step = Math.max(1, Math.min(3, Number(uiState.step) || 1));
+      let step = Math.max(1, Math.min(3, Number(uiState.step) || 1));
+      if (isTuristaCluster(refs.cluster.value) && step === 2) {
+        step = 3;
+      }
       uiState.step = step;
 
       refs.carrelloSection.classList.toggle('hidden', inWizard);
       refs.step1Section.classList.toggle('hidden', !inWizard || step !== 1);
-      refs.step2Section.classList.toggle('hidden', !inWizard || step !== 2);
+      refs.step2Section.classList.toggle('hidden', !inWizard || step !== 2 || isTuristaCluster(refs.cluster.value));
       refs.step3Section.classList.toggle('hidden', !inWizard || step !== 3);
       refs.wizardActions.classList.toggle('hidden', !inWizard);
       refs.step1Actions.classList.toggle('hidden', !inWizard || step !== 1);
-      refs.step2Actions.classList.toggle('hidden', !inWizard || step !== 2);
+      refs.step2Actions.classList.toggle('hidden', !inWizard || step !== 2 || isTuristaCluster(refs.cluster.value));
       refs.step3Actions.classList.toggle('hidden', !inWizard || step !== 3);
 
       if (!inWizard || step !== 2) {
@@ -1893,13 +2089,18 @@
         renderDynamicSections();
       }
 
+      applyClusterFieldVisibility();
       renderStepIndicator();
       updateUploadVisibility();
     }
 
     function goToStep(step) {
       uiState.view = 'wizard';
-      uiState.step = Math.max(1, Math.min(3, Number(step) || 1));
+      let nextStep = Math.max(1, Math.min(3, Number(step) || 1));
+      if (isTuristaCluster(refs.cluster.value) && nextStep === 2) {
+        nextStep = 3;
+      }
+      uiState.step = nextStep;
       renderDynamicSections();
       renderWizardLayout();
       queueDraftSave();
@@ -1995,10 +2196,13 @@
     function filteredOfferte() {
       const categoriaId = refs.categoria.value;
       const cluster = refs.cluster.value;
+      const turista = isTuristaCluster(cluster);
 
       return state.offerte.filter((row) => {
         const categoriaOk = row.categoria_id === categoriaId;
-        const clusterOk = !row.cluster_cliente || row.cluster_cliente === cluster;
+        const clusterOk = turista
+          ? true
+          : (!row.cluster_cliente || row.cluster_cliente === cluster);
         return categoriaOk && clusterOk;
       });
     }
@@ -2186,11 +2390,16 @@
       runtimeState.search.lastRequestedCfPiva = '';
       runtimeState.search.lastCompletedCfPiva = '';
       runtimeState.restoreNeedsFileReselection = false;
+      runtimeState.identificationCompleted = false;
+      runtimeState.clusterLocked = false;
+      runtimeState.identifierType = null;
+      runtimeState.turistaDefaults = null;
 
       praticaFiles.documento_identita = null;
+      refs.initialIdentifier.value = '';
 
       refs.cfPiva.value = '';
-      refs.cluster.value = '';
+      setClusterValue('', { lock: false });
       refs.ragioneSociale.value = '';
       refs.nomeReferente.value = '';
       refs.cellulare.value = '';
@@ -2218,6 +2427,7 @@
       renderCarrello();
       updateUploadVisibility();
       updateStep3ActionsLabels();
+      applyClusterFieldVisibility();
       goToStep(1);
       clearDraftFromSession();
     }
@@ -2304,17 +2514,19 @@
 
     function getClienteFormData() {
       const normalizedCfPiva = normalizeCfPiva(refs.cfPiva.value);
+      const normalizedCluster = normalizeClusterValue(refs.cluster.value);
+      const turista = isTuristaCluster(normalizedCluster);
       refs.cfPiva.value = normalizedCfPiva;
       return {
         cf_piva: normalizedCfPiva,
-        cluster: refs.cluster.value,
+        cluster: normalizedCluster,
         ragione_sociale: refs.ragioneSociale.value.trim(),
         nome_referente: refs.nomeReferente.value.trim() || null,
         cellulare: refs.cellulare.value.trim() || null,
-        provincia: refs.provincia.value.trim() || null,
-        comune: refs.comune.value.trim() || null,
-        via: refs.via.value.trim() || null,
-        civico: refs.civico.value.trim() || null
+        provincia: turista ? null : (refs.provincia.value.trim() || null),
+        comune: turista ? null : (refs.comune.value.trim() || null),
+        via: turista ? null : (refs.via.value.trim() || null),
+        civico: turista ? null : (refs.civico.value.trim() || null)
       };
     }
 
@@ -2327,7 +2539,11 @@
         throw new Error('Compila il campo cliente Ragione Sociale');
       }
 
-      if (cliente.cluster !== 'Consumer' && cliente.cluster !== 'Business') {
+      if (
+        cliente.cluster !== CLUSTERS.CONSUMER &&
+        cliente.cluster !== CLUSTERS.BUSINESS &&
+        cliente.cluster !== CLUSTERS.TURISTA
+      ) {
         throw new Error('Cluster cliente non valido');
       }
     }
@@ -2676,10 +2892,96 @@
       markTechnicalConnected('Connesso');
     }
 
+    function detectIdentifierKind(value) {
+      const normalized = normalizeCfPiva(value);
+      if (!normalized) return null;
+      if (isItalianFiscalCode(normalized)) return 'cf';
+      if (isItalianVatNumber(normalized)) return 'piva';
+      return 'passaporto';
+    }
+
+    async function startIdentifiedAnagraficaFlow(cfPiva, cluster, options = {}) {
+      const normalizedValue = normalizeCfPiva(cfPiva);
+      const normalizedCluster = normalizeClusterValue(cluster);
+
+      if (!normalizedValue) {
+        throw new Error('Inserisci codice fiscale, partita IVA o passaporto');
+      }
+
+      if (!normalizedCluster) {
+        throw new Error('Cluster non valido per il flusso iniziale');
+      }
+
+      if (normalizedCluster === CLUSTERS.TURISTA) {
+        getTuristaDefaultContractSelection();
+      }
+
+      runtimeState.identificationCompleted = true;
+      runtimeState.identifierType = options.identifierType || null;
+      refs.initialIdentifier.value = normalizedValue;
+      refs.cfPiva.value = normalizedValue;
+      setClusterValue(normalizedCluster, { lock: normalizedCluster === CLUSTERS.TURISTA });
+      applyClusterFieldVisibility();
+      uiState.view = 'wizard';
+      uiState.step = 1;
+      renderWizardLayout();
+      queueDraftSave();
+
+      await cercaCliente({
+        force: true,
+        cfPiva: normalizedValue,
+        presetCluster: normalizedCluster,
+        lockCluster: normalizedCluster === CLUSTERS.TURISTA
+      });
+    }
+
+    async function handleInitialIdentifierContinue() {
+      const normalizedValue = normalizeCfPiva(refs.initialIdentifier.value);
+
+      if (!normalizedValue) {
+        showUserError('Inserisci codice fiscale, partita IVA o passaporto', 'Identificazione cliente');
+        return;
+      }
+
+      refs.initialIdentifier.value = normalizedValue;
+      const kind = detectIdentifierKind(normalizedValue);
+
+      if (kind === 'cf') {
+        await startIdentifiedAnagraficaFlow(normalizedValue, CLUSTERS.CONSUMER, { identifierType: 'cf' });
+        return;
+      }
+
+      if (kind === 'piva') {
+        await startIdentifiedAnagraficaFlow(normalizedValue, CLUSTERS.BUSINESS, { identifierType: 'piva' });
+        return;
+      }
+
+      showConfirmOverlay({
+        title: 'Hai inserito i seguenti valori:',
+        text: `${normalizedValue}\nVuoi correggerlo oppure confermi essere un passaporto?`,
+        cancelLabel: 'Correggi',
+        confirmLabel: 'Passaporto',
+        onConfirm: async () => {
+          try {
+            await startIdentifiedAnagraficaFlow(normalizedValue, CLUSTERS.TURISTA, { identifierType: 'passaporto' });
+          } catch (error) {
+            showUserError(error.message, 'Identificazione cliente');
+          }
+        },
+        onCancel: () => {
+          refs.initialIdentifier.focus();
+        }
+      });
+    }
+
     async function cercaCliente(options = {}) {
-      refs.cfPiva.value = normalizeCfPiva(refs.cfPiva.value);
-      const cfPiva = refs.cfPiva.value;
+      const requestedCfPiva = normalizeCfPiva(options.cfPiva || refs.cfPiva.value);
+      refs.cfPiva.value = requestedCfPiva;
+      refs.initialIdentifier.value = requestedCfPiva;
+      const cfPiva = requestedCfPiva;
       const force = Boolean(options.force);
+      const presetCluster = normalizeClusterValue(options.presetCluster || '');
+      const lockCluster = Boolean(options.lockCluster);
 
       if (!cfPiva) {
         showUserError('Inserisci CF/P.IVA prima di cercare anagrafica', 'Ricerca anagrafica');
@@ -2703,6 +3005,16 @@
         );
 
         if (!data.found) {
+          if (presetCluster) {
+            setClusterValue(presetCluster, { lock: lockCluster });
+          } else if (runtimeState.clusterLocked && isTuristaCluster(refs.cluster.value)) {
+            setClusterValue(CLUSTERS.TURISTA, { lock: true });
+          }
+          applyClusterFieldVisibility();
+          renderOfferte();
+          renderOpzioni();
+          renderReload();
+          renderDynamicSections();
           runtimeState.search.lastCompletedCfPiva = cfPiva;
           setMessage('Cliente non trovato: puoi compilare manualmente i campi', 'info');
           markTechnicalConnected('Connesso');
@@ -2712,7 +3024,16 @@
         }
 
         const found = data.data || {};
-        if (found.cluster === 'Consumer' || found.cluster === 'Business') refs.cluster.value = found.cluster;
+        if (presetCluster) {
+          setClusterValue(presetCluster, { lock: lockCluster });
+        } else if (runtimeState.clusterLocked && isTuristaCluster(refs.cluster.value)) {
+          setClusterValue(CLUSTERS.TURISTA, { lock: true });
+        } else {
+          const foundCluster = normalizeClusterValue(found.cluster);
+          if (foundCluster) {
+            setClusterValue(foundCluster, { lock: foundCluster === CLUSTERS.TURISTA });
+          }
+        }
         refs.ragioneSociale.value = found.ragione_sociale || refs.ragioneSociale.value;
         refs.nomeReferente.value = found.nome_referente || refs.nomeReferente.value;
         refs.cellulare.value = found.cellulare || refs.cellulare.value;
@@ -2720,6 +3041,7 @@
         refs.comune.value = found.comune || refs.comune.value;
         refs.via.value = found.via || refs.via.value;
         refs.civico.value = found.civico || refs.civico.value;
+        applyClusterFieldVisibility();
 
         renderOfferte();
         renderOpzioni();
@@ -2820,7 +3142,12 @@
         if (goToCart) {
           openCartView();
         } else {
-          goToStep(2);
+          if (isTuristaCluster(refs.cluster.value)) {
+            applyTuristaContractDefaults();
+            goToStep(3);
+          } else {
+            goToStep(2);
+          }
         }
       } catch (error) {
         showUserError(error.message, 'Verifica contratto');
@@ -3246,10 +3573,13 @@
     }
 
       refs.cluster.addEventListener('change', () => {
+        runtimeState.clusterLocked = false;
+        refs.cluster.disabled = false;
         refs.offerta.value = '';
         refs.opzione.value = '';
         refs.reload.value = '';
         refs.switchSim.value = '';
+        applyClusterFieldVisibility();
         renderOfferte();
         renderOpzioni();
         renderReload();
@@ -3299,12 +3629,15 @@
     function hasUnsavedWork() {
       if (runtimeState.isSubmitting) return true;
       if (runtimeState.editingTempId) return true;
+      if (runtimeState.identificationCompleted) return true;
       if (state.cart.contratti.length > 0) return true;
       if (Array.isArray(praticaFiles.documento_identita) && praticaFiles.documento_identita.length > 0) return true;
       if (getInputFiles(refs.fileDocumentoIdentita).length > 0) return true;
       if (getInputFile(refs.fileContrattoPdf)) return true;
       if (getInputFiles(refs.fileCopiaSimMnp).length > 0) return true;
       if (getInputFiles(refs.fileCopiaBolletta).length > 0) return true;
+
+      if (String(refs.initialIdentifier.value || '').trim() !== '') return true;
 
       const hasClienteData = [
         refs.cfPiva.value,
@@ -3389,6 +3722,12 @@
         ui: {
           view: uiState.view,
           step: uiState.step
+        },
+        entry: {
+          completed: runtimeState.identificationCompleted,
+          identifier_value: refs.initialIdentifier.value || refs.cfPiva.value || '',
+          identifier_type: runtimeState.identifierType || null,
+          cluster_locked: runtimeState.clusterLocked
         },
         editing_temp_id: runtimeState.editingTempId || null,
         restore_needs_file_reselection: runtimeState.restoreNeedsFileReselection,
@@ -3493,11 +3832,19 @@
 
       runtimeState.draftSuspended = true;
       try {
+        runtimeState.identificationCompleted = Boolean(
+          draft?.entry?.completed ||
+          draft?.cliente_form?.cf_piva ||
+          (Array.isArray(draft?.cart?.contratti) && draft.cart.contratti.length > 0)
+        );
+        runtimeState.identifierType = draft?.entry?.identifier_type || null;
+        refs.initialIdentifier.value = normalizeCfPiva(draft?.entry?.identifier_value || draft?.cliente_form?.cf_piva || '');
+
         const cliente = draft.cliente_form || {};
         refs.cfPiva.value = normalizeCfPiva(cliente.cf_piva || '');
-        refs.cluster.value = cliente.cluster === 'Business' || cliente.cluster === 'Consumer'
-          ? cliente.cluster
-          : '';
+        const restoredCluster = normalizeClusterValue(cliente.cluster);
+        const lockCluster = Boolean(draft?.entry?.cluster_locked) || isTuristaCluster(restoredCluster);
+        setClusterValue(restoredCluster, { lock: lockCluster });
         refs.ragioneSociale.value = cliente.ragione_sociale || '';
         refs.nomeReferente.value = cliente.nome_referente || '';
         refs.cellulare.value = cliente.cellulare || '';
@@ -3505,6 +3852,7 @@
         refs.comune.value = cliente.comune || '';
         refs.via.value = cliente.via || '';
         refs.civico.value = cliente.civico || '';
+        applyClusterFieldVisibility();
 
         refs.originePratica.value = draft.pratica?.origine_pratica || 'spontaneo';
         refs.operatoreId.value = draft.pratica?.operatore_id || '';
@@ -3533,6 +3881,9 @@
         runtimeState.editingTempId = draft.editing_temp_id || null;
 
         restoreContractFormDraft(draft.contract_form || {});
+        if (isTuristaCluster(refs.cluster.value) && (!refs.categoria.value || !refs.offerta.value)) {
+          applyTuristaContractDefaults();
+        }
 
         const nextView = draft.ui?.view === 'cart' ? 'cart' : 'wizard';
         const nextStep = Number(draft.ui?.step || 1);
@@ -3593,6 +3944,29 @@
       event.returnValue = '';
     }
 
+    refs.btnInitialContinue.addEventListener('click', async () => {
+      try {
+        await handleInitialIdentifierContinue();
+      } catch (error) {
+        showUserError(error.message, 'Identificazione cliente');
+      }
+    });
+
+    refs.initialIdentifier.addEventListener('keydown', async (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      try {
+        await handleInitialIdentifierContinue();
+      } catch (error) {
+        showUserError(error.message, 'Identificazione cliente');
+      }
+    });
+
+    refs.initialIdentifier.addEventListener('input', () => {
+      refs.initialIdentifier.value = normalizeCfPiva(refs.initialIdentifier.value);
+      queueDraftSave();
+    });
+
     refs.btnCercaCliente.addEventListener('click', async () => {
       try {
         await cercaCliente();
@@ -3605,6 +3979,7 @@
 
     refs.cfPiva.addEventListener('input', () => {
       refs.cfPiva.value = normalizeCfPiva(refs.cfPiva.value);
+      refs.initialIdentifier.value = refs.cfPiva.value;
       queueDraftSave();
     });
 
@@ -3624,8 +3999,11 @@
       try {
         const cliente = getClienteFormData();
         validateClienteData(cliente);
+        if (isTuristaCluster(cliente.cluster)) {
+          applyTuristaContractDefaults();
+        }
         updateCartClienteSnapshot();
-        goToStep(2);
+        goToStep(isTuristaCluster(cliente.cluster) ? 3 : 2);
       } catch (error) {
         showUserError(error.message, 'Verifica anagrafica');
       }
@@ -3645,13 +4023,24 @@
     });
 
     refs.btnStep3Back.addEventListener('click', () => {
-      goToStep(2);
+      if (isTuristaCluster(refs.cluster.value)) {
+        goToStep(1);
+      } else {
+        goToStep(2);
+      }
     });
 
     refs.btnAddToCart.addEventListener('click', () => addContrattoToCart({ goToCart: false }));
     refs.btnOpenCarrello.addEventListener('click', () => addContrattoToCart({ goToCart: true }));
     refs.btnOpenCarrelloTop.addEventListener('click', openCartView);
-    refs.btnBackToStep2.addEventListener('click', () => goToStep(2));
+    refs.btnBackToStep2.addEventListener('click', () => {
+      if (isTuristaCluster(refs.cluster.value)) {
+        applyTuristaContractDefaults();
+        goToStep(3);
+      } else {
+        goToStep(2);
+      }
+    });
     refs.btnNuovaPratica.addEventListener('click', startNuovaPraticaFromCart);
     refs.btnSvuotaCarrello.addEventListener('click', clearCart);
     refs.btnInviaPratica.addEventListener('click', inviaPratica);

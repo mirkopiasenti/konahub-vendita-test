@@ -6,7 +6,9 @@ const ORIGINI_PRATICA_AMMESSE = new Set([
   'spontaneo'
 ]);
 
-const CLUSTER_AMMESSI = new Set(['Consumer', 'Business']);
+const CLUSTER_AMMESSI = new Set(['Consumer', 'Business', 'Turista']);
+const TURISTA_CATEGORIA_FISSA = 'Mobile';
+const TURISTA_OFFERTA_FISSA = 'Untied - Call Your Country';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const CORS_HEADERS = {
@@ -60,7 +62,7 @@ function normalizeCluster(value) {
   const normalized = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
 
   if (!CLUSTER_AMMESSI.has(normalized)) {
-    throw new Error('Cluster non valido: usa Consumer o Business');
+    throw new Error('Cluster non valido: usa Consumer, Business o Turista');
   }
 
   return normalized;
@@ -187,6 +189,15 @@ function normalizeCategoryName(value) {
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
     .toLowerCase();
+}
+
+function normalizeComparableText(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '')
+    .toLowerCase()
+    .trim();
 }
 
 function validateCategorySpecificRules({ contract, category, offer, index }) {
@@ -556,7 +567,20 @@ exports.handler = async (event) => {
         throw new Error(`Offerta non coerente con categoria per contratti[${index}]`);
       }
 
-      if (cluster && offerta.cluster_cliente && offerta.cluster_cliente !== cluster) {
+      const isTuristaCluster = cluster === 'Turista';
+
+      if (isTuristaCluster) {
+        const categoriaNormalized = normalizeCategoryName(categoria.nome);
+        const offertaNormalized = normalizeComparableText(offerta.nome_offerta);
+
+        if (categoriaNormalized !== normalizeCategoryName(TURISTA_CATEGORIA_FISSA)) {
+          throw new Error(`Per cluster Turista la categoria deve essere ${TURISTA_CATEGORIA_FISSA} (contratti[${index}])`);
+        }
+
+        if (offertaNormalized !== normalizeComparableText(TURISTA_OFFERTA_FISSA)) {
+          throw new Error(`Per cluster Turista l'offerta deve essere "${TURISTA_OFFERTA_FISSA}" (contratti[${index}])`);
+        }
+      } else if (cluster && offerta.cluster_cliente && offerta.cluster_cliente !== cluster) {
         throw new Error(`Offerta non coerente con cluster per contratti[${index}]`);
       }
 
@@ -576,7 +600,7 @@ exports.handler = async (event) => {
           throw new Error(`Opzione non coerente con categoria/offerta per contratti[${index}]`);
         }
 
-        if (cluster && opzione.cluster_cliente && opzione.cluster_cliente !== cluster) {
+        if (!isTuristaCluster && cluster && opzione.cluster_cliente && opzione.cluster_cliente !== cluster) {
           throw new Error(`Opzione non coerente con cluster per contratti[${index}]`);
         }
       }
