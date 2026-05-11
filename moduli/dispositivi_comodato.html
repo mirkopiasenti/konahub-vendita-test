@@ -1,1528 +1,1463 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <link rel="icon" type="image/png" href="data:image/png;base64,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">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestione Dispositivi in Comodato - WindTre</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --windtre-orange: #FF6600;
-            --windtre-gray: #58595B;
-            --light-gray: #F5F5F5;
-            --white: #FFFFFF;
-            --error-red: #D32F2F;
-            --success-green: #388E3C;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--light-gray);
-            color: var(--windtre-gray);
-        }
-
-        .header {
-            background: linear-gradient(135deg, var(--windtre-gray) 0%, #3d3e40 100%);
-            color: var(--white);
-            padding: 1.5rem 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .header h1 {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .header .subtitle {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .btn-back {
-            padding: 8px 20px;
-            background-color: transparent;
-            color: var(--white);
-            border: 2px solid var(--white);
-            border-radius: 6px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-
-        .btn-back:hover {
-            background-color: var(--white);
-            color: var(--windtre-gray);
-        }
-
-        .nav-tabs {
-            background: linear-gradient(135deg, var(--windtre-gray) 0%, #3d3e40 100%);
-            display: flex;
-            padding: 1rem 1.5rem;
-            gap: 1rem;
-        }
-
-        .nav-tab {
-            flex: 1;
-            padding: 1rem 1.5rem;
-            text-align: center;
-            cursor: pointer;
-            border: 2px solid var(--windtre-gray);
-            background: var(--white);
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--windtre-gray);
-            transition: all 0.3s ease;
-            border-radius: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .nav-tab:hover {
-            background-color: var(--light-gray);
-            transform: translateY(-2px);
-        }
-
-        .nav-tab.active {
-            background: var(--windtre-orange);
-            color: var(--white);
-            border-color: var(--windtre-orange);
-            box-shadow: 0 4px 15px rgba(255, 102, 0, 0.4);
-        }
-
-        .nav-tab.active:hover {
-            background: #e55c00;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .page {
-            display: none;
-            background-color: var(--white);
-            border-radius: 8px;
-            padding: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .page.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .form-section {
-            margin-bottom: 2rem;
-        }
-
-        .form-section h2 {
-            color: var(--windtre-orange);
-            margin-bottom: 1rem;
-            font-size: 1.3rem;
-            border-bottom: 2px solid var(--light-gray);
-            padding-bottom: 0.5rem;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group label {
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--windtre-gray);
-        }
-
-        .form-group label .required {
-            color: var(--windtre-orange);
-        }
-
-        .form-group input[type="text"],
-        .form-group input[type="tel"],
-        .form-group input[type="file"] {
-            padding: 0.75rem;
-            border: 2px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--windtre-orange);
-        }
-
-        .form-group input.error {
-            border-color: var(--error-red);
-        }
-
-        .form-group small {
-            display: block;
-            margin-top: 0.25rem;
-            font-style: italic;
-        }
-
-        .form-group small span {
-            font-weight: 600;
-            color: var(--windtre-orange);
-        }
-
-        .error-message {
-            color: var(--error-red);
-            font-size: 0.85rem;
-            margin-top: 0.25rem;
-        }
-
-        .info-box {
-            background-color: #FFF3E0;
-            border-left: 4px solid var(--windtre-orange);
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 4px;
-        }
-
-        .info-box p {
-            margin: 0;
-            font-size: 0.9rem;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin: 1rem 0;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            margin-right: 0.5rem;
-            cursor: pointer;
-        }
-
-        .checkbox-group label {
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .btn {
-            padding: 0.75rem 2rem;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-right: 1rem;
-        }
-
-        .btn-primary {
-            background-color: var(--windtre-orange);
-            color: var(--white);
-        }
-
-        .btn-primary:hover {
-            background-color: #E55A00;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(255, 102, 0, 0.3);
-        }
-
-        .btn-secondary {
-            background-color: var(--windtre-gray);
-            color: var(--white);
-        }
-
-        .btn-secondary:hover {
-            background-color: #484949;
-        }
-
-        .btn:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .buttons-container {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .search-box {
-            margin-bottom: 2rem;
-            padding: 1.5rem;
-            background-color: var(--light-gray);
-            border-radius: 8px;
-        }
-
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, var(--windtre-orange) 0%, #ff8533 100%);
-            color: var(--white);
-            padding: 1.5rem;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(255, 102, 0, 0.2);
-        }
-
-        .stat-card h3 {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-card p {
-            font-size: 0.9rem;
-            opacity: 0.95;
-        }
-
-        .table-container {
-            overflow-x: auto;
-            margin-top: 1rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        table thead {
-            background-color: var(--windtre-gray);
-            color: var(--white);
-        }
-
-        table th,
-        table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        table tbody tr:hover {
-            background-color: var(--light-gray);
-        }
-
-        table tbody tr.highlight {
-            background-color: #FFF3E0;
-        }
-
-        .filters {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        .status-badge.fuori {
-            background-color: #FFE0B2;
-            color: #E65100;
-        }
-
-        .status-badge.rientrato {
-            background-color: #C8E6C9;
-            color: #2E7D32;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: var(--windtre-orange);
-        }
-
-        .success-message {
-            background-color: #C8E6C9;
-            color: #2E7D32;
-            padding: 1rem;
-            border-radius: 4px;
-            margin: 1rem 0;
-            border-left: 4px solid var(--success-green);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background-color: var(--white);
-            padding: 2rem;
-            border-radius: 8px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        .modal-header {
-            margin-bottom: 1rem;
-        }
-
-        .modal-header h3 {
-            color: var(--windtre-orange);
-        }
-
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .nav-tabs {
-                padding: 0.75rem;
-                gap: 0.5rem;
-                flex-wrap: wrap;
-            }
-
-            .nav-tab {
-                font-size: 0.8rem;
-                padding: 0.6rem 0.4rem;
-                flex: 1 1 45%;
-            }
-
-            .buttons-container {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-                margin-right: 0;
-                margin-bottom: 0.5rem;
-            }
-        }
-    </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/mirox-modules.css">
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestione Dispositivi in Comodato - WindTre</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style> * {
+ margin: 0;
+ padding: 0;
+ box-sizing: border-box;
+ }
+
+ :root {
+ --windtre-orange: #FF6600;
+ --windtre-gray: #58595B;
+ --light-gray: #F5F5F5;
+ --white: #FFFFFF;
+ --error-red: #D32F2F;
+ --success-green: #388E3C;
+ }
+
+ body {
+ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ background-color: var(--light-gray);
+ color: var(--windtre-gray);
+ }
+
+ .header {
+ background: linear-gradient(135deg, var(--windtre-gray) 0%, #3d3e40 100%);
+ color: var(--white);
+ padding: 1.5rem 2rem;
+ box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+ }
+
+ .header h1 {
+ font-size: 1.8rem;
+ margin-bottom: 0.5rem;
+ }
+
+ .header .subtitle {
+ font-size: 0.9rem;
+ opacity: 0.9;
+ }
+
+ .header-content {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ }
+
+ .btn-back {
+ padding: 8px 20px;
+ background-color: transparent;
+ color: var(--white);
+ border: 2px solid var(--white);
+ border-radius: 6px;
+ font-size: 0.9rem;
+ font-weight: 600;
+ cursor: pointer;
+ transition: all 0.3s ease;
+ text-decoration: none;
+ }
+
+ .btn-back:hover {
+ background-color: var(--white);
+ color: var(--windtre-gray);
+ }
+
+ .nav-tabs {
+ background: linear-gradient(135deg, var(--windtre-gray) 0%, #3d3e40 100%);
+ display: flex;
+ padding: 1rem 1.5rem;
+ gap: 1rem;
+ }
+
+ .nav-tab {
+ flex: 1;
+ padding: 1rem 1.5rem;
+ text-align: center;
+ cursor: pointer;
+ border: 2px solid var(--windtre-gray);
+ background: var(--white);
+ font-size: 1rem;
+ font-weight: 600;
+ color: var(--windtre-gray);
+ transition: all 0.3s ease;
+ border-radius: 30px;
+ box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+ }
+
+ .nav-tab:hover {
+ background-color: var(--light-gray);
+ transform: translateY(-2px);
+ }
+
+ .nav-tab.active {
+ background: var(--windtre-orange);
+ color: var(--white);
+ border-color: var(--windtre-orange);
+ box-shadow: 0 4px 15px rgba(255, 102, 0, 0.4);
+ }
+
+ .nav-tab.active:hover {
+ background: #e55c00;
+ }
+
+ .container {
+ max-width: 1200px;
+ margin: 2rem auto;
+ padding: 0 1rem;
+ }
+
+ .page {
+ display: none;
+ background-color: var(--white);
+ border-radius: 8px;
+ padding: 2rem;
+ box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+ }
+
+ .page.active {
+ display: block;
+ animation: fadeIn 0.3s ease;
+ }
+
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(10px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+
+ .form-section {
+ margin-bottom: 2rem;
+ }
+
+ .form-section h2 {
+ color: var(--windtre-orange);
+ margin-bottom: 1rem;
+ font-size: 1.3rem;
+ border-bottom: 2px solid var(--light-gray);
+ padding-bottom: 0.5rem;
+ }
+
+ .form-row {
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+ gap: 1rem;
+ margin-bottom: 1rem;
+ }
+
+ .form-group {
+ display: flex;
+ flex-direction: column;
+ }
+
+ .form-group label {
+ margin-bottom: 0.5rem;
+ font-weight: 500;
+ color: var(--windtre-gray);
+ }
+
+ .form-group label .required {
+ color: var(--windtre-orange);
+ }
+
+ .form-group input[type="text"],
+ .form-group input[type="tel"],
+ .form-group input[type="file"] {
+ padding: 0.75rem;
+ border: 2px solid #ddd;
+ border-radius: 4px;
+ font-size: 1rem;
+ transition: border-color 0.3s ease;
+ }
+
+ .form-group input:focus {
+ outline: none;
+ border-color: var(--windtre-orange);
+ }
+
+ .form-group input.error {
+ border-color: var(--error-red);
+ }
+
+ .form-group small {
+ display: block;
+ margin-top: 0.25rem;
+ font-style: italic;
+ }
+
+ .form-group small span {
+ font-weight: 600;
+ color: var(--windtre-orange);
+ }
+
+ .error-message {
+ color: var(--error-red);
+ font-size: 0.85rem;
+ margin-top: 0.25rem;
+ }
+
+ .info-box {
+ background-color: #FFF3E0;
+ border-left: 4px solid var(--windtre-orange);
+ padding: 1rem;
+ margin: 1rem 0;
+ border-radius: 4px;
+ }
+
+ .info-box p {
+ margin: 0;
+ font-size: 0.9rem;
+ }
+
+ .checkbox-group {
+ display: flex;
+ align-items: center;
+ margin: 1rem 0;
+ }
+
+ .checkbox-group input[type="checkbox"] {
+ width: 20px;
+ height: 20px;
+ margin-right: 0.5rem;
+ cursor: pointer;
+ }
+
+ .checkbox-group label {
+ cursor: pointer;
+ font-weight: 500;
+ }
+
+ .btn {
+ padding: 0.75rem 2rem;
+ border: none;
+ border-radius: 4px;
+ font-size: 1rem;
+ font-weight: 600;
+ cursor: pointer;
+ transition: all 0.3s ease;
+ margin-right: 1rem;
+ }
+
+ .btn-primary {
+ background-color: var(--windtre-orange);
+ color: var(--white);
+ }
+
+ .btn-primary:hover {
+ background-color: #E55A00;
+ transform: translateY(-2px);
+ box-shadow: 0 4px 8px rgba(255, 102, 0, 0.3);
+ }
+
+ .btn-secondary {
+ background-color: var(--windtre-gray);
+ color: var(--white);
+ }
+
+ .btn-secondary:hover {
+ background-color: #484949;
+ }
+
+ .btn:disabled {
+ background-color: #ccc;
+ cursor: not-allowed;
+ transform: none;
+ }
+
+ .buttons-container {
+ display: flex;
+ gap: 1rem;
+ margin-top: 2rem;
+ }
+
+ .search-box {
+ margin-bottom: 2rem;
+ padding: 1.5rem;
+ background-color: var(--light-gray);
+ border-radius: 8px;
+ }
+
+ .stats-container {
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+ gap: 1rem;
+ margin-bottom: 2rem;
+ }
+
+ .stat-card {
+ background: linear-gradient(135deg, var(--windtre-orange) 0%, #ff8533 100%);
+ color: var(--white);
+ padding: 1.5rem;
+ border-radius: 8px;
+ text-align: center;
+ box-shadow: 0 4px 6px rgba(255, 102, 0, 0.2);
+ }
+
+ .stat-card h3 {
+ font-size: 2rem;
+ margin-bottom: 0.5rem;
+ }
+
+ .stat-card p {
+ font-size: 0.9rem;
+ opacity: 0.95;
+ }
+
+ .table-container {
+ overflow-x: auto;
+ margin-top: 1rem;
+ }
+
+ table {
+ width: 100%;
+ border-collapse: collapse;
+ }
+
+ table thead {
+ background-color: var(--windtre-gray);
+ color: var(--white);
+ }
+
+ table th,
+ table td {
+ padding: 1rem;
+ text-align: left;
+ border-bottom: 1px solid #ddd;
+ }
+
+ table tbody tr:hover {
+ background-color: var(--light-gray);
+ }
+
+ table tbody tr.highlight {
+ background-color: #FFF3E0;
+ }
+
+ .filters {
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+ gap: 1rem;
+ margin-bottom: 1rem;
+ }
+
+ .status-badge {
+ padding: 0.25rem 0.75rem;
+ border-radius: 12px;
+ font-size: 0.85rem;
+ font-weight: 600;
+ display: inline-block;
+ }
+
+ .status-badge.fuori {
+ background-color: #FFE0B2;
+ color: #E65100;
+ }
+
+ .status-badge.rientrato {
+ background-color: #C8E6C9;
+ color: #2E7D32;
+ }
+
+ .loading {
+ text-align: center;
+ padding: 2rem;
+ color: var(--windtre-orange);
+ }
+
+ .success-message {
+ background-color: #C8E6C9;
+ color: #2E7D32;
+ padding: 1rem;
+ border-radius: 4px;
+ margin: 1rem 0;
+ border-left: 4px solid var(--success-green);
+ }
+
+ .modal {
+ display: none;
+ position: fixed;
+ top: 0;
+ left: 0;
+ width: 100%;
+ height: 100%;
+ background-color: rgba(0, 0, 0, 0.5);
+ z-index: 1000;
+ align-items: center;
+ justify-content: center;
+ }
+
+ .modal.active {
+ display: flex;
+ }
+
+ .modal-content {
+ background-color: var(--white);
+ padding: 2rem;
+ border-radius: 8px;
+ max-width: 500px;
+ width: 90%;
+ box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+ }
+
+ .modal-header {
+ margin-bottom: 1rem;
+ }
+
+ .modal-header h3 {
+ color: var(--windtre-orange);
+ }
+
+ @media (max-width: 768px) {
+ .form-row {
+ grid-template-columns: 1fr;
+ }
+
+ .nav-tabs {
+ padding: 0.75rem;
+ gap: 0.5rem;
+ flex-wrap: wrap;
+ }
+
+ .nav-tab {
+ font-size: 0.8rem;
+ padding: 0.6rem 0.4rem;
+ flex: 1 1 45%;
+ }
+
+ .buttons-container {
+ flex-direction: column;
+ }
+
+ .btn {
+ width: 100%;
+ margin-right: 0;
+ margin-bottom: 0.5rem;
+ }
+ }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/mirox-modules.css">
 </head>
 <body>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="../js/config.js"></script>
-    <script src="../js/auth.js"></script>
-    <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
-    <div class="header">
-        <div class="header-content">
-            <div>
-                <h1>Gestione Dispositivi in Comodato</h1>
-                <p class="subtitle">Sistema di tracciamento assistenze WindTre</p>
-            </div>
-            <a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
-        </div>
-    </div>
-
-    <div class="nav-tabs">
-        <button class="nav-tab active" onclick="switchPage('uscita')">📤 Consegna Dispositivo</button>
-        <button class="nav-tab" onclick="switchPage('rientro')">📥 Rientro Dispositivo</button>
-        <button class="nav-tab" onclick="switchPage('visualizzazione')">📊 Visualizza Assistenze</button>
-    </div>
-
-    <div class="container">
-        <!-- PAGINA 1: USCITA -->
-        <div id="page-uscita" class="page active">
-            <div class="form-section">
-                <h2>Registrazione Consegna Dispositivo</h2>
-                
-                <form id="form-uscita">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Nome <span class="required">*</span></label>
-                            <input type="text" id="uscita-nome" required>
-                            <span class="error-message" id="error-nome"></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Cognome <span class="required">*</span></label>
-                            <input type="text" id="uscita-cognome" required>
-                            <span class="error-message" id="error-cognome"></span>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Codice Fiscale <span class="required">*</span></label>
-                            <input type="text" id="uscita-cf" required maxlength="16" style="text-transform: uppercase;" oninput="validaCF()">
-                            <span class="error-message" id="error-cf"></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Numero di Cellulare <span class="required">*</span></label>
-                            <input type="tel" id="uscita-telefono" required maxlength="10" oninput="validaTelefono()">
-                            <span class="error-message" id="error-telefono"></span>
-                        </div>
-                    </div>
-
-                    <div class="info-box">
-                        <p><strong>⚠️ Attenzione:</strong> Almeno uno tra IMEI Prodotto o Numero SIM Temporanea deve essere compilato.</p>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>IMEI Prodotto</label>
-                            <input type="text" id="uscita-imei" maxlength="15" oninput="validaIMEI()">
-                            <span class="error-message" id="error-imei"></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Numero Cellulare SIM (Temporanea)</label>
-                            <input type="tel" id="uscita-sim" maxlength="10" oninput="validaSIM()">
-                            <span class="error-message" id="error-sim"></span>
-                        </div>
-                    </div>
-
-                    <div class="buttons-container">
-                        <button type="button" class="btn btn-primary" onclick="generaPDFUscita()">📄 Genera PDF</button>
-                        <button type="button" class="btn btn-secondary" onclick="resetFormUscita()">🔄 Resetta Form</button>
-                    </div>
-                </form>
-
-                <div id="upload-section-uscita" style="display: none; margin-top: 2rem;">
-                    <div class="success-message">
-                        ✅ PDF generato con successo! Scaricalo, fallo firmare al cliente e caricalo qui sotto.
-                    </div>
-                    <div class="form-group">
-                        <label>Carica PDF Firmato <span class="required">*</span></label>
-                        <input type="file" id="upload-pdf-uscita" accept=".pdf">
-                    </div>
-                    <div class="buttons-container">
-                        <button type="button" class="btn btn-primary" onclick="salvaDatiUscita()">💾 Salva e Invia</button>
-                        <button type="button" class="btn btn-secondary" onclick="annullaUscita()">❌ Annulla</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- PAGINA 2: RIENTRO -->
-        <div id="page-rientro" class="page">
-            <div class="form-section">
-                <h2>Registrazione Rientro Dispositivo</h2>
-
-                <div class="search-box">
-                    <h3 style="margin-bottom: 1rem; color: var(--windtre-orange);">🔍 Cerca Dispositivo</h3>
-                    
-                    <div class="info-box" style="margin-bottom: 1rem;">
-                        <p><strong>💡 Puoi cercare in due modi:</strong></p>
-                        <p>1️⃣ Inserisci solo il <strong>Codice Fiscale</strong></p>
-                        <p>2️⃣ Oppure inserisci <strong>Nome e Cognome</strong></p>
-                    </div>
-
-                    <div class="form-group" style="max-width: 500px;">
-                        <label>Codice Fiscale Cliente</label>
-                        <input type="text" id="ricerca-cf" maxlength="16" style="text-transform: uppercase;" placeholder="Es: RSSMRA80A01H501U">
-                        <span class="error-message" id="error-ricerca-cf"></span>
-                    </div>
-
-                    <div style="text-align: center; margin: 1rem 0; color: var(--windtre-gray); font-weight: 600;">
-                        - OPPURE -
-                    </div>
-
-                    <div class="form-row" style="max-width: 800px;">
-                        <div class="form-group">
-                            <label>Nome Cliente</label>
-                            <input type="text" id="ricerca-nome" placeholder="Es: Mario">
-                            <span class="error-message" id="error-ricerca-nome"></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Cognome Cliente</label>
-                            <input type="text" id="ricerca-cognome" placeholder="Es: Rossi">
-                            <span class="error-message" id="error-ricerca-cognome"></span>
-                        </div>
-                    </div>
-
-                    <button type="button" class="btn btn-primary" onclick="cercaDispositivo()">🔍 Cerca Dispositivo</button>
-                </div>
-
-                <div id="risultato-ricerca" style="display: none;">
-                    <div class="success-message" id="dispositivo-trovato">
-                        <!-- Dati dispositivo trovato -->
-                    </div>
-
-                    <form id="form-rientro">
-                        <div class="form-group">
-                            <label>Chi riceve il dispositivo <span class="required">*</span></label>
-                            <input type="text" id="rientro-operatore" readonly required style="background:#f3f4f6;cursor:not-allowed;">
-                        </div>
-
-                        <div class="buttons-container">
-                            <button type="button" class="btn btn-primary" onclick="generaPDFRientro()">📄 Genera PDF Rientro</button>
-                            <button type="button" class="btn btn-secondary" onclick="annullaRicerca()">❌ Annulla</button>
-                        </div>
-                    </form>
-
-                    <div id="upload-section-rientro" style="display: none; margin-top: 2rem;">
-                        <div class="success-message">
-                            ✅ PDF di rientro generato! Scaricalo, fallo firmare al cliente e caricalo qui sotto.
-                        </div>
-                        <div class="form-group">
-                            <label>Carica PDF Firmato Rientro <span class="required">*</span></label>
-                            <input type="file" id="upload-pdf-rientro" accept=".pdf">
-                        </div>
-                        <div class="buttons-container">
-                            <button type="button" class="btn btn-primary" onclick="salvaDatiRientro()">💾 Completa Rientro</button>
-                            <button type="button" class="btn btn-secondary" onclick="annullaRientro()">❌ Annulla</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- PAGINA 3: VISUALIZZAZIONE -->
-        <div id="page-visualizzazione" class="page">
-            <div class="form-section">
-                <h2>Dispositivi in Assistenza</h2>
-
-                <div class="stats-container" id="stats-container">
-                    <!-- Statistiche caricate dinamicamente -->
-                </div>
-
-                <div class="filters">
-                    <div class="form-group">
-                        <label>Cerca Cliente</label>
-                        <input type="text" id="filter-cliente" placeholder="Nome, Cognome o CF" onkeyup="applicaFiltri()">
-                    </div>
-                    <div class="form-group">
-                        <label>Stato</label>
-                        <select id="filter-stato" onchange="applicaFiltri()" style="padding: 0.75rem; border: 2px solid #ddd; border-radius: 4px;">
-                            <option value="">Tutti</option>
-                            <option value="fuori">In Assistenza</option>
-                            <option value="rientrato">Rientrati</option>
-                        </select>
-                    </div>
-                </div>
-
-                <button type="button" class="btn btn-primary" onclick="caricaDatiVisualizzazione()" style="margin-bottom: 1rem;">🔄 Aggiorna Dati</button>
-
-                <div class="table-container">
-                    <table id="tabella-dispositivi">
-                        <thead>
-                            <tr>
-                                <th>Cliente</th>
-                                <th>Codice Fiscale</th>
-                                <th>Numero Cellulare</th>
-                                <th>Data Uscita</th>
-                                <th>Data Rientro</th>
-                                <th>Giorni Fuori</th>
-                                <th>Stato</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-dispositivi">
-                            <tr>
-                                <td colspan="7" class="loading">Caricamento dati...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal di loading -->
-    <div id="loading-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>⏳ Operazione in corso...</h3>
-            </div>
-            <p id="loading-text">Attendere prego...</p>
-        </div>
-    </div>
-
-    <script>
-        // Configurazione URL Google Apps Script
-        // Migrato su Supabase: tabella post_vendita_dispositivi_comodato + storage bucket comodato-files
-        const sb = db;
-        (async () => {
-            const p = window.__profilo || await Auth.getSessione();
-            if (p) {
-                const el = document.getElementById('rientro-operatore');
-                if (el) el.value = p.nome || p.email || 'Operatore';
-            }
-        })();
-        const COMODATO_BUCKET = 'comodato-files';
-        async function uploadComodatoPdf(deviceId, base64, filename) {
-            try {
-                const bin = atob(base64);
-                const buf = new Uint8Array(bin.length);
-                for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-                const blob = new Blob([buf], { type: 'application/pdf' });
-                const path = `dispositivo_${deviceId}/${Date.now()}_${filename}`;
-                const { error } = await sb.storage.from(COMODATO_BUCKET).upload(path, blob, { upsert: true, contentType: 'application/pdf' });
-                if (error) throw error;
-                return sb.storage.from(COMODATO_BUCKET).getPublicUrl(path).data?.publicUrl || null;
-            } catch (e) { console.error('Upload PDF errore:', e); return null; }
-        }
-        
-        // Dati temporanei
-        let datiUscitaTemp = null;
-        let dispositivoSelezionato = null;
-
-        // Switch tra pagine
-        function switchPage(page) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            
-            document.getElementById(`page-${page}`).classList.add('active');
-            event.target.classList.add('active');
-
-            if (page === 'visualizzazione') {
-                caricaDatiVisualizzazione();
-            }
-        }
-
-        // VALIDAZIONI IN TEMPO REALE
-        function validaCF() {
-            const cf = document.getElementById('uscita-cf').value.trim();
-            const errorMsg = document.getElementById('error-cf');
-            const input = document.getElementById('uscita-cf');
-            
-            if (cf.length > 0 && cf.length < 16) {
-                errorMsg.textContent = `Mancano ${16 - cf.length} caratteri`;
-                input.classList.add('error');
-            } else if (cf.length === 16) {
-                errorMsg.textContent = '';
-                input.classList.remove('error');
-            }
-        }
-
-        function validaTelefono() {
-            const tel = document.getElementById('uscita-telefono').value.trim();
-            const errorMsg = document.getElementById('error-telefono');
-            const input = document.getElementById('uscita-telefono');
-            
-            if (tel.length > 0 && tel.length < 9) {
-                errorMsg.textContent = `Minimo 9 caratteri (hai inserito ${tel.length})`;
-                input.classList.add('error');
-            } else if (tel.length >= 9 && tel.length <= 10) {
-                errorMsg.textContent = '';
-                input.classList.remove('error');
-            }
-        }
-
-        function validaIMEI() {
-            const imei = document.getElementById('uscita-imei').value.trim();
-            const errorMsg = document.getElementById('error-imei');
-            const input = document.getElementById('uscita-imei');
-            
-            if (imei.length > 0 && imei.length < 15) {
-                errorMsg.textContent = `L'IMEI deve essere di 15 caratteri (hai inserito ${imei.length})`;
-                input.classList.add('error');
-            } else if (imei.length === 15) {
-                errorMsg.textContent = '';
-                input.classList.remove('error');
-            } else if (imei.length === 0) {
-                errorMsg.textContent = '';
-                input.classList.remove('error');
-            }
-        }
-
-        function validaSIM() {
-            const sim = document.getElementById('uscita-sim').value.trim();
-            const errorMsg = document.getElementById('error-sim');
-            const input = document.getElementById('uscita-sim');
-            
-            if (sim.length > 0 && sim.length < 9) {
-                errorMsg.textContent = `Minimo 9 caratteri (hai inserito ${sim.length})`;
-                input.classList.add('error');
-            } else if (sim.length >= 9 && sim.length <= 10) {
-                errorMsg.textContent = '';
-                input.classList.remove('error');
-            } else if (sim.length === 0) {
-                errorMsg.textContent = '';
-                input.classList.remove('error');
-            }
-        }
-
-        // PAGINA USCITA
-        function validaFormUscita() {
-            let valido = true;
-            
-            // Reset errori
-            document.querySelectorAll('.error-message').forEach(e => e.textContent = '');
-            document.querySelectorAll('input').forEach(i => i.classList.remove('error'));
-
-            const nome = document.getElementById('uscita-nome').value.trim();
-            const cognome = document.getElementById('uscita-cognome').value.trim();
-            const cf = document.getElementById('uscita-cf').value.trim().toUpperCase();
-            const telefono = document.getElementById('uscita-telefono').value.trim();
-            const imei = document.getElementById('uscita-imei').value.trim();
-            const sim = document.getElementById('uscita-sim').value.trim();
-
-            // Validazione Nome
-            if (!nome) {
-                mostraErrore('nome', 'Il nome è obbligatorio');
-                valido = false;
-            }
-
-            // Validazione Cognome
-            if (!cognome) {
-                mostraErrore('cognome', 'Il cognome è obbligatorio');
-                valido = false;
-            }
-
-            // Validazione Codice Fiscale
-            if (!cf) {
-                mostraErrore('cf', 'Il codice fiscale è obbligatorio');
-                valido = false;
-            } else if (cf.length !== 16) {
-                mostraErrore('cf', 'Il codice fiscale deve essere esattamente di 16 caratteri');
-                valido = false;
-            }
-
-            // Validazione Numero di Cellulare
-            if (!telefono) {
-                mostraErrore('telefono', 'Il numero di telefono è obbligatorio');
-                valido = false;
-            } else if (telefono.length < 9) {
-                mostraErrore('telefono', 'Il numero di telefono deve essere di almeno 9 caratteri');
-                valido = false;
-            } else if (telefono.length > 10) {
-                mostraErrore('telefono', 'Il numero di telefono deve essere massimo 10 caratteri');
-                valido = false;
-            }
-
-            // Validazione IMEI (se compilato)
-            if (imei && imei.length !== 15) {
-                mostraErrore('imei', 'L\'IMEI deve essere esattamente di 15 caratteri');
-                valido = false;
-            }
-
-            // Validazione SIM Temporanea (se compilata)
-            if (sim && sim.length < 9) {
-                mostraErrore('sim', 'Il numero SIM deve essere di almeno 9 caratteri');
-                valido = false;
-            } else if (sim && sim.length > 10) {
-                mostraErrore('sim', 'Il numero SIM deve essere massimo 10 caratteri');
-                valido = false;
-            }
-
-            // Validazione: almeno uno tra IMEI e SIM deve essere compilato
-            if (!imei && !sim) {
-                mostraErrore('imei', 'Compilare almeno IMEI o SIM Temporanea');
-                mostraErrore('sim', 'Compilare almeno IMEI o SIM Temporanea');
-                valido = false;
-            }
-
-            return valido;
-        }
-
-        function mostraErrore(campo, messaggio) {
-            document.getElementById(`error-${campo}`).textContent = messaggio;
-            document.getElementById(`uscita-${campo}`) ? 
-                document.getElementById(`uscita-${campo}`).classList.add('error') : 
-                null;
-        }
-
-        function generaPDFUscita() {
-            if (!validaFormUscita()) {
-                alert('⚠️ Compila correttamente tutti i campi obbligatori prima di generare il PDF');
-                return;
-            }
-
-            // Controllo specifico per IMEI e SIM
-            const imei = document.getElementById('uscita-imei').value.trim();
-            const sim = document.getElementById('uscita-sim').value.trim();
-            
-            if (!imei && !sim) {
-                alert('⚠️ ERRORE: Devi compilare almeno uno tra IMEI Prodotto o Numero SIM Temporanea');
-                document.getElementById('error-imei').textContent = 'Compilare almeno IMEI o SIM';
-                document.getElementById('error-sim').textContent = 'Compilare almeno IMEI o SIM';
-                document.getElementById('uscita-imei').classList.add('error');
-                document.getElementById('uscita-sim').classList.add('error');
-                return;
-            }
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-
-            // Salva dati temporaneamente
-            datiUscitaTemp = {
-                nome: document.getElementById('uscita-nome').value.trim(),
-                cognome: document.getElementById('uscita-cognome').value.trim(),
-                cf: document.getElementById('uscita-cf').value.trim().toUpperCase(),
-                telefono: document.getElementById('uscita-telefono').value.trim(),
-                imei: document.getElementById('uscita-imei').value.trim(),
-                sim: document.getElementById('uscita-sim').value.trim(),
-                dataUscita: new Date().toISOString(),
-                dataUscitaFormattata: new Date().toLocaleDateString('it-IT')
-            };
-
-            // Intestazione
-            doc.setFillColor(255, 102, 0);
-            doc.rect(0, 0, 210, 35, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(18);
-            doc.setFont(undefined, 'bold');
-            doc.text('WindTre Store - Via Roma 11 - Legnago', 15, 15);
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'normal');
-            doc.text('Modulo Consegna Dispositivo in Comodato', 15, 28);
-
-            // Reset colore testo
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(11);
-
-            let y = 48;
-
-            // Dati Cliente
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text('DATI CLIENTE', 15, y);
-            y += 10;
-            
-            doc.setFontSize(11);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Nome: ${datiUscitaTemp.nome}`, 15, y);
-            y += 7;
-            doc.text(`Cognome: ${datiUscitaTemp.cognome}`, 15, y);
-            y += 7;
-            doc.text(`Codice Fiscale: ${datiUscitaTemp.cf}`, 15, y);
-            y += 7;
-            doc.text(`Numero di Cellulare: ${datiUscitaTemp.telefono}`, 15, y);
-            y += 15;
-
-            // Dati Dispositivo
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text('DATI DISPOSITIVO', 15, y);
-            y += 10;
-            
-            doc.setFontSize(11);
-            doc.setFont(undefined, 'normal');
-            if (datiUscitaTemp.imei) {
-                doc.text(`IMEI Prodotto: ${datiUscitaTemp.imei}`, 15, y);
-                y += 7;
-            }
-            if (datiUscitaTemp.sim) {
-                doc.text(`Numero SIM Temporanea: ${datiUscitaTemp.sim}`, 15, y);
-                y += 7;
-            }
-            doc.text(`Data Consegna: ${datiUscitaTemp.dataUscitaFormattata}`, 15, y);
-            y += 15;
-
-            // Clausole
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'bold');
-            doc.text('CLAUSOLE', 15, y);
-            y += 8;
-            
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            
-            const clausole = [
-                '1. Il dispositivo è fornito in comodato d\'uso gratuito esclusivamente per assistenza tecnica.',
-                '2. Il cliente si impegna a custodirlo con diligenza e a restituirlo integro alla chiusura',
-                '   dell\'assistenza o su richiesta del negozio WindTre Legnago Via Roma 11.',
-                '3. In caso di danni, smarrimento o mancata restituzione, potrà essere richiesto l\'addebito',
-                '   del valore del dispositivo.',
-                '4. Il dispositivo rimane di proprietà del negozio WindTre Legnago Via Roma 11.'
-            ];
-            
-            clausole.forEach(clausola => {
-                doc.text(clausola, 15, y);
-                y += 5;
-            });
-            
-            y += 8;
-
-            // Dichiarazione
-            doc.setFontSize(10);
-            doc.text('Il sottoscritto dichiara di aver ricevuto in comodato d\'uso il dispositivo', 15, y);
-            y += 5;
-            doc.text('sopra indicato per assistenza tecnica.', 15, y);
-            y += 15;
-
-            // Firma - abbassata di due livelli
-            doc.setFontSize(11);
-            doc.text('Firma del Cliente', 15, y);
-            y += 10;
-            doc.line(15, y, 80, y);
-            
-            doc.text('Data: ' + datiUscitaTemp.dataUscitaFormattata, 120, y - 10);
-
-            // Footer
-            doc.setFontSize(8);
-            doc.setTextColor(150, 150, 150);
-            doc.text('WindTre Store - Via Roma 11, Legnago - Documento generato automaticamente', 105, 285, { align: 'center' });
-
-            // Salva PDF
-            doc.save(`Consegna_${datiUscitaTemp.cf}_${Date.now()}.pdf`);
-
-            // Mostra sezione upload
-            document.getElementById('upload-section-uscita').style.display = 'block';
-        }
-
-        function resetFormUscita() {
-            document.getElementById('form-uscita').reset();
-            document.getElementById('upload-section-uscita').style.display = 'none';
-            datiUscitaTemp = null;
-            document.querySelectorAll('.error-message').forEach(e => e.textContent = '');
-            document.querySelectorAll('input').forEach(i => i.classList.remove('error'));
-        }
-
-        function annullaUscita() {
-            if (confirm('Vuoi annullare l\'operazione? I dati inseriti andranno persi.')) {
-                resetFormUscita();
-            }
-        }
-
-        async function salvaDatiUscita() {
-            const fileInput = document.getElementById('upload-pdf-uscita');
-            
-            if (!fileInput.files.length) {
-                alert('⚠️ Carica il PDF firmato prima di procedere');
-                return;
-            }
-
-            if (!datiUscitaTemp) {
-                alert('⚠️ Errore: dati non trovati. Rigenera il PDF.');
-                return;
-            }
-
-            mostraLoading('Salvataggio in corso...');
-
-            try {
-                const file = fileInput.files[0];
-                const base64PDF = await fileToBase64(file);
-                const profilo = window.__profilo || await Auth.getSessione();
-
-                const { data: codiceRow } = await sb.rpc('genera_codice_comodato');
-
-                const { data: inserted, error: insErr } = await sb
-                    .from('post_vendita_dispositivi_comodato')
-                    .insert({
-                        codice: codiceRow || null,
-                        nome: datiUscitaTemp.nome,
-                        cognome: datiUscitaTemp.cognome,
-                        codice_fiscale: datiUscitaTemp.cf,
-                        telefono: datiUscitaTemp.telefono || null,
-                        imei: datiUscitaTemp.imei || '',
-                        sim_temporanea: datiUscitaTemp.sim || null,
-                        data_uscita: (datiUscitaTemp.dataUscita || new Date().toISOString()).slice(0, 10),
-                        operatore_uscita_id: profilo?.id || null,
-                        operatore_uscita_nome: profilo?.nome || profilo?.email || null,
-                        stato: 'fuori'
-                    })
-                    .select()
-                    .single();
-                if (insErr) throw insErr;
-
-                const pdfUrl = await uploadComodatoPdf(inserted.id, base64PDF, file.name);
-                if (pdfUrl) {
-                    await sb.from('post_vendita_dispositivi_comodato')
-                        .update({ cartella_url: pdfUrl })
-                        .eq('id', inserted.id);
-                }
-
-                nascondiLoading();
-                alert('✅ Dispositivo registrato con successo!');
-                setTimeout(() => { window.location.href = '../dashboard.html'; }, 500);
-
-            } catch (error) {
-                nascondiLoading();
-                console.error('Errore:', error);
-                alert('❌ Errore durante il salvataggio: ' + error.message);
-            }
-        }
-
-        // PAGINA RIENTRO
-        async function cercaDispositivo() {
-            const cf = document.getElementById('ricerca-cf').value.trim().toUpperCase();
-            const nome = document.getElementById('ricerca-nome').value.trim();
-            const cognome = document.getElementById('ricerca-cognome').value.trim();
-
-            // Reset errori
-            document.getElementById('error-ricerca-cf').textContent = '';
-            document.getElementById('error-ricerca-nome').textContent = '';
-            document.getElementById('error-ricerca-cognome').textContent = '';
-
-            // Verifica che almeno una modalità sia compilata
-            const usaCF = cf.length > 0;
-            const usaNomeCognome = nome.length > 0 && cognome.length > 0;
-
-            if (!usaCF && !usaNomeCognome) {
-                alert('⚠️ Inserisci il Codice Fiscale OPPURE Nome e Cognome per cercare');
-                return;
-            }
-
-            // Verifica CF se usato
-            if (usaCF && cf.length !== 16) {
-                document.getElementById('error-ricerca-cf').textContent = 'Il Codice Fiscale deve essere di 16 caratteri';
-                return;
-            }
-
-            // Verifica Nome e Cognome se usati
-            if (usaNomeCognome && (!nome || !cognome)) {
-                if (!nome) document.getElementById('error-ricerca-nome').textContent = 'Inserisci il nome';
-                if (!cognome) document.getElementById('error-ricerca-cognome').textContent = 'Inserisci il cognome';
-                return;
-            }
-
-            mostraLoading('Ricerca dispositivo...');
-
-            try {
-                let q = sb.from('post_vendita_dispositivi_comodato').select('*').eq('stato', 'fuori');
-                if (usaCF) {
-                    q = q.eq('codice_fiscale', cf);
-                } else {
-                    q = q.ilike('nome', `%${nome}%`).ilike('cognome', `%${cognome}%`);
-                }
-                const { data, error } = await q.order('data_uscita', { ascending: false }).limit(1);
-                if (error) throw error;
-                nascondiLoading();
-                if (data && data.length > 0) {
-                    const row = data[0];
-                    dispositivoSelezionato = {
-                        id: row.id,
-                        nome: row.nome,
-                        cognome: row.cognome,
-                        cf: row.codice_fiscale,
-                        imei: row.imei,
-                        sim: row.sim_temporanea,
-                        dataUscita: row.data_uscita
-                    };
-                    mostraRisultatoRicerca(dispositivoSelezionato);
-                } else {
-                    alert('❌ Nessun dispositivo trovato con questi dati o già rientrato');
-                    annullaRicerca();
-                }
-            } catch (error) {
-                nascondiLoading();
-                console.error('Errore:', error);
-                alert('❌ Errore durante la ricerca: ' + error.message);
-            }
-        }
-
-        function mostraRisultatoRicerca(dispositivo) {
-            const html = `
-                <strong>✓ Dispositivo Trovato</strong><br>
-                Cliente: ${dispositivo.nome} ${dispositivo.cognome}<br>
-                CF: ${dispositivo.cf}<br>
-                IMEI: ${dispositivo.imei || 'N/A'}<br>
-                SIM: ${dispositivo.sim || 'N/A'}<br>
-                Data Uscita: ${new Date(dispositivo.dataUscita).toLocaleDateString('it-IT')}<br>
-                Giorni fuori: ${calcolaGiorniFuori(dispositivo.dataUscita)}
-            `;
-            
-            document.getElementById('dispositivo-trovato').innerHTML = html;
-            document.getElementById('risultato-ricerca').style.display = 'block';
-        }
-
-        function annullaRicerca() {
-            document.getElementById('ricerca-cf').value = '';
-            document.getElementById('ricerca-nome').value = '';
-            document.getElementById('ricerca-cognome').value = '';
-            document.getElementById('error-ricerca-cf').textContent = '';
-            document.getElementById('error-ricerca-nome').textContent = '';
-            document.getElementById('error-ricerca-cognome').textContent = '';
-            document.getElementById('risultato-ricerca').style.display = 'none';
-            document.getElementById('upload-section-rientro').style.display = 'none';
-            dispositivoSelezionato = null;
-        }
-
-        function generaPDFRientro() {
-            const operatore = document.getElementById('rientro-operatore').value.trim();
-            
-            if (!operatore) {
-                alert('⚠️ Inserisci chi riceve il dispositivo');
-                return;
-            }
-
-            if (!dispositivoSelezionato) {
-                alert('⚠️ Errore: dispositivo non selezionato');
-                return;
-            }
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-
-            // Intestazione
-            doc.setFillColor(255, 102, 0);
-            doc.rect(0, 0, 210, 35, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(18);
-            doc.setFont(undefined, 'bold');
-            doc.text('WindTre Store - Via Roma 11 - Legnago', 15, 15);
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'normal');
-            doc.text('Modulo Rientro Dispositivo in Comodato', 15, 28);
-
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(11);
-
-            let y = 48;
-
-            // Dati Cliente
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text('DATI CLIENTE', 15, y);
-            y += 10;
-            
-            doc.setFontSize(11);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Nome: ${dispositivoSelezionato.nome}`, 15, y);
-            y += 7;
-            doc.text(`Cognome: ${dispositivoSelezionato.cognome}`, 15, y);
-            y += 7;
-            doc.text(`Codice Fiscale: ${dispositivoSelezionato.cf}`, 15, y);
-            y += 15;
-
-            // Dati Dispositivo
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text('DATI DISPOSITIVO', 15, y);
-            y += 10;
-            
-            doc.setFontSize(11);
-            doc.setFont(undefined, 'normal');
-            if (dispositivoSelezionato.imei) {
-                doc.text(`IMEI: ${dispositivoSelezionato.imei}`, 15, y);
-                y += 7;
-            }
-            if (dispositivoSelezionato.sim) {
-                doc.text(`SIM: ${dispositivoSelezionato.sim}`, 15, y);
-                y += 7;
-            }
-            doc.text(`Data Consegna: ${new Date(dispositivoSelezionato.dataUscita).toLocaleDateString('it-IT')}`, 15, y);
-            y += 7;
-            doc.text(`Data Rientro: ${new Date().toLocaleDateString('it-IT')}`, 15, y);
-            y += 7;
-            doc.text(`Giorni in assistenza: ${calcolaGiorniFuori(dispositivoSelezionato.dataUscita)}`, 15, y);
-            y += 15;
-
-            // Rientro
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text('DATI RIENTRO', 15, y);
-            y += 10;
-            
-            doc.setFontSize(11);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Materiale ritirato da: ${operatore}`, 15, y);
-            y += 15;
-
-            // Dichiarazione di Rientro
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text('DICHIARAZIONE DI RIENTRO', 15, y);
-            y += 10;
-            
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            const dichiarazione = `${dispositivoSelezionato.nome} ${dispositivoSelezionato.cognome} dichiara di aver restituito il dispositivo ricevuto in comodato,`;
-            doc.text(dichiarazione, 15, y);
-            y += 5;
-            doc.text('completo e nelle condizioni in cui è stato consegnato, salvo normale usura.', 15, y);
-            y += 10;
-
-            // Clausole essenziali
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'bold');
-            doc.text('Clausole essenziali', 15, y);
-            y += 8;
-            
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            
-            const clausole = [
-                '1. Con la firma del presente modulo, il cliente attesta l\'avvenuta riconsegna del dispositivo',
-                '   al negozio WindTre Legnago Via Roma 11.',
-                '2. Il negozio WindTre Legnago Via Roma 11, prende in carico il dispositivo e verifica',
-                '   successivamente integrità e funzionamento.',
-                '3. Eventuali danni riscontrati dopo il controllo tecnico potranno essere comunicati al',
-                '   cliente in un secondo momento.'
-            ];
-            
-            clausole.forEach(clausola => {
-                doc.text(clausola, 15, y);
-                y += 5;
-            });
-            
-            y += 15;
-
-            // Firme - abbassate di due livelli
-            doc.setFontSize(11);
-            doc.text('Firma del Cliente', 15, y);
-            y += 10;
-            doc.line(15, y, 80, y);
-            
-            doc.text('Firma Operatore', 120, y - 10);
-            y += 10;
-            doc.line(120, y, 185, y);
-
-            // Footer
-            doc.setFontSize(8);
-            doc.setTextColor(150, 150, 150);
-            doc.text('WindTre Store - Via Roma 11, Legnago - Documento generato automaticamente', 105, 285, { align: 'center' });
-
-            doc.save(`Rientro_${dispositivoSelezionato.cf}_${Date.now()}.pdf`);
-
-            document.getElementById('upload-section-rientro').style.display = 'block';
-        }
-
-        function annullaRientro() {
-            document.getElementById('upload-section-rientro').style.display = 'none';
-        }
-
-        async function salvaDatiRientro() {
-            const fileInput = document.getElementById('upload-pdf-rientro');
-            
-            if (!fileInput.files.length) {
-                alert('⚠️ Carica il PDF firmato prima di procedere');
-                return;
-            }
-
-            const operatore = document.getElementById('rientro-operatore').value.trim();
-
-            mostraLoading('Registrazione rientro...');
-
-            try {
-                const file = fileInput.files[0];
-                const base64PDF = await fileToBase64(file);
-                const profilo = window.__profilo || await Auth.getSessione();
-
-                const pdfUrl = await uploadComodatoPdf(dispositivoSelezionato.id, base64PDF, file.name);
-
-                const { error } = await sb
-                    .from('post_vendita_dispositivi_comodato')
-                    .update({
-                        stato: 'rientrato',
-                        data_rientro: new Date().toISOString().slice(0,10),
-                        operatore_rientro_id: profilo?.id || null,
-                        operatore_rientro_nome: operatore || profilo?.nome || null,
-                        cartella_url: pdfUrl || null
-                    })
-                    .eq('id', dispositivoSelezionato.id);
-                if (error) throw error;
-
-                nascondiLoading();
-                alert('✅ Rientro registrato con successo!');
-                setTimeout(() => { window.location.href = '../dashboard.html'; }, 500);
-
-            } catch (error) {
-                nascondiLoading();
-                console.error('Errore:', error);
-                alert('❌ Errore durante il salvataggio: ' + error.message);
-            }
-        }
-
-        // PAGINA VISUALIZZAZIONE
-        async function caricaDatiVisualizzazione() {
-            const tbody = document.getElementById('tbody-dispositivi');
-            tbody.innerHTML = '<tr><td colspan="7" class="loading">Caricamento dati...</td></tr>';
-
-            // Imposta il filtro stato su "fuori" (In Assistenza) di default
-            document.getElementById('filter-stato').value = 'fuori';
-
-            try {
-                const { data, error } = await sb
-                    .from('post_vendita_dispositivi_comodato')
-                    .select('*')
-                    .order('data_uscita', { ascending: false });
-                if (error) throw error;
-                const dispositivi = (data || []).map(r => ({
-                    id: r.id,
-                    nome: r.nome,
-                    cognome: r.cognome,
-                    cf: r.codice_fiscale,
-                    telefono: r.telefono,
-                    imei: r.imei,
-                    sim: r.sim_temporanea,
-                    dataUscita: r.data_uscita,
-                    dataRientro: r.data_rientro,
-                    operatoreRientro: r.operatore_rientro_nome,
-                    stato: r.stato,
-                    cartella: r.cartella_url
-                }));
-                window.tuttiDispositivi = dispositivi;
-                aggiornaStatistiche(dispositivi);
-                applicaFiltri();
-            } catch (error) {
-                console.error('Errore:', error);
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Errore nel caricamento: ' + error.message + '</td></tr>';
-            }
-        }
-
-        function aggiornaStatistiche(dispositivi) {
-            const fuori = dispositivi.filter(d => d.stato === 'fuori').length;
-            const rientrati = dispositivi.filter(d => d.stato === 'rientrato').length;
-            
-            let totaleGiorni = 0;
-            let count = 0;
-            dispositivi.forEach(d => {
-                if (d.stato === 'fuori') {
-                    totaleGiorni += calcolaGiorniFuori(d.dataUscita);
-                    count++;
-                }
-            });
-            const mediaGiorni = count > 0 ? Math.round(totaleGiorni / count) : 0;
-
-            const html = `
-                <div class="stat-card">
-                    <h3>${fuori}</h3>
-                    <p>Dispositivi in Assistenza</p>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, var(--windtre-gray) 0%, #484949 100%);">
-                    <h3>${rientrati}</h3>
-                    <p>Dispositivi Rientrati</p>
-                </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #388E3C 0%, #4CAF50 100%);">
-                    <h3>${mediaGiorni}</h3>
-                    <p>Media Giorni Assistenza</p>
-                </div>
-            `;
-            
-            document.getElementById('stats-container').innerHTML = html;
-        }
-
-        function renderizzaTabella(dispositivi) {
-            const tbody = document.getElementById('tbody-dispositivi');
-            
-            if (!dispositivi || dispositivi.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Nessun dispositivo trovato</td></tr>';
-                return;
-            }
-
-            let html = '';
-            dispositivi.forEach(d => {
-                const giorniFuori = d.stato === 'fuori' ? calcolaGiorniFuori(d.dataUscita) : '-';
-                const rowClass = d.stato === 'fuori' && giorniFuori > 7 ? 'highlight' : '';
-                
-                // Formatta data rientro
-                let dataRientro = '-';
-                if (d.dataRientro && d.dataRientro !== '') {
-                    // Se è già in formato GG/MM/AAAA, usa così com'è
-                    if (d.dataRientro.includes('/')) {
-                        dataRientro = d.dataRientro;
-                    } else {
-                        // Altrimenti converti
-                        dataRientro = new Date(d.dataRientro).toLocaleDateString('it-IT');
-                    }
-                }
-                
-                // Formatta data uscita
-                let dataUscita = d.dataUscita;
-                if (!dataUscita.includes('/')) {
-                    dataUscita = new Date(d.dataUscita).toLocaleDateString('it-IT');
-                }
-                
-                html += `
-                    <tr class="${rowClass}">
-                        <td>${d.nome} ${d.cognome}</td>
-                        <td>${d.cf}</td>
-                        <td>${d.telefono || '-'}</td>
-                        <td>${dataUscita}</td>
-                        <td>${dataRientro}</td>
-                        <td>${giorniFuori}</td>
-                        <td><span class="status-badge ${d.stato}">${d.stato === 'fuori' ? 'In Assistenza' : 'Rientrato'}</span></td>
-                    </tr>
-                `;
-            });
-            
-            tbody.innerHTML = html;
-        }
-
-        function applicaFiltri() {
-            if (!window.tuttiDispositivi) return;
-
-            const filterCliente = document.getElementById('filter-cliente').value.toLowerCase();
-            const filterStato = document.getElementById('filter-stato').value;
-
-            let dispositivi = window.tuttiDispositivi.filter(d => {
-                // Filtro cliente
-                if (filterCliente) {
-                    const clienteMatch = 
-                        d.nome.toLowerCase().includes(filterCliente) ||
-                        d.cognome.toLowerCase().includes(filterCliente) ||
-                        d.cf.toLowerCase().includes(filterCliente);
-                    if (!clienteMatch) return false;
-                }
-
-                // Filtro stato
-                if (filterStato && d.stato !== filterStato) return false;
-
-                return true;
-            });
-
-            renderizzaTabella(dispositivi);
-        }
-
-        // UTILITY
-        function calcolaGiorniFuori(dataUscita) {
-            const oggi = new Date();
-            const uscita = new Date(dataUscita);
-            const diff = oggi - uscita;
-            return Math.floor(diff / (1000 * 60 * 60 * 24));
-        }
-
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        function mostraLoading(testo) {
-            document.getElementById('loading-text').textContent = testo;
-            document.getElementById('loading-modal').classList.add('active');
-        }
-
-        function nascondiLoading() {
-            document.getElementById('loading-modal').classList.remove('active');
-        }
-
-        // Carica dati all'avvio
-        window.addEventListener('DOMContentLoaded', () => {
-            // Verifica configurazione
-            if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
-                alert('⚠️ ATTENZIONE: Configura prima l\'URL di Google Apps Script nella variabile APPS_SCRIPT_URL');
-            }
-        });
-    </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth.js"></script>
+<script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
+<div class="header">
+<div class="header-content">
+<div>
+<h1>Gestione Dispositivi in Comodato</h1>
+<p class="subtitle">Sistema di tracciamento assistenze WindTre</p>
+</div>
+<a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
+</div>
+</div> <div class="nav-tabs">
+<button class="nav-tab active" onclick="switchPage(' uscita')"> Consegna Dispositivo</button>
+<button class="nav-tab" onclick="switchPage(' rientro')"> Rientro Dispositivo</button>
+<button class="nav-tab" onclick="switchPage(' visualizzazione')"> Visualizza Assistenze</button>
+</div> <div class="container">
+<!-- PAGINA 1: USCITA -->
+<div id="page-uscita" class="page active">
+<div class="form-section">
+<h2>Registrazione Consegna Dispositivo</h2> <form id="form-uscita">
+<div class="form-row">
+<div class="form-group">
+<label>Nome<span class="required">*</span></label>
+<input type="text" id="uscita-nome" required>
+<span class="error-message" id="error-nome"></span>
+</div>
+<div class="form-group">
+<label>Cognome<span class="required">*</span></label>
+<input type="text" id="uscita-cognome" required>
+<span class="error-message" id="error-cognome"></span>
+</div>
+</div> <div class="form-row">
+<div class="form-group">
+<label>Codice Fiscale<span class="required">*</span></label>
+<input type="text" id="uscita-cf" required maxlength="16" style="text-transform: uppercase;" oninput="validaCF()">
+<span class="error-message" id="error-cf"></span>
+</div>
+<div class="form-group">
+<label>Numero di Cellulare<span class="required">*</span></label>
+<input type="tel" id="uscita-telefono" required maxlength="10" oninput="validaTelefono()">
+<span class="error-message" id="error-telefono"></span>
+</div>
+</div> <div class="info-box">
+<p><strong>️ Attenzione:</strong> Almeno uno tra IMEI Prodotto o Numero SIM Temporanea deve essere compilato.</p>
+</div> <div class="form-row">
+<div class="form-group">
+<label>IMEI Prodotto</label>
+<input type="text" id="uscita-imei" maxlength="15" oninput="validaIMEI()">
+<span class="error-message" id="error-imei"></span>
+</div>
+<div class="form-group">
+<label>Numero Cellulare SIM (Temporanea)</label>
+<input type="tel" id="uscita-sim" maxlength="10" oninput="validaSIM()">
+<span class="error-message" id="error-sim"></span>
+</div>
+</div> <div class="buttons-container">
+<button type="button" class="btn btn-primary" onclick="generaPDFUscita()"> Genera PDF</button>
+<button type="button" class="btn btn-secondary" onclick="resetFormUscita()"> Resetta Form</button>
+</div>
+</form> <div id="upload-section-uscita" style="display: none; margin-top: 2rem;">
+<div class="success-message"> PDF generato con successo! Scaricalo, fallo firmare al cliente e caricalo qui sotto.
+</div>
+<div class="form-group">
+<label>Carica PDF Firmato<span class="required">*</span></label>
+<input type="file" id="upload-pdf-uscita" accept=".pdf">
+</div>
+<div class="buttons-container">
+<button type="button" class="btn btn-primary" onclick="salvaDatiUscita()"> Salva e Invia</button>
+<button type="button" class="btn btn-secondary" onclick="annullaUscita()"> Annulla</button>
+</div>
+</div>
+</div>
+</div> <!-- PAGINA 2: RIENTRO -->
+<div id="page-rientro" class="page">
+<div class="form-section">
+<h2>Registrazione Rientro Dispositivo</h2> <div class="search-box">
+<h3 style="margin-bottom: 1rem; color: var(--windtre-orange);"> Cerca Dispositivo</h3> <div class="info-box" style="margin-bottom: 1rem;">
+<p><strong> Puoi cercare in due modi:</strong></p>
+<p>1️⃣ Inserisci solo il<strong>Codice Fiscale</strong></p>
+<p>2️⃣ Oppure inserisci<strong>Nome e Cognome</strong></p>
+</div> <div class="form-group" style="max-width: 500px;">
+<label>Codice Fiscale Cliente</label>
+<input type="text" id="ricerca-cf" maxlength="16" style="text-transform: uppercase;" placeholder="Es: RSSMRA80A01H501U">
+<span class="error-message" id="error-ricerca-cf"></span>
+</div> <div style="text-align: center; margin: 1rem 0; color: var(--windtre-gray); font-weight: 600;"> - OPPURE -
+</div> <div class="form-row" style="max-width: 800px;">
+<div class="form-group">
+<label>Nome Cliente</label>
+<input type="text" id="ricerca-nome" placeholder="Es: Mario">
+<span class="error-message" id="error-ricerca-nome"></span>
+</div>
+<div class="form-group">
+<label>Cognome Cliente</label>
+<input type="text" id="ricerca-cognome" placeholder="Es: Rossi">
+<span class="error-message" id="error-ricerca-cognome"></span>
+</div>
+</div> <button type="button" class="btn btn-primary" onclick="cercaDispositivo()"> Cerca Dispositivo</button>
+</div> <div id="risultato-ricerca" style="display: none;">
+<div class="success-message" id="dispositivo-trovato">
+<!-- Dati dispositivo trovato -->
+</div> <form id="form-rientro">
+<div class="form-group">
+<label>Chi riceve il dispositivo<span class="required">*</span></label>
+<input type="text" id="rientro-operatore" readonly required style="background:#f3f4f6;cursor:not-allowed;">
+</div> <div class="buttons-container">
+<button type="button" class="btn btn-primary" onclick="generaPDFRientro()"> Genera PDF Rientro</button>
+<button type="button" class="btn btn-secondary" onclick="annullaRicerca()"> Annulla</button>
+</div>
+</form> <div id="upload-section-rientro" style="display: none; margin-top: 2rem;">
+<div class="success-message"> PDF di rientro generato! Scaricalo, fallo firmare al cliente e caricalo qui sotto.
+</div>
+<div class="form-group">
+<label>Carica PDF Firmato Rientro<span class="required">*</span></label>
+<input type="file" id="upload-pdf-rientro" accept=".pdf">
+</div>
+<div class="buttons-container">
+<button type="button" class="btn btn-primary" onclick="salvaDatiRientro()"> Completa Rientro</button>
+<button type="button" class="btn btn-secondary" onclick="annullaRientro()"> Annulla</button>
+</div>
+</div>
+</div>
+</div>
+</div> <!-- PAGINA 3: VISUALIZZAZIONE -->
+<div id="page-visualizzazione" class="page">
+<div class="form-section">
+<h2>Dispositivi in Assistenza</h2> <div class="stats-container" id="stats-container">
+<!-- Statistiche caricate dinamicamente -->
+</div> <div class="filters">
+<div class="form-group">
+<label>Cerca Cliente</label>
+<input type="text" id="filter-cliente" placeholder="Nome, Cognome o CF" onkeyup="applicaFiltri()">
+</div>
+<div class="form-group">
+<label>Stato</label>
+<select id="filter-stato" onchange="applicaFiltri()" style="padding: 0.75rem; border: 2px solid #ddd; border-radius: 4px;">
+<option value="">Tutti</option>
+<option value="fuori">In Assistenza</option>
+<option value="rientrato">Rientrati</option>
+</select>
+</div>
+</div> <button type="button" class="btn btn-primary" onclick="caricaDatiVisualizzazione()" style="margin-bottom: 1rem;"> Aggiorna Dati</button> <div class="table-container">
+<table id="tabella-dispositivi">
+<thead>
+<tr>
+<th>Cliente</th>
+<th>Codice Fiscale</th>
+<th>Numero Cellulare</th>
+<th>Data Uscita</th>
+<th>Data Rientro</th>
+<th>Giorni Fuori</th>
+<th>Stato</th>
+</tr>
+</thead>
+<tbody id="tbody-dispositivi">
+<tr>
+<td colspan="7" class="loading">Caricamento dati...</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div> <!-- Modal di loading -->
+<div id="loading-modal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3> Operazione in corso...</h3>
+</div>
+<p id="loading-text">Attendere prego...</p>
+</div>
+</div> <script> // Configurazione URL Google Apps Script
+ // Migrato su Supabase: tabella post_vendita_dispositivi_comodato + storage bucket comodato-files
+ const sb = db;
+ (async () => {
+ const p = window.__profilo || await Auth.getSessione();
+ if (p) {
+ const el = document.getElementById('rientro-operatore');
+ if (el) el.value = p.nome || p.email || 'Operatore';
+ }
+ })();
+ const COMODATO_BUCKET = 'comodato-files';
+ async function uploadComodatoPdf(deviceId, base64, filename) {
+ try {
+ const bin = atob(base64);
+ const buf = new Uint8Array(bin.length);
+ for (let i = 0; i< bin.length; i++) buf[i] = bin.charCodeAt(i);
+ const blob = new Blob([buf], { type: 'application/pdf' });
+ const path = `dispositivo_${deviceId}/${Date.now()}_${filename}`;
+ const { error } = await sb.storage.from(COMODATO_BUCKET).upload(path, blob, { upsert: true, contentType: 'application/pdf' });
+ if (error) throw error;
+ return sb.storage.from(COMODATO_BUCKET).getPublicUrl(path).data?.publicUrl || null;
+ } catch (e) { console.error('Upload PDF errore:', e); return null; }
+ }
+ 
+ // Dati temporanei
+ let datiUscitaTemp = null;
+ let dispositivoSelezionato = null;
+
+ // Switch tra pagine
+ function switchPage(page) {
+ document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+ document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+ 
+ document.getElementById(`page-${page}`).classList.add('active');
+ event.target.classList.add('active');
+
+ if (page === 'visualizzazione') {
+ caricaDatiVisualizzazione();
+ }
+ }
+
+ // VALIDAZIONI IN TEMPO REALE
+ function validaCF() {
+ const cf = document.getElementById('uscita-cf').value.trim();
+ const errorMsg = document.getElementById('error-cf');
+ const input = document.getElementById('uscita-cf');
+ 
+ if (cf.length> 0 && cf.length< 16) {
+ errorMsg.textContent = `Mancano ${16 - cf.length} caratteri`;
+ input.classList.add('error');
+ } else if (cf.length === 16) {
+ errorMsg.textContent = '';
+ input.classList.remove('error');
+ }
+ }
+
+ function validaTelefono() {
+ const tel = document.getElementById('uscita-telefono').value.trim();
+ const errorMsg = document.getElementById('error-telefono');
+ const input = document.getElementById('uscita-telefono');
+ 
+ if (tel.length> 0 && tel.length< 9) {
+ errorMsg.textContent = `Minimo 9 caratteri (hai inserito ${tel.length})`;
+ input.classList.add('error');
+ } else if (tel.length>= 9 && tel.length<= 10) {
+ errorMsg.textContent = '';
+ input.classList.remove('error');
+ }
+ }
+
+ function validaIMEI() {
+ const imei = document.getElementById('uscita-imei').value.trim();
+ const errorMsg = document.getElementById('error-imei');
+ const input = document.getElementById('uscita-imei');
+ 
+ if (imei.length> 0 && imei.length< 15) {
+ errorMsg.textContent = `L'IMEI deve essere di 15 caratteri (hai inserito ${imei.length})`;
+ input.classList.add('error');
+ } else if (imei.length === 15) {
+ errorMsg.textContent = '';
+ input.classList.remove('error');
+ } else if (imei.length === 0) {
+ errorMsg.textContent = '';
+ input.classList.remove('error');
+ }
+ }
+
+ function validaSIM() {
+ const sim = document.getElementById('uscita-sim').value.trim();
+ const errorMsg = document.getElementById('error-sim');
+ const input = document.getElementById('uscita-sim');
+ 
+ if (sim.length> 0 && sim.length< 9) {
+ errorMsg.textContent = `Minimo 9 caratteri (hai inserito ${sim.length})`;
+ input.classList.add('error');
+ } else if (sim.length>= 9 && sim.length<= 10) {
+ errorMsg.textContent = '';
+ input.classList.remove('error');
+ } else if (sim.length === 0) {
+ errorMsg.textContent = '';
+ input.classList.remove('error');
+ }
+ }
+
+ // PAGINA USCITA
+ function validaFormUscita() {
+ let valido = true;
+ 
+ // Reset errori
+ document.querySelectorAll('.error-message').forEach(e => e.textContent = '');
+ document.querySelectorAll('input').forEach(i => i.classList.remove('error'));
+
+ const nome = document.getElementById('uscita-nome').value.trim();
+ const cognome = document.getElementById('uscita-cognome').value.trim();
+ const cf = document.getElementById('uscita-cf').value.trim().toUpperCase();
+ const telefono = document.getElementById('uscita-telefono').value.trim();
+ const imei = document.getElementById('uscita-imei').value.trim();
+ const sim = document.getElementById('uscita-sim').value.trim();
+
+ // Validazione Nome
+ if (!nome) {
+ mostraErrore('nome', 'Il nome è obbligatorio');
+ valido = false;
+ }
+
+ // Validazione Cognome
+ if (!cognome) {
+ mostraErrore('cognome', 'Il cognome è obbligatorio');
+ valido = false;
+ }
+
+ // Validazione Codice Fiscale
+ if (!cf) {
+ mostraErrore('cf', 'Il codice fiscale è obbligatorio');
+ valido = false;
+ } else if (cf.length !== 16) {
+ mostraErrore('cf', 'Il codice fiscale deve essere esattamente di 16 caratteri');
+ valido = false;
+ }
+
+ // Validazione Numero di Cellulare
+ if (!telefono) {
+ mostraErrore('telefono', 'Il numero di telefono è obbligatorio');
+ valido = false;
+ } else if (telefono.length< 9) {
+ mostraErrore('telefono', 'Il numero di telefono deve essere di almeno 9 caratteri');
+ valido = false;
+ } else if (telefono.length> 10) {
+ mostraErrore('telefono', 'Il numero di telefono deve essere massimo 10 caratteri');
+ valido = false;
+ }
+
+ // Validazione IMEI (se compilato)
+ if (imei && imei.length !== 15) {
+ mostraErrore('imei', 'L\'IMEI deve essere esattamente di 15 caratteri');
+ valido = false;
+ }
+
+ // Validazione SIM Temporanea (se compilata)
+ if (sim && sim.length< 9) {
+ mostraErrore('sim', 'Il numero SIM deve essere di almeno 9 caratteri');
+ valido = false;
+ } else if (sim && sim.length> 10) {
+ mostraErrore('sim', 'Il numero SIM deve essere massimo 10 caratteri');
+ valido = false;
+ }
+
+ // Validazione: almeno uno tra IMEI e SIM deve essere compilato
+ if (!imei && !sim) {
+ mostraErrore('imei', 'Compilare almeno IMEI o SIM Temporanea');
+ mostraErrore('sim', 'Compilare almeno IMEI o SIM Temporanea');
+ valido = false;
+ }
+
+ return valido;
+ }
+
+ function mostraErrore(campo, messaggio) {
+ document.getElementById(`error-${campo}`).textContent = messaggio;
+ document.getElementById(`uscita-${campo}`) ? 
+ document.getElementById(`uscita-${campo}`).classList.add('error') : 
+ null;
+ }
+
+ function generaPDFUscita() {
+ if (!validaFormUscita()) {
+ alert('️ Compila correttamente tutti i campi obbligatori prima di generare il PDF');
+ return;
+ }
+
+ // Controllo specifico per IMEI e SIM
+ const imei = document.getElementById('uscita-imei').value.trim();
+ const sim = document.getElementById('uscita-sim').value.trim();
+ 
+ if (!imei && !sim) {
+ alert('️ ERRORE: Devi compilare almeno uno tra IMEI Prodotto o Numero SIM Temporanea');
+ document.getElementById('error-imei').textContent = 'Compilare almeno IMEI o SIM';
+ document.getElementById('error-sim').textContent = 'Compilare almeno IMEI o SIM';
+ document.getElementById('uscita-imei').classList.add('error');
+ document.getElementById('uscita-sim').classList.add('error');
+ return;
+ }
+
+ const { jsPDF } = window.jspdf;
+ const doc = new jsPDF();
+
+ // Salva dati temporaneamente
+ datiUscitaTemp = {
+ nome: document.getElementById('uscita-nome').value.trim(),
+ cognome: document.getElementById('uscita-cognome').value.trim(),
+ cf: document.getElementById('uscita-cf').value.trim().toUpperCase(),
+ telefono: document.getElementById('uscita-telefono').value.trim(),
+ imei: document.getElementById('uscita-imei').value.trim(),
+ sim: document.getElementById('uscita-sim').value.trim(),
+ dataUscita: new Date().toISOString(),
+ dataUscitaFormattata: new Date().toLocaleDateString('it-IT')
+ };
+
+ // Intestazione
+ doc.setFillColor(255, 102, 0);
+ doc.rect(0, 0, 210, 35, 'F');
+ doc.setTextColor(255, 255, 255);
+ doc.setFontSize(18);
+ doc.setFont(undefined, 'bold');
+ doc.text('WindTre Store - Via Roma 11 - Legnago', 15, 15);
+ doc.setFontSize(12);
+ doc.setFont(undefined, 'normal');
+ doc.text('Modulo Consegna Dispositivo in Comodato', 15, 28);
+
+ // Reset colore testo
+ doc.setTextColor(0, 0, 0);
+ doc.setFontSize(11);
+
+ let y = 48;
+
+ // Dati Cliente
+ doc.setFontSize(14);
+ doc.setFont(undefined, 'bold');
+ doc.text('DATI CLIENTE', 15, y);
+ y += 10;
+ 
+ doc.setFontSize(11);
+ doc.setFont(undefined, 'normal');
+ doc.text(`Nome: ${datiUscitaTemp.nome}`, 15, y);
+ y += 7;
+ doc.text(`Cognome: ${datiUscitaTemp.cognome}`, 15, y);
+ y += 7;
+ doc.text(`Codice Fiscale: ${datiUscitaTemp.cf}`, 15, y);
+ y += 7;
+ doc.text(`Numero di Cellulare: ${datiUscitaTemp.telefono}`, 15, y);
+ y += 15;
+
+ // Dati Dispositivo
+ doc.setFontSize(14);
+ doc.setFont(undefined, 'bold');
+ doc.text('DATI DISPOSITIVO', 15, y);
+ y += 10;
+ 
+ doc.setFontSize(11);
+ doc.setFont(undefined, 'normal');
+ if (datiUscitaTemp.imei) {
+ doc.text(`IMEI Prodotto: ${datiUscitaTemp.imei}`, 15, y);
+ y += 7;
+ }
+ if (datiUscitaTemp.sim) {
+ doc.text(`Numero SIM Temporanea: ${datiUscitaTemp.sim}`, 15, y);
+ y += 7;
+ }
+ doc.text(`Data Consegna: ${datiUscitaTemp.dataUscitaFormattata}`, 15, y);
+ y += 15;
+
+ // Clausole
+ doc.setFontSize(12);
+ doc.setFont(undefined, 'bold');
+ doc.text('CLAUSOLE', 15, y);
+ y += 8;
+ 
+ doc.setFontSize(10);
+ doc.setFont(undefined, 'normal');
+ 
+ const clausole = [
+ '1. Il dispositivo è fornito in comodato d\'uso gratuito esclusivamente per assistenza tecnica.',
+ '2. Il cliente si impegna a custodirlo con diligenza e a restituirlo integro alla chiusura',
+ 'dell\'assistenza o su richiesta del negozio WindTre Legnago Via Roma 11.',
+ '3. In caso di danni, smarrimento o mancata restituzione, potrà essere richiesto l\'addebito',
+ 'del valore del dispositivo.',
+ '4. Il dispositivo rimane di proprietà del negozio WindTre Legnago Via Roma 11.'
+ ];
+ 
+ clausole.forEach(clausola => {
+ doc.text(clausola, 15, y);
+ y += 5;
+ });
+ 
+ y += 8;
+
+ // Dichiarazione
+ doc.setFontSize(10);
+ doc.text('Il sottoscritto dichiara di aver ricevuto in comodato d\'uso il dispositivo', 15, y);
+ y += 5;
+ doc.text('sopra indicato per assistenza tecnica.', 15, y);
+ y += 15;
+
+ // Firma - abbassata di due livelli
+ doc.setFontSize(11);
+ doc.text('Firma del Cliente', 15, y);
+ y += 10;
+ doc.line(15, y, 80, y);
+ 
+ doc.text('Data: ' + datiUscitaTemp.dataUscitaFormattata, 120, y - 10);
+
+ // Footer
+ doc.setFontSize(8);
+ doc.setTextColor(150, 150, 150);
+ doc.text('WindTre Store - Via Roma 11, Legnago - Documento generato automaticamente', 105, 285, { align: 'center' });
+
+ // Salva PDF
+ doc.save(`Consegna_${datiUscitaTemp.cf}_${Date.now()}.pdf`);
+
+ // Mostra sezione upload
+ document.getElementById('upload-section-uscita').style.display = 'block';
+ }
+
+ function resetFormUscita() {
+ document.getElementById('form-uscita').reset();
+ document.getElementById('upload-section-uscita').style.display = 'none';
+ datiUscitaTemp = null;
+ document.querySelectorAll('.error-message').forEach(e => e.textContent = '');
+ document.querySelectorAll('input').forEach(i => i.classList.remove('error'));
+ }
+
+ function annullaUscita() {
+ if (confirm('Vuoi annullare l\'operazione? I dati inseriti andranno persi.')) {
+ resetFormUscita();
+ }
+ }
+
+ async function salvaDatiUscita() {
+ const fileInput = document.getElementById('upload-pdf-uscita');
+ 
+ if (!fileInput.files.length) {
+ alert('️ Carica il PDF firmato prima di procedere');
+ return;
+ }
+
+ if (!datiUscitaTemp) {
+ alert('️ Errore: dati non trovati. Rigenera il PDF.');
+ return;
+ }
+
+ mostraLoading('Salvataggio in corso...');
+
+ try {
+ const file = fileInput.files[0];
+ const base64PDF = await fileToBase64(file);
+ const profilo = window.__profilo || await Auth.getSessione();
+
+ const { data: codiceRow } = await sb.rpc('genera_codice_comodato');
+
+ const { data: inserted, error: insErr } = await sb
+ .from('post_vendita_dispositivi_comodato')
+ .insert({
+ codice: codiceRow || null,
+ nome: datiUscitaTemp.nome,
+ cognome: datiUscitaTemp.cognome,
+ codice_fiscale: datiUscitaTemp.cf,
+ telefono: datiUscitaTemp.telefono || null,
+ imei: datiUscitaTemp.imei || '',
+ sim_temporanea: datiUscitaTemp.sim || null,
+ data_uscita: (datiUscitaTemp.dataUscita || new Date().toISOString()).slice(0, 10),
+ operatore_uscita_id: profilo?.id || null,
+ operatore_uscita_nome: profilo?.nome || profilo?.email || null,
+ stato: 'fuori'
+ })
+ .select()
+ .single();
+ if (insErr) throw insErr;
+
+ const pdfUrl = await uploadComodatoPdf(inserted.id, base64PDF, file.name);
+ if (pdfUrl) {
+ await sb.from('post_vendita_dispositivi_comodato')
+ .update({ cartella_url: pdfUrl })
+ .eq('id', inserted.id);
+ }
+
+ nascondiLoading();
+ alert('Dispositivo registrato con successo!');
+ setTimeout(() => { window.location.href = '../dashboard.html'; }, 500);
+
+ } catch (error) {
+ nascondiLoading();
+ console.error('Errore:', error);
+ alert('Errore durante il salvataggio: ' + error.message);
+ }
+ }
+
+ // PAGINA RIENTRO
+ async function cercaDispositivo() {
+ const cf = document.getElementById('ricerca-cf').value.trim().toUpperCase();
+ const nome = document.getElementById('ricerca-nome').value.trim();
+ const cognome = document.getElementById('ricerca-cognome').value.trim();
+
+ // Reset errori
+ document.getElementById('error-ricerca-cf').textContent = '';
+ document.getElementById('error-ricerca-nome').textContent = '';
+ document.getElementById('error-ricerca-cognome').textContent = '';
+
+ // Verifica che almeno una modalità sia compilata
+ const usaCF = cf.length> 0;
+ const usaNomeCognome = nome.length> 0 && cognome.length> 0;
+
+ if (!usaCF && !usaNomeCognome) {
+ alert('️ Inserisci il Codice Fiscale OPPURE Nome e Cognome per cercare');
+ return;
+ }
+
+ // Verifica CF se usato
+ if (usaCF && cf.length !== 16) {
+ document.getElementById('error-ricerca-cf').textContent = 'Il Codice Fiscale deve essere di 16 caratteri';
+ return;
+ }
+
+ // Verifica Nome e Cognome se usati
+ if (usaNomeCognome && (!nome || !cognome)) {
+ if (!nome) document.getElementById('error-ricerca-nome').textContent = 'Inserisci il nome';
+ if (!cognome) document.getElementById('error-ricerca-cognome').textContent = 'Inserisci il cognome';
+ return;
+ }
+
+ mostraLoading('Ricerca dispositivo...');
+
+ try {
+ let q = sb.from('post_vendita_dispositivi_comodato').select('*').eq('stato', 'fuori');
+ if (usaCF) {
+ q = q.eq('codice_fiscale', cf);
+ } else {
+ q = q.ilike('nome', `%${nome}%`).ilike('cognome', `%${cognome}%`);
+ }
+ const { data, error } = await q.order('data_uscita', { ascending: false }).limit(1);
+ if (error) throw error;
+ nascondiLoading();
+ if (data && data.length> 0) {
+ const row = data[0];
+ dispositivoSelezionato = {
+ id: row.id,
+ nome: row.nome,
+ cognome: row.cognome,
+ cf: row.codice_fiscale,
+ imei: row.imei,
+ sim: row.sim_temporanea,
+ dataUscita: row.data_uscita
+ };
+ mostraRisultatoRicerca(dispositivoSelezionato);
+ } else {
+ alert('Nessun dispositivo trovato con questi dati o già rientrato');
+ annullaRicerca();
+ }
+ } catch (error) {
+ nascondiLoading();
+ console.error('Errore:', error);
+ alert('Errore durante la ricerca: ' + error.message);
+ }
+ }
+
+ function mostraRisultatoRicerca(dispositivo) {
+ const html = `
+<strong> Dispositivo Trovato</strong><br> Cliente: ${dispositivo.nome} ${dispositivo.cognome}<br> CF: ${dispositivo.cf}<br> IMEI: ${dispositivo.imei || 'N/A'}<br> SIM: ${dispositivo.sim || 'N/A'}<br> Data Uscita: ${new Date(dispositivo.dataUscita).toLocaleDateString('it-IT')}<br> Giorni fuori: ${calcolaGiorniFuori(dispositivo.dataUscita)}
+ `;
+ 
+ document.getElementById('dispositivo-trovato').innerHTML = html;
+ document.getElementById('risultato-ricerca').style.display = 'block';
+ }
+
+ function annullaRicerca() {
+ document.getElementById('ricerca-cf').value = '';
+ document.getElementById('ricerca-nome').value = '';
+ document.getElementById('ricerca-cognome').value = '';
+ document.getElementById('error-ricerca-cf').textContent = '';
+ document.getElementById('error-ricerca-nome').textContent = '';
+ document.getElementById('error-ricerca-cognome').textContent = '';
+ document.getElementById('risultato-ricerca').style.display = 'none';
+ document.getElementById('upload-section-rientro').style.display = 'none';
+ dispositivoSelezionato = null;
+ }
+
+ function generaPDFRientro() {
+ const operatore = document.getElementById('rientro-operatore').value.trim();
+ 
+ if (!operatore) {
+ alert('️ Inserisci chi riceve il dispositivo');
+ return;
+ }
+
+ if (!dispositivoSelezionato) {
+ alert('️ Errore: dispositivo non selezionato');
+ return;
+ }
+
+ const { jsPDF } = window.jspdf;
+ const doc = new jsPDF();
+
+ // Intestazione
+ doc.setFillColor(255, 102, 0);
+ doc.rect(0, 0, 210, 35, 'F');
+ doc.setTextColor(255, 255, 255);
+ doc.setFontSize(18);
+ doc.setFont(undefined, 'bold');
+ doc.text('WindTre Store - Via Roma 11 - Legnago', 15, 15);
+ doc.setFontSize(12);
+ doc.setFont(undefined, 'normal');
+ doc.text('Modulo Rientro Dispositivo in Comodato', 15, 28);
+
+ doc.setTextColor(0, 0, 0);
+ doc.setFontSize(11);
+
+ let y = 48;
+
+ // Dati Cliente
+ doc.setFontSize(14);
+ doc.setFont(undefined, 'bold');
+ doc.text('DATI CLIENTE', 15, y);
+ y += 10;
+ 
+ doc.setFontSize(11);
+ doc.setFont(undefined, 'normal');
+ doc.text(`Nome: ${dispositivoSelezionato.nome}`, 15, y);
+ y += 7;
+ doc.text(`Cognome: ${dispositivoSelezionato.cognome}`, 15, y);
+ y += 7;
+ doc.text(`Codice Fiscale: ${dispositivoSelezionato.cf}`, 15, y);
+ y += 15;
+
+ // Dati Dispositivo
+ doc.setFontSize(14);
+ doc.setFont(undefined, 'bold');
+ doc.text('DATI DISPOSITIVO', 15, y);
+ y += 10;
+ 
+ doc.setFontSize(11);
+ doc.setFont(undefined, 'normal');
+ if (dispositivoSelezionato.imei) {
+ doc.text(`IMEI: ${dispositivoSelezionato.imei}`, 15, y);
+ y += 7;
+ }
+ if (dispositivoSelezionato.sim) {
+ doc.text(`SIM: ${dispositivoSelezionato.sim}`, 15, y);
+ y += 7;
+ }
+ doc.text(`Data Consegna: ${new Date(dispositivoSelezionato.dataUscita).toLocaleDateString('it-IT')}`, 15, y);
+ y += 7;
+ doc.text(`Data Rientro: ${new Date().toLocaleDateString('it-IT')}`, 15, y);
+ y += 7;
+ doc.text(`Giorni in assistenza: ${calcolaGiorniFuori(dispositivoSelezionato.dataUscita)}`, 15, y);
+ y += 15;
+
+ // Rientro
+ doc.setFontSize(14);
+ doc.setFont(undefined, 'bold');
+ doc.text('DATI RIENTRO', 15, y);
+ y += 10;
+ 
+ doc.setFontSize(11);
+ doc.setFont(undefined, 'normal');
+ doc.text(`Materiale ritirato da: ${operatore}`, 15, y);
+ y += 15;
+
+ // Dichiarazione di Rientro
+ doc.setFontSize(14);
+ doc.setFont(undefined, 'bold');
+ doc.text('DICHIARAZIONE DI RIENTRO', 15, y);
+ y += 10;
+ 
+ doc.setFontSize(10);
+ doc.setFont(undefined, 'normal');
+ const dichiarazione = `${dispositivoSelezionato.nome} ${dispositivoSelezionato.cognome} dichiara di aver restituito il dispositivo ricevuto in comodato,`;
+ doc.text(dichiarazione, 15, y);
+ y += 5;
+ doc.text('completo e nelle condizioni in cui è stato consegnato, salvo normale usura.', 15, y);
+ y += 10;
+
+ // Clausole essenziali
+ doc.setFontSize(12);
+ doc.setFont(undefined, 'bold');
+ doc.text('Clausole essenziali', 15, y);
+ y += 8;
+ 
+ doc.setFontSize(10);
+ doc.setFont(undefined, 'normal');
+ 
+ const clausole = [
+ '1. Con la firma del presente modulo, il cliente attesta l\'avvenuta riconsegna del dispositivo',
+ 'al negozio WindTre Legnago Via Roma 11.',
+ '2. Il negozio WindTre Legnago Via Roma 11, prende in carico il dispositivo e verifica',
+ 'successivamente integrità e funzionamento.',
+ '3. Eventuali danni riscontrati dopo il controllo tecnico potranno essere comunicati al',
+ 'cliente in un secondo momento.'
+ ];
+ 
+ clausole.forEach(clausola => {
+ doc.text(clausola, 15, y);
+ y += 5;
+ });
+ 
+ y += 15;
+
+ // Firme - abbassate di due livelli
+ doc.setFontSize(11);
+ doc.text('Firma del Cliente', 15, y);
+ y += 10;
+ doc.line(15, y, 80, y);
+ 
+ doc.text('Firma Operatore', 120, y - 10);
+ y += 10;
+ doc.line(120, y, 185, y);
+
+ // Footer
+ doc.setFontSize(8);
+ doc.setTextColor(150, 150, 150);
+ doc.text('WindTre Store - Via Roma 11, Legnago - Documento generato automaticamente', 105, 285, { align: 'center' });
+
+ doc.save(`Rientro_${dispositivoSelezionato.cf}_${Date.now()}.pdf`);
+
+ document.getElementById('upload-section-rientro').style.display = 'block';
+ }
+
+ function annullaRientro() {
+ document.getElementById('upload-section-rientro').style.display = 'none';
+ }
+
+ async function salvaDatiRientro() {
+ const fileInput = document.getElementById('upload-pdf-rientro');
+ 
+ if (!fileInput.files.length) {
+ alert('️ Carica il PDF firmato prima di procedere');
+ return;
+ }
+
+ const operatore = document.getElementById('rientro-operatore').value.trim();
+
+ mostraLoading('Registrazione rientro...');
+
+ try {
+ const file = fileInput.files[0];
+ const base64PDF = await fileToBase64(file);
+ const profilo = window.__profilo || await Auth.getSessione();
+
+ const pdfUrl = await uploadComodatoPdf(dispositivoSelezionato.id, base64PDF, file.name);
+
+ const { error } = await sb
+ .from('post_vendita_dispositivi_comodato')
+ .update({
+ stato: 'rientrato',
+ data_rientro: new Date().toISOString().slice(0,10),
+ operatore_rientro_id: profilo?.id || null,
+ operatore_rientro_nome: operatore || profilo?.nome || null,
+ cartella_url: pdfUrl || null
+ })
+ .eq('id', dispositivoSelezionato.id);
+ if (error) throw error;
+
+ nascondiLoading();
+ alert('Rientro registrato con successo!');
+ setTimeout(() => { window.location.href = '../dashboard.html'; }, 500);
+
+ } catch (error) {
+ nascondiLoading();
+ console.error('Errore:', error);
+ alert('Errore durante il salvataggio: ' + error.message);
+ }
+ }
+
+ // PAGINA VISUALIZZAZIONE
+ async function caricaDatiVisualizzazione() {
+ const tbody = document.getElementById('tbody-dispositivi');
+ tbody.innerHTML = '<tr><td colspan="7"class="loading">Caricamento dati...</td></tr>';
+
+ // Imposta il filtro stato su"fuori" (In Assistenza) di default
+ document.getElementById('filter-stato').value = 'fuori';
+
+ try {
+ const { data, error } = await sb
+ .from('post_vendita_dispositivi_comodato')
+ .select('*')
+ .order('data_uscita', { ascending: false });
+ if (error) throw error;
+ const dispositivi = (data || []).map(r => ({
+ id: r.id,
+ nome: r.nome,
+ cognome: r.cognome,
+ cf: r.codice_fiscale,
+ telefono: r.telefono,
+ imei: r.imei,
+ sim: r.sim_temporanea,
+ dataUscita: r.data_uscita,
+ dataRientro: r.data_rientro,
+ operatoreRientro: r.operatore_rientro_nome,
+ stato: r.stato,
+ cartella: r.cartella_url
+ }));
+ window.tuttiDispositivi = dispositivi;
+ aggiornaStatistiche(dispositivi);
+ applicaFiltri();
+ } catch (error) {
+ console.error('Errore:', error);
+ tbody.innerHTML = '<tr><td colspan="7"style="text-align: center; color: red;">Errore nel caricamento: ' + error.message + '</td></tr>';
+ }
+ }
+
+ function aggiornaStatistiche(dispositivi) {
+ const fuori = dispositivi.filter(d => d.stato === 'fuori').length;
+ const rientrati = dispositivi.filter(d => d.stato === 'rientrato').length;
+ 
+ let totaleGiorni = 0;
+ let count = 0;
+ dispositivi.forEach(d => {
+ if (d.stato === 'fuori') {
+ totaleGiorni += calcolaGiorniFuori(d.dataUscita);
+ count++;
+ }
+ });
+ const mediaGiorni = count> 0 ? Math.round(totaleGiorni / count) : 0;
+
+ const html = `
+<div class="stat-card">
+<h3>${fuori}</h3>
+<p>Dispositivi in Assistenza</p>
+</div>
+<div class="stat-card"style="background: linear-gradient(135deg, var(--windtre-gray) 0%, #484949 100%);">
+<h3>${rientrati}</h3>
+<p>Dispositivi Rientrati</p>
+</div>
+<div class="stat-card"style="background: linear-gradient(135deg, #388E3C 0%, #4CAF50 100%);">
+<h3>${mediaGiorni}</h3>
+<p>Media Giorni Assistenza</p>
+</div> `;
+ 
+ document.getElementById('stats-container').innerHTML = html;
+ }
+
+ function renderizzaTabella(dispositivi) {
+ const tbody = document.getElementById('tbody-dispositivi');
+ 
+ if (!dispositivi || dispositivi.length === 0) {
+ tbody.innerHTML = '<tr><td colspan="7"style="text-align: center;">Nessun dispositivo trovato</td></tr>';
+ return;
+ }
+
+ let html = '';
+ dispositivi.forEach(d => {
+ const giorniFuori = d.stato === 'fuori' ? calcolaGiorniFuori(d.dataUscita) : '-';
+ const rowClass = d.stato === 'fuori' && giorniFuori> 7 ? 'highlight' : '';
+ 
+ // Formatta data rientro
+ let dataRientro = '-';
+ if (d.dataRientro && d.dataRientro !== '') {
+ // Se è già in formato GG/MM/AAAA, usa così com'è
+ if (d.dataRientro.includes('/')) {
+ dataRientro = d.dataRientro;
+ } else {
+ // Altrimenti converti
+ dataRientro = new Date(d.dataRientro).toLocaleDateString('it-IT');
+ }
+ }
+ 
+ // Formatta data uscita
+ let dataUscita = d.dataUscita;
+ if (!dataUscita.includes('/')) {
+ dataUscita = new Date(d.dataUscita).toLocaleDateString('it-IT');
+ }
+ 
+ html += `
+<tr class="${rowClass}">
+<td>${d.nome} ${d.cognome}</td>
+<td>${d.cf}</td>
+<td>${d.telefono || '-'}</td>
+<td>${dataUscita}</td>
+<td>${dataRientro}</td>
+<td>${giorniFuori}</td>
+<td><span class="status-badge ${d.stato}">${d.stato === 'fuori' ? 'In Assistenza' : 'Rientrato'}</span></td>
+</tr> `;
+ });
+ 
+ tbody.innerHTML = html;
+ }
+
+ function applicaFiltri() {
+ if (!window.tuttiDispositivi) return;
+
+ const filterCliente = document.getElementById('filter-cliente').value.toLowerCase();
+ const filterStato = document.getElementById('filter-stato').value;
+
+ let dispositivi = window.tuttiDispositivi.filter(d => {
+ // Filtro cliente
+ if (filterCliente) {
+ const clienteMatch = 
+ d.nome.toLowerCase().includes(filterCliente) ||
+ d.cognome.toLowerCase().includes(filterCliente) ||
+ d.cf.toLowerCase().includes(filterCliente);
+ if (!clienteMatch) return false;
+ }
+
+ // Filtro stato
+ if (filterStato && d.stato !== filterStato) return false;
+
+ return true;
+ });
+
+ renderizzaTabella(dispositivi);
+ }
+
+ // UTILITY
+ function calcolaGiorniFuori(dataUscita) {
+ const oggi = new Date();
+ const uscita = new Date(dataUscita);
+ const diff = oggi - uscita;
+ return Math.floor(diff / (1000 * 60 * 60 * 24));
+ }
+
+ function fileToBase64(file) {
+ return new Promise((resolve, reject) => {
+ const reader = new FileReader();
+ reader.readAsDataURL(file);
+ reader.onload = () => resolve(reader.result.split(',')[1]);
+ reader.onerror = error => reject(error);
+ });
+ }
+
+ function mostraLoading(testo) {
+ document.getElementById('loading-text').textContent = testo;
+ document.getElementById('loading-modal').classList.add('active');
+ }
+
+ function nascondiLoading() {
+ document.getElementById('loading-modal').classList.remove('active');
+ }
+
+ // Carica dati all'avvio
+ window.addEventListener('DOMContentLoaded', () => {
+ // Verifica configurazione
+ if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+ alert('️ ATTENZIONE: Configura prima l\'URL di Google Apps Script nella variabile APPS_SCRIPT_URL');
+ }
+ });
+</script>
 </body>
 </html>
