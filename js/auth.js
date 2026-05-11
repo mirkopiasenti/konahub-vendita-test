@@ -4,6 +4,12 @@
 const Auth = {
   _profilo: null,
 
+  _indexPath() {
+    // Risolve correttamente il path verso index.html sia dalla root
+    // che dalla cartella /moduli/ (e qualsiasi sotto-cartella di primo livello).
+    return window.location.pathname.includes('/moduli/') ? '../index.html' : 'index.html';
+  },
+
   async caricaProfilo(userId) {
     const { data, error } = await db.from('profili').select('*').eq('id', userId).single();
     if (error || !data) return null;
@@ -23,7 +29,7 @@ const Auth = {
   async richiediAuth() {
     const profilo = await this.getSessione();
     if (!profilo) {
-      window.location.href = 'index.html';
+      window.location.href = this._indexPath();
       return null;
     }
     return profilo;
@@ -32,7 +38,7 @@ const Auth = {
   async logout() {
     this._profilo = null;
     await db.auth.signOut();
-    window.location.href = 'index.html';
+    window.location.href = this._indexPath();
   },
 
   getProfilo() { return this._profilo; },
