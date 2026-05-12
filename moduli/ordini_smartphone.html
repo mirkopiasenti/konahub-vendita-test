@@ -1045,7 +1045,7 @@
  // Mostra dettagli ordine
  function showOrderDetail(orderId) {
  currentOrderId = orderId;
- const order = allOrders.find(o => o.id === orderId);
+ const order = allOrders.find(o => String(o.id) === String(orderId));
  
  if (!order) return;
 
