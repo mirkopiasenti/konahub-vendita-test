@@ -590,6 +590,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/auth.js"></script>
+<script src="../js/anagrafica-helper.js"></script>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
 <!-- Header -->
 <div class="header">
@@ -618,15 +619,38 @@
 </div>
 </div>
 </div> <div class="form-section">
-<h2>Informazioni Cliente</h2>
+<h2>Cliente</h2>
 <div class="form-row">
 <div class="form-group">
-<label>Nome e Cognome<span class="required">*</span></label>
-<input type="text" id="nomecognome" required placeholder="Inserisci nome e cognome">
+<label>Codice Fiscale / P.IVA<span class="required">*</span></label>
+<input type="text" id="anag_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
+<small id="anag_cfpiva_hint" style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori per cercare</small>
 </div>
 <div class="form-group">
-<label>Numero di Cellulare<span class="required">*</span></label>
-<input type="tel" id="cellulare" required placeholder="Inserisci numero di cellulare">
+<label>Cluster</label>
+<input type="text" id="anag_cluster" readonly placeholder="Auto" style="background:#f3f4f6;cursor:not-allowed;">
+</div>
+</div>
+<div id="anag_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
+<div id="anag_fields" style="display:none">
+<div class="form-row">
+<div class="form-group">
+<label>Ragione Sociale / Intestatario<span class="required">*</span></label>
+<input type="text" id="anag_ragione_sociale" placeholder="Es. Mario Rossi oppure Acme SRL">
+</div>
+<div class="form-group">
+<label>Nome Referente<span class="required">*</span></label>
+<input type="text" id="anag_nome_referente" placeholder="Es. Mario">
+</div>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label>Cellulare<span class="required">*</span></label>
+<input type="tel" id="anag_cellulare" placeholder="Es. 333 1234567">
+</div>
+<div class="form-group">
+<!-- spazio -->
+</div>
 </div>
 </div>
 </div> <div class="form-section">
@@ -723,16 +747,109 @@
 </div>
 <div id="modal-body"></div>
 </div>
-</div> <script> // Migrato su Supabase. Tabella: vendita_ordini_smartphone
+</div> <script> // Migrato su Supabase. Tabella: vendita_ordini_smartphone (con anagrafica unificata)
  const sb = db;
  let allOrders = [];
  let currentOrderId = null;
+ // Stato della ricerca anagrafica
+ const anagState = {
+   id: null,        // UUID se anagrafica esistente trovata
+   cfPiva: '',      // CF/PIVA normalizzato
+   kind: null,      // 'cf' | 'piva' | null
+   cluster: null,   // 'Consumer' | 'Business'
+   lookupDone: false,
+   exists: false
+ };
 
  // Auto-fill operatore dal profilo loggato
  (async () => {
  const p = window.__profilo || await Auth.getSessione();
  if (p) document.getElementById('operatore').value = p.nome || p.email || 'Operatore';
  })();
+
+ // --- Helpers UI per il blocco anagrafica ---
+ function setAnagStatus(msg, type) {
+   const el = document.getElementById('anag_status');
+   const colors = { ok: '#047857', warn: '#b45309', err: '#b91c1c', info: '#1d4ed8' };
+   el.style.color = colors[type] || '#0f172a';
+   el.textContent = msg || '';
+ }
+ function setAnagFieldsReadonly(readonly) {
+   ['anag_ragione_sociale','anag_nome_referente','anag_cellulare'].forEach(id => {
+     const el = document.getElementById(id);
+     if (!el) return;
+     el.readOnly = !!readonly;
+     el.style.background = readonly ? '#f3f4f6' : '';
+     el.style.cursor = readonly ? 'not-allowed' : '';
+   });
+ }
+ function showAnagFields(show) {
+   document.getElementById('anag_fields').style.display = show ? 'block' : 'none';
+ }
+ function resetAnagState() {
+   anagState.id = null; anagState.cfPiva = ''; anagState.kind = null;
+   anagState.cluster = null; anagState.lookupDone = false; anagState.exists = false;
+   document.getElementById('anag_cluster').value = '';
+   document.getElementById('anag_ragione_sociale').value = '';
+   document.getElementById('anag_nome_referente').value = '';
+   document.getElementById('anag_cellulare').value = '';
+   setAnagFieldsReadonly(false);
+   showAnagFields(false);
+   setAnagStatus('', '');
+ }
+
+ // --- Lookup anagrafica al blur del campo CF/PIVA ---
+ async function eseguiLookupAnagrafica() {
+   const raw = document.getElementById('anag_cfpiva').value;
+   const cfPiva = AnagraficaHelper.normalizeCfPiva(raw);
+   document.getElementById('anag_cfpiva').value = cfPiva;
+   if (!cfPiva) { resetAnagState(); return; }
+
+   const kind = AnagraficaHelper.detectKind(cfPiva);
+   if (!kind) {
+     resetAnagState();
+     setAnagStatus('Il valore inserito non è un CF (16 caratteri) né una P.IVA (11 cifre). Verifica il dato.', 'err');
+     return;
+   }
+   anagState.cfPiva = cfPiva;
+   anagState.kind = kind;
+   anagState.cluster = AnagraficaHelper.clusterFromKind(kind);
+   document.getElementById('anag_cluster').value = anagState.cluster;
+
+   setAnagStatus('Ricerca cliente in corso...', 'info');
+   try {
+     const res = await AnagraficaHelper.cerca(cfPiva);
+     anagState.lookupDone = true;
+     if (res.found) {
+       anagState.id = res.data.id;
+       anagState.exists = true;
+       document.getElementById('anag_ragione_sociale').value = res.data.ragione_sociale || '';
+       document.getElementById('anag_nome_referente').value = res.data.nome_referente || '';
+       document.getElementById('anag_cellulare').value = res.data.cellulare || '';
+       // Sovrascrivi cluster con quello reale se diverso (audit)
+       if (res.data.cluster) {
+         anagState.cluster = res.data.cluster;
+         document.getElementById('anag_cluster').value = res.data.cluster;
+       }
+       setAnagFieldsReadonly(true);
+       showAnagFields(true);
+       setAnagStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-'), 'ok');
+     } else {
+       anagState.id = null;
+       anagState.exists = false;
+       setAnagFieldsReadonly(false);
+       showAnagFields(true);
+       setAnagStatus('Cliente nuovo — compila i dati di censimento (minimi obbligatori).', 'warn');
+       document.getElementById('anag_ragione_sociale').focus();
+     }
+   } catch (err) {
+     setAnagStatus('Errore ricerca: ' + err.message, 'err');
+   }
+ }
+ document.getElementById('anag_cfpiva').addEventListener('blur', eseguiLookupAnagrafica);
+ document.getElementById('anag_cfpiva').addEventListener('keydown', (e) => {
+   if (e.key === 'Enter') { e.preventDefault(); eseguiLookupAnagrafica(); }
+ });
 
  // Switch tra le tab
  function switchTab(index) {
@@ -755,39 +872,67 @@
  // Gestione submit form
  document.getElementById('orderForm').addEventListener('submit', async (e) => {
  e.preventDefault();
- 
+
  const submitBtn = document.getElementById('submitBtn');
+ const profilo = window.__profilo || await Auth.getSessione();
+
+ // --- Validazione cliente (anagrafica) ---
+ const datiAnag = {
+   cf_piva: document.getElementById('anag_cfpiva').value,
+   cluster: document.getElementById('anag_cluster').value,
+   ragione_sociale: document.getElementById('anag_ragione_sociale').value,
+   nome_referente: document.getElementById('anag_nome_referente').value,
+   cellulare: document.getElementById('anag_cellulare').value,
+   creato_da: profilo?.id || null
+ };
+ const errAnag = AnagraficaHelper.validaDatiMinimi(datiAnag);
+ if (errAnag) { showMessage(errAnag, 'error'); return; }
+ if (!anagState.lookupDone) {
+   // Forziamo la ricerca prima del salvataggio se non fatta
+   await eseguiLookupAnagrafica();
+   if (AnagraficaHelper.validaDatiMinimi(datiAnag)) { showMessage('Verifica i dati cliente', 'error'); return; }
+ }
+
  submitBtn.disabled = true;
  submitBtn.textContent = 'Invio in corso...';
 
- const profilo = window.__profilo || await Auth.getSessione();
- const { data: codiceRow } = await sb.rpc('genera_codice_ordine_smartphone');
- const record = {
- codice_ordine: codiceRow || null,
- operatore_id: profilo?.id || null,
- operatore_nome: profilo?.nome || profilo?.email || null,
- nome_cognome: document.getElementById('nomecognome').value.trim(),
- numero_cellulare: document.getElementById('cellulare').value.trim(),
- marca: document.getElementById('marca').value,
- modello: document.getElementById('modello').value.trim(),
- memoria: document.getElementById('memoria').value,
- colorazione: document.getElementById('colorazione').value.trim(),
- note: document.getElementById('note').value.trim() || null,
- stato: 'In attesa'
- };
-
  try {
- const { error } = await sb.from('vendita_ordini_smartphone').insert(record);
- if (error) throw error;
- showMessage('Ordine registrato con successo!', 'success');
- document.getElementById('orderForm').reset();
- setTimeout(() => { window.location.href = '../dashboard.html'; }, 1500);
+   // 1. Risolvi/crea anagrafica → ottieni UUID
+   const anagraficaId = await AnagraficaHelper.cercaOcrea(datiAnag);
+
+   // 2. Genera codice ordine
+   const { data: codiceRow, error: codErr } = await sb.rpc('genera_codice_ordine_smartphone');
+   if (codErr) throw codErr;
+
+   // 3. Inserisci ordine collegato all'anagrafica
+   const record = {
+     codice_ordine: codiceRow || null,
+     operatore_id: profilo?.id || null,
+     operatore_nome: profilo?.nome || profilo?.email || null,
+     anagrafica_id: anagraficaId,
+     cf_piva_snapshot: datiAnag.cf_piva,
+     nome_cognome: datiAnag.ragione_sociale,    // snapshot
+     numero_cellulare: datiAnag.cellulare,      // snapshot
+     marca: document.getElementById('marca').value,
+     modello: document.getElementById('modello').value.trim(),
+     memoria: document.getElementById('memoria').value,
+     colorazione: document.getElementById('colorazione').value.trim(),
+     note: document.getElementById('note').value.trim() || null,
+     stato: 'In attesa'
+   };
+   const { error } = await sb.from('vendita_ordini_smartphone').insert(record);
+   if (error) throw error;
+
+   showMessage('Ordine registrato con successo!', 'success');
+   document.getElementById('orderForm').reset();
+   resetAnagState();
+   setTimeout(() => { window.location.href = '../dashboard.html'; }, 1500);
  } catch (error) {
- console.error('Errore:', error);
- showMessage('Errore durante la registrazione: ' + error.message, 'error');
+   console.error('Errore:', error);
+   showMessage('Errore durante la registrazione: ' + error.message, 'error');
  } finally {
- submitBtn.disabled = false;
- submitBtn.textContent = 'Registra Ordine';
+   submitBtn.disabled = false;
+   submitBtn.textContent = 'Registra Ordine';
  }
  });
 
@@ -806,6 +951,8 @@
  id: r.id,
  operatore: r.operatore_nome || '',
  nomeCognome: r.nome_cognome || '',
+ cfPiva: r.cf_piva_snapshot || '',
+ anagraficaId: r.anagrafica_id || null,
  cellulare: r.numero_cellulare || '',
  marca: r.marca || '',
  modello: r.modello || '',
@@ -885,8 +1032,12 @@
 <div class="detail-value">${order.operatore}</div>
 </div>
 <div class="detail-row">
-<div class="detail-label">Nome e Cognome:</div>
+<div class="detail-label">Intestatario:</div>
 <div class="detail-value">${order.nomeCognome}</div>
+</div>
+<div class="detail-row">
+<div class="detail-label">CF / P.IVA:</div>
+<div class="detail-value">${order.cfPiva || '-'}</div>
 </div>
 <div class="detail-row">
 <div class="detail-label">Cellulare:</div>
