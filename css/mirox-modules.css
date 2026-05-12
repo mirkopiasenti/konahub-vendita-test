@@ -363,14 +363,19 @@ tbody tr:hover {
 }
 
 /* ------- MODAL ------- */
-.modal, .modal-overlay {
+/* Overlay: il backdrop scuro (mai .modal!) */
+.modal-overlay {
     background: rgba(15, 23, 42, 0.5) !important;
 }
-.modal-content, .modal-container {
+/* Container del modal: SEMPRE bianco */
+.modal,
+.modal-content,
+.modal-container {
     background: var(--mx-bg-card) !important;
     border-radius: var(--mx-radius-lg) !important;
     box-shadow: var(--mx-shadow-lg) !important;
     border: 1px solid var(--mx-border) !important;
+    color: var(--mx-text) !important;
 }
 .modal-header {
     background: var(--mx-bg-card) !important;
@@ -391,8 +396,16 @@ tbody tr:hover {
     cursor: pointer !important;
 }
 .modal-close:hover { color: var(--mx-text) !important; }
-.modal-body { padding: 24px !important; }
-.modal-footer { padding: 16px 24px !important; border-top: 1px solid var(--mx-border-light) !important; }
+.modal-body {
+    background: var(--mx-bg-card) !important;
+    color: var(--mx-text) !important;
+    padding: 24px !important;
+}
+.modal-footer {
+    background: var(--mx-bg-card) !important;
+    padding: 16px 24px !important;
+    border-top: 1px solid var(--mx-border-light) !important;
+}
 
 /* ------- ALERTS / MESSAGGI ------- */
 .alert, .message, #message {
