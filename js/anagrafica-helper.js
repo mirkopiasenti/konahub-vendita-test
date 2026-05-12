@@ -79,9 +79,10 @@
   async function cerca(cfPiva) {
     const v = normalizeCfPiva(cfPiva);
     if (!v) return { found: false };
-    if (!window.db) throw new Error('Supabase client (db) non inizializzato');
+    var sbClient = window.db || (typeof db !== 'undefined' ? db : null);
+    if (!sbClient) throw new Error('Supabase client (db) non inizializzato');
 
-    const { data, error } = await window.db
+    const { data, error } = await sbClient
       .from('anagrafica')
       .select('id, cf_piva, cluster, ragione_sociale, nome_referente, cellulare, provincia, comune, via, civico')
       .ilike('cf_piva', v)
@@ -111,7 +112,8 @@
    * @returns {Promise<string>} UUID dell'anagrafica
    */
   async function cercaOcrea(dati) {
-    if (!window.db) throw new Error('Supabase client (db) non inizializzato');
+    var sbClient = window.db || (typeof db !== 'undefined' ? db : null);
+    if (!sbClient) throw new Error('Supabase client (db) non inizializzato');
 
     const payload = {
       p_cf_piva: normalizeCfPiva(dati.cf_piva),
@@ -130,7 +132,7 @@
     if (!payload.p_cluster) throw new Error('Cluster obbligatorio');
     if (!payload.p_ragione_sociale) throw new Error('Ragione sociale obbligatoria');
 
-    const { data, error } = await window.db.rpc('cerca_o_crea_anagrafica', payload);
+    const { data, error } = await sbClient.rpc('cerca_o_crea_anagrafica', payload);
     if (error) throw error;
     return data; // uuid
   }
