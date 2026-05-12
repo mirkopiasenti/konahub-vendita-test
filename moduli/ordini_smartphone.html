@@ -597,7 +597,6 @@
 <div class="header-content">
 <div>
 <h1>Gestione Ordini Smartphone</h1>
-<p class="subtitle">Sistema di registrazione e monitoraggio ordini Smartphone</p>
 </div>
 <a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
 </div>
@@ -626,34 +625,33 @@
 <input type="text" id="anag_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
 <small id="anag_cfpiva_hint" style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori per cercare</small>
 </div>
-<div class="form-group">
-<label>Cluster</label>
-<input type="text" id="anag_cluster" readonly placeholder="Auto" style="background:#f3f4f6;cursor:not-allowed;">
-</div>
 </div>
 <div id="anag_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
 <div id="anag_fields" style="display:none">
 <div class="form-row">
 <div class="form-group">
-<label>Ragione Sociale / Intestatario<span class="required">*</span></label>
-<input type="text" id="anag_ragione_sociale" placeholder="Es. Mario Rossi oppure Acme SRL">
+<label>Cluster</label>
+<input type="text" id="anag_cluster" readonly placeholder="Auto" style="background:#f3f4f6;cursor:not-allowed;">
 </div>
 <div class="form-group">
-<label>Nome Referente<span class="required">*</span></label>
-<input type="text" id="anag_nome_referente" placeholder="Es. Mario">
+<label>Ragione Sociale / Intestatario<span class="required">*</span></label>
+<input type="text" id="anag_ragione_sociale" placeholder="Es. Mario Rossi oppure Acme SRL">
 </div>
 </div>
 <div class="form-row">
 <div class="form-group">
+<label>Nome Referente<span class="required">*</span></label>
+<input type="text" id="anag_nome_referente" placeholder="Es. Mario">
+</div>
+<div class="form-group">
 <label>Cellulare<span class="required">*</span></label>
 <input type="tel" id="anag_cellulare" placeholder="Es. 333 1234567">
 </div>
-<div class="form-group">
-<!-- spazio -->
 </div>
 </div>
 </div>
-</div> <div class="form-section">
+<div id="order_details_wrap" style="display:none">
+<div class="form-section">
 <h2>Dettagli Dispositivo</h2>
 <div class="form-row">
 <div class="form-group">
@@ -662,7 +660,7 @@
 <option value="">Seleziona marca...</option>
 <option value="iPhone">iPhone</option>
 <option value="Samsung">Samsung</option>
-<option value="Redmi">Redmi</option>
+<option value="Xiaomi">Xiaomi</option>
 <option value="ZTE">ZTE</option>
 <option value="Motorola">Motorola</option>
 <option value="Oppo">Oppo</option>
@@ -699,6 +697,7 @@
 </div>
 </div>
 </div> <button type="submit" class="btn btn-primary" id="submitBtn">Registra Ordine</button>
+</div>
 </form>
 </div> <!-- PAGINA 2: Riepilogo Ordini -->
 <div class="page" id="page-riepilogo">
@@ -786,6 +785,9 @@
  function showAnagFields(show) {
    document.getElementById('anag_fields').style.display = show ? 'block' : 'none';
  }
+ function showOrderDetails(show) {
+   document.getElementById('order_details_wrap').style.display = show ? 'block' : 'none';
+ }
  function resetAnagState() {
    anagState.id = null; anagState.cfPiva = ''; anagState.kind = null;
    anagState.cluster = null; anagState.lookupDone = false; anagState.exists = false;
@@ -795,6 +797,7 @@
    document.getElementById('anag_cellulare').value = '';
    setAnagFieldsReadonly(false);
    showAnagFields(false);
+   showOrderDetails(false);
    setAnagStatus('', '');
  }
 
@@ -803,16 +806,20 @@
    const raw = document.getElementById('anag_cfpiva').value;
    const cfPiva = AnagraficaHelper.normalizeCfPiva(raw);
    document.getElementById('anag_cfpiva').value = cfPiva;
-   if (!cfPiva) { resetAnagState(); return; }
+
+   // Sempre reset prima di una nuova ricerca: niente dati "appesi" dal lookup precedente
+   resetAnagState();
+
+   if (!cfPiva) return;
 
    const kind = AnagraficaHelper.detectKind(cfPiva);
    if (!kind) {
-     resetAnagState();
      setAnagStatus('Il valore inserito non è un CF (16 caratteri) né una P.IVA (11 cifre). Verifica il dato.', 'err');
      return;
    }
    anagState.cfPiva = cfPiva;
    anagState.kind = kind;
+   // Cluster derivato dal kind: questa è la verità (regex CF + Luhn P.IVA)
    anagState.cluster = AnagraficaHelper.clusterFromKind(kind);
    document.getElementById('anag_cluster').value = anagState.cluster;
 
@@ -820,20 +827,28 @@
    try {
      const res = await AnagraficaHelper.cerca(cfPiva);
      anagState.lookupDone = true;
+     showOrderDetails(true);
      if (res.found) {
        anagState.id = res.data.id;
        anagState.exists = true;
        document.getElementById('anag_ragione_sociale').value = res.data.ragione_sociale || '';
        document.getElementById('anag_nome_referente').value = res.data.nome_referente || '';
        document.getElementById('anag_cellulare').value = res.data.cellulare || '';
-       // Sovrascrivi cluster con quello reale se diverso (audit)
-       if (res.data.cluster) {
-         anagState.cluster = res.data.cluster;
-         document.getElementById('anag_cluster').value = res.data.cluster;
+       // Cluster: il kind detection è la verità.
+       // Se in DB c'è un cluster diverso (dati legacy errati), lo SEGNALIAMO ma non lo accettiamo.
+       const dbCluster = (res.data.cluster || '').trim();
+       const detectedCluster = anagState.cluster;
+       if (dbCluster && dbCluster !== detectedCluster) {
+         setAnagStatus(
+           '✓ Cliente trovato: ' + (res.data.ragione_sociale || '-') +
+           ' — ⚠ cluster in DB era "' + dbCluster + '" ma è stato corretto a "' + detectedCluster + '" in base al ' + (kind === 'cf' ? 'CF' : 'P.IVA'),
+           'warn'
+         );
+       } else {
+         setAnagStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-'), 'ok');
        }
        setAnagFieldsReadonly(true);
        showAnagFields(true);
-       setAnagStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-'), 'ok');
      } else {
        anagState.id = null;
        anagState.exists = false;
@@ -846,6 +861,15 @@
      setAnagStatus('Errore ricerca: ' + err.message, 'err');
    }
  }
+
+ // --- Reset automatico dello stato non appena il CF/PIVA viene modificato ---
+ // (così se l'utente cancella o cambia, sparisce subito ogni dato della ricerca precedente)
+ document.getElementById('anag_cfpiva').addEventListener('input', () => {
+   const v = AnagraficaHelper.normalizeCfPiva(document.getElementById('anag_cfpiva').value);
+   if (v !== anagState.cfPiva) {
+     resetAnagState();
+   }
+ });
  document.getElementById('anag_cfpiva').addEventListener('blur', eseguiLookupAnagrafica);
  document.getElementById('anag_cfpiva').addEventListener('keydown', (e) => {
    if (e.key === 'Enter') { e.preventDefault(); eseguiLookupAnagrafica(); }
