@@ -459,3 +459,186 @@ tbody tr:hover {
     border: 3px solid var(--mx-border) !important;
     border-top-color: var(--mx-primary) !important;
 }
+
+/* ============================================================
+   OVERRIDE SPECIFICI per ordini_smartphone / armonizzazione Mirox
+   ============================================================ */
+
+/* "Registra Ordine" e simili pulsanti primari full-width legacy */
+.btn.btn-primary,
+button.btn-primary,
+button.btn[type="submit"] {
+    width: auto !important;
+    min-width: 200px !important;
+    padding: 11px 28px !important;
+    border-radius: 10px !important;
+    background: var(--mx-primary) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: background 0.2s ease !important;
+    margin-top: 8px !important;
+}
+.btn.btn-primary:hover,
+button.btn-primary:hover,
+button.btn[type="submit"]:hover {
+    background: var(--mx-primary-dark) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+/* Centra il bottone submit del form-section */
+form > .btn.btn-primary,
+form > button.btn-primary {
+    display: block !important;
+    margin: 16px auto 0 !important;
+}
+
+/* Bottone "Dettaglio" e azione tabella */
+.btn-dettaglio {
+    background: var(--mx-bg) !important;
+    color: var(--mx-text) !important;
+    border: 1px solid var(--mx-border) !important;
+    padding: 7px 16px !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+    transform: none !important;
+}
+.btn-dettaglio:hover {
+    background: var(--mx-primary-bg) !important;
+    color: var(--mx-primary-dark) !important;
+    border-color: var(--mx-primary) !important;
+    transform: none !important;
+}
+
+/* Tabella ordini: header chiaro invece di arancione pieno */
+.orders-table thead {
+    background: var(--mx-border-light) !important;
+    color: var(--mx-text-secondary) !important;
+}
+.orders-table thead th {
+    color: var(--mx-text-secondary) !important;
+    background: var(--mx-border-light) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    padding: 12px !important;
+    border-bottom: 1px solid var(--mx-border) !important;
+}
+.orders-table tbody td {
+    padding: 12px !important;
+    border-bottom: 1px solid var(--mx-border-light) !important;
+    font-size: 13px !important;
+}
+.orders-table tbody tr:hover {
+    background: var(--mx-bg) !important;
+}
+
+/* Form section h2: meno aggressivo */
+.form-section {
+    background: var(--mx-bg-card) !important;
+    border: 1px solid var(--mx-border) !important;
+    border-radius: var(--mx-radius-lg) !important;
+    box-shadow: var(--mx-shadow-sm) !important;
+    padding: 18px 22px !important;
+    margin-bottom: 18px !important;
+}
+.form-section h2 {
+    color: var(--mx-text) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    border-bottom: 1px solid var(--mx-border-light) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 14px !important;
+}
+.form-group label {
+    color: var(--mx-text) !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+}
+.form-group label .required {
+    color: var(--mx-primary) !important;
+    margin-left: 2px !important;
+}
+
+/* Filtri: chip-style elegante */
+.filter-section {
+    background: var(--mx-bg-card) !important;
+    border: 1px solid var(--mx-border) !important;
+    border-radius: var(--mx-radius-lg) !important;
+    padding: 14px 18px !important;
+    margin-bottom: 14px !important;
+}
+.filter-group label {
+    color: var(--mx-text-secondary) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+}
+.hide-venduti-box {
+    border: 1px solid var(--mx-border) !important;
+    border-radius: 10px !important;
+    background: var(--mx-bg-card) !important;
+    padding: 9px 14px !important;
+    transition: all 0.2s ease !important;
+}
+.hide-venduti-box:hover {
+    background: var(--mx-primary-bg) !important;
+    border-color: var(--mx-primary) !important;
+}
+.hide-venduti-box label {
+    color: var(--mx-text) !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+}
+
+/* Modale ordini: niente bordo arancione sotto header */
+.modal .modal-header {
+    border-bottom: 1px solid var(--mx-border-light) !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 14px !important;
+}
+.modal .modal-header h2 {
+    color: var(--mx-text) !important;
+    font-size: 17px !important;
+    font-weight: 700 !important;
+}
+.modal-close:hover {
+    color: var(--mx-primary) !important;
+    transform: none !important;
+}
+.detail-label {
+    color: var(--mx-text-secondary) !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    width: 140px !important;
+}
+.detail-value {
+    color: var(--mx-text) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+.status-update-section {
+    border-top: 1px solid var(--mx-border-light) !important;
+    padding-top: 18px !important;
+    margin-top: 18px !important;
+}
+.status-update-section h3 {
+    color: var(--mx-text) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+}
+.status-buttons .btn-status {
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+    border-width: 1px !important;
+    transition: all 0.2s ease !important;
+}
