@@ -447,49 +447,64 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/auth.js"></script>
+<script src="../js/anagrafica-helper.js"></script>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
 <div class="header">
 <div class="header-content">
 <div>
 <h1>Gestione Dispositivi in Comodato</h1>
-<p class="subtitle">Sistema di tracciamento assistenze WindTre</p>
 </div>
 <a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
 </div>
 </div> <div class="nav-tabs">
-<button class="nav-tab active" onclick="switchPage(' uscita')"> Consegna Dispositivo</button>
-<button class="nav-tab" onclick="switchPage(' rientro')"> Rientro Dispositivo</button>
-<button class="nav-tab" onclick="switchPage(' visualizzazione')"> Visualizza Assistenze</button>
+<button class="nav-tab active" onclick="switchPage('uscita')">Consegna Dispositivo</button>
+<button class="nav-tab" onclick="switchPage('rientro')">Rientro Dispositivo</button>
+<button class="nav-tab" onclick="switchPage('visualizzazione')">Visualizza Assistenze</button>
 </div> <div class="container">
 <!-- PAGINA 1: USCITA -->
 <div id="page-uscita" class="page active">
 <div class="form-section">
-<h2>Registrazione Consegna Dispositivo</h2> <form id="form-uscita">
+<h2>Cliente</h2>
+<form id="form-uscita">
 <div class="form-row">
 <div class="form-group">
-<label>Nome<span class="required">*</span></label>
-<input type="text" id="uscita-nome" required>
-<span class="error-message" id="error-nome"></span>
+<label>Codice Fiscale / P.IVA<span class="required">*</span></label>
+<input type="text" id="anag_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
+<small style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori per cercare</small>
+</div>
+</div>
+<div id="anag_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
+<div id="anag_fields" style="display:none">
+<div class="form-row">
+<div class="form-group">
+<label>Cluster</label>
+<input type="text" id="anag_cluster" readonly placeholder="Auto" style="background:#f3f4f6;cursor:not-allowed;">
 </div>
 <div class="form-group">
-<label>Cognome<span class="required">*</span></label>
-<input type="text" id="uscita-cognome" required>
-<span class="error-message" id="error-cognome"></span>
+<label>Ragione Sociale / Intestatario<span class="required">*</span></label>
+<input type="text" id="anag_ragione_sociale" placeholder="Es. Mario Rossi oppure Acme SRL">
 </div>
-</div> <div class="form-row">
+</div>
+<div class="form-row">
 <div class="form-group">
-<label>Codice Fiscale<span class="required">*</span></label>
-<input type="text" id="uscita-cf" required maxlength="16" style="text-transform: uppercase;" oninput="validaCF()">
-<span class="error-message" id="error-cf"></span>
+<label>Nome Referente<span class="required">*</span></label>
+<input type="text" id="anag_nome_referente" placeholder="Es. Mario">
 </div>
 <div class="form-group">
-<label>Numero di Cellulare<span class="required">*</span></label>
-<input type="tel" id="uscita-telefono" required maxlength="10" oninput="validaTelefono()">
-<span class="error-message" id="error-telefono"></span>
+<label>Cellulare<span class="required">*</span></label>
+<input type="tel" id="anag_cellulare" placeholder="Es. 333 1234567">
 </div>
-</div> <div class="info-box">
-<p><strong>️ Attenzione:</strong> Almeno uno tra IMEI Prodotto o Numero SIM Temporanea deve essere compilato.</p>
-</div> <div class="form-row">
+</div>
+</div>
+</div>
+
+<div id="device_details_wrap" style="display:none">
+<div class="form-section">
+<h2>Dispositivo</h2>
+<div class="info-box">
+<p><strong>⚠ Attenzione:</strong> Almeno uno tra IMEI Prodotto o Numero SIM Temporanea deve essere compilato.</p>
+</div>
+<div class="form-row">
 <div class="form-group">
 <label>IMEI Prodotto</label>
 <input type="text" id="uscita-imei" maxlength="15" oninput="validaIMEI()">
@@ -500,48 +515,40 @@
 <input type="tel" id="uscita-sim" maxlength="10" oninput="validaSIM()">
 <span class="error-message" id="error-sim"></span>
 </div>
-</div> <div class="buttons-container">
-<button type="button" class="btn btn-primary" onclick="generaPDFUscita()"> Genera PDF</button>
-<button type="button" class="btn btn-secondary" onclick="resetFormUscita()"> Resetta Form</button>
 </div>
-</form> <div id="upload-section-uscita" style="display: none; margin-top: 2rem;">
-<div class="success-message"> PDF generato con successo! Scaricalo, fallo firmare al cliente e caricalo qui sotto.
+<div class="buttons-container">
+<button type="button" class="btn btn-primary" onclick="generaPDFUscita()">Genera PDF</button>
+<button type="button" class="btn btn-secondary" onclick="resetFormUscita()">Resetta Form</button>
 </div>
+</div>
+
+<div id="upload-section-uscita" style="display: none; margin-top: 1rem;">
+<div class="form-section">
+<div class="success-message">PDF generato con successo! Scaricalo, fallo firmare al cliente e caricalo qui sotto.</div>
 <div class="form-group">
 <label>Carica PDF Firmato<span class="required">*</span></label>
 <input type="file" id="upload-pdf-uscita" accept=".pdf">
 </div>
 <div class="buttons-container">
-<button type="button" class="btn btn-primary" onclick="salvaDatiUscita()"> Salva e Invia</button>
-<button type="button" class="btn btn-secondary" onclick="annullaUscita()"> Annulla</button>
+<button type="button" class="btn btn-primary" onclick="salvaDatiUscita()">Salva e Invia</button>
+<button type="button" class="btn btn-secondary" onclick="annullaUscita()">Annulla</button>
 </div>
 </div>
 </div>
+</div>
+</form>
 </div> <!-- PAGINA 2: RIENTRO -->
 <div id="page-rientro" class="page">
 <div class="form-section">
-<h2>Registrazione Rientro Dispositivo</h2> <div class="search-box">
-<h3 style="margin-bottom: 1rem; color: var(--windtre-orange);"> Cerca Dispositivo</h3> <div class="info-box" style="margin-bottom: 1rem;">
-<p><strong> Puoi cercare in due modi:</strong></p>
-<p>1️⃣ Inserisci solo il<strong>Codice Fiscale</strong></p>
-<p>2️⃣ Oppure inserisci<strong>Nome e Cognome</strong></p>
-</div> <div class="form-group" style="max-width: 500px;">
-<label>Codice Fiscale Cliente</label>
+<h2>Cerca Dispositivo</h2>
+<div class="form-group" style="max-width: 500px;">
+<label>Codice Fiscale Cliente<span class="required">*</span></label>
 <input type="text" id="ricerca-cf" maxlength="16" style="text-transform: uppercase;" placeholder="Es: RSSMRA80A01H501U">
 <span class="error-message" id="error-ricerca-cf"></span>
-</div> <div style="text-align: center; margin: 1rem 0; color: var(--windtre-gray); font-weight: 600;"> - OPPURE -
-</div> <div class="form-row" style="max-width: 800px;">
-<div class="form-group">
-<label>Nome Cliente</label>
-<input type="text" id="ricerca-nome" placeholder="Es: Mario">
-<span class="error-message" id="error-ricerca-nome"></span>
 </div>
-<div class="form-group">
-<label>Cognome Cliente</label>
-<input type="text" id="ricerca-cognome" placeholder="Es: Rossi">
-<span class="error-message" id="error-ricerca-cognome"></span>
-</div>
-</div> <button type="button" class="btn btn-primary" onclick="cercaDispositivo()"> Cerca Dispositivo</button>
+<input type="hidden" id="ricerca-nome">
+<input type="hidden" id="ricerca-cognome">
+<button type="button" class="btn btn-primary" onclick="cercaDispositivo()">Cerca Dispositivo</button>
 </div> <div id="risultato-ricerca" style="display: none;">
 <div class="success-message" id="dispositivo-trovato">
 <!-- Dati dispositivo trovato -->
@@ -643,6 +650,12 @@
  let datiUscitaTemp = null;
  let dispositivoSelezionato = null;
 
+ // Sezione anagrafica per Consegna Dispositivo
+ const anagSection = window.AnagraficaHelper.setupAnagraficaSection('anag', {
+   onLookupComplete: () => { document.getElementById('device_details_wrap').style.display = 'block'; },
+   onReset: () => { document.getElementById('device_details_wrap').style.display = 'none'; }
+ });
+
  // Switch tra pagine
  function switchPage(page) {
  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -656,34 +669,7 @@
  }
  }
 
- // VALIDAZIONI IN TEMPO REALE
- function validaCF() {
- const cf = document.getElementById('uscita-cf').value.trim();
- const errorMsg = document.getElementById('error-cf');
- const input = document.getElementById('uscita-cf');
- 
- if (cf.length> 0 && cf.length< 16) {
- errorMsg.textContent = `Mancano ${16 - cf.length} caratteri`;
- input.classList.add('error');
- } else if (cf.length === 16) {
- errorMsg.textContent = '';
- input.classList.remove('error');
- }
- }
-
- function validaTelefono() {
- const tel = document.getElementById('uscita-telefono').value.trim();
- const errorMsg = document.getElementById('error-telefono');
- const input = document.getElementById('uscita-telefono');
- 
- if (tel.length> 0 && tel.length< 9) {
- errorMsg.textContent = `Minimo 9 caratteri (hai inserito ${tel.length})`;
- input.classList.add('error');
- } else if (tel.length>= 9 && tel.length<= 10) {
- errorMsg.textContent = '';
- input.classList.remove('error');
- }
- }
+ // validaCF/validaTelefono legacy rimosse (campi nome/cognome/cf/telefono ora gestiti dall'anagrafica-helper).
 
  function validaIMEI() {
  const imei = document.getElementById('uscita-imei').value.trim();
@@ -719,74 +705,44 @@
  }
  }
 
- // PAGINA USCITA
+ // PAGINA USCITA - validazione cliente + dispositivo
  function validaFormUscita() {
  let valido = true;
- 
- // Reset errori
- document.querySelectorAll('.error-message').forEach(e => e.textContent = '');
- document.querySelectorAll('input').forEach(i => i.classList.remove('error'));
 
- const nome = document.getElementById('uscita-nome').value.trim();
- const cognome = document.getElementById('uscita-cognome').value.trim();
- const cf = document.getElementById('uscita-cf').value.trim().toUpperCase();
- const telefono = document.getElementById('uscita-telefono').value.trim();
+ // Reset errori device
+ document.querySelectorAll('.error-message').forEach(e => e.textContent = '');
+ document.querySelectorAll('#device_details_wrap input').forEach(i => i.classList.remove('error'));
+
+ // 1. Validazione anagrafica
+ const errAnag = anagSection.validate();
+ if (errAnag) {
+   anagSection.setStatus(errAnag, 'err');
+   valido = false;
+ }
+
  const imei = document.getElementById('uscita-imei').value.trim();
  const sim = document.getElementById('uscita-sim').value.trim();
 
- // Validazione Nome
- if (!nome) {
- mostraErrore('nome', 'Il nome è obbligatorio');
- valido = false;
- }
-
- // Validazione Cognome
- if (!cognome) {
- mostraErrore('cognome', 'Il cognome è obbligatorio');
- valido = false;
- }
-
- // Validazione Codice Fiscale
- if (!cf) {
- mostraErrore('cf', 'Il codice fiscale è obbligatorio');
- valido = false;
- } else if (cf.length !== 16) {
- mostraErrore('cf', 'Il codice fiscale deve essere esattamente di 16 caratteri');
- valido = false;
- }
-
- // Validazione Numero di Cellulare
- if (!telefono) {
- mostraErrore('telefono', 'Il numero di telefono è obbligatorio');
- valido = false;
- } else if (telefono.length< 9) {
- mostraErrore('telefono', 'Il numero di telefono deve essere di almeno 9 caratteri');
- valido = false;
- } else if (telefono.length> 10) {
- mostraErrore('telefono', 'Il numero di telefono deve essere massimo 10 caratteri');
- valido = false;
- }
-
  // Validazione IMEI (se compilato)
  if (imei && imei.length !== 15) {
- mostraErrore('imei', 'L\'IMEI deve essere esattamente di 15 caratteri');
- valido = false;
+   mostraErrore('imei', "L'IMEI deve essere esattamente di 15 caratteri");
+   valido = false;
  }
 
  // Validazione SIM Temporanea (se compilata)
- if (sim && sim.length< 9) {
- mostraErrore('sim', 'Il numero SIM deve essere di almeno 9 caratteri');
- valido = false;
- } else if (sim && sim.length> 10) {
- mostraErrore('sim', 'Il numero SIM deve essere massimo 10 caratteri');
- valido = false;
+ if (sim && sim.length < 9) {
+   mostraErrore('sim', 'Il numero SIM deve essere di almeno 9 caratteri');
+   valido = false;
+ } else if (sim && sim.length > 10) {
+   mostraErrore('sim', 'Il numero SIM deve essere massimo 10 caratteri');
+   valido = false;
  }
 
  // Validazione: almeno uno tra IMEI e SIM deve essere compilato
  if (!imei && !sim) {
- mostraErrore('imei', 'Compilare almeno IMEI o SIM Temporanea');
- mostraErrore('sim', 'Compilare almeno IMEI o SIM Temporanea');
- valido = false;
+   mostraErrore('imei', 'Compilare almeno IMEI o SIM Temporanea');
+   mostraErrore('sim', 'Compilare almeno IMEI o SIM Temporanea');
+   valido = false;
  }
 
  return valido;
@@ -801,36 +757,36 @@
 
  function generaPDFUscita() {
  if (!validaFormUscita()) {
- alert('️ Compila correttamente tutti i campi obbligatori prima di generare il PDF');
+ alert('⚠ Compila correttamente tutti i campi obbligatori prima di generare il PDF');
  return;
  }
 
- // Controllo specifico per IMEI e SIM
  const imei = document.getElementById('uscita-imei').value.trim();
  const sim = document.getElementById('uscita-sim').value.trim();
- 
- if (!imei && !sim) {
- alert('️ ERRORE: Devi compilare almeno uno tra IMEI Prodotto o Numero SIM Temporanea');
- document.getElementById('error-imei').textContent = 'Compilare almeno IMEI o SIM';
- document.getElementById('error-sim').textContent = 'Compilare almeno IMEI o SIM';
- document.getElementById('uscita-imei').classList.add('error');
- document.getElementById('uscita-sim').classList.add('error');
- return;
- }
 
  const { jsPDF } = window.jspdf;
  const doc = new jsPDF();
 
+ // Dati cliente da anagrafica
+ const datiAnag = anagSection.getDati();
+ // Splitta ragione_sociale in "nome cognome" per il PDF legacy (best effort)
+ const parts = (datiAnag.ragione_sociale || '').trim().split(/\s+/);
+ const nome = parts.slice(0, -1).join(' ') || datiAnag.ragione_sociale || '';
+ const cognome = parts.length > 1 ? parts[parts.length - 1] : '';
+
  // Salva dati temporaneamente
  datiUscitaTemp = {
- nome: document.getElementById('uscita-nome').value.trim(),
- cognome: document.getElementById('uscita-cognome').value.trim(),
- cf: document.getElementById('uscita-cf').value.trim().toUpperCase(),
- telefono: document.getElementById('uscita-telefono').value.trim(),
- imei: document.getElementById('uscita-imei').value.trim(),
- sim: document.getElementById('uscita-sim').value.trim(),
- dataUscita: new Date().toISOString(),
- dataUscitaFormattata: new Date().toLocaleDateString('it-IT')
+   nome: nome,
+   cognome: cognome,
+   ragione_sociale: datiAnag.ragione_sociale,
+   cluster: datiAnag.cluster,
+   cf: datiAnag.cf_piva,
+   telefono: datiAnag.cellulare,
+   imei: imei,
+   sim: sim,
+   anagrafica_id: anagSection.state.id, // null se non ancora creata
+   dataUscita: new Date().toISOString(),
+   dataUscitaFormattata: new Date().toLocaleDateString('it-IT')
  };
 
  // Intestazione
@@ -972,12 +928,19 @@
  const base64PDF = await fileToBase64(file);
  const profilo = window.__profilo || await Auth.getSessione();
 
+ // 1. Risolvi/crea anagrafica → ottieni UUID
+ const datiAnag = anagSection.getDati(profilo?.id);
+ const anagraficaId = await window.AnagraficaHelper.cercaOcrea(datiAnag);
+
+ // 2. Codice comodato
  const { data: codiceRow } = await sb.rpc('genera_codice_comodato');
 
+ // 3. Insert comodato con anagrafica_id + snapshot
  const { data: inserted, error: insErr } = await sb
  .from('post_vendita_dispositivi_comodato')
  .insert({
  codice: codiceRow || null,
+ anagrafica_id: anagraficaId,
  nome: datiUscitaTemp.nome,
  cognome: datiUscitaTemp.cognome,
  codice_fiscale: datiUscitaTemp.cf,
@@ -1011,23 +974,18 @@
  }
  }
 
- // PAGINA RIENTRO
+ // PAGINA RIENTRO - ricerca solo per CF
  async function cercaDispositivo() {
  const cf = document.getElementById('ricerca-cf').value.trim().toUpperCase();
- const nome = document.getElementById('ricerca-nome').value.trim();
- const cognome = document.getElementById('ricerca-cognome').value.trim();
 
  // Reset errori
  document.getElementById('error-ricerca-cf').textContent = '';
- document.getElementById('error-ricerca-nome').textContent = '';
- document.getElementById('error-ricerca-cognome').textContent = '';
 
- // Verifica che almeno una modalità sia compilata
  const usaCF = cf.length> 0;
- const usaNomeCognome = nome.length> 0 && cognome.length> 0;
+ const usaNomeCognome = false;
 
  if (!usaCF && !usaNomeCognome) {
- alert('️ Inserisci il Codice Fiscale OPPURE Nome e Cognome per cercare');
+ alert('⚠ Inserisci il Codice Fiscale del cliente per cercare');
  return;
  }
 
