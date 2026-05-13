@@ -158,6 +158,167 @@
     return null;
   }
 
+  // ---- 5. Factory section UI (riutilizzabile in moduli a 1 o 2 anagrafiche) -
+
+  /**
+   * Crea un "blocco anagrafica" autosufficiente collegandosi a campi del DOM
+   * identificati da un prefisso (es. "anag", "anag_vecchio", "anag_nuovo").
+   *
+   * Campi attesi nel DOM (con il prefisso passato):
+   *   #{prefix}_cfpiva           (input testo)
+   *   #{prefix}_status           (div: messaggi di stato)
+   *   #{prefix}_fields           (wrapper dei campi censimento, hidden di default)
+   *   #{prefix}_cluster          (input readonly)
+   *   #{prefix}_ragione_sociale  (input)
+   *   #{prefix}_nome_referente   (input)
+   *   #{prefix}_cellulare        (input)
+   *
+   * Espone uno `state` con: { id, cfPiva, kind, cluster, lookupDone, exists }
+   * Espone metodi: reset(), executeLookup(), getDati(creato_da), validate()
+   *
+   * @param {string} prefix
+   * @param {Object} [opts]
+   * @param {Function} [opts.onLookupComplete] - callback({state}) dopo ogni lookup
+   * @param {Function} [opts.onReset] - callback al reset
+   * @param {Function} [opts.onValidationError] - callback(messaggio)
+   * @returns {Object} sezione con state e metodi
+   */
+  function setupAnagraficaSection(prefix, opts) {
+    opts = opts || {};
+    const $ = (suffix) => document.getElementById(prefix + '_' + suffix);
+
+    const state = {
+      id: null,
+      cfPiva: '',
+      kind: null,
+      cluster: null,
+      lookupDone: false,
+      exists: false
+    };
+
+    function setStatus(msg, type) {
+      const el = $('status');
+      if (!el) return;
+      const colors = { ok: '#047857', warn: '#b45309', err: '#b91c1c', info: '#1d4ed8' };
+      el.style.color = colors[type] || '#0f172a';
+      el.textContent = msg || '';
+    }
+
+    function setFieldsReadonly(readonly) {
+      ['ragione_sociale', 'nome_referente', 'cellulare'].forEach((s) => {
+        const el = $(s);
+        if (!el) return;
+        el.readOnly = !!readonly;
+        el.style.background = readonly ? '#f3f4f6' : '';
+        el.style.cursor = readonly ? 'not-allowed' : '';
+      });
+    }
+
+    function showFields(show) {
+      const el = $('fields');
+      if (el) el.style.display = show ? 'block' : 'none';
+    }
+
+    function reset() {
+      state.id = null;
+      state.cfPiva = '';
+      state.kind = null;
+      state.cluster = null;
+      state.lookupDone = false;
+      state.exists = false;
+      ['cluster', 'ragione_sociale', 'nome_referente', 'cellulare'].forEach((s) => {
+        const el = $(s);
+        if (el) el.value = '';
+      });
+      setFieldsReadonly(false);
+      showFields(false);
+      setStatus('', '');
+      if (typeof opts.onReset === 'function') opts.onReset();
+    }
+
+    async function executeLookup() {
+      const raw = $('cfpiva').value;
+      const cfPiva = normalizeCfPiva(raw);
+      $('cfpiva').value = cfPiva;
+
+      reset();
+      if (!cfPiva) return;
+
+      const kind = detectKind(cfPiva);
+      if (!kind) {
+        setStatus("Il valore inserito non è un CF (16 caratteri) né una P.IVA (11 cifre). Verifica il dato.", 'err');
+        return;
+      }
+      state.cfPiva = cfPiva;
+      state.kind = kind;
+      state.cluster = clusterFromKind(kind);
+      if ($('cluster')) $('cluster').value = state.cluster;
+
+      setStatus('Ricerca cliente in corso...', 'info');
+      try {
+        const res = await cerca(cfPiva);
+        state.lookupDone = true;
+        if (res.found) {
+          state.id = res.data.id;
+          state.exists = true;
+          if ($('ragione_sociale')) $('ragione_sociale').value = res.data.ragione_sociale || '';
+          if ($('nome_referente')) $('nome_referente').value = res.data.nome_referente || '';
+          if ($('cellulare')) $('cellulare').value = res.data.cellulare || '';
+          const dbCluster = (res.data.cluster || '').trim();
+          if (dbCluster && dbCluster !== state.cluster) {
+            setStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-') +
+              ' — ⚠ cluster in DB era "' + dbCluster + '" ma è stato corretto a "' + state.cluster +
+              '" in base al ' + (kind === 'cf' ? 'CF' : 'P.IVA'), 'warn');
+          } else {
+            setStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-'), 'ok');
+          }
+          setFieldsReadonly(true);
+          showFields(true);
+        } else {
+          state.id = null;
+          state.exists = false;
+          setFieldsReadonly(false);
+          showFields(true);
+          setStatus('Cliente nuovo — compila i dati di censimento.', 'warn');
+          if ($('ragione_sociale')) $('ragione_sociale').focus();
+        }
+        if (typeof opts.onLookupComplete === 'function') opts.onLookupComplete({ state, found: res.found });
+      } catch (err) {
+        setStatus('Errore ricerca: ' + err.message, 'err');
+      }
+    }
+
+    function getDati(creatoDa) {
+      return {
+        cf_piva: $('cfpiva') ? $('cfpiva').value : '',
+        cluster: $('cluster') ? $('cluster').value : '',
+        ragione_sociale: $('ragione_sociale') ? $('ragione_sociale').value : '',
+        nome_referente: $('nome_referente') ? $('nome_referente').value : '',
+        cellulare: $('cellulare') ? $('cellulare').value : '',
+        creato_da: creatoDa || null
+      };
+    }
+
+    function validate() {
+      return validaDatiMinimi(getDati());
+    }
+
+    // Bind listeners
+    const cfInput = $('cfpiva');
+    if (cfInput) {
+      cfInput.addEventListener('blur', executeLookup);
+      cfInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); executeLookup(); }
+      });
+      cfInput.addEventListener('input', () => {
+        const v = normalizeCfPiva(cfInput.value);
+        if (v !== state.cfPiva) reset();
+      });
+    }
+
+    return { state, reset, executeLookup, getDati, validate, setStatus };
+  }
+
   // Esposizione globale
   window.AnagraficaHelper = {
     normalizeCfPiva,
@@ -167,6 +328,7 @@
     clusterFromKind,
     cerca,
     cercaOcrea,
-    validaDatiMinimi
+    validaDatiMinimi,
+    setupAnagraficaSection
   };
 })(window);

@@ -1457,13 +1457,21 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/auth.js"></script>
+<script src="../js/anagrafica-helper.js"></script>
+<style>
+.split-anag { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.split-anag > .section { margin-bottom: 0 !important; }
+@media (max-width: 900px) { .split-anag { grid-template-columns: 1fr; } }
+.coincide-row { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--mx-primary-bg, #FFF3E0); border: 1px solid #ffe0b2; border-radius: 10px; margin-bottom: 14px; }
+.coincide-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #ff6600; cursor: pointer; }
+.coincide-row label { font-weight: 700; color: #b45309; cursor: pointer; }
+</style>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
 <!-- Header -->
 <div class="header">
 <div class="header-content">
 <div>
 <h1>Switch Sim Mobili</h1>
-<p class="subtitle">Sistema di registrazione e monitoraggio switch sim mobili</p>
 </div>
 <a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
 </div>
@@ -1494,104 +1502,81 @@
 <option value="E-MOBILE">E-MOBILE</option>
 </select>
 </div>
-</div> <!-- Sezione Attuale Intestatario -->
+</div> <!-- CHECKBOX COINCIDE -->
+<div class="coincide-row">
+<input type="checkbox" id="coincide-check">
+<label for="coincide-check">Nuovo Intestatario (Rientro) coincide con Attuale</label>
+</div>
+
+<!-- SPLIT SCREEN: SX = RIENTRO (Nuovo), DX = ATTUALE (Vecchio) -->
+<div class="split-anag">
+
+<!-- RIENTRO INTESTATARIO (SX) -->
 <div class="section">
-<div class="section-title">Dati Attuale Intestatario Sim</div> <div class="form-group">
-<label class="required">Cluster Cliente</label>
-<div class="radio-group">
-<div class="radio-option">
-<input type="radio" id="consumer" name="cluster" value="Consumer" required>
-<label for="consumer">Consumer</label>
+<div class="section-title">Nuovo Intestatario (Rientro)</div>
+<div class="form-group">
+<label class="required">Codice Fiscale / P.IVA</label>
+<input type="text" id="anag_nuovo_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
+<small style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori</small>
 </div>
-<div class="radio-option">
-<input type="radio" id="business" name="cluster" value="Business">
-<label for="business">Business</label>
-</div>
-</div>
-</div> <!-- Campi Consumer -->
-<div id="attualeConsumer" class="hidden">
+<div id="anag_nuovo_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
+<div id="anag_nuovo_fields" class="hidden">
 <div class="form-row">
 <div class="form-group">
-<label for="attualeNome" class="required">Nome</label>
-<input type="text" id="attualeNome" name="attualeNome">
+<label>Cluster</label>
+<input type="text" id="anag_nuovo_cluster" readonly style="background:#f3f4f6;cursor:not-allowed;">
 </div>
 <div class="form-group">
-<label for="attualeCognome" class="required">Cognome</label>
-<input type="text" id="attualeCognome" name="attualeCognome">
+<label class="required">Ragione Sociale / Intestatario</label>
+<input type="text" id="anag_nuovo_ragione_sociale">
 </div>
 </div>
-<div class="form-group">
-<label for="attualeCF" class="required">Codice Fiscale</label>
-<input type="text" id="attualeCF" name="attualeCF" maxlength="16">
-</div>
-</div> <!-- Campi Business -->
-<div id="attualeBusiness" class="hidden">
-<div class="form-group">
-<label for="attualeRagioneSociale" class="required">Ragione Sociale</label>
-<input type="text" id="attualeRagioneSociale" name="attualeRagioneSociale">
-</div>
-<div class="form-group">
-<label for="attualePIVA" class="required">Partita IVA</label>
-<input type="text" id="attualePIVA" name="attualePIVA" maxlength="11">
-</div>
-</div>
-</div> <!-- Flag Stesso Intestatario -->
-<div class="section">
-<div class="flag-container">
-<div class="flag-title">Stesso Intestatario Sim Rientro?</div>
-<div class="radio-group">
-<div class="radio-option">
-<input type="radio" id="stessoSi" name="stessoIntestatario" value="SI" required>
-<label for="stessoSi">Sì</label>
-</div>
-<div class="radio-option">
-<input type="radio" id="stessoNo" name="stessoIntestatario" value="NO">
-<label for="stessoNo">No</label>
-</div>
-</div>
-</div>
-</div> <!-- Sezione Nuovo Intestatario (condizionale) -->
-<div class="section hidden" id="nuovoIntestatarioSection">
-<div class="section-title">Dati Nuovo Intestatario Sim</div> <!-- Selezione Cluster per Nuovo Intestatario -->
-<div class="form-group">
-<label class="required">Cluster Nuovo Intestatario</label>
-<div class="radio-group">
-<div class="radio-option">
-<input type="radio" id="nuovoConsumerRadio" name="nuovoCluster" value="Consumer">
-<label for="nuovoConsumerRadio">Consumer</label>
-</div>
-<div class="radio-option">
-<input type="radio" id="nuovoBusinessRadio" name="nuovoCluster" value="Business">
-<label for="nuovoBusinessRadio">Business</label>
-</div>
-</div>
-</div> <!-- Campi Consumer -->
-<div id="nuovoConsumer" class="hidden">
 <div class="form-row">
 <div class="form-group">
-<label for="nuovoNome" class="required">Nome</label>
-<input type="text" id="nuovoNome" name="nuovoNome">
+<label class="required">Nome Referente</label>
+<input type="text" id="anag_nuovo_nome_referente">
 </div>
 <div class="form-group">
-<label for="nuovoCognome" class="required">Cognome</label>
-<input type="text" id="nuovoCognome" name="nuovoCognome">
+<label class="required">Cellulare</label>
+<input type="tel" id="anag_nuovo_cellulare">
 </div>
+</div>
+</div>
+</div>
+
+<!-- ATTUALE INTESTATARIO (DX) -->
+<div class="section">
+<div class="section-title">Attuale Intestatario Sim</div>
+<div class="form-group">
+<label class="required">Codice Fiscale / P.IVA</label>
+<input type="text" id="anag_vecchio_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
+<small style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori</small>
+</div>
+<div id="anag_vecchio_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
+<div id="anag_vecchio_fields" class="hidden">
+<div class="form-row">
+<div class="form-group">
+<label>Cluster</label>
+<input type="text" id="anag_vecchio_cluster" readonly style="background:#f3f4f6;cursor:not-allowed;">
 </div>
 <div class="form-group">
-<label for="nuovoCF" class="required">Codice Fiscale</label>
-<input type="text" id="nuovoCF" name="nuovoCF" maxlength="16">
+<label class="required">Ragione Sociale / Intestatario</label>
+<input type="text" id="anag_vecchio_ragione_sociale">
 </div>
-</div> <!-- Campi Business -->
-<div id="nuovoBusiness" class="hidden">
+</div>
+<div class="form-row">
 <div class="form-group">
-<label for="nuovoRagioneSociale" class="required">Ragione Sociale</label>
-<input type="text" id="nuovoRagioneSociale" name="nuovoRagioneSociale">
+<label class="required">Nome Referente</label>
+<input type="text" id="anag_vecchio_nome_referente">
 </div>
 <div class="form-group">
-<label for="nuovoPIVA" class="required">Partita IVA</label>
-<input type="text" id="nuovoPIVA" name="nuovoPIVA" maxlength="11">
+<label class="required">Cellulare</label>
+<input type="tel" id="anag_vecchio_cellulare">
 </div>
 </div>
+</div>
+</div>
+
 </div> <!-- Sezione Dati Switch -->
 <div class="section">
 <div class="section-title">Dati Switch</div> <div class="form-group">
@@ -2129,68 +2114,77 @@
  }
  });
 
- // Cluster Attuale Intestatario
- document.querySelectorAll('input[name="cluster"]').forEach(radio => {
- radio.addEventListener('change', function() {
- const isConsumer = this.value === 'Consumer';
- 
- // Mostra/nascondi sezioni
- document.getElementById('attualeConsumer').classList.toggle('hidden', !isConsumer);
- document.getElementById('attualeBusiness').classList.toggle('hidden', isConsumer);
- 
- // Gestisci visura camerale
- const visuraGroup = document.getElementById('visuraCameraleGroup');
- const visuraInput = document.getElementById('visuraCamerale');
- if (visuraGroup) {
- visuraGroup.classList.toggle('hidden', isConsumer);
- // Aggiungi/rimuovi required
- if (!isConsumer) {
- visuraInput.setAttribute('required', 'required');
- } else {
- visuraInput.removeAttribute('required');
- }
- }
- });
- });
+ // ===== SETUP ANAGRAFICHE (RIENTRO/Nuovo + ATTUALE/Vecchio) =====
+ const anagNuovo = window.AnagraficaHelper.setupAnagraficaSection('anag_nuovo');
+ const anagVecchio = window.AnagraficaHelper.setupAnagraficaSection('anag_vecchio');
 
- // Stesso Intestatario
- document.querySelectorAll('input[name="stessoIntestatario"]').forEach(radio => {
- radio.addEventListener('change', function() {
- const isDiverso = this.value === 'NO';
- 
- // Mostra/nascondi sezione nuovo intestatario
- const nuovoSection = document.getElementById('nuovoIntestatarioSection');
- if (nuovoSection) {
- nuovoSection.classList.toggle('hidden', !isDiverso);
- }
- 
- // Mostra/nascondi upload documento nuovo intestatario
- const docNuovoGroup = document.getElementById('docNuovoIntestatarioGroup');
- const docNuovoInput = document.getElementById('docNuovoIntestatario');
- if (docNuovoGroup) {
- docNuovoGroup.classList.toggle('hidden', !isDiverso);
- // Aggiungi/rimuovi required
- if (isDiverso) {
- docNuovoInput.setAttribute('required', 'required');
- } else {
- docNuovoInput.removeAttribute('required');
- }
- }
- });
- });
+ // Visura camerale: required dinamicamente in base al cluster dell'attuale intestatario
+ // Si attiva quando anagVecchio.state.cluster diventa 'Business'
+ // Hook dentro l'onLookupComplete
+ (function bindVisura() {
+   const visuraGroup = document.getElementById('visuraCameraleGroup');
+   const visuraInput = document.getElementById('visuraCamerale');
+   function aggiornaVisura() {
+     if (!visuraGroup) return;
+     const isBusiness = anagVecchio.state.cluster === 'Business';
+     visuraGroup.classList.toggle('hidden', !isBusiness);
+     if (visuraInput) {
+       if (isBusiness) visuraInput.setAttribute('required', 'required');
+       else visuraInput.removeAttribute('required');
+     }
+   }
+   const cf = document.getElementById('anag_vecchio_cfpiva');
+   if (cf) {
+     cf.addEventListener('blur', () => setTimeout(aggiornaVisura, 50));
+     cf.addEventListener('input', () => { if (visuraGroup) visuraGroup.classList.add('hidden'); });
+   }
+ })();
 
- // Cluster Nuovo Intestatario
- document.querySelectorAll('input[name="nuovoCluster"]').forEach(radio => {
- radio.addEventListener('change', function() {
- const isConsumer = this.value === 'Consumer';
- 
- const nuovoConsumer = document.getElementById('nuovoConsumer');
- const nuovoBusiness = document.getElementById('nuovoBusiness');
- 
- if (nuovoConsumer) nuovoConsumer.classList.toggle('hidden', !isConsumer);
- if (nuovoBusiness) nuovoBusiness.classList.toggle('hidden', isConsumer);
- });
- });
+ // Checkbox "Nuovo Intestatario coincide con Attuale"
+ const coincideCheck = document.getElementById('coincide-check');
+ if (coincideCheck) {
+   coincideCheck.addEventListener('change', () => {
+     const nuovoSection = document.getElementById('docNuovoIntestatarioGroup');
+     const docNuovoInput = document.getElementById('docNuovoIntestatario');
+     if (coincideCheck.checked) {
+       if (!anagVecchio.state.cfPiva) {
+         alert('⚠ Compila prima l\'Attuale Intestatario');
+         coincideCheck.checked = false;
+         return;
+       }
+       const d = anagVecchio.getDati();
+       document.getElementById('anag_nuovo_cfpiva').value = d.cf_piva;
+       document.getElementById('anag_nuovo_cluster').value = d.cluster;
+       document.getElementById('anag_nuovo_ragione_sociale').value = d.ragione_sociale;
+       document.getElementById('anag_nuovo_nome_referente').value = d.nome_referente;
+       document.getElementById('anag_nuovo_cellulare').value = d.cellulare;
+       anagNuovo.state.id = anagVecchio.state.id;
+       anagNuovo.state.cfPiva = anagVecchio.state.cfPiva;
+       anagNuovo.state.kind = anagVecchio.state.kind;
+       anagNuovo.state.cluster = anagVecchio.state.cluster;
+       anagNuovo.state.lookupDone = true;
+       anagNuovo.state.exists = anagVecchio.state.exists;
+       document.getElementById('anag_nuovo_fields').classList.remove('hidden');
+       document.getElementById('anag_nuovo_fields').style.display = 'block';
+       ['anag_nuovo_cfpiva','anag_nuovo_cluster','anag_nuovo_ragione_sociale','anag_nuovo_nome_referente','anag_nuovo_cellulare'].forEach(id => {
+         const el = document.getElementById(id);
+         if (el) { el.readOnly = true; el.style.background = '#f3f4f6'; el.style.cursor = 'not-allowed'; }
+       });
+       anagNuovo.setStatus('= identico all\'Attuale Intestatario', 'info');
+       // doc del nuovo intestatario non più richiesto
+       if (nuovoSection) nuovoSection.classList.add('hidden');
+       if (docNuovoInput) docNuovoInput.removeAttribute('required');
+     } else {
+       ['anag_nuovo_cfpiva','anag_nuovo_cluster','anag_nuovo_ragione_sociale','anag_nuovo_nome_referente','anag_nuovo_cellulare'].forEach(id => {
+         const el = document.getElementById(id);
+         if (el) { el.readOnly = false; el.style.background = ''; el.style.cursor = ''; }
+       });
+       anagNuovo.reset();
+       if (nuovoSection) nuovoSection.classList.remove('hidden');
+       if (docNuovoInput) docNuovoInput.setAttribute('required', 'required');
+     }
+   });
+ }
 
  // ========================================
  // GESTIONE NUMERI MNP CON OFFERTE
@@ -2401,81 +2395,8 @@
  return { valido: true, messaggio: 'Codice Fiscale valido' };
  }
 
- /**
- * Aggiungi validazione in tempo reale per Attuale Intestatario
- */
- function validaAttualeIntestatario() {
- const nome = document.getElementById('attualeNome').value.trim();
- const cognome = document.getElementById('attualeCognome').value.trim();
- const cf = document.getElementById('attualeCF').value.trim();
-
- if (nome && cognome && cf.length === 16) {
- const risultato = validaCodiceFiscale(nome, cognome, cf);
- 
- const cfInput = document.getElementById('attualeCF');
- if (risultato.valido) {
- cfInput.style.borderColor = '#4CAF50';
- cfInput.style.backgroundColor = '#E8F5E9';
- return true;
- } else {
- cfInput.style.borderColor = '#f44336';
- cfInput.style.backgroundColor = '#FFEBEE';
- return false;
- }
- }
- return true; // Non validare se i campi non sono completi
- }
-
- /**
- * Aggiungi validazione in tempo reale per Nuovo Intestatario
- */
- function validaNuovoIntestatario() {
- const nome = document.getElementById('nuovoNome').value.trim();
- const cognome = document.getElementById('nuovoCognome').value.trim();
- const cf = document.getElementById('nuovoCF').value.trim();
-
- if (nome && cognome && cf.length === 16) {
- const risultato = validaCodiceFiscale(nome, cognome, cf);
- 
- const cfInput = document.getElementById('nuovoCF');
- if (risultato.valido) {
- cfInput.style.borderColor = '#4CAF50';
- cfInput.style.backgroundColor = '#E8F5E9';
- return true;
- } else {
- cfInput.style.borderColor = '#f44336';
- cfInput.style.backgroundColor = '#FFEBEE';
- return false;
- }
- }
- return true;
- }
-
- // Event listener per validazione in tempo reale - ATTUALE
- ['attualeNome', 'attualeCognome', 'attualeCF'].forEach(id => {
- const element = document.getElementById(id);
- if (element) {
- element.addEventListener('blur', validaAttualeIntestatario);
- element.addEventListener('input', function() {
- if (id === 'attualeCF' && this.value.length === 16) {
- validaAttualeIntestatario();
- }
- });
- }
- });
-
- // Event listener per validazione in tempo reale - NUOVO
- ['nuovoNome', 'nuovoCognome', 'nuovoCF'].forEach(id => {
- const element = document.getElementById(id);
- if (element) {
- element.addEventListener('blur', validaNuovoIntestatario);
- element.addEventListener('input', function() {
- if (id === 'nuovoCF' && this.value.length === 16) {
- validaNuovoIntestatario();
- }
- });
- }
- });
+ // Validazioni CF legacy rimosse: ora la verifica CF/P.IVA è gestita dall'anagrafica-helper
+ // (kind detection + lookup + cluster lock automatici nel blocco split-screen).
 
  // ========================================
  // SUBMIT FORM
@@ -2483,207 +2404,120 @@
 
  document.getElementById('switchForm').addEventListener('submit', async function(e) {
  e.preventDefault();
- 
- // Validazione: almeno un numero MNP deve essere presente
+
+ // Validazione: almeno un numero MNP
  if (numeriMNP.length === 0) {
- alert('️ Aggiungi almeno un numero MNP prima di salvare');
- document.getElementById('numeroMNP').focus();
- return;
+   alert('⚠ Aggiungi almeno un numero MNP prima di salvare');
+   document.getElementById('numeroMNP').focus();
+   return;
  }
 
- // VALIDAZIONE CODICE FISCALE CONSUMER
- const cluster = document.querySelector('input[name="cluster"]:checked').value;
- 
- // Validazione Attuale Intestatario (se Consumer)
- if (cluster === 'Consumer') {
- const nome = document.getElementById('attualeNome').value.trim();
- const cognome = document.getElementById('attualeCognome').value.trim();
- const cf = document.getElementById('attualeCF').value.trim();
- 
- const risultato = validaCodiceFiscale(nome, cognome, cf);
- if (!risultato.valido) {
- alert('Errore Attuale Intestatario:\n' + risultato.messaggio);
- document.getElementById('attualeCF').focus();
- return;
- }
- }
+ // Validazione anagrafiche
+ const errAttuale = anagVecchio.validate();
+ if (errAttuale) { alert('Attuale Intestatario: ' + errAttuale); return; }
+ const errNuovo = anagNuovo.validate();
+ if (errNuovo) { alert('Nuovo Intestatario (Rientro): ' + errNuovo); return; }
 
- // Validazione Nuovo Intestatario (se Consumer E diverso)
- const stessoIntestatario = document.querySelector('input[name="stessoIntestatario"]:checked').value;
- if (stessoIntestatario === 'NO') {
- const nuovoCluster = document.querySelector('input[name="nuovoCluster"]:checked').value;
- 
- if (nuovoCluster === 'Consumer') {
- const nome = document.getElementById('nuovoNome').value.trim();
- const cognome = document.getElementById('nuovoCognome').value.trim();
- const cf = document.getElementById('nuovoCF').value.trim();
- 
- const risultato = validaCodiceFiscale(nome, cognome, cf);
- if (!risultato.valido) {
- alert('Errore Nuovo Intestatario:\n' + risultato.messaggio);
- document.getElementById('nuovoCF').focus();
- return;
- }
- }
- }
- 
  const submitBtn = document.getElementById('submitBtn');
  submitBtn.disabled = true;
- 
- // Mostra modal di loading
  showLoadingModal();
- 
+
  try {
- // Raccogli dati form
- const formData = raccogliDati();
- 
- // Raccogli file
- const files = await raccogliFile();
- 
- // Invia dati a Supabase: una riga per numero MNP
- const profilo = window.__profilo || await Auth.getSessione();
- const attualeCluster = formData.cluster;
- const attualeRagione = attualeCluster === 'Consumer'
- ? ((formData.attualeIntestatario.nome || '') + ' ' + (formData.attualeIntestatario.cognome || '')).trim()
- : (formData.attualeIntestatario.ragioneSociale || '');
- const attualeCfPiva = attualeCluster === 'Consumer'
- ? (formData.attualeIntestatario.cf || '')
- : (formData.attualeIntestatario.piva || '');
+   const profilo = window.__profilo || await Auth.getSessione();
+   const coincide = document.getElementById('coincide-check')?.checked;
 
- let nuovoRagione = '', nuovoCfPiva = '';
- if (formData.stessoIntestatario === 'NO' && formData.nuovoIntestatario) {
- const nuovoCluster = formData.nuovoCluster;
- nuovoRagione = nuovoCluster === 'Consumer'
- ? ((formData.nuovoIntestatario.nome || '') + ' ' + (formData.nuovoIntestatario.cognome || '')).trim()
- : (formData.nuovoIntestatario.ragioneSociale || '');
- nuovoCfPiva = nuovoCluster === 'Consumer'
- ? (formData.nuovoIntestatario.cf || '')
- : (formData.nuovoIntestatario.piva || '');
- }
+   // 1. Risolvi/crea anagrafiche
+   const datiAttuale = anagVecchio.getDati(profilo?.id);
+   const datiNuovo   = anagNuovo.getDati(profilo?.id);
+   const idAttuale = await window.AnagraficaHelper.cercaOcrea(datiAttuale);
+   const idNuovo   = coincide ? idAttuale : await window.AnagraficaHelper.cercaOcrea(datiNuovo);
 
- const inserts = numeriMNP.map(mnp => ({
- stato: 'ATTESA ATTIVAZIONE SIM',
- data_inserimento: formData.dataInserimento,
- operatore_id: profilo?.id || null,
- operatore_nome: formData.operatore || profilo?.nome || null,
- gestore: formData.gestoreSim || null,
- ragione_sociale_attuale: attualeRagione || null,
- cf_piva_attuale: attualeCfPiva || null,
- ragione_sociale_rientro: nuovoRagione || null,
- cf_piva_rientro: nuovoCfPiva || null,
- numero_portabilita: mnp.numero,
- offerta_rientro: mnp.offerta || null,
- modalita_pagamento: formData.modalitaPagamento || null,
- importo: formData.costoSwitch ? parseFloat(formData.costoSwitch) : null,
- note: formData.note || null
- }));
+   // 2. Raccolta dati form
+   const formData = {
+     dataInserimento: new Date().toISOString(),
+     operatore: document.getElementById('operatore').value,
+     gestoreSim: document.getElementById('gestoreSim').value,
+     costoSwitch: document.getElementById('costoSwitch').value,
+     modalitaPagamento: document.getElementById('modalitaPagamento').value,
+     note: document.getElementById('note').value
+   };
 
- const { data: insertedRows, error: insErr } = await sb
- .from('vendita_switch_sim')
- .insert(inserts)
- .select();
- if (insErr) throw insErr;
+   // 3. File
+   const files = await raccogliFile();
 
- // Carica file sul primo record (cartella condivisa) + replica URL su tutti
- if (insertedRows && insertedRows.length) {
- const primary = insertedRows[0];
- const uploaded = {};
- for (const [label, base64] of Object.entries(files)) {
- if (!base64 || label.endsWith('Nome')) continue;
- uploaded[label] = await uploadSwitchSimFile(primary.id, base64, label, label);
- }
- if (uploaded.docAttualeIntestatario) {
- await sb.from('vendita_switch_sim')
- .update({ cartella_url: uploaded.docAttualeIntestatario })
- .in('id', insertedRows.map(r => r.id));
- }
- }
+   // 4. Inserts: una riga per numero MNP, con FK anagrafiche
+   const inserts = numeriMNP.map(mnp => ({
+     stato: 'ATTESA ATTIVAZIONE SIM',
+     data_inserimento: formData.dataInserimento,
+     operatore_id: profilo?.id || null,
+     operatore_nome: formData.operatore || profilo?.nome || null,
+     gestore: formData.gestoreSim || null,
+     anagrafica_attuale_id: idAttuale,
+     anagrafica_rientro_id: idNuovo,
+     ragione_sociale_attuale: datiAttuale.ragione_sociale || null,
+     cf_piva_attuale: datiAttuale.cf_piva || null,
+     ragione_sociale_rientro: datiNuovo.ragione_sociale || null,
+     cf_piva_rientro: datiNuovo.cf_piva || null,
+     numero_portabilita: mnp.numero,
+     offerta_rientro: mnp.offerta || null,
+     modalita_pagamento: formData.modalitaPagamento || null,
+     importo: formData.costoSwitch ? parseFloat(formData.costoSwitch) : null,
+     note: formData.note || null
+   }));
 
- hideLoadingModal();
- showSuccessModal(`Create ${numeriMNP.length} pratiche switch SIM`, true);
+   const { data: insertedRows, error: insErr } = await sb
+     .from('vendita_switch_sim')
+     .insert(inserts)
+     .select();
+   if (insErr) throw insErr;
+
+   // 5. Upload allegati (sul primo record + replica URL su tutti)
+   if (insertedRows && insertedRows.length) {
+     const primary = insertedRows[0];
+     const uploaded = {};
+     for (const [label, base64] of Object.entries(files)) {
+       if (!base64 || label.endsWith('Nome')) continue;
+       uploaded[label] = await uploadSwitchSimFile(primary.id, base64, label, label);
+     }
+     if (uploaded.docAttualeIntestatario) {
+       await sb.from('vendita_switch_sim')
+         .update({ cartella_url: uploaded.docAttualeIntestatario })
+         .in('id', insertedRows.map(r => r.id));
+     }
+   }
+
+   hideLoadingModal();
+   showSuccessModal(`Create ${numeriMNP.length} pratiche switch SIM`, true);
 
  } catch (error) {
- console.error('Errore:', error);
- hideLoadingModal();
- alert('Errore durante il salvataggio: ' + error.message);
- submitBtn.disabled = false;
+   console.error('Errore:', error);
+   hideLoadingModal();
+   alert('Errore durante il salvataggio: ' + error.message);
+   submitBtn.disabled = false;
  }
  });
 
- function raccogliDati() {
- const cluster = document.querySelector('input[name="cluster"]:checked').value;
- const isConsumer = cluster === 'Consumer';
- const stessoIntestatario = document.querySelector('input[name="stessoIntestatario"]:checked').value;
- 
- const dati = {
- dataInserimento: new Date().toISOString(),
- cluster: cluster,
- operatore: document.getElementById('operatore').value,
- gestoreSim: document.getElementById('gestoreSim').value,
- stessoIntestatario: stessoIntestatario,
- // offertaRientro ora è associata a ogni singolo numero in numeriMNP
- costoSwitch: document.getElementById('costoSwitch').value,
- modalitaPagamento: document.getElementById('modalitaPagamento').value,
- note: document.getElementById('note').value
- };
- 
- // Dati Attuale Intestatario
- if (isConsumer) {
- dati.attualeIntestatario = {
- nome: document.getElementById('attualeNome').value,
- cognome: document.getElementById('attualeCognome').value,
- cf: document.getElementById('attualeCF').value.toUpperCase()
- };
- } else {
- dati.attualeIntestatario = {
- ragioneSociale: document.getElementById('attualeRagioneSociale').value,
- piva: document.getElementById('attualePIVA').value
- };
- }
- 
- // Dati Nuovo Intestatario (se diverso)
- if (stessoIntestatario === 'NO') {
- const nuovoCluster = document.querySelector('input[name="nuovoCluster"]:checked').value;
- const isNuovoConsumer = nuovoCluster === 'Consumer';
- 
- dati.nuovoCluster = nuovoCluster;
- 
- if (isNuovoConsumer) {
- dati.nuovoIntestatario = {
- nome: document.getElementById('nuovoNome').value,
- cognome: document.getElementById('nuovoCognome').value,
- cf: document.getElementById('nuovoCF').value.toUpperCase()
- };
- } else {
- dati.nuovoIntestatario = {
- ragioneSociale: document.getElementById('nuovoRagioneSociale').value,
- piva: document.getElementById('nuovoPIVA').value
- };
- }
- }
- 
- return dati;
- }
+ // raccogliDati() legacy rimossa: ora si usano anagVecchio/anagNuovo via helper.
 
  async function raccogliFile() {
- const files = {};
- 
- files.docAttualeIntestatario = await fileToBase64('docAttualeIntestatario');
- files.fotoSimCliente = await fileToBase64('fotoSimCliente');
- files.fotoSimSwitch = await fileToBase64('fotoSimSwitch');
- 
- // File condizionali
- const stessoIntestatario = document.querySelector('input[name="stessoIntestatario"]:checked').value;
- if (stessoIntestatario === 'NO') {
- files.docNuovoIntestatario = await fileToBase64('docNuovoIntestatario');
- }
- 
- const cluster = document.querySelector('input[name="cluster"]:checked').value;
- if (cluster === 'Business') {
- files.visuraCamerale = await fileToBase64('visuraCamerale');
- }
- 
- return files;
+   const files = {};
+
+   files.docAttualeIntestatario = await fileToBase64('docAttualeIntestatario');
+   files.fotoSimCliente = await fileToBase64('fotoSimCliente');
+   files.fotoSimSwitch = await fileToBase64('fotoSimSwitch');
+
+   // File condizionali: doc nuovo intestatario solo se NON coincide
+   const coincide = document.getElementById('coincide-check')?.checked;
+   if (!coincide) {
+     files.docNuovoIntestatario = await fileToBase64('docNuovoIntestatario');
+   }
+
+   // Visura camerale solo se attuale è Business (deriva da kind detection)
+   if (anagVecchio.state.cluster === 'Business') {
+     files.visuraCamerale = await fileToBase64('visuraCamerale');
+   }
+
+   return files;
  }
 
  function fileToBase64(inputId) {
@@ -2881,7 +2715,7 @@
  function apriDettagliAttesa(rowIndex) {
  // Usa la stessa funzione di apriDettagli ma con allAttesaData
  currentDetailRowIndex = rowIndex;
- const record = allAttesaData.find(r => r.rowIndex === rowIndex);
+ const record = allAttesaData.find(r => String(r.rowIndex) === String(rowIndex));
  if (!record) {
  alert('Errore: Record non trovato');
  return;
@@ -3143,7 +2977,7 @@
  currentDetailRowIndex = rowIndex;
  
  // Trova il record corrispondente
- const record = allData.find(r => r.rowIndex === rowIndex);
+ const record = allData.find(r => String(r.rowIndex) === String(rowIndex));
  
  if (!record) {
  alert('Errore: Record non trovato');
@@ -3746,7 +3580,7 @@
  }
  
  function apriModalRicarica(rowIndex, tipo) {
- const ricarica = allRicariche.find(r => r.rowIndex === rowIndex);
+ const ricarica = allRicariche.find(r => String(r.rowIndex) === String(rowIndex));
  
  if (!ricarica) {
  alert('Errore: ricarica non trovata');

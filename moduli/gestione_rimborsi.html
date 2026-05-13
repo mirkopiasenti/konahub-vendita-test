@@ -473,12 +473,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/auth.js"></script>
+<script src="../js/anagrafica-helper.js"></script>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
 <div class="header">
 <div class="header-content">
 <div>
 <h1>Gestione Rimborsi</h1>
-<div class="subtitle">Sistema di registrazione e monitoraggio Rimborsi</div>
 </div>
 <a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
 </div>
@@ -490,19 +490,46 @@
 <div class="content-card">
 <!-- PAGINA 1: Nuova Richiesta -->
 <div id="page1" class="page active">
+<div id="alertContainer"></div>
+<form id="rimborsoForm">
 <div class="form-section">
-<h2>Nuova Richiesta di Rimborso</h2>
-</div> <div id="alertContainer"></div> <form id="rimborsoForm">
+<h2>Cliente</h2>
 <div class="form-row">
 <div class="form-group">
-<label>Nome<span class="required">*</span></label>
-<input type="text" id="nome" required>
+<label>Codice Fiscale / P.IVA<span class="required">*</span></label>
+<input type="text" id="anag_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
+<small style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori per cercare</small>
+</div>
+</div>
+<div id="anag_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
+<div id="anag_fields" style="display:none">
+<div class="form-row">
+<div class="form-group">
+<label>Cluster</label>
+<input type="text" id="anag_cluster" readonly placeholder="Auto" style="background:#f3f4f6;cursor:not-allowed;">
 </div>
 <div class="form-group">
-<label>Cognome<span class="required">*</span></label>
-<input type="text" id="cognome" required>
+<label>Ragione Sociale / Intestatario<span class="required">*</span></label>
+<input type="text" id="anag_ragione_sociale">
 </div>
-</div> <div class="form-row">
+</div>
+<div class="form-row">
+<div class="form-group">
+<label>Nome Referente<span class="required">*</span></label>
+<input type="text" id="anag_nome_referente">
+</div>
+<div class="form-group">
+<label>Cellulare<span class="required">*</span></label>
+<input type="tel" id="anag_cellulare">
+</div>
+</div>
+</div>
+</div>
+
+<div id="rimborso_details_wrap" style="display:none">
+<div class="form-section">
+<h2>Dettagli Rimborso</h2>
+<div class="form-row">
 <div class="form-group">
 <label>Sesso<span class="required">*</span></label>
 <select id="sesso" required>
@@ -512,25 +539,29 @@
 </select>
 </div>
 <div class="form-group">
-<label>Codice Fiscale<span class="required">*</span></label>
-<input type="text" id="codiceFiscale" required maxlength="16" style="text-transform: uppercase;">
-</div>
-</div> <div class="form-row">
-<div class="form-group">
 <label>Importo Rimborso (€)<span class="required">*</span></label>
 <input type="number" id="importo" required step="0.01" min="0">
 </div>
+</div>
+<div class="form-row">
 <div class="form-group">
 <label>Identificativo Contratto<span class="required">*</span></label>
 <input type="text" id="idContratto" required>
 </div>
-</div> <div class="form-group">
+<div class="form-group">
+</div>
+</div>
+<div class="form-group">
 <label>Motivazione del Rimborso<span class="required">*</span></label>
 <textarea id="motivazione" required></textarea>
-</div> <div class="form-group">
+</div>
+<div class="form-group">
 <label>Note Interne (solo database, non visibili nel PDF)</label>
 <textarea id="noteInterne" placeholder="Note aggiuntive visibili solo internamente..."></textarea>
-</div> <button type="submit" class="btn btn-primary">Genera PDF e Salva</button>
+</div>
+<button type="submit" class="btn btn-primary">Genera PDF e Salva</button>
+</div>
+</div>
 </form>
 </div> <!-- PAGINA 2: In Attesa -->
 <div id="page2" class="page">
@@ -635,6 +666,12 @@
 
  let currentRimborsoData = null;
  let pendingRimborsoData = null; // Per salvare i dati prima della conferma
+
+ // Sezione anagrafica
+ const anagSection = window.AnagraficaHelper.setupAnagraficaSection('anag', {
+   onLookupComplete: () => { document.getElementById('rimborso_details_wrap').style.display = 'block'; },
+   onReset: () => { document.getElementById('rimborso_details_wrap').style.display = 'none'; }
+ });
 
  // Inizializzazione
  document.addEventListener('DOMContentLoaded', function() {
@@ -821,15 +858,32 @@
  e.preventDefault();
 
  const submitBtn = e.target.querySelector('button[type="submit"]');
+
+ // Validazione anagrafica
+ const errAnag = anagSection.validate();
+ if (errAnag) {
+   showAlert(errAnag, 'error');
+   return;
+ }
+
  submitBtn.disabled = true;
  submitBtn.textContent = 'Generazione PDF in corso...';
 
  try {
+ const datiAnag = anagSection.getDati();
+ // Splitta ragione_sociale in nome/cognome best-effort per PDF legacy
+ const parts = (datiAnag.ragione_sociale || '').trim().split(/\s+/);
+ const nomeDerivato = parts.slice(0, -1).join(' ') || datiAnag.ragione_sociale || '';
+ const cognomeDerivato = parts.length > 1 ? parts[parts.length - 1] : '';
+
  const formData = {
- nome: document.getElementById('nome').value.trim(),
- cognome: document.getElementById('cognome').value.trim(),
+ nome: nomeDerivato,
+ cognome: cognomeDerivato,
+ ragioneSociale: datiAnag.ragione_sociale,
+ cluster: datiAnag.cluster,
  sesso: document.getElementById('sesso').value,
- codiceFiscale: document.getElementById('codiceFiscale').value.trim().toUpperCase(),
+ codiceFiscale: datiAnag.cf_piva,
+ cellulare: datiAnag.cellulare,
  importo: document.getElementById('importo').value,
  idContratto: document.getElementById('idContratto').value.trim(),
  motivazione: document.getElementById('motivazione').value.trim(),
@@ -891,11 +945,17 @@
  const base64data = reader.result.split(',')[1];
  try {
  const profilo = window.__profilo || await Auth.getSessione();
+
+ // 1. Risolvi/crea anagrafica
+ const datiAnag = anagSection.getDati(profilo?.id);
+ const anagraficaId = await window.AnagraficaHelper.cercaOcrea(datiAnag);
+
  const { data: codiceRow } = await sb.rpc('genera_codice_rimborso');
  const { data: inserted, error: insErr } = await sb
  .from('post_vendita_gestione_rimborsi')
  .insert({
  codice: codiceRow || null,
+ anagrafica_id: anagraficaId,
  nome: formData.nome,
  cognome: formData.cognome,
  sesso: formData.sesso || null,

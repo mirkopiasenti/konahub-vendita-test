@@ -96,6 +96,41 @@ GRANT EXECUTE ON FUNCTION public.cerca_o_crea_anagrafica(text, text, text, text,
 
 
 -- =============================================================================
+-- FUNZIONE: ricerca_anagrafica (multi-criterio per pagina Storico Cliente)
+-- Cerca per CF/PIVA, ragione sociale, nome referente, cellulare (case-insensitive).
+-- Tutti i parametri sono opzionali; almeno uno deve essere non vuoto.
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.ricerca_anagrafica(
+    p_query text DEFAULT NULL
+)
+RETURNS SETOF public.anagrafica
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_q text;
+BEGIN
+    v_q := TRIM(COALESCE(p_query, ''));
+    IF v_q = '' THEN
+        RETURN;
+    END IF;
+    RETURN QUERY
+    SELECT *
+    FROM public.anagrafica
+    WHERE
+        cf_piva ILIKE ('%' || v_q || '%')
+        OR ragione_sociale ILIKE ('%' || v_q || '%')
+        OR nome_referente ILIKE ('%' || v_q || '%')
+        OR cellulare ILIKE ('%' || v_q || '%')
+    ORDER BY ragione_sociale ASC
+    LIMIT 50;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.ricerca_anagrafica(text) TO authenticated;
+
+
+-- =============================================================================
 -- ALTER TABLE: vendita_ordini_smartphone
 -- =============================================================================
 ALTER TABLE public.vendita_ordini_smartphone
