@@ -206,12 +206,13 @@ CREATE OR REPLACE VIEW public.storico_cliente AS
 
     UNION ALL
 
+    -- data_uscita è DATE: usiamo created_at per il timestamp corretto in timeline
     SELECT
         anagrafica_id,
         'dispositivo_comodato',
         id::text,
         codice,
-        data_uscita::timestamptz,
+        created_at AS data_op,
         stato,
         'IMEI: ' || COALESCE(imei,'-') || COALESCE(' • SIM: ' || sim_temporanea,''),
         operatore_uscita_nome

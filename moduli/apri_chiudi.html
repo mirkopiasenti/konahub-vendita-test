@@ -741,42 +741,7 @@
 <!-- SPLIT SCREEN ANAGRAFICHE: SX = NUOVO, DX = VECCHIO -->
 <div class="split-anag">
 
-<!-- NUOVO INTESTATARIO (SX) -->
-<div class="form-section">
-<h2>Nuovo Intestatario</h2>
-<div class="form-row">
-<div class="form-group">
-<label>Codice Fiscale / P.IVA<span class="required">*</span></label>
-<input type="text" id="anag_nuovo_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
-<small style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori</small>
-</div>
-</div>
-<div id="anag_nuovo_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
-<div id="anag_nuovo_fields" style="display:none">
-<div class="form-row">
-<div class="form-group">
-<label>Cluster</label>
-<input type="text" id="anag_nuovo_cluster" readonly style="background:#f3f4f6;cursor:not-allowed;">
-</div>
-<div class="form-group">
-<label>Ragione Sociale / Intestatario<span class="required">*</span></label>
-<input type="text" id="anag_nuovo_ragione_sociale">
-</div>
-</div>
-<div class="form-row">
-<div class="form-group">
-<label>Nome Referente<span class="required">*</span></label>
-<input type="text" id="anag_nuovo_nome_referente">
-</div>
-<div class="form-group">
-<label>Cellulare<span class="required">*</span></label>
-<input type="tel" id="anag_nuovo_cellulare">
-</div>
-</div>
-</div>
-</div>
-
-<!-- VECCHIO INTESTATARIO (DX) -->
+<!-- VECCHIO INTESTATARIO (SX) -->
 <div class="form-section">
 <h2>Vecchio Intestatario</h2>
 <div class="form-row">
@@ -806,6 +771,41 @@
 <div class="form-group">
 <label>Cellulare<span class="required">*</span></label>
 <input type="tel" id="anag_vecchio_cellulare">
+</div>
+</div>
+</div>
+</div>
+
+<!-- NUOVO INTESTATARIO (DX) -->
+<div class="form-section">
+<h2>Nuovo Intestatario</h2>
+<div class="form-row">
+<div class="form-group">
+<label>Codice Fiscale / P.IVA<span class="required">*</span></label>
+<input type="text" id="anag_nuovo_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
+<small style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori</small>
+</div>
+</div>
+<div id="anag_nuovo_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
+<div id="anag_nuovo_fields" style="display:none">
+<div class="form-row">
+<div class="form-group">
+<label>Cluster</label>
+<input type="text" id="anag_nuovo_cluster" readonly style="background:#f3f4f6;cursor:not-allowed;">
+</div>
+<div class="form-group">
+<label>Ragione Sociale / Intestatario<span class="required">*</span></label>
+<input type="text" id="anag_nuovo_ragione_sociale">
+</div>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label>Nome Referente<span class="required">*</span></label>
+<input type="text" id="anag_nuovo_nome_referente">
+</div>
+<div class="form-group">
+<label>Cellulare<span class="required">*</span></label>
+<input type="tel" id="anag_nuovo_cellulare">
 </div>
 </div>
 </div>
@@ -966,15 +966,15 @@
 </div>
 </div> <!-- Modal Dettagli -->
 <div id="modal-dettagli" class="modal">
-<div class="modal-content" style="max-width: 700px;">
+<div class="modal-content" style="max-width: 980px; width: 96%; max-height: 92vh;">
 <div class="modal-header">
-<h2> Dettagli Pratica</h2>
-<button class="close-modal" onclick="chiudiModalDettagli()"></button>
+<h2>Dettagli Pratica</h2>
+<button type="button" class="close-modal" onclick="chiudiModalDettagli()" aria-label="Chiudi" style="background:transparent;border:none;font-size:28px;line-height:1;cursor:pointer;color:#94a3b8;padding:0 8px;font-weight:300;">×</button>
 </div>
 <div class="modal-body" id="modal-dettagli-body">
 <!-- Contenuto generato dinamicamente -->
 </div>
-<div class="modal-footer" id="modal-dettagli-footer">
+<div class="modal-footer" id="modal-dettagli-footer" style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
 <!-- Bottoni azione -->
 </div>
 </div>
@@ -1090,19 +1090,25 @@
  const coincideCheck = document.getElementById('coincide-check');
  coincideCheck.addEventListener('change', () => {
    if (coincideCheck.checked) {
-     // Copia dati dal vecchio al nuovo (snapshot one-shot)
-     if (!anagVecchio.state.cfPiva) {
-       alert('⚠ Compila prima il Vecchio Intestatario');
+     if (!anagVecchio.state.cfPiva || !anagVecchio.state.lookupDone) {
+       alert('⚠ Compila prima il Vecchio Intestatario (digita il CF/P.IVA e attendi la ricerca)');
        coincideCheck.checked = false;
        return;
      }
-     const d = anagVecchio.getDati();
-     document.getElementById('anag_nuovo_cfpiva').value = d.cf_piva;
-     document.getElementById('anag_nuovo_cluster').value = d.cluster;
-     document.getElementById('anag_nuovo_ragione_sociale').value = d.ragione_sociale;
-     document.getElementById('anag_nuovo_nome_referente').value = d.nome_referente;
-     document.getElementById('anag_nuovo_cellulare').value = d.cellulare;
-     // Forza lo state del nuovo a quello del vecchio (così non rifa lookup)
+     // Copia dati 1:1 dai campi del Vecchio al Nuovo (lettura diretta dal DOM, più robusta)
+     const pairs = [
+       ['anag_vecchio_cfpiva', 'anag_nuovo_cfpiva'],
+       ['anag_vecchio_cluster', 'anag_nuovo_cluster'],
+       ['anag_vecchio_ragione_sociale', 'anag_nuovo_ragione_sociale'],
+       ['anag_vecchio_nome_referente', 'anag_nuovo_nome_referente'],
+       ['anag_vecchio_cellulare', 'anag_nuovo_cellulare']
+     ];
+     pairs.forEach(([from, to]) => {
+       const src = document.getElementById(from);
+       const dst = document.getElementById(to);
+       if (src && dst) dst.value = src.value || '';
+     });
+     // Forza lo state del nuovo a quello del vecchio
      anagNuovo.state.id = anagVecchio.state.id;
      anagNuovo.state.cfPiva = anagVecchio.state.cfPiva;
      anagNuovo.state.kind = anagVecchio.state.kind;
@@ -1110,14 +1116,12 @@
      anagNuovo.state.lookupDone = true;
      anagNuovo.state.exists = anagVecchio.state.exists;
      document.getElementById('anag_nuovo_fields').style.display = 'block';
-     // Disabilita tutti i campi della sezione nuovo
      ['anag_nuovo_cfpiva','anag_nuovo_cluster','anag_nuovo_ragione_sociale','anag_nuovo_nome_referente','anag_nuovo_cellulare'].forEach(id => {
        const el = document.getElementById(id);
        if (el) { el.readOnly = true; el.style.background = '#f3f4f6'; el.style.cursor = 'not-allowed'; }
      });
      anagNuovo.setStatus('= identico al Vecchio Intestatario', 'info');
    } else {
-     // Reset completo
      ['anag_nuovo_cfpiva','anag_nuovo_cluster','anag_nuovo_ragione_sociale','anag_nuovo_nome_referente','anag_nuovo_cellulare'].forEach(id => {
        const el = document.getElementById(id);
        if (el) { el.readOnly = false; el.style.background = ''; el.style.cursor = ''; }

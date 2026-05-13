@@ -458,7 +458,6 @@
 </div>
 </div> <div class="nav-tabs">
 <button class="nav-tab active" onclick="switchPage('uscita')">Consegna Dispositivo</button>
-<button class="nav-tab" onclick="switchPage('rientro')">Rientro Dispositivo</button>
 <button class="nav-tab" onclick="switchPage('visualizzazione')">Visualizza Assistenze</button>
 </div> <div class="container">
 <!-- PAGINA 1: USCITA -->
@@ -537,44 +536,46 @@
 </div>
 </div>
 </form>
-</div> <!-- PAGINA 2: RIENTRO -->
-<div id="page-rientro" class="page">
-<div class="form-section">
-<h2>Cerca Dispositivo</h2>
-<div class="form-group" style="max-width: 500px;">
-<label>Codice Fiscale Cliente<span class="required">*</span></label>
-<input type="text" id="ricerca-cf" maxlength="16" style="text-transform: uppercase;" placeholder="Es: RSSMRA80A01H501U">
-<span class="error-message" id="error-ricerca-cf"></span>
 </div>
+
+<!-- MODAL RIENTRO (aperto da Visualizza Assistenze) -->
+<div id="modal-rientro" class="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:10000;justify-content:center;align-items:flex-start;padding:40px 20px;overflow-y:auto;">
+<div class="modal-content" style="background:#fff;max-width:720px;width:96%;max-height:90vh;overflow-y:auto;padding:24px;border-radius:12px;">
+<div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #e5e7eb;">
+<h2 style="margin:0;font-size:18px;font-weight:700;">Rientro Dispositivo</h2>
+<button type="button" onclick="chiudiModalRientro()" style="background:transparent;border:none;font-size:26px;cursor:pointer;color:#94a3b8;padding:0 8px;">×</button>
+</div>
+<input type="hidden" id="ricerca-cf">
 <input type="hidden" id="ricerca-nome">
 <input type="hidden" id="ricerca-cognome">
-<button type="button" class="btn btn-primary" onclick="cercaDispositivo()">Cerca Dispositivo</button>
-</div> <div id="risultato-ricerca" style="display: none;">
-<div class="success-message" id="dispositivo-trovato">
-<!-- Dati dispositivo trovato -->
-</div> <form id="form-rientro">
-<div class="form-group">
+<div id="risultato-ricerca" style="display:block;">
+<div class="success-message" id="dispositivo-trovato"></div>
+<form id="form-rientro">
+<div class="form-group" style="margin-top:14px;">
 <label>Chi riceve il dispositivo<span class="required">*</span></label>
 <input type="text" id="rientro-operatore" readonly required style="background:#f3f4f6;cursor:not-allowed;">
-</div> <div class="buttons-container">
-<button type="button" class="btn btn-primary" onclick="generaPDFRientro()"> Genera PDF Rientro</button>
-<button type="button" class="btn btn-secondary" onclick="annullaRicerca()"> Annulla</button>
 </div>
-</form> <div id="upload-section-rientro" style="display: none; margin-top: 2rem;">
-<div class="success-message"> PDF di rientro generato! Scaricalo, fallo firmare al cliente e caricalo qui sotto.
+<div class="buttons-container" style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:14px;">
+<button type="button" class="btn btn-primary" onclick="generaPDFRientro()">Genera PDF Rientro</button>
+<button type="button" class="btn btn-secondary" onclick="chiudiModalRientro()">Annulla</button>
 </div>
-<div class="form-group">
+</form>
+<div id="upload-section-rientro" style="display:none;margin-top:18px;">
+<div class="success-message">PDF di rientro generato! Scaricalo, fallo firmare al cliente e caricalo qui sotto.</div>
+<div class="form-group" style="margin-top:10px;">
 <label>Carica PDF Firmato Rientro<span class="required">*</span></label>
 <input type="file" id="upload-pdf-rientro" accept=".pdf">
 </div>
-<div class="buttons-container">
-<button type="button" class="btn btn-primary" onclick="salvaDatiRientro()"> Completa Rientro</button>
-<button type="button" class="btn btn-secondary" onclick="annullaRientro()"> Annulla</button>
+<div class="buttons-container" style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:12px;">
+<button type="button" class="btn btn-primary" onclick="salvaDatiRientro()">Completa Rientro</button>
+<button type="button" class="btn btn-secondary" onclick="chiudiModalRientro()">Annulla</button>
 </div>
 </div>
 </div>
 </div>
-</div> <!-- PAGINA 3: VISUALIZZAZIONE -->
+</div>
+
+<!-- PAGINA 3: VISUALIZZAZIONE -->
 <div id="page-visualizzazione" class="page">
 <div class="form-section">
 <h2>Dispositivi in Assistenza</h2> <div class="stats-container" id="stats-container">
@@ -603,6 +604,7 @@
 <th>Data Rientro</th>
 <th>Giorni Fuori</th>
 <th>Stato</th>
+<th>Azioni</th>
 </tr>
 </thead>
 <tbody id="tbody-dispositivi">
@@ -649,6 +651,45 @@
  // Dati temporanei
  let datiUscitaTemp = null;
  let dispositivoSelezionato = null;
+
+ // Apre il modal Rientro per uno specifico dispositivo (chiamato dalla tabella Visualizza Assistenze)
+ function apriRientroDispositivo(dispositivoId) {
+   if (!window.tuttiDispositivi) return;
+   const d = window.tuttiDispositivi.find(x => String(x.id) === String(dispositivoId));
+   if (!d) { alert('⚠ Dispositivo non trovato'); return; }
+   if (d.stato !== 'fuori') { alert('⚠ Questo dispositivo è già rientrato'); return; }
+   dispositivoSelezionato = {
+     id: d.id,
+     nome: d.nome,
+     cognome: d.cognome,
+     cf: d.cf,
+     telefono: d.telefono,
+     imei: d.imei,
+     sim: d.sim,
+     dataUscita: d.dataUscita
+   };
+   mostraRisultatoRicerca(dispositivoSelezionato);
+   // Reset upload section
+   document.getElementById('upload-section-rientro').style.display = 'none';
+   const inp = document.getElementById('upload-pdf-rientro');
+   if (inp) inp.value = '';
+   // Auto-fill operatore
+   const p = window.__profilo;
+   const opEl = document.getElementById('rientro-operatore');
+   if (opEl && p) opEl.value = p.nome || p.email || 'Operatore';
+   // Apri il modal
+   const modal = document.getElementById('modal-rientro');
+   modal.style.display = 'flex';
+ }
+ window.apriRientroDispositivo = apriRientroDispositivo;
+
+ function chiudiModalRientro() {
+   const modal = document.getElementById('modal-rientro');
+   if (modal) modal.style.display = 'none';
+   dispositivoSelezionato = null;
+   document.getElementById('upload-section-rientro').style.display = 'none';
+ }
+ window.chiudiModalRientro = chiudiModalRientro;
 
  // Sezione anagrafica per Consegna Dispositivo
  const anagSection = window.AnagraficaHelper.setupAnagraficaSection('anag', {
@@ -1235,7 +1276,8 @@
 
  nascondiLoading();
  alert('Rientro registrato con successo!');
- setTimeout(() => { window.location.href = '../dashboard.html'; }, 500);
+ chiudiModalRientro();
+ caricaDatiVisualizzazione();
 
  } catch (error) {
  nascondiLoading();
@@ -1316,7 +1358,7 @@
  const tbody = document.getElementById('tbody-dispositivi');
  
  if (!dispositivi || dispositivi.length === 0) {
- tbody.innerHTML = '<tr><td colspan="7"style="text-align: center;">Nessun dispositivo trovato</td></tr>';
+ tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Nessun dispositivo trovato</td></tr>';
  return;
  }
 
@@ -1343,6 +1385,9 @@
  dataUscita = new Date(d.dataUscita).toLocaleDateString('it-IT');
  }
  
+ const azioneHtml = d.stato === 'fuori'
+   ? `<button class="btn btn-primary" style="padding:6px 12px;font-size:12px;" onclick="apriRientroDispositivo('${d.id}')">Rientro</button>`
+   : '<span style="color:#94a3b8;font-size:12px;">—</span>';
  html += `
 <tr class="${rowClass}">
 <td>${d.nome} ${d.cognome}</td>
@@ -1352,6 +1397,7 @@
 <td>${dataRientro}</td>
 <td>${giorniFuori}</td>
 <td><span class="status-badge ${d.stato}">${d.stato === 'fuori' ? 'In Assistenza' : 'Rientrato'}</span></td>
+<td>${azioneHtml}</td>
 </tr> `;
  });
  

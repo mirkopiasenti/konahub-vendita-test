@@ -642,3 +642,163 @@ form > button.btn-primary {
     border-width: 1px !important;
     transition: all 0.2s ease !important;
 }
+
+/* ============================================================
+   BORDINO ARANCIONE A SINISTRA SU TUTTE LE FORM-SECTION / SECTION
+   Coerenza tra apri_chiudi, switch_sim, ordini, comodato, rimborsi
+   ============================================================ */
+.form-section,
+.section {
+    border-left: 4px solid var(--mx-primary) !important;
+    border-top: 1px solid var(--mx-border) !important;
+    border-right: 1px solid var(--mx-border) !important;
+    border-bottom: 1px solid var(--mx-border) !important;
+}
+
+/* SPAZI PIÙ COMPATTI nelle form-section / section (switch_sim allineato ad apri_chiudi) */
+.section .form-group,
+.section .form-row,
+.form-section .form-group {
+    margin-bottom: 10px !important;
+}
+.section .form-group:last-child,
+.form-section .form-group:last-child {
+    margin-bottom: 0 !important;
+}
+.section .form-row,
+.form-section .form-row {
+    gap: 12px !important;
+    margin-bottom: 10px !important;
+}
+.section-title {
+    color: var(--mx-text) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    border-bottom: 1px solid var(--mx-border-light) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 12px !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+}
+.section input[type="text"],
+.section input[type="tel"],
+.section input[type="email"],
+.section input[type="number"],
+.section input[type="date"],
+.section select,
+.section textarea {
+    padding: 9px 12px !important;
+    font-size: 13.5px !important;
+}
+
+/* ============================================================
+   MODAL — Footer bottoni centrati + close X visibile
+   ============================================================ */
+.modal .modal-footer,
+.modal-overlay .modal-footer {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+    padding: 16px 24px !important;
+    border-top: 1px solid var(--mx-border-light) !important;
+}
+.modal .close-modal,
+.modal-overlay .close-modal {
+    background: transparent !important;
+    border: none !important;
+    font-size: 26px !important;
+    line-height: 1 !important;
+    color: var(--mx-text-light) !important;
+    cursor: pointer !important;
+    padding: 0 8px !important;
+    transition: color 0.2s ease !important;
+}
+.modal .close-modal:hover,
+.modal-overlay .close-modal:hover {
+    color: var(--mx-primary) !important;
+    transform: none !important;
+}
+.modal .close-modal:empty::before,
+.modal-overlay .close-modal:empty::before {
+    content: '×';
+}
+
+/* ============================================================
+   POPUP LOADING / SUCCESS — Aspetto uniforme su tutti i moduli
+   (eccetto upload-contratti e simulatore_protecta che non caricano questo CSS)
+   ============================================================ */
+.loading-modal,
+.loading-overlay {
+    background: rgba(15, 23, 42, 0.55) !important;
+}
+.loading-modal .loading-content,
+.loading-overlay .loading-card {
+    background: #fff !important;
+    border-radius: 14px !important;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18) !important;
+    padding: 36px 48px !important;
+    text-align: center !important;
+    min-width: 280px !important;
+}
+.loading-modal .loading-content h3,
+.loading-overlay .loading-card .loading-title {
+    color: var(--mx-primary) !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    margin-bottom: 12px !important;
+    letter-spacing: -0.01em !important;
+}
+.loading-modal .loading-content p,
+.loading-overlay .loading-card .loading-text,
+.loading-overlay .loading-card #ldText {
+    color: var(--mx-text-secondary) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    margin: 6px 0 0 !important;
+}
+.loading-modal .spinner,
+.loading-overlay .spinner,
+.loading-modal .loading-spinner {
+    width: 44px !important;
+    height: 44px !important;
+    border: 4px solid var(--mx-border) !important;
+    border-top-color: var(--mx-primary) !important;
+    border-radius: 50% !important;
+    animation: spin 0.8s linear infinite !important;
+    margin: 0 auto 16px !important;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Success modal con cerchio verde + check icon (uniforme con switch_sim & apri_chiudi) */
+.success-modal {
+    text-align: center !important;
+}
+.success-modal .success-icon {
+    width: 84px !important;
+    height: 84px !important;
+    border-radius: 50% !important;
+    background: #DCFCE7 !important;
+    margin: 0 auto 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.success-modal .success-icon svg {
+    width: 44px !important;
+    height: 44px !important;
+    stroke: #16a34a !important;
+    fill: none !important;
+    stroke-width: 3 !important;
+}
+.success-modal h3 {
+    color: #16a34a !important;
+    font-size: 19px !important;
+    font-weight: 700 !important;
+    margin-bottom: 6px !important;
+}
+.success-modal p {
+    color: var(--mx-text-secondary) !important;
+    font-size: 14px !important;
+}
