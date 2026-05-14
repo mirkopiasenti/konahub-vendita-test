@@ -860,50 +860,85 @@
 </div> <!-- UPLOAD DOCUMENTI -->
 <div class="form-section">
 <h2>Caricamento Documenti</h2> <!-- Documenti Vecchio Intestatario -->
+<style>
+.mx-drop-zone { border: 2px dashed #cbd5e1; border-radius: 10px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all .2s ease; background: #fafbfc; }
+.mx-drop-zone:hover, .mx-drop-zone.dragover { border-color: #FF6600; background: #FFF3E0; }
+.mx-drop-zone .mx-drop-text { font-weight: 600; color: #475569; font-size: 14px; }
+.mx-drop-zone .mx-drop-hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+.mx-drop-zone.has-file { border-color: #16a34a; background: #F0FDF4; }
+.mx-drop-zone.has-file .mx-drop-text { color: #047857; }
+.mx-files-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.mx-file-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; }
+.mx-file-row .mx-file-name { flex: 1; color: #1e293b; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.mx-file-row .mx-file-remove { background: transparent; border: none; color: #dc2626; cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; }
+.mx-templates-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.mx-template-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; color: #475569; text-decoration: none; font-weight: 600; transition: all .2s ease; }
+.mx-template-link:hover { border-color: #FF6600; color: #FF6600; background: #FFF3E0; }
+</style>
+
+<!-- 1. Documento Vecchio Intestatario -->
 <div class="file-upload-group" id="upload-vecchio-container">
 <div class="file-upload-header">
-<h3>1. Documenti Vecchio Intestatario<span class="required">*</span></h3>
+<h3>1. Documento Vecchio Intestatario<span class="required">*</span></h3>
 </div>
-<div class="file-input-wrapper">
-<input type="file" id="doc-vecchio" accept=".pdf" required onchange="handleFileChange('vecchio')">
-<span class="file-info" id="info-vecchio"> File caricato</span>
+<div class="mx-drop-zone" id="dropzone-vecchio" data-target="doc-vecchio">
+<div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
 </div>
-</div> <!-- Documenti Nuovo Intestatario -->
+<input type="file" id="doc-vecchio" accept=".pdf" required style="display:none;" onchange="handleFileChange('vecchio')">
+<div class="mx-files-list" id="files-vecchio"></div>
+</div>
+
+<!-- 2. Documento Nuovo Intestatario -->
 <div class="file-upload-group" id="upload-nuovo-container" style="margin-top: 1rem;">
 <div class="file-upload-header">
-<h3>2. Documenti Nuovo Intestatario<span class="required">*</span></h3>
+<h3>2. Documento Nuovo Intestatario<span class="required">*</span></h3>
 </div>
-<div class="file-input-wrapper">
-<input type="file" id="doc-nuovo" accept=".pdf" required onchange="handleFileChange('nuovo')">
-<span class="file-info" id="info-nuovo"> File caricato</span>
+<div class="mx-drop-zone" id="dropzone-nuovo" data-target="doc-nuovo">
+<div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
 </div>
-</div> <!-- Disdetta Linea Fissa -->
+<input type="file" id="doc-nuovo" accept=".pdf" required style="display:none;" onchange="handleFileChange('nuovo')">
+<div class="mx-files-list" id="files-nuovo"></div>
+</div>
+
+<!-- 3. Disdetta Linea Fissa -->
 <div class="file-upload-group" id="upload-fisso-container" style="margin-top: 1rem;">
 <div class="file-upload-header">
 <h3>3. Disdetta Linea Fissa<span class="required">*</span></h3>
-<a href="https://drive.google.com/uc?export=download&id=1XU2GAljXFGrwcy2PAkUJr-aCdnzaUY2P" target="_blank" class="download-btn"> ️ Scarica Modulo
-</a>
 </div>
-<div class="file-input-wrapper">
-<input type="file" id="doc-fisso" accept=".pdf" required onchange="handleFileChange('fisso')">
-<span class="file-info" id="info-fisso"> File caricato</span>
+<div class="mx-templates-row">
+<a href="#" target="_blank" class="mx-template-link" data-template="fisso_consumer">Scarica Modulo Consumer</a>
+<a href="#" target="_blank" class="mx-template-link" data-template="fisso_business">Scarica Modulo Business</a>
 </div>
-</div> <!-- Disdetta Sim Mobile (condizionale) -->
+<div class="mx-drop-zone" id="dropzone-fisso" data-target="doc-fisso" style="margin-top:8px;">
+<div class="mx-drop-text">Trascina qui il PDF firmato o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
+</div>
+<input type="file" id="doc-fisso" accept=".pdf" required style="display:none;" onchange="handleFileChange('fisso')">
+<div class="mx-files-list" id="files-fisso"></div>
+</div>
+
+<!-- 4. Disdetta Sim Mobile (condizionale) -->
 <div id="upload-sim-section" class="conditional-section" style="margin-top: 1rem;">
 <div class="file-upload-group" id="upload-sim-container">
 <div class="file-upload-header">
 <h3>4. Disdetta Sim Mobile<span class="required">*</span></h3>
-<a href="https://drive.google.com/uc?export=download&id=1_meeRzIQtVJ8WJ2YkNI1mRkY0Eqz82Pw" target="_blank" class="download-btn"> ️ Scarica Modulo
-</a>
 </div>
-<div class="file-input-wrapper">
-<input type="file" id="doc-sim" accept=".pdf" onchange="handleFileChange('sim')">
-<span class="file-info" id="info-sim"> File caricato</span>
+<div class="mx-templates-row">
+<a href="#" target="_blank" class="mx-template-link" data-template="mobile_consumer">Scarica Modulo Consumer</a>
+<a href="#" target="_blank" class="mx-template-link" data-template="mobile_business">Scarica Modulo Business</a>
 </div>
+<div class="mx-drop-zone" id="dropzone-sim" data-target="doc-sim" style="margin-top:8px;">
+<div class="mx-drop-text">Trascina qui il PDF firmato o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
+</div>
+<input type="file" id="doc-sim" accept=".pdf" style="display:none;" onchange="handleFileChange('sim')">
+<div class="mx-files-list" id="files-sim"></div>
 </div>
 </div>
 </div> <div class="info-box">
-<p><strong>ℹ️ Nota:</strong> Tutti i campi contrassegnati con<span style="color: #FF6600;">*</span> sono obbligatori. Assicurati di compilare tutti i dati e caricare i documenti richiesti prima di inviare.</p>
+<p><strong>Nota:</strong> Tutti i campi contrassegnati con <span style="color: #FF6600;">*</span> sono obbligatori. Assicurati di compilare tutti i dati e caricare i documenti richiesti prima di inviare.</p>
 </div> <div class="buttons-container">
 <button type="submit" class="btn btn-primary" id="submit-btn"> Invia Dati
 </button>
@@ -994,14 +1029,13 @@
 <label>Numero ASK<span class="required">*</span></label>
 <input type="text" id="numero-ask" placeholder="Es: ASK123456" required>
 </div> <div class="form-group" style="margin-bottom: 1rem;">
-<label> Allega File PDF (multipli consentiti)</label>
-<div class="file-upload-area" onclick="document.getElementById(' files-disdetta').click()" style="border: 2px dashed #ccc; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; background: #fafafa;">
-<input type="file" id="files-disdetta" multiple accept=".pdf" style="display: none;" onchange="handleFilesDisdetta(this)">
-<div style="font-size: 36px; color: #FF6600; margin-bottom: 10px;"></div>
-<div style="color: #58595B; font-weight: 600;">Clicca per allegare file PDF</div>
-<div style="color: #999; font-size: 12px; margin-top: 5px;">Puoi selezionare più file contemporaneamente</div>
+<label>Allega File PDF (multipli consentiti)<span class="required">*</span></label>
+<div class="mx-drop-zone" id="dropzone-disdetta" data-target="files-disdetta">
+<div class="mx-drop-text">Trascina qui i PDF firmati o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — puoi selezionare più file</div>
 </div>
-<div id="files-disdetta-list" style="margin-top: 10px;"></div>
+<input type="file" id="files-disdetta" multiple accept=".pdf" style="display: none;" onchange="handleFilesDisdetta(this)">
+<div id="files-disdetta-list" class="mx-files-list" style="margin-top: 10px;"></div>
 </div>
 </div>
 </div>
@@ -1029,14 +1063,94 @@
 <button class="btn btn-primary" id="btn-conferma-ko" style="background-color: var(--error-red);" onclick="confermaKO()">Conferma KO</button>
 </div>
 </div>
-</div> <!-- Loading Modal -->
+</div>
+
+<!-- Loading Modal -->
 <div id="loading-modal" class="loading-modal">
 <div class="loading-content">
 <div class="spinner"></div>
 <h3 id="loading-title">Attendere...</h3>
 <p id="loading-text">Salvataggio in corso...</p>
 </div>
-</div> <script> // ===== CONFIGURAZIONE - migrato su Supabase =====
+</div>
+
+<!-- Mirox Confirm/Alert/Success Modal -->
+<div id="mx-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:100000;justify-content:center;align-items:center;padding:20px;">
+<div style="background:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(15,23,42,0.2);padding:28px 32px;max-width:460px;width:100%;text-align:center;">
+<div id="mx-modal-icon" style="margin:0 auto 14px;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;"></div>
+<h3 id="mx-modal-title" style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:6px;"></h3>
+<p id="mx-modal-text" style="font-size:14px;color:#64748b;margin-bottom:22px;line-height:1.5;"></p>
+<div id="mx-modal-buttons" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;"></div>
+</div>
+</div>
+
+<script>
+(function(){
+  const modal = document.getElementById('mx-modal');
+  const icoEl = document.getElementById('mx-modal-icon');
+  const titleEl = document.getElementById('mx-modal-title');
+  const textEl = document.getElementById('mx-modal-text');
+  const btnsEl = document.getElementById('mx-modal-buttons');
+  const ICONS = {
+    warn:  { bg:'#FFF7ED', svg:'<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#FF6600" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' },
+    err:   { bg:'#FEF2F2', svg:'<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' },
+    ok:    { bg:'#F0FDF4', svg:'<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' },
+    ask:   { bg:'#FFF3E0', svg:'<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#FF6600" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' }
+  };
+  function show(opts) {
+    const ico = ICONS[opts.icon || 'ask'];
+    icoEl.style.background = ico.bg;
+    icoEl.innerHTML = ico.svg;
+    titleEl.textContent = opts.title || '';
+    textEl.textContent = opts.text || '';
+    textEl.style.display = opts.text ? 'block' : 'none';
+    btnsEl.innerHTML = '';
+    (opts.buttons || []).forEach(b => {
+      const btn = document.createElement('button');
+      btn.textContent = b.label;
+      btn.type = 'button';
+      btn.style.cssText = b.primary
+        ? 'padding:10px 22px;background:#FF6600;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;'
+        : 'padding:10px 22px;background:#fff;color:#475569;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;';
+      btn.onclick = () => { modal.style.display = 'none'; if (b.onClick) b.onClick(); };
+      btnsEl.appendChild(btn);
+    });
+    modal.style.display = 'flex';
+  }
+  window.mxAlert = function(text, icon) {
+    return new Promise(resolve => {
+      show({
+        icon: icon || 'warn',
+        title: icon === 'err' ? 'Errore' : 'Attenzione',
+        text,
+        buttons: [{ label: 'OK', primary: true, onClick: resolve }]
+      });
+    });
+  };
+  window.mxConfirm = function(title, text) {
+    return new Promise(resolve => {
+      show({
+        icon: 'ask',
+        title, text,
+        buttons: [
+          { label: 'Annulla', primary: false, onClick: () => resolve(false) },
+          { label: 'Conferma', primary: true, onClick: () => resolve(true) }
+        ]
+      });
+    });
+  };
+  window.mxSuccess = function(title, text) {
+    return new Promise(resolve => {
+      show({
+        icon: 'ok',
+        title: title || 'Operazione completata',
+        text: text || '',
+        buttons: [{ label: 'OK', primary: true, onClick: resolve }]
+      });
+    });
+  };
+})();
+</script> <script> // ===== CONFIGURAZIONE - migrato su Supabase =====
  const sb = db;
  const APRI_CHIUDI_BUCKET = 'apri-chiudi-files';
  const PASSWORD_CORRETTA = '2013';
@@ -1091,7 +1205,7 @@
  coincideCheck.addEventListener('change', () => {
    if (coincideCheck.checked) {
      if (!anagVecchio.state.cfPiva || !anagVecchio.state.lookupDone) {
-       alert('⚠ Compila prima il Vecchio Intestatario (digita il CF/P.IVA e attendi la ricerca)');
+       mxAlert('Compila prima il Vecchio Intestatario (digita il CF/P.IVA e attendi la ricerca)', 'warn');
        coincideCheck.checked = false;
        return;
      }
@@ -1172,20 +1286,78 @@
    });
  });
 
- // ===== GESTIONE FILE UPLOAD =====
- function handleFileChange(tipo) {
- const fileInput = document.getElementById(`doc-${tipo}`);
- const fileInfo = document.getElementById(`info-${tipo}`);
- const container = document.getElementById(`upload-${tipo}-container`);
+ // ===== GESTIONE FILE UPLOAD (drag-drop + click + render lista) =====
+ function renderFileList(tipo) {
+   const fileInput = document.getElementById(`doc-${tipo}`);
+   const list = document.getElementById(`files-${tipo}`);
+   const dz = document.getElementById(`dropzone-${tipo}`);
+   if (!list || !dz) return;
+   list.innerHTML = '';
+   if (fileInput.files.length > 0) {
+     dz.classList.add('has-file');
+     Array.from(fileInput.files).forEach((f, idx) => {
+       const row = document.createElement('div');
+       row.className = 'mx-file-row';
+       row.innerHTML = `<span class="mx-file-name">${f.name}</span><button type="button" class="mx-file-remove" title="Rimuovi" onclick="removeFile('${tipo}',${idx})">×</button>`;
+       list.appendChild(row);
+     });
+   } else {
+     dz.classList.remove('has-file');
+   }
+ }
+ function handleFileChange(tipo) { renderFileList(tipo); }
+ function removeFile(tipo, idx) {
+   const inp = document.getElementById(`doc-${tipo}`);
+   if (!inp.files || inp.files.length === 0) return;
+   const dt = new DataTransfer();
+   Array.from(inp.files).forEach((f, i) => { if (i !== idx) dt.items.add(f); });
+   inp.files = dt.files;
+   renderFileList(tipo);
+ }
+ window.removeFile = removeFile;
+ // Bind drag-drop + click su tutte le dropzone
+ document.querySelectorAll('.mx-drop-zone').forEach(dz => {
+   const targetId = dz.dataset.target;
+   const inp = document.getElementById(targetId);
+   if (!inp) return;
+   dz.addEventListener('click', () => inp.click());
+   dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+   dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+   dz.addEventListener('drop', (e) => {
+     e.preventDefault();
+     dz.classList.remove('dragover');
+     const allowMulti = inp.hasAttribute('multiple');
+     const dt = new DataTransfer();
+     if (allowMulti && inp.files) { Array.from(inp.files).forEach(f => dt.items.add(f)); }
+     Array.from(e.dataTransfer.files || []).forEach(f => {
+       if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) return;
+       dt.items.add(f);
+       if (!allowMulti) return false;
+     });
+     inp.files = dt.files;
+     const tipo = targetId.replace('doc-', '');
+     renderFileList(tipo);
+   });
+ });
 
- if (fileInput.files.length> 0) {
- fileInfo.classList.add('show');
- container.classList.add('has-file');
- } else {
- fileInfo.classList.remove('show');
- container.classList.remove('has-file');
- }
- }
+ // ===== POPOLAMENTO LINK TEMPLATE DA SUPABASE STORAGE =====
+ (function setupTemplateLinks() {
+   if (!window.db) return;
+   const MODULI_BUCKET = 'moduli-template';
+   const MAP = {
+     'fisso_consumer':  'disdetta_fisso_consumer.pdf',
+     'fisso_business':  'disdetta_fisso_business.pdf',
+     'mobile_consumer': 'disdetta_mobile_consumer.pdf',
+     'mobile_business': 'disdetta_mobile_business.pdf'
+   };
+   document.querySelectorAll('.mx-template-link').forEach(a => {
+     const key = a.dataset.template;
+     const file = MAP[key];
+     if (!file) return;
+     const url = window.db.storage.from(MODULI_BUCKET).getPublicUrl(file).data?.publicUrl;
+     if (url) a.href = url;
+   });
+ })();
 
  // ===== CONVERSIONE FILE IN BASE64 =====
  function fileToBase64(file) {
@@ -1203,20 +1375,20 @@
 
  // Validazione anagrafiche
  const errVecchio = anagVecchio.validate();
- if (errVecchio) { alert('Vecchio Intestatario: ' + errVecchio); return; }
+ if (errVecchio) { mxAlert('Vecchio Intestatario: ' + errVecchio, 'warn'); return; }
  const errNuovo = anagNuovo.validate();
- if (errNuovo) { alert('Nuovo Intestatario: ' + errNuovo); return; }
+ if (errNuovo) { mxAlert('Nuovo Intestatario: ' + errNuovo, 'warn'); return; }
 
  // Validazione chiusura linea
  const chiusuraRadio = document.querySelector('input[name="chiusura-linea"]:checked');
- if (!chiusuraRadio) { alert('⚠ Seleziona la modalità di chiusura linea'); return; }
+ if (!chiusuraRadio) { mxAlert('Seleziona la modalità di chiusura linea', 'warn'); return; }
 
  // Validazione numero sim se necessario
  const simSi = document.getElementById('sim-si').checked;
  if (simSi) {
    const numeroSim = document.getElementById('numero-sim').value;
    const regex = /^3\d{9,10}$/;
-   if (!regex.test(numeroSim)) { alert('⚠ Inserire un numero di cellulare valido'); return; }
+   if (!regex.test(numeroSim)) { mxAlert('Inserire un numero di cellulare valido', 'warn'); return; }
  }
 
  mostraLoading('Caricamento file e salvataggio dati in corso...', 'Invio Dati');
@@ -1281,13 +1453,13 @@
    ]);
 
    nascondiLoading();
-   alert('Dati salvati con successo!');
-   setTimeout(() => { window.location.href = '../dashboard.html'; }, 500);
+   await mxSuccess('Dati salvati con successo!');
+   setTimeout(() => { window.location.href = '../dashboard.html'; }, 200);
 
  } catch (error) {
    nascondiLoading();
    console.error('Errore:', error);
-   alert('Errore durante il salvataggio: ' + error.message);
+   mxAlert('Errore durante il salvataggio: ' + error.message, 'err');
  }
  }
 
@@ -1421,7 +1593,7 @@
  function apriModalDettagli(rowIndex) {
  const d = window.tuttiDati.find(item => String(item.rowIndex) === String(rowIndex));
  if (!d) {
- alert('Pratica non trovata');
+ mxAlert('Pratica non trovata', 'err');
  return;
  }
  
@@ -1432,6 +1604,34 @@
  document.getElementById('modal-dettagli').classList.add('active');
  }
  
+ async function caricaAllegatiPratica(rowIndex) {
+   const container = document.getElementById('allegati-list-' + rowIndex);
+   if (!container) return;
+   try {
+     const path = `pratica_${rowIndex}`;
+     const { data, error } = await sb.storage.from(APRI_CHIUDI_BUCKET).list(path);
+     if (error) throw error;
+     const files = (data || []).filter(f => f.name && !f.name.startsWith('.') && f.metadata);
+     if (!files.length) {
+       container.innerHTML = '<div style="color:#94a3b8;font-size:13px;">Nessun allegato presente</div>';
+       return;
+     }
+     container.innerHTML = files.map(f => {
+       const fullPath = path + '/' + f.name;
+       const url = sb.storage.from(APRI_CHIUDI_BUCKET).getPublicUrl(fullPath).data?.publicUrl || '#';
+       const labelPretty = f.name.replace(/^(doc_vecchio|doc_nuovo|doc_fisso|doc_sim|disdetta)_\d+_/, '').replace(/_\d+(?=\.)/, '');
+       return `<a href="${url}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;text-decoration:none;color:#1e293b;font-size:13px;transition:all .2s ease;">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${labelPretty}</span>
+         <span style="color:#FF6600;font-size:12px;font-weight:700;">Scarica</span>
+       </a>`;
+     }).join('');
+   } catch (e) {
+     console.error('Errore caricamento allegati:', e);
+     container.innerHTML = '<div style="color:#dc2626;font-size:13px;">Errore caricamento allegati</div>';
+   }
+ }
+
  function renderModalDettagli(d) {
  const body = document.getElementById('modal-dettagli-body');
  const footer = document.getElementById('modal-dettagli-footer');
@@ -1482,25 +1682,35 @@
 </div>
 </div> <!-- Disdetta -->
 <div style="background: #e3f2fd; padding: 15px; border-radius: 8px;">
-<h4 style="margin: 0 0 10px 0; color: #58595B;"> Disdetta</h4>
+<h4 style="margin: 0 0 10px 0; color: #58595B;">Disdetta</h4>
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
 <div><strong>Data Invio:</strong> ${dataInvioDisdetta}</div>
 <div><strong>Numero ASK:</strong> ${d.numeroAsk || '-'}</div>
 </div>
 </div>
+
+<!-- Allegati -->
+<div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+<h4 style="margin: 0 0 10px 0; color: #58595B;">Allegati</h4>
+<div id="allegati-list-${d.rowIndex}" style="display:flex;flex-direction:column;gap:6px;">
+<div style="color:#94a3b8;font-size:13px;">Caricamento allegati...</div>
+</div>
+</div>
 </div> `;
+
+ // Carica allegati async
+ caricaAllegatiPratica(d.rowIndex);
  
- // Footer con azioni
+ // Footer con azioni (centrate, no Chiudi - la X in alto a destra basta)
  let footerHtml = `
-<button class="btn btn-secondary"onclick="chiudiModalDettagli()">Chiudi</button>
-<button class="btn btn-primary"style="background: #2196F3;"onclick="attivaModificaDettagli()">️ Modifica</button> `;
- 
+<button class="btn btn-primary" onclick="attivaModificaDettagli()">Modifica</button>`;
+
  if (d.stato === 'IN CORSO') {
  footerHtml += `
-<button class="btn btn-primary"style="background: #FF6600;"onclick="chiudiModalDettagli(); apriModalDisdetta(${d.rowIndex})"> Disdetta</button>
-<button class="btn btn-primary"style="background: #f44336;"onclick="chiudiModalDettagli(); apriModalKO(${d.rowIndex})"> KO</button> `;
+<button class="btn btn-primary" style="background:#FF6600;" onclick="chiudiModalDettagli(); apriModalDisdetta(${d.rowIndex})">Disdetta</button>
+<button class="btn btn-primary" style="background:#dc2626;" onclick="chiudiModalDettagli(); apriModalKO(${d.rowIndex})">KO</button>`;
  }
- 
+
  footer.innerHTML = footerHtml;
  }
  
@@ -1645,14 +1855,14 @@
  if (error) throw error;
 
  nascondiLoading();
- alert('Modifiche salvate con successo!');
+ await mxSuccess('Modifiche salvate con successo!');
  chiudiModalDettagli();
  caricaDatiRiepilogo();
 
  } catch (error) {
  nascondiLoading();
  console.error('Errore:', error);
- alert('Errore durante il salvataggio: ' + error.message);
+ mxAlert('Errore durante il salvataggio: ' + error.message, 'err');
  }
  }
  
@@ -1728,7 +1938,7 @@
  files.forEach(file => {
  // Verifica che sia un PDF
  if (file.type !== 'application/pdf') {
- alert('️ Solo file PDF sono consentiti: ' + file.name);
+ mxAlert('Solo file PDF sono consentiti: ' + file.name, 'warn');
  return;
  }
  
@@ -1741,33 +1951,24 @@
  renderFilesDisdettaList();
  }
  
- // Renderizza la lista dei file selezionati
+ // Renderizza la lista dei file selezionati (stile Mirox)
  function renderFilesDisdettaList() {
- const container = document.getElementById('files-disdetta-list');
- 
- if (filesDisdettaSelezionati.length === 0) {
- container.innerHTML = '';
- return;
- }
- 
- let html = '<div style="background: #f8f9fa; border-radius: 8px; padding: 10px;">';
- html += '<div style="font-weight: 600; margin-bottom: 8px; color: #58595B;"> File selezionati (' + filesDisdettaSelezionati.length + '):</div>';
- 
- filesDisdettaSelezionati.forEach((file, index) => {
- const sizeKB = (file.size / 1024).toFixed(1);
- html += `
-<div style="display: flex; align-items: center; justify-content: space-between; padding: 8px; background: white; border-radius: 4px; margin-bottom: 5px; border: 1px solid #e0e0e0;">
-<div style="display: flex; align-items: center; gap: 8px;">
-<span style="font-size: 1.2rem;"></span>
-<span style="font-size: 0.9rem;">${file.name}</span>
-<span style="font-size: 0.8rem; color: #999;">(${sizeKB} KB)</span>
-</div>
-<button onclick="removeFileDisdetta(${index})"style="background: #f44336; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px;">×</button>
-</div> `;
- });
- 
- html += '</div>';
- container.innerHTML = html;
+   const container = document.getElementById('files-disdetta-list');
+   const dz = document.getElementById('dropzone-disdetta');
+   if (!container) return;
+   container.innerHTML = '';
+   if (filesDisdettaSelezionati.length === 0) {
+     if (dz) dz.classList.remove('has-file');
+     return;
+   }
+   if (dz) dz.classList.add('has-file');
+   filesDisdettaSelezionati.forEach((file, index) => {
+     const sizeKB = (file.size / 1024).toFixed(1);
+     const row = document.createElement('div');
+     row.className = 'mx-file-row';
+     row.innerHTML = `<span class="mx-file-name">${file.name} <span style="color:#94a3b8;font-size:11px;">(${sizeKB} KB)</span></span><button type="button" class="mx-file-remove" title="Rimuovi" onclick="removeFileDisdetta(${index})">×</button>`;
+     container.appendChild(row);
+   });
  }
  
  // Rimuove un file dalla lista
@@ -1775,6 +1976,33 @@
  filesDisdettaSelezionati.splice(index, 1);
  renderFilesDisdettaList();
  }
+ window.removeFileDisdetta = removeFileDisdetta;
+
+ // Bind drag-drop + click sul dropzone disdetta
+ (function bindDisdettaDropzone() {
+   const dz = document.getElementById('dropzone-disdetta');
+   const inp = document.getElementById('files-disdetta');
+   if (!dz || !inp) return;
+   dz.addEventListener('click', () => inp.click());
+   dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+   dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+   dz.addEventListener('drop', (e) => {
+     e.preventDefault();
+     dz.classList.remove('dragover');
+     const files = Array.from(e.dataTransfer.files || []);
+     files.forEach(file => {
+       if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+         alert('Solo file PDF sono consentiti: ' + file.name);
+         return;
+       }
+       if (!filesDisdettaSelezionati.find(f => f.name === file.name && f.size === file.size)) {
+         filesDisdettaSelezionati.push(file);
+       }
+     });
+     renderFilesDisdettaList();
+     if (filesDisdettaSelezionati.length > 0) dz.classList.add('has-file');
+   });
+ })();
 
  async function salvaDatiDisdetta() {
  const dataInvio = document.getElementById('data-invio-disdetta').value;
@@ -1788,64 +2016,58 @@
  console.log('Row Index:', praticaSelezionata);
 
  if (!dataInvio || !numeroAsk) {
- alert('️ Compila tutti i campi obbligatori (Data e Numero ASK)');
- return;
+   mxAlert('Compila tutti i campi obbligatori (Data e Numero ASK)', 'warn');
+   return;
+ }
+ // Almeno un file PDF è obbligatorio
+ if (!filesDisdettaSelezionati || filesDisdettaSelezionati.length === 0) {
+   mxAlert('Allega almeno un file PDF della disdetta prima di salvare', 'warn');
+   return;
  }
 
- if (!confirm('Sei sicuro di voler aggiungere i dati disdetta? Questa azione cambierà lo stato della pratica a CHIUSO.')) {
- return;
- }
+ const conferma = await mxConfirm(
+   'Sei sicuro di voler aggiungere i dati disdetta?',
+   'Questa azione cambierà lo stato della pratica a CHIUSO.'
+ );
+ if (!conferma) return;
 
- // Disabilita il bottone
  btnSalva.disabled = true;
  btnSalva.textContent = 'Invio in corso...';
-
  mostraLoading('Caricamento file PDF e salvataggio dati disdetta in corso...', 'Salvataggio Dati Disdetta');
 
  try {
- // Converti tutti i file in base64
- let filesBase64 = [];
- for (const file of filesDisdettaSelezionati) {
- const base64 = await fileToBase64(file);
- filesBase64.push({
- base64: base64,
- nome: file.name
- });
- console.log('File convertito:', file.name);
- }
+   // Converti tutti i file in base64
+   let filesBase64 = [];
+   for (const file of filesDisdettaSelezionati) {
+     const base64 = await fileToBase64(file);
+     filesBase64.push({ base64, nome: file.name });
+   }
+   // Upload allegati disdetta
+   for (const f of filesBase64) {
+     await uploadApriChiudiFile(praticaSelezionata, f.base64, f.nome, 'disdetta');
+   }
 
- // Upload allegati disdetta
- for (const f of filesBase64) {
- await uploadApriChiudiFile(praticaSelezionata, f.base64, f.nome, 'disdetta');
- }
+   const { error } = await sb
+     .from('vendita_apri_chiudi')
+     .update({
+       stato: 'CHIUSO',
+       data_invio_disdetta: dataInvio,
+       numero_ask: numeroAsk
+     })
+     .eq('id', praticaSelezionata);
+   if (error) throw error;
 
- const { error } = await sb
- .from('vendita_apri_chiudi')
- .update({
- stato: 'CHIUSO',
- data_invio_disdetta: dataInvio,
- numero_ask: numeroAsk
- })
- .eq('id', praticaSelezionata);
- if (error) throw error;
-
- nascondiLoading();
- alert('Dati disdetta salvati con successo! Stato aggiornato a CHIUSO.');
- console.log('=== FINE salvaDatiDisdetta - SUCCESSO ===');
- chiudiModalDisdetta();
- 
- // Ricarica i dati del riepilogo
- caricaDatiRiepilogo();
+   nascondiLoading();
+   chiudiModalDisdetta();
+   await mxSuccess('Dati disdetta salvati', 'Stato aggiornato a CHIUSO.');
+   caricaDatiRiepilogo();
 
  } catch (error) {
- nascondiLoading();
- // Riabilita il bottone in caso di errore
- btnSalva.disabled = false;
- btnSalva.textContent = 'Salva Dati';
- 
- console.error('ERRORE salvaDatiDisdetta:', error);
- console.error('Stack:', error.stack);
- alert('Errore durante il salvataggio: ' + error.message + '\n\nControlla la console (F12) per dettagli.');
+   nascondiLoading();
+   btnSalva.disabled = false;
+   btnSalva.textContent = 'Salva Dati';
+   console.error('ERRORE salvaDatiDisdetta:', error);
+   mxAlert('Errore durante il salvataggio: ' + error.message, 'err');
  }
  }
 
@@ -1882,29 +2104,31 @@
  }
 
  async function confermaKO() {
- if (!confirm('Sei SICURO di voler impostare questa pratica come KO? Questa azione NON può essere annullata.')) {
- return;
- }
+   const ok = await mxConfirm(
+     'Confermi di voler impostare questa pratica come KO?',
+     'Questa azione non può essere annullata.'
+   );
+   if (!ok) return;
 
- mostraLoading('Aggiornamento stato pratica a KO...', '️ Aggiornamento Stato');
+   mostraLoading('Aggiornamento stato pratica a KO...', 'Aggiornamento Stato');
 
- try {
- const { error } = await sb
- .from('vendita_apri_chiudi')
- .update({ stato: 'KO' })
- .eq('id', praticaSelezionata);
- if (error) throw error;
+   try {
+     const { error } = await sb
+       .from('vendita_apri_chiudi')
+       .update({ stato: 'KO' })
+       .eq('id', praticaSelezionata);
+     if (error) throw error;
 
- nascondiLoading();
- alert('Pratica impostata come KO con successo!');
- chiudiModalKO();
- caricaDatiRiepilogo();
+     nascondiLoading();
+     chiudiModalKO();
+     await mxSuccess('Pratica impostata come KO');
+     caricaDatiRiepilogo();
 
- } catch (error) {
- nascondiLoading();
- console.error('Errore:', error);
- alert('Errore: ' + error.message);
- }
+   } catch (error) {
+     nascondiLoading();
+     console.error('Errore:', error);
+     mxAlert('Errore: ' + error.message, 'err');
+   }
  }
 
  // ===== UTILITY =====
