@@ -1,0 +1,30 @@
+# =============================================================================
+# Mirox CRM - Configurazione Netlify
+# =============================================================================
+
+[build]
+  publish    = "."
+  functions  = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+  # External modules che non vanno bundlati
+  external_node_modules = ["@supabase/supabase-js", "nodemailer"]
+
+# Headers di sicurezza/cache base
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options          = "SAMEORIGIN"
+    X-Content-Type-Options   = "nosniff"
+    Referrer-Policy          = "strict-origin-when-cross-origin"
+
+# =============================================================================
+# Scheduled functions
+# =============================================================================
+# cron-rientro-sim — invia mail giornaliera a info@konatech.it per ogni
+# pratica Switch SIM con giorno_rientro = oggi e non già notificata.
+# Lo schedule è dichiarato anche nel codice della function (module.exports.schedule),
+# ma lo replico qui per chiarezza.
+[functions."cron-rientro-sim"]
+  schedule = "0 7 * * *"

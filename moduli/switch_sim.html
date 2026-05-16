@@ -110,6 +110,24 @@
  margin: 2rem auto;
  padding: 0 0.5rem;
  }
+ /* Pagine Attesa, Riepilogo e Ricariche: usa tutta la larghezza per evitare wrap a capo */
+ #pageAttesa.page, #pageRiepilogo.page, #pageRicariche.page {
+   max-width: none;
+   width: 100%;
+ }
+ #pageAttesa table, #pageRiepilogo table, #pageRicariche table {
+   width: 100%;
+   table-layout: auto;
+ }
+ #pageAttesa table th, #pageAttesa table td,
+ #pageRiepilogo table th, #pageRiepilogo table td,
+ #pageRicariche table th, #pageRicariche table td {
+   white-space: nowrap;
+   padding: 10px 12px;
+   font-size: 12.5px;
+ }
+ /* Allarga il container principale solo quando siamo su pagine "wide" */
+ .container.wide-layout { max-width: 100%; padding: 0 12px; }
 
  .page {
  display: none;
@@ -986,17 +1004,20 @@
 
  .dettagli-header .close-btn {
  background: rgba(255, 255, 255, 0.2);
- color: white;
- border: none;
- width: 40px;
- height: 40px;
+ color: #fff !important;
+ border: 1px solid rgba(255, 255, 255, 0.3);
+ width: 38px;
+ height: 38px;
  border-radius: 50%;
- font-size: 1.5rem;
+ font-size: 22px;
+ line-height: 1;
+ font-weight: 300;
  cursor: pointer;
  display: flex;
  align-items: center;
  justify-content: center;
- transition: all 0.3s;
+ transition: all 0.2s ease;
+ padding: 0;
  }
 
  .dettagli-header .close-btn:hover {
@@ -1624,50 +1645,77 @@
 <textarea id="note" name="note" placeholder="Inserisci eventuali note aggiuntive..."></textarea>
 </div>
 </div> <!-- Sezione Upload Documenti -->
+<style>
+.mx-drop-zone { border: 2px dashed #cbd5e1; border-radius: 10px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all .2s ease; background: #fafbfc; }
+.mx-drop-zone:hover, .mx-drop-zone.dragover { border-color: #FF6600; background: #FFF3E0; }
+.mx-drop-zone .mx-drop-text { font-weight: 600; color: #475569; font-size: 14px; }
+.mx-drop-zone .mx-drop-hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+.mx-drop-zone.has-file { border-color: #16a34a; background: #F0FDF4; }
+.mx-drop-zone.has-file .mx-drop-text { color: #047857; }
+.mx-files-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.mx-file-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; }
+.mx-file-row .mx-file-name { flex: 1; color: #1e293b; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.mx-file-row .mx-file-remove { background: transparent; border: none; color: #dc2626; cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; }
+</style>
 <div class="section">
-<div class="section-title">Upload Documenti (PDF)</div> <div class="form-group">
+<div class="section-title">Upload Documenti (PDF)</div>
+
+<div class="form-group">
 <label class="required">Documenti Personali Attuale Intestatario</label>
-<div class="file-upload">
-<label for="docAttualeIntestatario" class="file-label"> Scegli File PDF
-</label>
-<input type="file" id="docAttualeIntestatario" accept=".pdf" required>
-<span class="file-name" id="docAttualeIntestatarioName">Nessun file selezionato</span>
+<div class="mx-drop-zone" data-target="docAttualeIntestatario">
+<div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
 </div>
-</div> <div class="form-group hidden" id="docNuovoIntestatarioGroup">
+<input type="file" id="docAttualeIntestatario" accept=".pdf" required style="display:none;">
+<div class="mx-files-list" data-list-for="docAttualeIntestatario"></div>
+</div>
+
+<div class="form-group hidden" id="docNuovoIntestatarioGroup">
 <label class="required">Documenti Personali Nuovo Intestatario</label>
-<div class="file-upload">
-<label for="docNuovoIntestatario" class="file-label"> Scegli File PDF
-</label>
-<input type="file" id="docNuovoIntestatario" accept=".pdf">
-<span class="file-name" id="docNuovoIntestatarioName">Nessun file selezionato</span>
+<div class="mx-drop-zone" data-target="docNuovoIntestatario">
+<div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
 </div>
-</div> <div class="form-group hidden" id="visuraCameraleGroup">
+<input type="file" id="docNuovoIntestatario" accept=".pdf" style="display:none;">
+<div class="mx-files-list" data-list-for="docNuovoIntestatario"></div>
+</div>
+
+<div class="form-group hidden" id="visuraCameraleGroup">
 <label class="required">Visura Camerale</label>
-<div class="file-upload">
-<label for="visuraCamerale" class="file-label"> Scegli File PDF
-</label>
-<input type="file" id="visuraCamerale" accept=".pdf">
-<span class="file-name" id="visuraCameraleName">Nessun file selezionato</span>
+<div class="mx-drop-zone" data-target="visuraCamerale">
+<div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
 </div>
-</div> <div class="form-group">
+<input type="file" id="visuraCamerale" accept=".pdf" style="display:none;">
+<div class="mx-files-list" data-list-for="visuraCamerale"></div>
+</div>
+
+<div class="form-group">
 <label class="required">Fotocopia Sim Cliente</label>
-<div class="file-upload">
-<label for="fotoSimCliente" class="file-label"> Scegli File PDF
-</label>
-<input type="file" id="fotoSimCliente" accept=".pdf" required>
-<span class="file-name" id="fotoSimClienteName">Nessun file selezionato</span>
+<div class="mx-drop-zone" data-target="fotoSimCliente">
+<div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
 </div>
-</div> <div class="form-group">
+<input type="file" id="fotoSimCliente" accept=".pdf" required style="display:none;">
+<div class="mx-files-list" data-list-for="fotoSimCliente"></div>
+</div>
+
+<div class="form-group">
 <label class="required">Fotocopia Sim per Switch</label>
-<div class="file-upload">
-<label for="fotoSimSwitch" class="file-label"> Scegli File PDF
-</label>
-<input type="file" id="fotoSimSwitch" accept=".pdf" required>
-<span class="file-name" id="fotoSimSwitchName">Nessun file selezionato</span>
+<div class="mx-drop-zone" data-target="fotoSimSwitch">
+<div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
+</div>
+<input type="file" id="fotoSimSwitch" accept=".pdf" required style="display:none;">
+<div class="mx-files-list" data-list-for="fotoSimSwitch"></div>
 </div>
 </div>
-</div> <div id="alertContainer"></div> <button type="submit" class="submit-btn" id="submitBtn"> Salva Switch
-</button>
+
+<div id="alertContainer"></div>
+
+<div style="display:flex;justify-content:center;margin-top:18px;">
+<button type="submit" class="submit-btn" id="submitBtn" style="min-width:300px;padding:14px 32px;font-size:15px;font-weight:700;background:#FF6600;color:#fff;border:none;border-radius:10px;cursor:pointer;">Salva Switch</button>
+</div>
 </form>
 </div>
 </div> <!-- PAGINA 2: ATTESA INSERIMENTO (NUOVA!) -->
@@ -1697,14 +1745,13 @@
 <th>CF/P.IVA</th>
 <th>Num. MNP</th>
 <th>Data Ins.</th>
-<th></th>
-<th>Dettagli</th>
+<th>Cartella</th>
 <th>Azioni</th>
 </tr>
 </thead>
 <tbody id="attesaTableBody">
 <tr>
-<td colspan="10" class="loading-spinner">
+<td colspan="9" class="loading-spinner">
 <div class="spinner-icon"></div>
 <p style="margin-top: 1rem;">Caricamento dati...</p>
 </td>
@@ -1764,27 +1811,22 @@
 </div> <!-- PAGINA 3: RICARICHE -->
 <div id="pageRicariche" class="page">
 <div class="ricariche-header">
-<h2> Gestione Ricariche</h2>
-<div class="ricariche-stats">
-<div class="stat-box urgente">
-<div class="stat-number" id="statScadute">0</div>
-<div class="stat-label">️ Scadute</div>
+<h2>Gestione Ricariche</h2>
 </div>
-<div class="stat-box presto">
-<div class="stat-number" id="statPresto">0</div>
-<div class="stat-label"> Da fare</div>
+
+<!-- Tab 1°/2° + filtro Mostra OK -->
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+<div style="display:inline-flex;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:4px;">
+<button type="button" class="ric-tab active" data-ric-tab="prima" style="padding:9px 22px;font-weight:700;font-size:13px;border:none;background:#FF6600;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">1° Ricarica</button>
+<button type="button" class="ric-tab" data-ric-tab="seconda" style="padding:9px 22px;font-weight:600;font-size:13px;border:none;background:transparent;color:#64748b;border-radius:8px;cursor:pointer;font-family:inherit;">2° Ricarica</button>
 </div>
-<div class="stat-box effettuate">
-<div class="stat-number" id="statEffettuate">0</div>
-<div class="stat-label"> Effettuate</div>
+<label style="display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#475569;cursor:pointer;">
+<input type="checkbox" id="ric-mostra-ok" style="width:16px;height:16px;accent-color:#FF6600;cursor:pointer;">
+Mostra anche ricariche in OK
+</label>
 </div>
-</div>
-</div> <div class="ricariche-filters">
-<button class="filter-btn" onclick="filterRicariche(' tutte')">Mostra Tutto</button>
-<button class="filter-btn active" onclick="filterRicariche(' da-fare')">Solo da Fare</button>
-<button class="filter-btn" onclick="filterRicariche(' scadute')">Solo Scadute</button>
-<button class="filter-btn" onclick="filterRicariche(' effettuate')">Solo Effettuate</button>
-</div> <div class="table-container">
+
+<div class="table-container">
 <table class="ricariche-table">
 <thead>
 <tr>
@@ -1792,17 +1834,13 @@
 <th>C.F./P.IVA</th>
 <th>Gestore</th>
 <th>Numero MNP</th>
-<th>1° Ricarica</th>
-<th>2° Ricarica</th>
+<th id="ric-col-data">Data Ricarica</th>
+<th>Stato</th>
+<th>Azione</th>
 </tr>
 </thead>
 <tbody id="ricaricheTableBody">
-<tr>
-<td colspan="6" style="text-align: center; padding: 2rem;">
-<div class="spinner-icon"></div>
-<p style="margin-top: 1rem;">Caricamento ricariche...</p>
-</td>
-</tr>
+<tr><td colspan="7" style="text-align: center; padding: 2rem;"><div class="spinner-icon"></div><p style="margin-top: 1rem;">Caricamento ricariche...</p></td></tr>
 </tbody>
 </table>
 </div>
@@ -1847,7 +1885,7 @@
 <div class="modal-container dettagli-modal">
 <div class="dettagli-header">
 <h2> Dettagli Tecnici</h2>
-<button class="close-btn" onclick="chiudiDettagli()"></button>
+<button class="close-btn" onclick="chiudiDettagli()" aria-label="Chiudi">×</button>
 </div> <form id="dettagliForm">
 <!-- Sezione Dati Principali -->
 <div class="dettagli-section">
@@ -1929,21 +1967,23 @@
 <input type="text" id="dettaglio_numeroProvvisorio" maxlength="10" placeholder="10 cifre">
 <small class="field-hint">Formato: 10 cifre numeriche</small>
 </div>
-</div> <div class="form-row">
+</div>
+<div class="form-row">
 <div class="form-group">
-<label>Giorno Attivazione ️</label>
-<input type="text" id="dettaglio_giornoAttivazione" placeholder="gg/mm/aaaa" maxlength="10">
+<label>Giorno Attivazione</label>
+<input type="date" id="dettaglio_giornoAttivazione">
 <small class="field-hint">Cambia stato + Auto-calcola 1°Ric (+25gg) e 2°Ric (+55gg)</small>
 </div>
 <div class="form-group">
-<label>Giorno Portabilità ️</label>
-<input type="text" id="dettaglio_giornoPortabilita" placeholder="gg/mm/aaaa" maxlength="10">
+<label>Giorno Portabilità</label>
+<input type="date" id="dettaglio_giornoPortabilita">
 <small class="field-hint">Auto-calcola Rientro (+61gg)</small>
 </div>
-</div> <div class="form-row">
+</div>
+<div class="form-row">
 <div class="form-group">
 <label>Giorno Rientro</label>
-<input type="text" id="dettaglio_giornoRientro" readonly style="background: #f5f5f5; cursor: not-allowed; font-style: italic;">
+<input type="date" id="dettaglio_giornoRientro" readonly style="background: #f5f5f5; cursor: not-allowed; font-style: italic;">
 <small class="field-hint">Auto-calcolato: Portabilità + 61 giorni</small>
 </div>
 <div class="form-group">
@@ -1994,6 +2034,52 @@
  // Migrato su Supabase: tabella vendita_switch_sim + storage bucket switch-sim-files
  const sb = db;
  const SWITCH_SIM_BUCKET = 'switch-sim-files';
+
+ // Drag-drop bindings su tutte le .mx-drop-zone della pagina
+ function renderSwitchFileList(inputId) {
+   const inp = document.getElementById(inputId);
+   const list = document.querySelector(`.mx-files-list[data-list-for="${inputId}"]`);
+   const dz = document.querySelector(`.mx-drop-zone[data-target="${inputId}"]`);
+   if (!list || !dz) return;
+   list.innerHTML = '';
+   if (inp.files && inp.files.length > 0) {
+     dz.classList.add('has-file');
+     Array.from(inp.files).forEach(f => {
+       const row = document.createElement('div');
+       row.className = 'mx-file-row';
+       row.innerHTML = `<span class="mx-file-name">${f.name}</span><button type="button" class="mx-file-remove" title="Rimuovi" onclick="clearSwitchFile('${inputId}')">×</button>`;
+       list.appendChild(row);
+     });
+   } else {
+     dz.classList.remove('has-file');
+   }
+ }
+ function clearSwitchFile(inputId) {
+   const inp = document.getElementById(inputId);
+   if (inp) { inp.value = ''; renderSwitchFileList(inputId); }
+ }
+ window.clearSwitchFile = clearSwitchFile;
+ document.querySelectorAll('.mx-drop-zone').forEach(dz => {
+   const targetId = dz.dataset.target;
+   if (!targetId) return;
+   const inp = document.getElementById(targetId);
+   if (!inp) return;
+   dz.addEventListener('click', () => inp.click());
+   inp.addEventListener('change', () => renderSwitchFileList(targetId));
+   dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+   dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+   dz.addEventListener('drop', (e) => {
+     e.preventDefault();
+     dz.classList.remove('dragover');
+     const file = (e.dataTransfer.files || [])[0];
+     if (!file) return;
+     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) return;
+     const dt = new DataTransfer();
+     dt.items.add(file);
+     inp.files = dt.files;
+     renderSwitchFileList(targetId);
+   });
+ });
 
  // Auto-fill operatore dal profilo
  (async () => {
@@ -2559,10 +2645,15 @@
  if (evt && evt.target) {
    evt.target.classList.add('active');
  } else {
-   // Fallback: trova il bottone via testo/ordine
    const tabs = document.querySelectorAll('.nav-tab');
    const idx = { inserimento: 0, attesa: 1, riepilogo: 2, ricariche: 3 }[tabName];
    if (idx !== undefined && tabs[idx]) tabs[idx].classList.add('active');
+ }
+ // Wide layout su tab che hanno tabelle larghe
+ const container = document.querySelector('.container');
+ if (container) {
+   if (['attesa','riepilogo','ricariche'].includes(tabName)) container.classList.add('wide-layout');
+   else container.classList.remove('wide-layout');
  }
 
  // Mostra/nascondi pagine
@@ -2690,7 +2781,7 @@
  const tbody = document.getElementById('attesaTableBody');
  
  if (!filteredAttesaData || filteredAttesaData.length === 0) {
- tbody.innerHTML = '<tr><td colspan="10"style="text-align: center; padding: 3rem; color: #999;"> Nessuna pratica in attesa di attivazione</td></tr>';
+ tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 3rem; color: #999;">Nessuna pratica in attesa di attivazione</td></tr>';
  return;
  }
 
@@ -2698,34 +2789,27 @@
  const hasNuovo = record.nuovoNomeCognome && record.nuovoNomeCognome !== '-';
  const hasNuovoCF = record.nuovoCFPIVA && record.nuovoCFPIVA !== '-';
 
- return`
+ return `
 <tr>
-<td><span class="badge badge-attesa"title="ATTESA ATTIVAZIONE SIM">ATTESA</span></td>
+<td><span class="badge badge-attesa" title="ATTESA ATTIVAZIONE SIM">ATTESA</span></td>
 <td title="${record.attualeNomeCognome || ''}">${record.attualeNomeCognome || '-'}</td>
 <td title="${record.attualeCFPIVA || ''}">${record.attualeCFPIVA || '-'}</td>
-<td class="${hasNuovo ? 'highlight-yellow' : ''}"title="${record.nuovoNomeCognome || ''}">${record.nuovoNomeCognome || '-'}</td>
-<td class="${hasNuovoCF ? 'highlight-yellow' : ''}"title="${record.nuovoCFPIVA || ''}">${record.nuovoCFPIVA || '-'}</td>
+<td class="${hasNuovo ? 'highlight-yellow' : ''}" title="${record.nuovoNomeCognome || ''}">${record.nuovoNomeCognome || '-'}</td>
+<td class="${hasNuovoCF ? 'highlight-yellow' : ''}" title="${record.nuovoCFPIVA || ''}">${record.nuovoCFPIVA || '-'}</td>
 <td title="${record.numeroMNP || ''}">${record.numeroMNP || '-'}</td>
 <td title="${record.dataInserimento || ''}">${record.dataInserimento || '-'}</td>
-<td> ${record.folderUrl ? 
- '<a href="' + record.folderUrl + '"target="_blank"class="link-drive"title="Apri cartella Google Drive"></a>' : 
- '-'
- }
+<td>${record.folderUrl ? '<a href="' + record.folderUrl + '" target="_blank" class="link-drive" title="Apri cartella">📁</a>' : '-'}</td>
+<td style="white-space:nowrap;">
+<button class="action-btn" style="background:#DCFCE7;color:#047857;border:1px solid #BBF7D0;font-weight:700;margin-right:6px;padding:7px 14px;border-radius:8px;cursor:pointer;" onclick="apriAttivazione(${record.rowIndex})" title="Attiva pratica (apri dettagli)">ATTIVAZIONE</button>
+<button class="action-btn" style="background:#FEE2E2;color:#b91c1c;border:1px solid #FECACA;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;" onclick="cambiaStatoAttesa(${record.rowIndex}, 'KO')" title="Pratica KO">KO</button>
 </td>
-<td>
-<button class="action-btn"style="background: #2196F3; color: white;"onclick="apriDettagliAttesa(${record.rowIndex})"title="Apri dettagli tecnici">DETTAGLI</button>
-</td>
-<td>
-<button class="action-btn btn-update"style="background: #4CAF50; margin-right: 0.3rem;"onclick="cambiaStatoAttesa(${record.rowIndex}, 'IN CORSO')"title="Segna come IN CORSO">IN CORSO</button>
-<button class="action-btn btn-update"style="background: #f44336;"onclick="cambiaStatoAttesa(${record.rowIndex}, 'KO')"title="Segna come KO">KO</button>
-</td>
-</tr> `;
+</tr>`;
  }).join('');
  }
 
  function mostraErroreTabellaAttesa(messaggio) {
- document.getElementById('attesaTableBody').innerHTML = 
- '<tr><td colspan="10"style="text-align: center; padding: 3rem; color: #f44336;">' + messaggio + '</td></tr>';
+ document.getElementById('attesaTableBody').innerHTML =
+ '<tr><td colspan="9" style="text-align: center; padding: 3rem; color: #f44336;">' + messaggio + '</td></tr>';
  }
 
  function apriDettagliAttesa(rowIndex) {
@@ -2741,8 +2825,14 @@
  document.getElementById('dettagliModal').classList.add('active');
  }
 
+ // ATTIVAZIONE: apre il modal Dettagli per completare i dati e passare a IN CORSO
+ function apriAttivazione(rowIndex) {
+   apriDettagliAttesa(rowIndex);
+ }
+ window.apriAttivazione = apriAttivazione;
+
  async function cambiaStatoAttesa(rowIndex, nuovoStato) {
- if (!confirm('Confermi di voler cambiare lo stato in"' + nuovoStato + '"?')) {
+ if (!confirm('Confermi di voler cambiare lo stato in "' + nuovoStato + '"?')) {
  return;
  }
 
@@ -2809,28 +2899,31 @@
 
  return matchRagione && matchStato && matchNumero;
  });
- // Ordina per Giorno Rientro: prima le date da oggi in avanti (piu vicine in alto),
- // poi le date passate (dalla piu recente), infine i valori vuoti/non validi.
+ // Ordinamento Giorno Rientro:
+ // 1. SCADUTI prima (data nel passato), i più vecchi/più scaduti in cima
+ // 2. DA SCADERE dopo, i più vicini ad oggi in alto, i più lontani in basso
+ // 3. Valori vuoti/invalidi alla fine
  const oggi = new Date();
  oggi.setHours(0, 0, 0, 0);
 
  filteredData.sort((a, b) => {
- const dateA = parseItalianDate(a.giornoRientro);
- const dateB = parseItalianDate(b.giornoRientro);
+   const dateA = parseItalianDate(a.giornoRientro);
+   const dateB = parseItalianDate(b.giornoRientro);
 
- const getPriority = (date) => {
- if (!date || isNaN(date.getTime())) return 2;
- return date>= oggi ? 0 : 1;
- };
+   const getPriority = (date) => {
+     if (!date || isNaN(date.getTime())) return 2;
+     return date < oggi ? 0 : 1; // 0 = scaduto, 1 = da scadere
+   };
 
- const priorityA = getPriority(dateA);
- const priorityB = getPriority(dateB);
+   const priorityA = getPriority(dateA);
+   const priorityB = getPriority(dateB);
+   if (priorityA !== priorityB) return priorityA - priorityB;
 
- if (priorityA !== priorityB) return priorityA - priorityB;
-
- if (priorityA === 0) return dateA - dateB; // future: piu vicina a oggi prima
- if (priorityA === 1) return dateB - dateA; // passato: piu recente prima
- return 0;
+   // All'interno della stessa priorità: ordine cronologico ASC
+   // - scaduti: data più lontana (più scaduto) prima → ASC
+   // - futuri: data più vicina (a oggi) prima → ASC
+   if (priorityA === 2) return 0;
+   return dateA - dateB;
  });
 
  renderTable();
@@ -2936,27 +3029,34 @@
  function popolaModalDettagli(record) {
  // FUNZIONE HELPER PER FORMATTARE DATE
  const formatDateOnly = (dateValue) => {
- if (!dateValue) return'';
- if (typeof dateValue === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateValue)) {
- return dateValue;
- }
- let date;
- if (typeof dateValue === 'string') {
- date = new Date(dateValue);
- } else if (dateValue instanceof Date) {
- date = dateValue;
- } else {
- return dateValue.toString();
- }
- if (isNaN(date.getTime())) {
- return dateValue.toString();
- }
- const day = String(date.getDate()).padStart(2, '0');
- const month = String(date.getMonth() + 1).padStart(2, '0');
- const year = date.getFullYear();
- return`${day}/${month}/${year}`;
+   if (!dateValue) return '';
+   if (typeof dateValue === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateValue)) return dateValue;
+   let date;
+   if (typeof dateValue === 'string') date = new Date(dateValue);
+   else if (dateValue instanceof Date) date = dateValue;
+   else return dateValue.toString();
+   if (isNaN(date.getTime())) return dateValue.toString();
+   const day = String(date.getDate()).padStart(2, '0');
+   const month = String(date.getMonth() + 1).padStart(2, '0');
+   const year = date.getFullYear();
+   return `${day}/${month}/${year}`;
  };
- 
+ // Per input type="date": ritorna YYYY-MM-DD
+ const formatDateISO = (dateValue) => {
+   if (!dateValue) return '';
+   if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateValue)) return dateValue.slice(0,10);
+   // Se è gg/mm/aaaa convertilo
+   if (typeof dateValue === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateValue)) {
+     const [d,m,y] = dateValue.split('/');
+     return `${y}-${m}-${d}`;
+   }
+   const d = new Date(dateValue);
+   if (isNaN(d.getTime())) return '';
+   const day = String(d.getDate()).padStart(2,'0');
+   const mon = String(d.getMonth()+1).padStart(2,'0');
+   return `${d.getFullYear()}-${mon}-${day}`;
+ };
+
  // MAPPING CAMPI
  const campiDaPopolare = [
  [record.dataInserimento, 'dettaglio_dataRichiesta', formatDateOnly],
@@ -2970,9 +3070,9 @@
  [record.offertaRientro, 'dettaglio_offertaRientro', (v) => v || ''],
  [record.iccidSim, 'dettaglio_iccidSim', (v) => v || ''],
  [record.numeroProvvisorio, 'dettaglio_numeroProvvisorio', (v) => v || ''],
- [record.giornoAttivazione, 'dettaglio_giornoAttivazione', formatDateOnly],
- [record.giornoPortabilita, 'dettaglio_giornoPortabilita', formatDateOnly],
- [record.giornoRientro, 'dettaglio_giornoRientro', formatDateOnly],
+ [record.giornoAttivazione, 'dettaglio_giornoAttivazione', formatDateISO],
+ [record.giornoPortabilita, 'dettaglio_giornoPortabilita', formatDateISO],
+ [record.giornoRientro, 'dettaglio_giornoRientro', formatDateISO],
  [record.simDefinitiva, 'dettaglio_simDefinitiva', (v) => v || ''],
  [record.modalitaPagamento, 'dettaglio_modalitaPagamento', (v) => v || 'POS'],
  [record.costoSwitch, 'dettaglio_costoSwitch', (v) => v ? v.toString().replace(/€\s?/, '') : ''],
@@ -3338,14 +3438,14 @@
  
  if (redirect) {
  setTimeout(() => {
- window.location.href = '../index.html';
+ window.location.href = '../dashboard.html';
  }, 2000);
  }
  } catch (e) {
  console.error('Errore showSuccessModal:', e);
  alert(' ' + message);
  if (redirect) {
- window.location.href = '../index.html';
+ window.location.href = '../dashboard.html';
  }
  }
  }
@@ -3373,10 +3473,12 @@
  
  (async () => {
  try {
+ // Solo switch che sono nella pagina RIEPILOGO: non KO e non ATTESA ATTIVAZIONE SIM
  const { data: rows, error } = await sb
  .from('vendita_switch_sim')
  .select('*')
  .neq('stato', 'KO')
+ .neq('stato', 'ATTESA ATTIVAZIONE SIM')
  .order('data_inserimento', { ascending: false });
  if (error) throw error;
  allRicariche = (rows || []).map(mapDbToLegacy);
@@ -3384,62 +3486,105 @@
  aggiornaStatistiche();
  } catch (error) {
  document.getElementById('ricaricheTableBody').innerHTML = `
-<tr><td colspan="4"style="text-align: center; color: red; padding: 2rem;"> Errore: ${error.message}
-</td></tr> `;
+<tr><td colspan="4" style="text-align: center; color: red; padding: 2rem;">Errore: ${error.message}</td></tr>`;
  }
  })();
  }
  
+ // Stato corrente tab Ricariche
+ let ricaricheTab = 'prima'; // 'prima' | 'seconda'
+ let ricaricheMostraOk = false;
+
+ function setRicaricheTab(tab) {
+   ricaricheTab = tab;
+   document.querySelectorAll('.ric-tab').forEach(b => {
+     const active = b.dataset.ricTab === tab;
+     b.classList.toggle('active', active);
+     b.style.background = active ? '#FF6600' : 'transparent';
+     b.style.color = active ? '#fff' : '#64748b';
+     b.style.fontWeight = active ? '700' : '600';
+   });
+   const col = document.getElementById('ric-col-data');
+   if (col) col.textContent = tab === 'prima' ? 'Data 1° Ricarica' : 'Data 2° Ricarica';
+   renderRicariche();
+ }
+ window.setRicaricheTab = setRicaricheTab;
+ // Bind dei pulsanti tab e checkbox una volta solo
+ document.addEventListener('DOMContentLoaded', () => {
+   document.querySelectorAll('.ric-tab').forEach(b => {
+     b.addEventListener('click', () => setRicaricheTab(b.dataset.ricTab));
+   });
+   const cb = document.getElementById('ric-mostra-ok');
+   if (cb) cb.addEventListener('change', () => { ricaricheMostraOk = cb.checked; renderRicariche(); });
+ });
+
  function renderRicariche() {
- const tbody = document.getElementById('ricaricheTableBody');
- 
- if (allRicariche.length === 0) {
- tbody.innerHTML = `
-<tr><td colspan="6"style="text-align: center; padding: 2rem;"> Nessuna ricarica da gestire
-</td></tr> `;
- return;
- }
- 
- // Filtra in base al filtro attivo
- let ricaricheFiltrate = [...allRicariche];
- 
- if (currentFilter === 'da-fare') {
- ricaricheFiltrate = ricaricheFiltrate.filter(r => !isRicaricaEffettuata(r, 'prima') || !isRicaricaEffettuata(r, 'seconda')
- );
- } else if (currentFilter === 'scadute') {
- ricaricheFiltrate = ricaricheFiltrate.filter(r => isRicaricaScaduta(r, 'prima') || isRicaricaScaduta(r, 'seconda')
- );
- } else if (currentFilter === 'effettuate') {
- ricaricheFiltrate = ricaricheFiltrate.filter(r => isRicaricaEffettuata(r, 'prima') && isRicaricaEffettuata(r, 'seconda')
- );
- }
- 
- // Ordina: scadute prima, poi da fare presto, poi future, poi effettuate
- ricaricheFiltrate.sort((a, b) => {
- const prioritaA = calcolaPriorita(a);
- const prioritaB = calcolaPriorita(b);
- return prioritaA - prioritaB;
- });
- 
- let html = '';
- 
- ricaricheFiltrate.forEach(ricarica => {
- const classeRiga = getClasseRiga(ricarica);
- 
- html += `
-<tr class="${classeRiga}">
-<td><strong>${ricarica.ragioneSociale || '-'}</strong></td>
-<td style="font-family: monospace; font-size: 0.85rem;">${ricarica.attualeCFPIVA || '-'}</td>
-<td>${ricarica.gestoreSim || '-'}</td>
-<td>${ricarica.numeroMNP || '-'}</td>
-<td class="ricarica-cell"> ${renderCellaRicarica(ricarica, 'prima')}
-</td>
-<td class="ricarica-cell"> ${renderCellaRicarica(ricarica, 'seconda')}
-</td>
-</tr> `;
- });
- 
- tbody.innerHTML = html;
+   const tbody = document.getElementById('ricaricheTableBody');
+   if (!tbody) return;
+
+   if (allRicariche.length === 0) {
+     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;">Nessuna ricarica da gestire</td></tr>';
+     return;
+   }
+
+   const tipo = ricaricheTab; // 'prima' | 'seconda'
+   const oggi = new Date(); oggi.setHours(0,0,0,0);
+
+   // Per ogni pratica, considera la ricarica del tipo corrente
+   let righe = allRicariche.map(r => {
+     const dataPrevista = tipo === 'prima' ? r.primaRicarica : r.secondaRicarica;
+     const dataEsec = tipo === 'prima' ? r.dataEsecuzionePrima : r.dataEsecuzioneSeconda;
+     const importo = tipo === 'prima' ? r.importoPrima : r.importoSeconda;
+     const effettuata = isRicaricaEffettuata(r, tipo);
+     return { r, dataPrevista, dataEsec, importo, effettuata };
+   }).filter(x => x.dataPrevista); // escludi pratiche senza data ricarica per questo tipo
+
+   // Filtro OK
+   if (!ricaricheMostraOk) {
+     righe = righe.filter(x => !x.effettuata);
+   }
+
+   // Ordina: scaduti prima (più scaduti in cima), poi futuri (più vicini prima)
+   righe.sort((a, b) => {
+     const da = parseItalianDate(a.dataPrevista);
+     const db = parseItalianDate(b.dataPrevista);
+     const prio = (d) => (!d || isNaN(d.getTime())) ? 2 : (d < oggi ? 0 : 1);
+     const pa = prio(da), pb = prio(db);
+     if (pa !== pb) return pa - pb;
+     if (pa === 2) return 0;
+     return da - db;
+   });
+
+   if (!righe.length) {
+     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;">Nessuna ricarica da visualizzare</td></tr>';
+     return;
+   }
+
+   tbody.innerHTML = righe.map(({ r, dataPrevista, dataEsec, importo, effettuata }) => {
+     let stato = '';
+     if (effettuata) {
+       stato = `<span style="background:#DCFCE7;color:#047857;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;">OK</span>`;
+     } else {
+       const d = parseItalianDate(dataPrevista);
+       if (d && d < oggi) {
+         stato = `<span style="background:#FEE2E2;color:#b91c1c;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;">SCADUTA</span>`;
+       } else {
+         stato = `<span style="background:#FFF7ED;color:#b45309;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;">DA FARE</span>`;
+       }
+     }
+     const azione = effettuata
+       ? `<span style="color:#94a3b8;font-size:12px;">${dataEsec || ''} · ${importo || ''}</span>`
+       : `<button type="button" class="action-btn" style="background:#DCFCE7;color:#047857;border:1px solid #BBF7D0;font-weight:700;padding:6px 12px;border-radius:8px;cursor:pointer;" onclick="apriRicarica(${r.rowIndex},'${tipo}')">Registra</button>`;
+     return `<tr>
+       <td><strong>${r.ragioneSociale || '-'}</strong></td>
+       <td style="font-family:monospace;font-size:12.5px;">${r.attualeCFPIVA || '-'}</td>
+       <td>${r.gestoreSim || '-'}</td>
+       <td>${r.numeroMNP || '-'}</td>
+       <td>${dataPrevista || '-'}</td>
+       <td>${stato}</td>
+       <td>${azione}</td>
+     </tr>`;
+   }).join('');
  }
  
  function renderCellaRicarica(ricarica, tipo) {
@@ -3595,6 +3740,10 @@
  renderRicariche();
  }
  
+ // Alias usato dai bottoni della tabella Ricariche
+ function apriRicarica(rowIndex, tipo) { apriModalRicarica(rowIndex, tipo); }
+ window.apriRicarica = apriRicarica;
+
  function apriModalRicarica(rowIndex, tipo) {
  const ricarica = allRicariche.find(r => String(r.rowIndex) === String(rowIndex));
  

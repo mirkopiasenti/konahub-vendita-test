@@ -728,10 +728,19 @@ form > button.btn-primary {
 /* ============================================================
    POPUP LOADING / SUCCESS — Aspetto uniforme su tutti i moduli
    (eccetto upload-contratti e simulatore_protecta che non caricano questo CSS)
+   NOTA: .loading-modal in apri/chiudi è l'overlay (sfondo scuro),
+   ma in switch_sim è il container interno (sfondo bianco). Distinguo.
    ============================================================ */
-.loading-modal,
+/* Overlay scuro: solo quando NON è anche un modal-container */
+.loading-modal:not(.modal-container),
 .loading-overlay {
     background: rgba(15, 23, 42, 0.55) !important;
+}
+/* Container interno loading (switch_sim usa .modal-container.loading-modal) */
+.modal-container.loading-modal,
+.modal-container.success-modal {
+    background: #fff !important;
+    color: var(--mx-text) !important;
 }
 .loading-modal .loading-content,
 .loading-overlay .loading-card {

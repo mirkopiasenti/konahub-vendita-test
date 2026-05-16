@@ -939,9 +939,9 @@
 </div>
 </div> <div class="info-box">
 <p><strong>Nota:</strong> Tutti i campi contrassegnati con <span style="color: #FF6600;">*</span> sono obbligatori. Assicurati di compilare tutti i dati e caricare i documenti richiesti prima di inviare.</p>
-</div> <div class="buttons-container">
-<button type="submit" class="btn btn-primary" id="submit-btn"> Invia Dati
-</button>
+</div>
+<div class="buttons-container" style="display:flex;justify-content:center;margin-top:18px;">
+<button type="submit" class="btn btn-primary" id="submit-btn" style="min-width:300px;padding:14px 32px;font-size:15px;font-weight:700;">Invia Dati</button>
 </div>
 </form>
 </div> <!-- PAGINA RIEPILOGO -->
@@ -1164,17 +1164,39 @@
  }
  })();
 
- async function uploadApriChiudiFile(praticaId, base64, filename, label) {
- try {
- const bin = atob(base64);
- const buf = new Uint8Array(bin.length);
- for (let i = 0; i< bin.length; i++) buf[i] = bin.charCodeAt(i);
- const blob = new Blob([buf], { type: 'application/octet-stream' });
- const path = `pratica_${praticaId}/${label}_${Date.now()}_${filename}`;
- const { error } = await sb.storage.from(APRI_CHIUDI_BUCKET).upload(path, blob, { upsert: true });
- if (error) throw error;
- return sb.storage.from(APRI_CHIUDI_BUCKET).getPublicUrl(path).data?.publicUrl || null;
- } catch (e) { console.error('Upload errore (' + label + '):', e); return null; }
+ // Sanitize per nome cartella/file Supabase Storage:
+ // - tieni alfanumerici, spazi, trattini, underscore; rimpiazza il resto con _
+ // - rimpiazza spazi con _ e collapsa più underscore
+ function sanitizeFsName(s) {
+   return String(s || '')
+     .normalize('NFD').replace(/[̀-ͯ]/g, '') // togli accenti
+     .replace(/[^A-Za-z0-9\s_-]/g, '_')
+     .trim().replace(/\s+/g, '_')
+     .replace(/_+/g, '_')
+     .substring(0, 80) || 'ND';
+ }
+ // Estensione da nome file (default .pdf)
+ function fileExt(name) {
+   const m = /\.([A-Za-z0-9]{1,8})$/.exec(name || '');
+   return m ? '.' + m[1].toLowerCase() : '.pdf';
+ }
+ // Costruisci nome cartella: A_P_<vecchio>_<nuovo>
+ function buildFolderName(ragVecchio, ragNuovo) {
+   return `A_P_${sanitizeFsName(ragVecchio)}_${sanitizeFsName(ragNuovo)}`;
+ }
+
+ // Upload generico: ora prende folderPath + fileName espliciti
+ async function uploadApriChiudiFile(folderPath, base64, fileName) {
+   try {
+     const bin = atob(base64);
+     const buf = new Uint8Array(bin.length);
+     for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+     const blob = new Blob([buf], { type: 'application/octet-stream' });
+     const path = `${folderPath}/${fileName}`;
+     const { error } = await sb.storage.from(APRI_CHIUDI_BUCKET).upload(path, blob, { upsert: true });
+     if (error) throw error;
+     return sb.storage.from(APRI_CHIUDI_BUCKET).getPublicUrl(path).data?.publicUrl || null;
+   } catch (e) { console.error('Upload errore (' + fileName + '):', e); return null; }
  }
 
  // Variabili globali per modali
@@ -1345,10 +1367,10 @@
    if (!window.db) return;
    const MODULI_BUCKET = 'moduli-template';
    const MAP = {
-     'fisso_consumer':  'disdetta_fisso_consumer.pdf',
-     'fisso_business':  'disdetta_fisso_business.pdf',
-     'mobile_consumer': 'disdetta_mobile_consumer.pdf',
-     'mobile_business': 'disdetta_mobile_business.pdf'
+     'fisso_consumer':  'moduli-apri-chiudi/disdetta_fisso_consumer.pdf',
+     'fisso_business':  'moduli-apri-chiudi/disdetta_fisso_business.pdf',
+     'mobile_consumer': 'moduli-apri-chiudi/disdetta_mobile_consumer.pdf',
+     'mobile_business': 'moduli-apri-chiudi/disdetta_mobile_business.pdf'
    };
    document.querySelectorAll('.mx-template-link').forEach(a => {
      const key = a.dataset.template;
@@ -1444,13 +1466,17 @@
      .single();
    if (insErr) throw insErr;
 
-   // 4. Upload allegati
+   // 4. Upload allegati con nuovo naming standard
+   const folderName = buildFolderName(datiVecchio.ragione_sociale, datiNuovo.ragione_sociale);
    await Promise.all([
-     uploadApriChiudiFile(inserted.id, files.docVecchio, files.docVecchioNome, 'doc_vecchio'),
-     uploadApriChiudiFile(inserted.id, files.docNuovo, files.docNuovoNome, 'doc_nuovo'),
-     uploadApriChiudiFile(inserted.id, files.docFisso, files.docFissoNome, 'doc_fisso'),
-     files.docSim ? uploadApriChiudiFile(inserted.id, files.docSim, files.docSimNome, 'doc_sim') : Promise.resolve()
+     uploadApriChiudiFile(folderName, files.docVecchio, 'doc_vecchio_intestatario' + fileExt(files.docVecchioNome)),
+     uploadApriChiudiFile(folderName, files.docNuovo,   'doc_nuovo_intestatario'   + fileExt(files.docNuovoNome)),
+     uploadApriChiudiFile(folderName, files.docFisso,   'disdetta_fisso'           + fileExt(files.docFissoNome)),
+     files.docSim ? uploadApriChiudiFile(folderName, files.docSim, 'disdetta_sim' + fileExt(files.docSimNome)) : Promise.resolve()
    ]);
+
+   // Salva il nome cartella nel record (per recupero allegati nel dettaglio)
+   await sb.from('vendita_apri_chiudi').update({ cartella_url: folderName }).eq('id', inserted.id);
 
    nascondiLoading();
    await mxSuccess('Dati salvati con successo!');
@@ -1608,23 +1634,51 @@
    const container = document.getElementById('allegati-list-' + rowIndex);
    if (!container) return;
    try {
-     const path = `pratica_${rowIndex}`;
-     const { data, error } = await sb.storage.from(APRI_CHIUDI_BUCKET).list(path);
-     if (error) throw error;
-     const files = (data || []).filter(f => f.name && !f.name.startsWith('.') && f.metadata);
+     // Leggi nome cartella dal record (oppure ricostruiscilo)
+     const { data: rec } = await sb
+       .from('vendita_apri_chiudi')
+       .select('cartella_url, ragione_sociale_vecchio, ragione_sociale_nuovo')
+       .eq('id', rowIndex)
+       .single();
+     let folderName = rec?.cartella_url
+       || buildFolderName(rec?.ragione_sociale_vecchio, rec?.ragione_sociale_nuovo);
+
+     // Path candidati: folder reale + fallback legacy 'pratica_<id>'
+     const candidates = [folderName, `pratica_${rowIndex}`];
+     let files = [];
+     let usedPath = '';
+     for (const p of candidates) {
+       const { data } = await sb.storage.from(APRI_CHIUDI_BUCKET).list(p);
+       const list = (data || []).filter(f => f.name && !f.name.startsWith('.') && f.metadata);
+       if (list.length) { files = list; usedPath = p; break; }
+     }
+
      if (!files.length) {
        container.innerHTML = '<div style="color:#94a3b8;font-size:13px;">Nessun allegato presente</div>';
        return;
      }
+
+     // Mappa label leggibili
+     function prettyLabel(name) {
+       const base = name.replace(/\.[a-z0-9]+$/i, '');
+       const lab = base
+         .replace(/^doc_vecchio_intestatario.*/i, 'Documento Vecchio Intestatario')
+         .replace(/^doc_nuovo_intestatario.*/i,   'Documento Nuovo Intestatario')
+         .replace(/^disdetta_fisso.*/i,          'Disdetta Linea Fissa')
+         .replace(/^disdetta_sim.*/i,            'Disdetta SIM Mobile')
+         .replace(/^ask_(.+?)(?:_(\d+))?$/i, (m, num, idx) => `ASK ${num}${idx ? ' • #' + idx : ''}`);
+       return lab === base ? name : lab + ' (' + name + ')';
+     }
+
      container.innerHTML = files.map(f => {
-       const fullPath = path + '/' + f.name;
+       const fullPath = usedPath + '/' + f.name;
        const url = sb.storage.from(APRI_CHIUDI_BUCKET).getPublicUrl(fullPath).data?.publicUrl || '#';
-       const labelPretty = f.name.replace(/^(doc_vecchio|doc_nuovo|doc_fisso|doc_sim|disdetta)_\d+_/, '').replace(/_\d+(?=\.)/, '');
-       return `<a href="${url}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;text-decoration:none;color:#1e293b;font-size:13px;transition:all .2s ease;">
+       const label = prettyLabel(f.name);
+       return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;color:#1e293b;font-size:13px;">
          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${labelPretty}</span>
-         <span style="color:#FF6600;font-size:12px;font-weight:700;">Scarica</span>
-       </a>`;
+         <a href="${url}" target="_blank" rel="noopener" style="flex:1;overflow:hidden;text-overflow:ellipsis;color:#1e293b;text-decoration:none;font-weight:500;" title="Apri anteprima in nuova scheda">${label}</a>
+         <a href="${url}" download="${f.name}" style="color:#FF6600;font-size:12px;font-weight:700;text-decoration:none;padding:4px 10px;border:1px solid #FFE0CC;border-radius:6px;" title="Scarica file">Scarica</a>
+       </div>`;
      }).join('');
    } catch (e) {
      console.error('Errore caricamento allegati:', e);
@@ -2036,15 +2090,29 @@
  mostraLoading('Caricamento file PDF e salvataggio dati disdetta in corso...', 'Salvataggio Dati Disdetta');
 
  try {
-   // Converti tutti i file in base64
-   let filesBase64 = [];
-   for (const file of filesDisdettaSelezionati) {
-     const base64 = await fileToBase64(file);
-     filesBase64.push({ base64, nome: file.name });
+   // Recupero folder name della pratica (dalla colonna cartella_url, salvata in fase di insert)
+   const { data: praticaRow } = await sb
+     .from('vendita_apri_chiudi')
+     .select('cartella_url, ragione_sociale_vecchio, ragione_sociale_nuovo')
+     .eq('id', praticaSelezionata)
+     .single();
+   let folderName = praticaRow?.cartella_url;
+   if (!folderName) {
+     // Fallback: ricostruisci dal record (per pratiche pre-naming)
+     folderName = buildFolderName(praticaRow?.ragione_sociale_vecchio, praticaRow?.ragione_sociale_nuovo);
    }
-   // Upload allegati disdetta
-   for (const f of filesBase64) {
-     await uploadApriChiudiFile(praticaSelezionata, f.base64, f.nome, 'disdetta');
+
+   // Sanitize numero ASK per fs
+   const askSafe = sanitizeFsName(numeroAsk);
+
+   // Converti e carica con nuovo naming: ask_<numero_ask>_<n>.<ext>
+   const multi = filesDisdettaSelezionati.length > 1;
+   for (let i = 0; i < filesDisdettaSelezionati.length; i++) {
+     const file = filesDisdettaSelezionati[i];
+     const base64 = await fileToBase64(file);
+     const suffix = multi ? '_' + (i + 1) : '';
+     const fileName = 'ask_' + askSafe + suffix + fileExt(file.name);
+     await uploadApriChiudiFile(folderName, base64, fileName);
    }
 
    const { error } = await sb
@@ -2052,7 +2120,8 @@
      .update({
        stato: 'CHIUSO',
        data_invio_disdetta: dataInvio,
-       numero_ask: numeroAsk
+       numero_ask: numeroAsk,
+       cartella_url: folderName  // assicura sia salvato
      })
      .eq('id', praticaSelezionata);
    if (error) throw error;
