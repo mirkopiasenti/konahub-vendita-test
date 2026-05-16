@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Test Centro Email Mirox</title>
+<style>
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #f8fafc; padding: 40px 20px; color: #0f172a; }
+  .container { max-width: 640px; margin: 0 auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 30px; box-shadow: 0 4px 12px rgba(15,23,42,.06); }
+  h1 { margin: 0 0 6px; font-size: 22px; }
+  p { color: #64748b; font-size: 14px; }
+  label { display: block; font-size: 13px; font-weight: 700; margin: 14px 0 6px; }
+  input, textarea, select { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; font-size: 14px; box-sizing: border-box; }
+  textarea { min-height: 80px; resize: vertical; }
+  button { background: #FF6600; color: #fff; border: none; padding: 12px 24px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 18px; font-family: inherit; }
+  button:hover { background: #E55A00; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  #risultato { margin-top: 20px; padding: 16px; border-radius: 10px; font-family: monospace; font-size: 13px; white-space: pre-wrap; word-break: break-all; }
+  .ok { background: #DCFCE7; color: #047857; border: 1px solid #BBF7D0; }
+  .err { background: #FEE2E2; color: #b91c1c; border: 1px solid #FECACA; }
+  .info { background: #EFF6FF; color: #1d4ed8; border: 1px solid #BFDBFE; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🧪 Test Centro Email Mirox</h1>
+  <p>Strumento interno per verificare che il sistema email funzioni correttamente.</p>
+
+  <label>Destinatario</label>
+  <input type="email" id="to" value="mirox.crm@gmail.com">
+
+  <label>Subject</label>
+  <input type="text" id="subject" value="Test centro email Mirox">
+
+  <label>Tipo invio</label>
+  <select id="modo">
+    <option value="html">HTML libero (test rapido)</option>
+    <option value="template_segnalazione">Template: segnalazione_assegnata (a mirko.piasenti@gmail.com)</option>
+    <option value="template_rientro">Template: rientro_sim (a info@konatech.it)</option>
+    <option value="template_ordine">Template: ordine_smartphone_nuovo (a mirko.piasenti@gmail.com)</option>
+  </select>
+
+  <label>HTML libero (solo se "HTML libero" selezionato)</label>
+  <textarea id="html"><h1 style="color:#FF6600">Funziona!</h1><p>Centro Email Mirox è operativo. ✅</p></textarea>
+
+  <button id="btnSend">Invia mail di test</button>
+
+  <div id="risultato" style="display:none;"></div>
+</div>
+
+<script>
+const SAMPLES = {
+  template_segnalazione: {
+    to: 'mirko.piasenti@gmail.com',
+    template: 'segnalazione_assegnata',
+    vars: {
+      id: 999,
+      assegnatario: 'Mirko',
+      urgenza: 'Normale',
+      ragione_sociale: 'TEST CLIENTE',
+      codice_fiscale_piva: 'TSTCLN80A01H501Z',
+      numero_contatto: '3331234567',
+      operatore: 'Test',
+      gestione_pratica: 'Interna Negozio',
+      data_invio: new Date().toLocaleDateString('it-IT'),
+      dettagli_segnalazione: 'Questo è un test del template segnalazione_assegnata.',
+      link_segnalazioni: window.location.origin + '/moduli/segnalazioni.html'
+    }
+  },
+  template_rientro: {
+    to: 'info@konatech.it',
+    template: 'rientro_sim',
+    vars: {
+      id: 888,
+      cliente: 'TEST CLIENTE',
+      cf: 'TSTCLN80A01H501Z',
+      mnp: '3331234567',
+      gestore: 'OPTIMA',
+      operatore: 'Test',
+      data_inserimento: new Date().toLocaleDateString('it-IT'),
+      link_switch: window.location.origin + '/moduli/switch_sim.html'
+    }
+  },
+  template_ordine: {
+    to: 'mirko.piasenti@gmail.com',
+    template: 'ordine_smartphone_nuovo',
+    vars: {
+      codice_ordine: 'ORD-TEST-001',
+      cliente: 'TEST CLIENTE',
+      cf: 'TSTCLN80A01H501Z',
+      cellulare: '3331234567',
+      marca: 'iPhone',
+      modello: '15 Pro',
+      memoria: '256GB',
+      colorazione: 'Titanio',
+      operatore: 'Test',
+      note_block: '',
+      link_ordini: window.location.origin + '/moduli/ordini_smartphone.html'
+    }
+  }
+};
+
+document.getElementById('modo').addEventListener('change', (e) => {
+  const tx = document.getElementById('html');
+  tx.disabled = e.target.value !== 'html';
+  tx.style.opacity = e.target.value === 'html' ? '1' : '.5';
+});
+
+document.getElementById('btnSend').addEventListener('click', async () => {
+  const btn = document.getElementById('btnSend');
+  const out = document.getElementById('risultato');
+  const modo = document.getElementById('modo').value;
+  const to = document.getElementById('to').value.trim();
+  const subject = document.getElementById('subject').value.trim();
+
+  let payload;
+  if (modo === 'html') {
+    payload = { to, subject, html: document.getElementById('html').value };
+  } else {
+    payload = SAMPLES[modo];
+    if (subject) payload.subject = subject;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Invio in corso...';
+  out.style.display = 'block';
+  out.className = 'info';
+  out.textContent = 'Richiesta inviata...\nPayload:\n' + JSON.stringify(payload, null, 2);
+
+  try {
+    const res = await fetch('/.netlify/functions/mirox-send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    out.className = (res.ok && data.ok) ? 'ok' : 'err';
+    out.textContent = (res.ok && data.ok ? '✅ OK\n\n' : '❌ ERRORE\n\n') + JSON.stringify(data, null, 2);
+  } catch (err) {
+    out.className = 'err';
+    out.textContent = '❌ Errore di rete: ' + err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Invia mail di test';
+  }
+});
+</script>
+</body>
+</html>
