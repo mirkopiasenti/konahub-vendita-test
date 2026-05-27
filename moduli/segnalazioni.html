@@ -198,19 +198,30 @@
 </style>
 </head>
 <body>
-<div class="page-header">
-<div class="page-header-left"><h1>Segnalazioni</h1><p>Gestione segnalazioni clienti WindTre Store</p></div>
-<div class="header-actions"><button type="button" class="btn btn-primary" onclick="apriModalAskManuale()">ASK Manuale</button><a href="../dashboard.html" class="btn btn-secondary">Dashboard</a></div>
+<!-- Header uniforme con gli altri moduli (riferimento: Apri/Chiudi) -->
+<div class="header">
+<div class="header-content">
+<div>
+<h1>Segnalazioni</h1>
+<p class="subtitle">Gestione segnalazioni clienti WindTre Store</p>
 </div>
-<div class="tab-nav">
-<button type="button" class="tab-btn active" data-tab="richiesta" onclick="switchTab('richiesta',this)">Nuova Segnalazione</button>
-<button type="button" class="tab-btn" data-tab="assegnazione" onclick="switchTab('assegnazione',this)">Da Assegnare<span class="tab-counter zero" id="cntAss">0</span></button>
-<button type="button" class="tab-btn" data-tab="gestione" onclick="switchTab('gestione',this)">Da Gestire<span class="tab-counter zero" id="cntGest">0</span></button>
-<button type="button" class="tab-btn" data-tab="riepilogo" onclick="switchTab('riepilogo',this)">Riepilogo<span class="tab-counter zero" id="cntRiep">0</span></button>
+<a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
 </div>
-<div class="page-body">
+</div>
+<!-- Tab bar -->
+<div class="nav-tabs">
+<button type="button" class="nav-tab tab-btn active" data-tab="richiesta" onclick="switchTab('richiesta',this)">Nuova Segnalazione</button>
+<button type="button" class="nav-tab tab-btn" data-tab="assegnazione" onclick="switchTab('assegnazione',this)">Da Assegnare<span class="tab-counter zero" id="cntAss">0</span></button>
+<button type="button" class="nav-tab tab-btn" data-tab="gestione" onclick="switchTab('gestione',this)">Da Gestire<span class="tab-counter zero" id="cntGest">0</span></button>
+<button type="button" class="nav-tab tab-btn" data-tab="riepilogo" onclick="switchTab('riepilogo',this)">Riepilogo<span class="tab-counter zero" id="cntRiep">0</span></button>
+</div>
+<div class="container page-body">
 <!-- TAB 1 -->
 <div id="richiesta" class="tab-content active">
+<!-- Pulsante "ASK Manuale" allineato a destra come negli altri moduli (pattern del + Aggiungi rimborso manuale) -->
+<div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+<button type="button" class="btn btn-secondary" onclick="apriModalAskManuale()" style="background:#fff;color:#0f172a;border:1px solid #e2e8f0;padding:8px 16px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">+ ASK Manuale</button>
+</div>
 <form id="formNuova" class="form-card">
 <div class="form-card-title">Nuova Segnalazione</div>
 <div class="form-group"><label class="form-label">Urgenza</label>
@@ -227,7 +238,7 @@
 <div class="form-group"><label class="form-label">Ragione Sociale</label><input class="form-control" id="ragioneSociale" required></div>
 <div class="form-row"><div class="form-group"><label class="form-label">Codice Fiscale / P.IVA</label><input class="form-control" id="cf" maxlength="16" required style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"><div class="form-hint">16 caratteri (CF) oppure 11 cifre (P.IVA)</div></div><div class="form-group"><label class="form-label">Numero Contatto</label><input class="form-control" id="tel" type="tel" pattern="[0-9]{10}" required><div class="form-hint">10 cifre senza spazi</div></div></div>
 <div class="form-group"><label class="form-label">Dettagli Segnalazione</label><textarea class="form-control" id="dettagli" rows="4" placeholder="Descrivi la segnalazione..." required></textarea></div>
-<div class="form-group"><label class="form-label">Allegati</label><div class="file-drop" onclick="document.getElementById(' fileInput').click()"><input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"><div class="file-drop-icon">↑</div><div class="file-drop-text">Clicca per allegare file</div><div class="file-drop-hint">PDF, PNG, JPG, DOC</div></div><div id="fileList"></div></div>
+<div class="form-group"><label class="form-label">Allegati</label><div class="file-drop" onclick="document.getElementById('fileInput').click()"><input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"><div class="file-drop-icon">↑</div><div class="file-drop-text">Clicca per allegare file</div><div class="file-drop-hint">PDF, PNG, JPG, DOC</div></div><div id="fileList"></div></div>
 <div style="text-align:right;margin-top:8px;"><button type="submit" class="btn btn-primary btn-lg">Invia Segnalazione</button></div>
 </form>
 </div>
@@ -251,9 +262,9 @@
 <div class="inline-loader" id="ldRiep"><div class="inline-spinner"></div><div class="inline-loader-text">Caricamento...</div></div>
 <div class="table-container"><table><thead><tr><th>ID</th><th>Stato</th><th>Urgenza</th><th>Assegnatario</th><th>Cliente</th><th>Data Apertura</th><th></th></tr></thead><tbody id="tbRiep"><tr class="empty-row"><td colspan="7">Nessuna segnalazione</td></tr></tbody></table></div>
 </div>
-</div> <div class="modal-overlay" id="modalGest"><div class="modal" style="max-width:800px;"><div class="modal-header"><span class="modal-title">Dettagli Segnalazione</span><button type="button" class="modal-close" onclick="closeModal(' modalGest')">&times;</button></div><div class="modal-body" id="modalGestBody"></div></div></div>
-<div class="modal-overlay" id="modalRiep"><div class="modal" style="max-width:800px;"><div class="modal-header"><span class="modal-title">Dettagli e Note</span><button type="button" class="modal-close" onclick="closeModal(' modalRiep')">&times;</button></div><div class="modal-body" id="modalRiepBody"></div></div></div>
-<div class="modal-overlay" id="modalAsk"><div class="modal" style="max-width:540px;"><div class="modal-header"><span class="modal-title">ASK Manuale</span><button type="button" class="modal-close" onclick="closeModal(' modalAsk')">&times;</button></div><div class="modal-body"><p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Inserisci un ASK già gestito. Verrà salvato come"Chiuso".</p><form id="formAsk"><div class="form-group"><label class="form-label">Ragione Sociale</label><input class="form-control" id="askRagioneSociale" required></div><div class="form-group"><label class="form-label">Codice Fiscale / P.IVA</label><input class="form-control" id="askCf" required maxlength="16" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"><div class="form-hint">16 caratteri (CF) oppure 11 cifre (P.IVA)</div></div><div class="form-row"><div class="form-group"><label class="form-label">Assegnatario</label><select class="form-control" id="askAssegnatario" required><option value="">Seleziona</option><option>Mirko</option><option>Francesca</option></select></div><div class="form-group"><label class="form-label">Tipo ASK</label><select class="form-control" id="askTipo" required><option value="">Seleziona</option><option>Reclami su Fatture</option><option>Comportamenti Scorretti</option><option>Recessi</option><option>Normalizzazioni</option><option>Guasti</option><option>Convergenze</option><option>Subentri</option><option>CS</option><option>Altro</option></select></div></div><div class="form-group"><label class="form-label">Numero ASK</label><input class="form-control" id="askNum" required></div><div class="form-group"><label class="form-label">Allegati</label><input type="file" id="askFiles" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="form-control"></div><div class="modal-footer" style="padding:16px 0 0;border:0;"><button type="button" class="btn btn-secondary" onclick="closeModal(' modalAsk')">Annulla</button><button type="submit" class="btn btn-primary">Salva ASK</button></div></form></div></div></div> <div class="modal-overlay" id="modalAss"><div class="modal" style="max-width:800px;"><div class="modal-header"><span class="modal-title">Dettagli Segnalazione</span><button type="button" class="modal-close" onclick="closeModal(' modalAss')">&times;</button></div><div class="modal-body" id="modalAssBody"></div></div></div> <div id="toast-container"></div>
+</div> <div class="modal-overlay" id="modalGest"><div class="modal" style="max-width:800px;"><div class="modal-header"><span class="modal-title">Dettagli Segnalazione</span><button type="button" class="modal-close" onclick="closeModal('modalGest')">&times;</button></div><div class="modal-body" id="modalGestBody"></div></div></div>
+<div class="modal-overlay" id="modalRiep"><div class="modal" style="max-width:800px;"><div class="modal-header"><span class="modal-title">Dettagli e Note</span><button type="button" class="modal-close" onclick="closeModal('modalRiep')">&times;</button></div><div class="modal-body" id="modalRiepBody"></div></div></div>
+<div class="modal-overlay" id="modalAsk"><div class="modal" style="max-width:540px;"><div class="modal-header"><span class="modal-title">ASK Manuale</span><button type="button" class="modal-close" onclick="closeModal('modalAsk')">&times;</button></div><div class="modal-body"><p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Inserisci un ASK già gestito. Verrà salvato come"Chiuso".</p><form id="formAsk"><div class="form-group"><label class="form-label">Ragione Sociale</label><input class="form-control" id="askRagioneSociale" required></div><div class="form-group"><label class="form-label">Codice Fiscale / P.IVA</label><input class="form-control" id="askCf" required maxlength="16" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"><div class="form-hint">16 caratteri (CF) oppure 11 cifre (P.IVA)</div></div><div class="form-row"><div class="form-group"><label class="form-label">Assegnatario</label><select class="form-control" id="askAssegnatario" required><option value="">Seleziona</option><option>Mirko</option><option>Francesca</option></select></div><div class="form-group"><label class="form-label">Tipo ASK</label><select class="form-control" id="askTipo" required><option value="">Seleziona</option><option>Reclami su Fatture</option><option>Comportamenti Scorretti</option><option>Recessi</option><option>Normalizzazioni</option><option>Guasti</option><option>Convergenze</option><option>Subentri</option><option>CS</option><option>Altro</option></select></div></div><div class="form-group"><label class="form-label">Numero ASK</label><input class="form-control" id="askNum" required></div><div class="form-group"><label class="form-label">Allegati</label><input type="file" id="askFiles" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="form-control"></div><div class="modal-footer" style="padding:16px 0 0;border:0;"><button type="button" class="btn btn-secondary" onclick="closeModal('modalAsk')">Annulla</button><button type="submit" class="btn btn-primary">Salva ASK</button></div></form></div></div></div> <div class="modal-overlay" id="modalAss"><div class="modal" style="max-width:800px;"><div class="modal-header"><span class="modal-title">Dettagli Segnalazione</span><button type="button" class="modal-close" onclick="closeModal('modalAss')">&times;</button></div><div class="modal-body" id="modalAssBody"></div></div></div> <div id="toast-container"></div>
 <div class="loading-overlay" id="loadingOverlay"><div class="loading-card"><div class="spinner" id="ldSpinner"></div><div class="loading-result" id="ldResult" style="display:none;"></div><div class="loading-text" id="ldText">Salvataggio...</div></div></div> <script>
 const SUPABASE_URL='https://lbgwamhjkjjfwgusafbi.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxiZ3dhbWhqa2pqZndndXNhZmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2MjIxMTksImV4cCI6MjA5MDE5ODExOX0.SgmrxbP07F-8jtqvf8JHYkFqCVu-2hM4KgLEH_vPvuo';

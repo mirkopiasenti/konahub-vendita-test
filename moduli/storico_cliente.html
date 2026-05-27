@@ -333,27 +333,83 @@ body {
 
 <div class="container" style="max-width:1100px;margin:24px auto;padding:0 24px;">
 
-<!-- SEZIONE RICERCA -->
-<div class="search-card">
-  <h2>Cerca cliente</h2>
-  <form id="searchForm" class="search-row" onsubmit="return false;">
-    <input type="text" id="searchInput" class="search-input" placeholder="CF / P.IVA / Nome / Cognome / Cellulare..." autocomplete="off">
-    <button type="submit" class="btn-search" id="btnSearch">Cerca</button>
-  </form>
-  <div id="resultsArea" style="margin-top:16px;"></div>
+<!-- VIEW 1: RICERCA (visibile di default) -->
+<div id="searchView">
+  <div class="search-card">
+    <h2>Cerca cliente</h2>
+    <form id="searchForm" class="search-row" onsubmit="return false;">
+      <input type="text" id="searchInput" class="search-input" placeholder="CF / P.IVA / Nome / Cognome / Cellulare..." autocomplete="off">
+      <button type="submit" class="btn-search" id="btnSearch">Cerca</button>
+    </form>
+    <div id="resultsArea" style="margin-top:16px;"></div>
+  </div>
 </div>
 
-<!-- SCHEDA CLIENTE SELEZIONATA -->
-<div id="clientArea" style="display:none;"></div>
-
-<!-- TIMELINE -->
-<div id="timelineArea" style="display:none;"></div>
+<!-- VIEW 2: PAGINA DEDICATA CLIENTE (nascosta finché non selezioni un cliente) -->
+<div id="clientView" style="display:none;">
+  <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+    <button type="button" id="btnBackToSearch" class="btn-back-internal" onclick="tornaAllaRicerca()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;font-family:inherit;">← Torna alla ricerca</button>
+    <span id="clientBreadcrumb" style="font-size:13px;color:#64748b;font-weight:500;"></span>
+  </div>
+  <!-- SCHEDA CLIENTE SELEZIONATA -->
+  <div id="clientArea"></div>
+  <!-- TIMELINE -->
+  <div id="timelineArea"></div>
+</div>
 
 </div>
 
 <script>
 const sb = db;
 let currentCliente = null;
+let currentStorico = [];
+
+// =============================================================================
+// CONFIG: mappa fra "tipo" della view storico_cliente e tabella sorgente / bucket
+// =============================================================================
+const TIPO_CONFIG = {
+  'ordine_smartphone':    { tabella: 'vendita_ordini_smartphone',          bucket: null,                  folderField: null,         folderPrefix: null,            label: 'Ordine Smartphone' },
+  'dispositivo_comodato': { tabella: 'post_vendita_dispositivi_comodato',  bucket: 'comodato-files',       folderField: null,         folderPrefix: 'dispositivo_',  label: 'Dispositivo Comodato' },
+  'rimborso':             { tabella: 'post_vendita_gestione_rimborsi',     bucket: 'rimborsi-files',       folderField: null,         folderPrefix: 'rimborso_',     label: 'Rimborso' },
+  'apri_chiudi_vecchio':  { tabella: 'vendita_apri_chiudi',                bucket: 'apri-chiudi-files',    folderField: 'cartella_url', folderPrefix: null,           label: 'Apri/Chiudi (cessione)' },
+  'apri_chiudi_nuovo':    { tabella: 'vendita_apri_chiudi',                bucket: 'apri-chiudi-files',    folderField: 'cartella_url', folderPrefix: null,           label: 'Apri/Chiudi (subentro)' },
+  'switch_sim_attuale':   { tabella: 'vendita_switch_sim',                 bucket: 'switch-sim-files',     folderField: 'cartella_url', folderPrefix: null,           label: 'Switch SIM (attuale intestatario)' },
+  'switch_sim_rientro':   { tabella: 'vendita_switch_sim',                 bucket: 'switch-sim-files',     folderField: 'cartella_url', folderPrefix: null,           label: 'Switch SIM (rientro)' }
+};
+
+// Mappa label tecnici file -> nomi descrittivi (per popup allegati)
+const FILE_LABELS = {
+  // apri/chiudi
+  'doc_vecchio_intestatario': 'Documento Identità Vecchio Intestatario',
+  'doc_nuovo_intestatario':   'Documento Identità Nuovo Intestatario',
+  'disdetta_fisso':            'Disdetta Linea Fissa',
+  'disdetta_sim':              'Disdetta SIM Mobile',
+  // switch sim
+  'docAttualeIntestatario':    'Documento Identità Attuale Intestatario',
+  'docNuovoIntestatario':      'Documento Identità Nuovo Intestatario',
+  'visuraCamerale':            'Visura Camerale',
+  'fotoSimCliente':            'Foto SIM Cliente',
+  'fotoSimSwitch':             'Foto SIM Switch',
+  'docContrattoSwitch':        'Contratto Switch SIM firmato',
+  'docCarrello':               'Stampa Carrello',
+  'docModuloPrivacy':          'Modulo Privacy',
+  'docDelegaConsenso':         'Delega/Consenso'
+};
+function _displayFileName(rawFileName) {
+  if (!rawFileName) return 'Documento';
+  const base = rawFileName.replace(/\.[a-z0-9]+$/i, '');
+  // Pattern Apri/Chiudi: "doc_vecchio_intestatario" o "ask_<numero>_<idx>"
+  for (const k of Object.keys(FILE_LABELS)) {
+    if (base.startsWith(k)) return FILE_LABELS[k];
+  }
+  // Pattern Switch SIM: "<label>_<timestamp>_<original>"
+  const m = /^([A-Za-z]+)_\d+_/.exec(base);
+  if (m && FILE_LABELS[m[1]]) return FILE_LABELS[m[1]];
+  // Fallback ASK
+  const askM = /^ask_(.+?)(?:_(\d+))?$/i.exec(base);
+  if (askM) return 'ASK ' + askM[1] + (askM[2] ? ' • #' + askM[2] : '');
+  return base;
+}
 
 function escapeHtml(s) {
   if (s === null || s === undefined) return '';
@@ -468,12 +524,15 @@ document.getElementById('searchInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); eseguiRicerca(); }
 });
 
-// === SELEZIONA CLIENTE ===
-async function selezionaCliente(uuid) {
+// === APRI PAGINA CLIENTE (nasconde la ricerca) ===
+async function apriPaginaCliente(uuid) {
+  // Mostra la view dedicata, nasconde quella della ricerca
+  document.getElementById('searchView').style.display = 'none';
+  document.getElementById('clientView').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
   const clientArea = document.getElementById('clientArea');
   const timelineArea = document.getElementById('timelineArea');
-  clientArea.style.display = 'block';
-  timelineArea.style.display = 'block';
   clientArea.innerHTML = '<div class="client-card"><div class="loading">Caricamento scheda cliente...</div></div>';
   timelineArea.innerHTML = '<div class="timeline-card"><h2>Storico Operazioni</h2><div class="loading">Caricamento storico...</div></div>';
 
@@ -487,6 +546,7 @@ async function selezionaCliente(uuid) {
     if (errC) throw errC;
     if (!cliente) throw new Error('Cliente non trovato');
     currentCliente = cliente;
+    document.getElementById('clientBreadcrumb').textContent = cliente.ragione_sociale || cliente.cf_piva || 'Cliente';
     renderClienteCard(cliente);
 
     // 2. Carica timeline
@@ -496,14 +556,24 @@ async function selezionaCliente(uuid) {
       .eq('anagrafica_id', uuid)
       .order('data_op', { ascending: false });
     if (errS) throw errS;
-    renderTimeline(storico || []);
-
-    // Scroll alla scheda
-    clientArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    currentStorico = storico || [];
+    renderTimeline(currentStorico);
   } catch (err) {
     clientArea.innerHTML = '<div class="client-card"><div class="empty-state"><div class="empty-state-title">Errore</div><div class="empty-state-sub">' + escapeHtml(err.message) + '</div></div></div>';
-    timelineArea.style.display = 'none';
+    timelineArea.innerHTML = '';
   }
+}
+// Alias retrocompatibilità (vecchio nome usato dal markup risultati ricerca)
+const selezionaCliente = apriPaginaCliente;
+
+function tornaAllaRicerca() {
+  document.getElementById('clientView').style.display = 'none';
+  document.getElementById('searchView').style.display = 'block';
+  currentCliente = null;
+  currentStorico = [];
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Re-focus sul campo ricerca per riprendere subito
+  setTimeout(() => { const i = document.getElementById('searchInput'); if (i) i.focus(); }, 50);
 }
 
 function renderClienteCard(c) {
@@ -543,6 +613,10 @@ function renderClienteCard(c) {
           <span class="info-value">${fmtDate(c.updated_at)}</span>
         </div>
       </div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-light);display:flex;gap:10px;flex-wrap:wrap;">
+        <button type="button" onclick="scaricaDocumentoIdentita('${escapeHtml(c.id)}')" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:#FF6600;color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;">📄 Download documento identità</button>
+        <span id="docHelpText" style="font-size:12px;color:var(--text-light);align-self:center;">Scarica sempre l'ultimo documento d'identità caricato per questo cliente</span>
+      </div>
     </div>
   `;
 }
@@ -566,8 +640,10 @@ function renderTimeline(storico) {
     <div class="timeline-card">
       <h2>Storico Operazioni (${storico.length})</h2>
       <div class="timeline">
-        ${storico.map(op => {
+        ${storico.map((op, idx) => {
           const t = TIPI[op.tipo] || { label: op.tipo, icon: '?' };
+          const cfg = TIPO_CONFIG[op.tipo];
+          const hasAllegati = cfg && cfg.bucket;
           return `
             <div class="timeline-item">
               <div class="timeline-row">
@@ -581,6 +657,10 @@ function renderTimeline(storico) {
                   ${op.operatore_nome ? '<span>Operatore: ' + escapeHtml(op.operatore_nome) + '</span>' : ''}
                   <span class="stato-badge ${statoClasse(op.stato)}">${escapeHtml(op.stato || '-')}</span>
                 </div>
+                <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                  <button type="button" onclick="apriDettaglioOperazione(${idx})" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;font-family:inherit;">🔍 Dettagli</button>
+                  ${hasAllegati ? `<button type="button" onclick="apriAllegatiOperazione(${idx})" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;font-family:inherit;">📎 Allegati</button>` : ''}
+                </div>
               </div>
             </div>
           `;
@@ -589,6 +669,242 @@ function renderTimeline(storico) {
     </div>
   `;
 }
+
+// =============================================================================
+// DETTAGLIO OPERAZIONE — popup con TUTTI i campi della pratica sorgente
+// =============================================================================
+async function apriDettaglioOperazione(idx) {
+  if (!window.MiroxUI) { console.error('MiroxUI non caricato'); return; }
+  const op = currentStorico[idx];
+  if (!op) return;
+  const cfg = TIPO_CONFIG[op.tipo];
+  if (!cfg) {
+    await window.MiroxUI.alert('Tipo operazione non supportato: ' + op.tipo, { type: 'warning' });
+    return;
+  }
+  const loader = window.MiroxUI.loading.show('Caricamento dettagli', 'Recupero dati pratica...');
+  try {
+    const { data: rec, error } = await sb
+      .from(cfg.tabella)
+      .select('*')
+      .eq('id', op.record_id)
+      .single();
+    if (error) throw error;
+    loader.hide();
+    if (!rec) {
+      await window.MiroxUI.alert('Dettagli non trovati per questa pratica.', { type: 'warning' });
+      return;
+    }
+    // Costruisce un grid con tutti i campi non-null della tabella
+    const rows = Object.entries(rec)
+      .filter(([k, v]) => v !== null && v !== '' && v !== false && k !== 'id')
+      .map(([k, v]) => {
+        let display;
+        if (typeof v === 'boolean') display = v ? '✓ Sì' : 'No';
+        else if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) display = fmtDateTime(v);
+        else if (typeof v === 'object') display = '<code style="font-size:11px;">' + escapeHtml(JSON.stringify(v)) + '</code>';
+        else display = escapeHtml(String(v));
+        const label = k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        return `<div style="padding:10px 14px;background:#f8fafc;border-left:3px solid #FF6600;border-radius:6px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;margin-bottom:2px;">${escapeHtml(label)}</div>
+          <div style="font-size:13.5px;color:#0f172a;font-weight:500;word-break:break-word;">${display}</div>
+        </div>`;
+      }).join('');
+    const html = `
+      <div style="margin-bottom:14px;padding:12px 16px;background:#FFF3E0;border-radius:8px;font-size:12.5px;color:#7c2d12;">
+        <strong>${escapeHtml(cfg.label)}</strong> · ${op.riferimento ? 'Rif. <strong>' + escapeHtml(op.riferimento) + '</strong> · ' : ''}${fmtDateTime(op.data_op)}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px;">${rows || '<div style="color:#94a3b8;font-size:13px;">Nessun campo disponibile.</div>'}</div>
+    `;
+    const footer = `<button type="button" class="mx-btn mx-btn-secondary" data-mx-close>Chiudi</button>`;
+    const m = window.MiroxUI._build({ title: cfg.label + (op.riferimento ? ' — ' + op.riferimento : ''), bodyHtml: html, footerHtml: footer, large: true });
+    m.foot.querySelector('[data-mx-close]').addEventListener('click', m.close);
+  } catch (e) {
+    loader.error('Errore caricamento');
+    console.error('Errore dettaglio operazione:', e);
+    setTimeout(() => window.MiroxUI.alert('Impossibile caricare i dettagli: ' + e.message, { type: 'error', title: 'Errore' }), 200);
+  }
+}
+
+// =============================================================================
+// ALLEGATI OPERAZIONE — popup MiroxUI.allegati con file della pratica
+// =============================================================================
+async function apriAllegatiOperazione(idx) {
+  if (!window.MiroxUI) { console.error('MiroxUI non caricato'); return; }
+  const op = currentStorico[idx];
+  if (!op) return;
+  const cfg = TIPO_CONFIG[op.tipo];
+  if (!cfg || !cfg.bucket) {
+    await window.MiroxUI.alert('Nessun allegato disponibile per questo tipo di operazione.', { type: 'info' });
+    return;
+  }
+  const loader = window.MiroxUI.loading.show('Caricamento allegati', 'Sto leggendo i file dallo storage...');
+  try {
+    // Determina la cartella nel bucket
+    let folder;
+    if (cfg.folderField) {
+      // Folder salvato nel record (Apri/Chiudi, Switch SIM)
+      const { data: rec, error } = await sb.from(cfg.tabella).select(cfg.folderField).eq('id', op.record_id).single();
+      if (error) throw error;
+      folder = rec ? rec[cfg.folderField] : null;
+      // Se folder è un URL completo, estraiamo la sola parte cartella
+      if (folder && /^https?:\/\//.test(folder)) {
+        folder = folder.replace(/^https?:\/\/[^/]+\/storage\/v1\/object\/public\/[^/]+\//, '').replace(/\/[^/]+$/, '');
+      }
+    } else if (cfg.folderPrefix) {
+      // Folder costruita da prefix + id (Comodato, Rimborso)
+      folder = cfg.folderPrefix + op.record_id;
+    }
+    let items = [];
+    const candidates = [folder, cfg.folderPrefix ? cfg.folderPrefix + op.record_id : null, 'pratica_' + op.record_id].filter(Boolean);
+    for (const f of candidates) {
+      const { data: files, error } = await sb.storage.from(cfg.bucket).list(f, { limit: 100 });
+      if (error) continue;
+      const filtered = (files || []).filter(x => x.name && !x.name.startsWith('.') && x.metadata);
+      if (filtered.length) {
+        items = filtered.map(file => {
+          const path = `${f}/${file.name}`;
+          const url = sb.storage.from(cfg.bucket).getPublicUrl(path).data?.publicUrl || '#';
+          return { name: file.name, displayName: _displayFileName(file.name), url };
+        });
+        break;
+      }
+    }
+    loader.hide();
+    window.MiroxUI.allegati({
+      title: cfg.label + (op.riferimento ? ' — ' + op.riferimento : '') + ' · Allegati',
+      items,
+      emptyText: 'Nessun allegato presente per questa pratica.'
+    });
+  } catch (e) {
+    loader.error('Errore caricamento');
+    console.error('Errore allegati operazione:', e);
+    setTimeout(() => window.MiroxUI.alert('Impossibile leggere gli allegati: ' + e.message, { type: 'error', title: 'Errore' }), 200);
+  }
+}
+
+// =============================================================================
+// DOWNLOAD DOCUMENTO IDENTITÀ — sempre il più recente del cliente
+// =============================================================================
+// Cerca il documento d'identità del cliente nelle 3 fonti:
+//   1. vendita_documenti (upload contratti) → tipo_documento ILIKE '%identit%'
+//   2. vendita_apri_chiudi (cartella_url + file doc_vecchio_intestatario o doc_nuovo_intestatario)
+//   3. vendita_switch_sim (cartella_url + file docAttualeIntestatario o docNuovoIntestatario)
+// Prende quello con data più recente. Per apri/chiudi e switch sim:
+//   - se il cliente è il VECCHIO/ATTUALE → file doc_vecchio_intestatario / docAttualeIntestatario
+//   - se il cliente è il NUOVO/RIENTRO  → file doc_nuovo_intestatario / docNuovoIntestatario
+async function scaricaDocumentoIdentita(uuid) {
+  if (!window.MiroxUI) { console.error('MiroxUI non caricato'); return; }
+  const loader = window.MiroxUI.loading.show('Ricerca documento', 'Sto cercando il documento d\'identità più recente...');
+  try {
+    const candidati = []; // { ts: Date, url, source, fileName }
+
+    // ---- Fonte 1: vendita_documenti (upload contratti) ---------------------
+    try {
+      const { data: docs } = await sb
+        .from('vendita_documenti')
+        .select('storage_bucket, storage_path, file_name, uploaded_at, tipo_documento')
+        .eq('anagrafica_id', uuid)
+        .ilike('tipo_documento', '%identit%')
+        .order('uploaded_at', { ascending: false })
+        .limit(1);
+      if (docs && docs.length) {
+        const d = docs[0];
+        const url = sb.storage.from(d.storage_bucket || 'contratti-vendita').getPublicUrl(d.storage_path).data?.publicUrl;
+        if (url) candidati.push({ ts: new Date(d.uploaded_at), url, source: 'Upload Contratti', fileName: d.file_name || 'documento.pdf' });
+      }
+    } catch (e) { console.warn('Lookup vendita_documenti:', e.message); }
+
+    // ---- Fonte 2: vendita_apri_chiudi (vecchio o nuovo intestatario) -------
+    try {
+      // Cerca la pratica più recente in cui il cliente è coinvolto, sia come vecchio sia come nuovo
+      const { data: pratiche } = await sb
+        .from('vendita_apri_chiudi')
+        .select('id, cartella_url, anagrafica_vecchio_id, anagrafica_nuovo_id, data_inserimento, ragione_sociale_vecchio, ragione_sociale_nuovo')
+        .or(`anagrafica_vecchio_id.eq.${uuid},anagrafica_nuovo_id.eq.${uuid}`)
+        .order('data_inserimento', { ascending: false })
+        .limit(5);
+      if (pratiche && pratiche.length) {
+        for (const p of pratiche) {
+          if (!p.cartella_url) continue;
+          const isVecchio = p.anagrafica_vecchio_id === uuid;
+          const labelTarget = isVecchio ? 'doc_vecchio_intestatario' : 'doc_nuovo_intestatario';
+          const folder = p.cartella_url.replace(/^https?:\/\/[^/]+\/storage\/v1\/object\/public\/[^/]+\//, '').replace(/\/[^/]+$/, '');
+          const { data: files } = await sb.storage.from('apri-chiudi-files').list(folder, { limit: 50 });
+          const match = (files || []).find(f => f.name && f.name.toLowerCase().startsWith(labelTarget.toLowerCase()));
+          if (match) {
+            const url = sb.storage.from('apri-chiudi-files').getPublicUrl(`${folder}/${match.name}`).data?.publicUrl;
+            if (url) {
+              candidati.push({ ts: new Date(p.data_inserimento), url, source: 'Apri/Chiudi', fileName: match.name });
+              break; // trovato il più recente per questa fonte
+            }
+          }
+        }
+      }
+    } catch (e) { console.warn('Lookup apri/chiudi:', e.message); }
+
+    // ---- Fonte 3: vendita_switch_sim (attuale o rientro) ------------------
+    try {
+      const { data: pratiche } = await sb
+        .from('vendita_switch_sim')
+        .select('id, cartella_url, anagrafica_attuale_id, anagrafica_rientro_id, data_inserimento')
+        .or(`anagrafica_attuale_id.eq.${uuid},anagrafica_rientro_id.eq.${uuid}`)
+        .order('data_inserimento', { ascending: false })
+        .limit(5);
+      if (pratiche && pratiche.length) {
+        for (const p of pratiche) {
+          if (!p.cartella_url) continue;
+          const isAttuale = p.anagrafica_attuale_id === uuid;
+          const labelTarget = isAttuale ? 'docAttualeIntestatario' : 'docNuovoIntestatario';
+          const folder = p.cartella_url.replace(/^https?:\/\/[^/]+\/storage\/v1\/object\/public\/[^/]+\//, '').replace(/\/[^/]+$/, '');
+          const { data: files } = await sb.storage.from('switch-sim-files').list(folder, { limit: 50 });
+          const match = (files || []).find(f => f.name && f.name.toLowerCase().startsWith(labelTarget.toLowerCase()));
+          if (match) {
+            const url = sb.storage.from('switch-sim-files').getPublicUrl(`${folder}/${match.name}`).data?.publicUrl;
+            if (url) {
+              candidati.push({ ts: new Date(p.data_inserimento), url, source: 'Switch SIM', fileName: match.name });
+              break;
+            }
+          }
+        }
+      }
+    } catch (e) { console.warn('Lookup switch sim:', e.message); }
+
+    // Sceglie il candidato con timestamp più recente
+    if (!candidati.length) {
+      loader.hide();
+      await window.MiroxUI.alert(
+        'Nessun documento d\'identità trovato per questo cliente.<br><br>Controlla che sia stato caricato almeno in uno tra: upload contratti, Apri/Chiudi, Switch SIM.',
+        { type: 'warning', title: 'Documento non disponibile', html: true }
+      );
+      return;
+    }
+    candidati.sort((a, b) => b.ts - a.ts);
+    const best = candidati[0];
+    loader.success('Documento trovato (fonte: ' + best.source + ')');
+    // Apre il file in una nuova scheda (download dipende dal Content-Disposition del bucket;
+    // forziamo download tramite tag <a download> dinamico)
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = best.url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.download = best.fileName || 'documento.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }, 600);
+  } catch (e) {
+    loader.error('Errore di ricerca');
+    console.error('Errore download documento:', e);
+    setTimeout(() => window.MiroxUI.alert('Errore durante la ricerca del documento: ' + e.message, { type: 'error', title: 'Errore' }), 200);
+  }
+}
+window.scaricaDocumentoIdentita = scaricaDocumentoIdentita;
+window.apriDettaglioOperazione = apriDettaglioOperazione;
+window.apriAllegatiOperazione = apriAllegatiOperazione;
+window.apriPaginaCliente = apriPaginaCliente;
+window.tornaAllaRicerca = tornaAllaRicerca;
 
 // Esposizione per onclick inline
 window.selezionaCliente = selezionaCliente;
