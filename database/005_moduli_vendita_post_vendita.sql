@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS public.vendita_ordini_smartphone (
     note                text,
 
     stato               text NOT NULL DEFAULT 'In attesa'
-                        CHECK (stato IN ('In attesa','Ordinato','Arrivato','Venduto','Annullato')),
+                        CHECK (stato IN ('In attesa','Ordinato','Venduto','Annullato')),
 
     created_at          timestamptz NOT NULL DEFAULT now(),
     updated_at          timestamptz NOT NULL DEFAULT now()

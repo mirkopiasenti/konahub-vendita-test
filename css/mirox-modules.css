@@ -37,46 +37,76 @@ html, body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* ------- HEADER (sostituisce gradienti WindTre grigi) ------- */
+/* ------- HEADER (stile coerente con segnalazioni) ------- */
 .header,
 .page-header,
 .top-nav {
     background: var(--mx-bg-card) !important;
     color: var(--mx-text) !important;
     border-bottom: 1px solid var(--mx-border) !important;
-    box-shadow: var(--mx-shadow-sm) !important;
-    padding: 18px 28px !important;
+    box-shadow: none !important;
+    padding: 20px 32px !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
+    flex-wrap: nowrap !important;
+}
+.header-content {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
+    width: 100% !important;
+}
+/* Il primo div interno (titolo + subtitle) resta in colonna */
+.header-content > div:first-child {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 2px !important;
 }
 .header h1, .page-header h1, .top-nav h1, .top-nav h2 {
     color: var(--mx-text) !important;
     font-weight: 700 !important;
-    font-size: 20px !important;
+    font-size: 22px !important;
     margin: 0 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.01em !important;
 }
 .header .subtitle, .header p, .page-header p {
     color: var(--mx-text-secondary) !important;
     font-size: 13px !important;
-    margin-top: 2px !important;
+    margin: 2px 0 0 !important;
+    line-height: 1.3 !important;
 }
 
-/* Pulsante "Dashboard" / back link nell'header */
-.btn-back, .header a, .top-nav a[href*="dashboard"] {
-    background: var(--mx-bg) !important;
+/* Back-link "← Torna alla dashboard" stile upload-contratti */
+.btn-back,
+.header > a,
+.header-content > a,
+.top-nav a[href*="dashboard"] {
+    background: transparent !important;
     color: var(--mx-text-secondary) !important;
-    border: 1px solid var(--mx-border) !important;
-    border-radius: var(--mx-radius) !important;
-    padding: 8px 14px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 2px 0 !important;
+    margin-top: 4px !important;
     font-size: 13px !important;
-    font-weight: 600 !important;
+    font-weight: 500 !important;
     text-decoration: none !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    transition: all 0.2s ease !important;
+    display: inline-block !important;
+    transition: color 0.2s ease !important;
+    box-shadow: none !important;
 }
-.btn-back:hover, .header a:hover, .top-nav a[href*="dashboard"]:hover {
-    background: var(--mx-border-light) !important;
-    color: var(--mx-text) !important;
+.btn-back:hover,
+.header > a:hover,
+.header-content > a:hover,
+.top-nav a[href*="dashboard"]:hover {
+    background: transparent !important;
+    color: var(--mx-primary) !important;
+    border: none !important;
 }
 
 /* ------- TAB BAR ------- */
@@ -85,28 +115,76 @@ html, body {
     border-bottom: 1px solid var(--mx-border) !important;
     padding: 0 28px !important;
     display: flex !important;
-    gap: 4px !important;
+    gap: 0 !important;
+    box-shadow: none !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
 }
 .nav-tab {
+    flex: 0 0 auto !important;
     background: transparent !important;
     color: var(--mx-text-secondary) !important;
     border: none !important;
-    padding: 14px 18px !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 14px 22px !important;
     font-size: 13px !important;
     font-weight: 600 !important;
     border-bottom: 2px solid transparent !important;
-    border-radius: 0 !important;
+    margin: 0 !important;
     cursor: pointer !important;
-    transition: all 0.2s ease !important;
+    transition: color 0.2s ease, border-color 0.2s ease !important;
     font-family: inherit !important;
+    text-align: center !important;
+    transform: none !important;
 }
 .nav-tab:hover {
     color: var(--mx-text) !important;
+    background: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
-.nav-tab.active {
+.nav-tab.active,
+.nav-tab.active:hover {
     color: var(--mx-primary) !important;
     border-bottom-color: var(--mx-primary) !important;
     background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* Alias per gestione_rimborsi che usa .tab-button al posto di .nav-tab */
+.tab-button {
+    flex: 0 0 auto !important;
+    background: transparent !important;
+    color: var(--mx-text-secondary) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 14px 22px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-bottom: 2px solid transparent !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    transition: color 0.2s ease, border-color 0.2s ease !important;
+    font-family: inherit !important;
+    text-align: center !important;
+    transform: none !important;
+}
+.tab-button:hover {
+    color: var(--mx-text) !important;
+    background: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+.tab-button.active,
+.tab-button.active:hover {
+    color: var(--mx-primary) !important;
+    border-bottom-color: var(--mx-primary) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 /* ------- CONTAINER / CARD ------- */
@@ -285,14 +363,19 @@ tbody tr:hover {
 }
 
 /* ------- MODAL ------- */
-.modal, .modal-overlay {
+/* Overlay: il backdrop scuro (mai .modal!) */
+.modal-overlay {
     background: rgba(15, 23, 42, 0.5) !important;
 }
-.modal-content, .modal-container {
+/* Container del modal: SEMPRE bianco */
+.modal,
+.modal-content,
+.modal-container {
     background: var(--mx-bg-card) !important;
     border-radius: var(--mx-radius-lg) !important;
     box-shadow: var(--mx-shadow-lg) !important;
     border: 1px solid var(--mx-border) !important;
+    color: var(--mx-text) !important;
 }
 .modal-header {
     background: var(--mx-bg-card) !important;
@@ -313,8 +396,16 @@ tbody tr:hover {
     cursor: pointer !important;
 }
 .modal-close:hover { color: var(--mx-text) !important; }
-.modal-body { padding: 24px !important; }
-.modal-footer { padding: 16px 24px !important; border-top: 1px solid var(--mx-border-light) !important; }
+.modal-body {
+    background: var(--mx-bg-card) !important;
+    color: var(--mx-text) !important;
+    padding: 24px !important;
+}
+.modal-footer {
+    background: var(--mx-bg-card) !important;
+    padding: 16px 24px !important;
+    border-top: 1px solid var(--mx-border-light) !important;
+}
 
 /* ------- ALERTS / MESSAGGI ------- */
 .alert, .message, #message {
@@ -367,4 +458,569 @@ tbody tr:hover {
 .spinner, .inline-spinner {
     border: 3px solid var(--mx-border) !important;
     border-top-color: var(--mx-primary) !important;
+}
+
+/* ============================================================
+   OVERRIDE SPECIFICI per ordini_smartphone / armonizzazione Mirox
+   ============================================================ */
+
+/* "Registra Ordine" e simili pulsanti primari full-width legacy */
+.btn.btn-primary,
+button.btn-primary,
+button.btn[type="submit"] {
+    width: auto !important;
+    min-width: 200px !important;
+    padding: 11px 28px !important;
+    border-radius: 10px !important;
+    background: var(--mx-primary) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: background 0.2s ease !important;
+    margin-top: 8px !important;
+}
+.btn.btn-primary:hover,
+button.btn-primary:hover,
+button.btn[type="submit"]:hover {
+    background: var(--mx-primary-dark) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+/* Centra il bottone submit del form-section */
+form > .btn.btn-primary,
+form > button.btn-primary {
+    display: block !important;
+    margin: 16px auto 0 !important;
+}
+
+/* Bottone "Dettaglio" e azione tabella */
+.btn-dettaglio {
+    background: var(--mx-bg) !important;
+    color: var(--mx-text) !important;
+    border: 1px solid var(--mx-border) !important;
+    padding: 7px 16px !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+    transform: none !important;
+}
+.btn-dettaglio:hover {
+    background: var(--mx-primary-bg) !important;
+    color: var(--mx-primary-dark) !important;
+    border-color: var(--mx-primary) !important;
+    transform: none !important;
+}
+
+/* Tabella ordini: header chiaro invece di arancione pieno */
+.orders-table thead {
+    background: var(--mx-border-light) !important;
+    color: var(--mx-text-secondary) !important;
+}
+.orders-table thead th {
+    color: var(--mx-text-secondary) !important;
+    background: var(--mx-border-light) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    padding: 12px !important;
+    border-bottom: 1px solid var(--mx-border) !important;
+}
+.orders-table tbody td {
+    padding: 12px !important;
+    border-bottom: 1px solid var(--mx-border-light) !important;
+    font-size: 13px !important;
+}
+.orders-table tbody tr:hover {
+    background: var(--mx-bg) !important;
+}
+
+/* Form section h2: meno aggressivo */
+.form-section {
+    background: var(--mx-bg-card) !important;
+    border: 1px solid var(--mx-border) !important;
+    border-radius: var(--mx-radius-lg) !important;
+    box-shadow: var(--mx-shadow-sm) !important;
+    padding: 18px 22px !important;
+    margin-bottom: 18px !important;
+}
+.form-section h2 {
+    color: var(--mx-text) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    border-bottom: 1px solid var(--mx-border-light) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 14px !important;
+}
+.form-group label {
+    color: var(--mx-text) !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+}
+.form-group label .required {
+    color: var(--mx-primary) !important;
+    margin-left: 2px !important;
+}
+
+/* Filtri: chip-style elegante */
+.filter-section {
+    background: var(--mx-bg-card) !important;
+    border: 1px solid var(--mx-border) !important;
+    border-radius: var(--mx-radius-lg) !important;
+    padding: 14px 18px !important;
+    margin-bottom: 14px !important;
+}
+.filter-group label {
+    color: var(--mx-text-secondary) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+}
+.hide-venduti-box {
+    border: 1px solid var(--mx-border) !important;
+    border-radius: 10px !important;
+    background: var(--mx-bg-card) !important;
+    padding: 9px 14px !important;
+    transition: all 0.2s ease !important;
+}
+.hide-venduti-box:hover {
+    background: var(--mx-primary-bg) !important;
+    border-color: var(--mx-primary) !important;
+}
+.hide-venduti-box label {
+    color: var(--mx-text) !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+}
+
+/* Modale ordini: niente bordo arancione sotto header */
+.modal .modal-header {
+    border-bottom: 1px solid var(--mx-border-light) !important;
+    margin-bottom: 16px !important;
+    padding-bottom: 14px !important;
+}
+.modal .modal-header h2 {
+    color: var(--mx-text) !important;
+    font-size: 17px !important;
+    font-weight: 700 !important;
+}
+.modal-close:hover {
+    color: var(--mx-primary) !important;
+    transform: none !important;
+}
+.detail-label {
+    color: var(--mx-text-secondary) !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    width: 140px !important;
+}
+.detail-value {
+    color: var(--mx-text) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+.status-update-section {
+    border-top: 1px solid var(--mx-border-light) !important;
+    padding-top: 18px !important;
+    margin-top: 18px !important;
+}
+.status-update-section h3 {
+    color: var(--mx-text) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+}
+.status-buttons .btn-status {
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+    border-width: 1px !important;
+    transition: all 0.2s ease !important;
+}
+
+/* ============================================================
+   BORDINO ARANCIONE A SINISTRA SU TUTTE LE FORM-SECTION / SECTION
+   Coerenza tra apri_chiudi, switch_sim, ordini, comodato, rimborsi
+   ============================================================ */
+.form-section,
+.section {
+    border-left: 4px solid var(--mx-primary) !important;
+    border-top: 1px solid var(--mx-border) !important;
+    border-right: 1px solid var(--mx-border) !important;
+    border-bottom: 1px solid var(--mx-border) !important;
+}
+
+/* SPAZI PIÙ COMPATTI nelle form-section / section (switch_sim allineato ad apri_chiudi) */
+.section .form-group,
+.section .form-row,
+.form-section .form-group {
+    margin-bottom: 10px !important;
+}
+.section .form-group:last-child,
+.form-section .form-group:last-child {
+    margin-bottom: 0 !important;
+}
+.section .form-row,
+.form-section .form-row {
+    gap: 12px !important;
+    margin-bottom: 10px !important;
+}
+.section-title {
+    color: var(--mx-text) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    border-bottom: 1px solid var(--mx-border-light) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 12px !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+}
+.section input[type="text"],
+.section input[type="tel"],
+.section input[type="email"],
+.section input[type="number"],
+.section input[type="date"],
+.section select,
+.section textarea {
+    padding: 9px 12px !important;
+    font-size: 13.5px !important;
+}
+
+/* ============================================================
+   MODAL — Footer bottoni centrati + close X visibile
+   ============================================================ */
+.modal .modal-footer,
+.modal-overlay .modal-footer {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+    padding: 16px 24px !important;
+    border-top: 1px solid var(--mx-border-light) !important;
+}
+.modal .close-modal,
+.modal-overlay .close-modal {
+    background: transparent !important;
+    border: none !important;
+    font-size: 26px !important;
+    line-height: 1 !important;
+    color: var(--mx-text-light) !important;
+    cursor: pointer !important;
+    padding: 0 8px !important;
+    transition: color 0.2s ease !important;
+}
+.modal .close-modal:hover,
+.modal-overlay .close-modal:hover {
+    color: var(--mx-primary) !important;
+    transform: none !important;
+}
+.modal .close-modal:empty::before,
+.modal-overlay .close-modal:empty::before {
+    content: '×';
+}
+
+/* ============================================================
+   POPUP LOADING / SUCCESS — Aspetto uniforme su tutti i moduli
+   (eccetto upload-contratti e simulatore_protecta che non caricano questo CSS)
+   NOTA: .loading-modal in apri/chiudi è l'overlay (sfondo scuro),
+   ma in switch_sim è il container interno (sfondo bianco). Distinguo.
+   ============================================================ */
+/* Overlay scuro: solo quando NON è anche un modal-container */
+.loading-modal:not(.modal-container),
+.loading-overlay {
+    background: rgba(15, 23, 42, 0.55) !important;
+}
+/* Container interno loading (switch_sim usa .modal-container.loading-modal) */
+.modal-container.loading-modal,
+.modal-container.success-modal {
+    background: #fff !important;
+    color: var(--mx-text) !important;
+}
+.loading-modal .loading-content,
+.loading-overlay .loading-card {
+    background: #fff !important;
+    border-radius: 14px !important;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18) !important;
+    padding: 36px 48px !important;
+    text-align: center !important;
+    min-width: 280px !important;
+}
+.loading-modal .loading-content h3,
+.loading-overlay .loading-card .loading-title {
+    color: var(--mx-primary) !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    margin-bottom: 12px !important;
+    letter-spacing: -0.01em !important;
+}
+.loading-modal .loading-content p,
+.loading-overlay .loading-card .loading-text,
+.loading-overlay .loading-card #ldText {
+    color: var(--mx-text-secondary) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    margin: 6px 0 0 !important;
+}
+.loading-modal .spinner,
+.loading-overlay .spinner,
+.loading-modal .loading-spinner {
+    width: 44px !important;
+    height: 44px !important;
+    border: 4px solid var(--mx-border) !important;
+    border-top-color: var(--mx-primary) !important;
+    border-radius: 50% !important;
+    animation: spin 0.8s linear infinite !important;
+    margin: 0 auto 16px !important;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   REFACTOR ESTETICO GLOBALE
+   Override aggiuntivi per uniformare i moduli al pattern Apri/Chiudi
+   (escluso simulatore_protecta che non carica questo CSS).
+   ============================================================ */
+
+/* PAGE WRAPPER — ogni .page diventa una card bianca pulita */
+.page,
+.tab-content,
+.content-card {
+    background: var(--mx-bg-card) !important;
+    border-radius: var(--mx-radius-lg) !important;
+    box-shadow: var(--mx-shadow-sm) !important;
+    border: 1px solid var(--mx-border) !important;
+    color: var(--mx-text) !important;
+    padding: 24px !important;
+    margin-bottom: 18px !important;
+}
+.tab-content:not(.active) { display: none !important; }
+
+/* FILTERS / FILTERS-SECTION / FILTERS-BAR — coerenti tra i moduli */
+.filters,
+.filters-section,
+.filters-bar,
+.filter-section {
+    background: var(--mx-bg-card) !important;
+    border: 1px solid var(--mx-border) !important;
+    border-radius: var(--mx-radius-lg) !important;
+    padding: 16px 18px !important;
+    margin-bottom: 16px !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+    gap: 12px !important;
+    align-items: end !important;
+}
+.filters .form-group,
+.filters-section .form-group {
+    margin-bottom: 0 !important;
+}
+
+/* HEADER LINEAR-GRADIENT LEGACY → bianco moderno (forziamo) */
+.header,
+.page-header,
+.top-nav,
+header[role="banner"] {
+    background-image: none !important;
+}
+
+/* NAV-TABS LEGACY → stile sottolineatura coerente con mirox-modules originale */
+.nav-tabs,
+.tab-nav {
+    background-image: none !important;
+    padding: 0 28px !important;
+    gap: 0 !important;
+}
+.nav-tab,
+.tab-button,
+.tab-btn {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    color: var(--mx-text-secondary) !important;
+    padding: 14px 22px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    transform: none !important;
+}
+.nav-tab.active,
+.tab-button.active,
+.tab-btn.active {
+    background: transparent !important;
+    color: var(--mx-primary) !important;
+    border-bottom-color: var(--mx-primary) !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* PULSANTI Carica/Salva/Annulla — variante consistente */
+.btn-danger,
+button.btn-danger,
+.btn-error {
+    background: var(--mx-danger) !important;
+    color: #fff !important;
+    border: none !important;
+}
+.btn-success,
+button.btn-success {
+    background: var(--mx-success) !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+/* MODALI legacy con classe .modal (non .modal-overlay) — anche queste */
+.modal {
+    background: var(--mx-bg-card) !important;
+    border-radius: var(--mx-radius-lg) !important;
+    box-shadow: var(--mx-shadow-lg) !important;
+}
+
+/* STATUS BADGE legacy → coerenti con badge mirox */
+.status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 4px 10px !important;
+    border-radius: 999px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+}
+.status-badge.fuori,
+.status-badge.attivo,
+.status-badge.attesa { background: var(--mx-warning-bg) !important; color: #b45309 !important; }
+.status-badge.rientrato,
+.status-badge.chiuso,
+.status-badge.completato { background: var(--mx-success-bg) !important; color: #047857 !important; }
+.status-badge.in-corso,
+.status-badge.ordinato { background: var(--mx-info-bg) !important; color: #1d4ed8 !important; }
+.status-badge.ko,
+.status-badge.annullato { background: var(--mx-danger-bg) !important; color: #b91c1c !important; }
+
+/* LOADING SPINNER legacy con animazione 'spin' */
+.spinner-icon,
+.spinner-large,
+.loading-spinner {
+    border-color: var(--mx-border) !important;
+    border-top-color: var(--mx-primary) !important;
+}
+
+/* ============================================================
+   UPLOAD FILE — Pattern condiviso (riferimento: Switch SIM)
+   Classi: .mx-drop-zone, .mx-files-list, .mx-file-row
+   Markup atteso:
+     <div class="mx-drop-zone" data-target="myInput">
+       <div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+       <div class="mx-drop-hint">PDF — un solo file</div>
+     </div>
+     <input type="file" id="myInput" accept=".pdf" style="display:none">
+     <div class="mx-files-list" data-list-for="myInput"></div>
+   Binding JS: js/mirox-upload.js (MiroxUpload.bindAll())
+   ============================================================ */
+.mx-drop-zone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 22px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s ease;
+    background: #fafbfc;
+}
+.mx-drop-zone:hover,
+.mx-drop-zone.dragover {
+    border-color: #FF6600;
+    background: #FFF3E0;
+}
+.mx-drop-zone .mx-drop-text {
+    font-weight: 600;
+    color: #475569;
+    font-size: 14px;
+}
+.mx-drop-zone .mx-drop-hint {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+.mx-drop-zone.has-file {
+    border-color: #16a34a;
+    background: #F0FDF4;
+}
+.mx-drop-zone.has-file .mx-drop-text {
+    color: #047857;
+}
+.mx-files-list {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.mx-file-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+}
+.mx-file-row .mx-file-name {
+    flex: 1;
+    color: #1e293b;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mx-file-row .mx-file-remove {
+    background: transparent;
+    border: none;
+    color: #dc2626;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 6px;
+}
+.mx-file-row .mx-file-remove:hover {
+    color: #b91c1c;
+}
+
+/* Success modal con cerchio verde + check icon (uniforme con switch_sim & apri_chiudi) */
+.success-modal {
+    text-align: center !important;
+}
+.success-modal .success-icon {
+    width: 84px !important;
+    height: 84px !important;
+    border-radius: 50% !important;
+    background: #DCFCE7 !important;
+    margin: 0 auto 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.success-modal .success-icon svg {
+    width: 44px !important;
+    height: 44px !important;
+    stroke: #16a34a !important;
+    fill: none !important;
+    stroke-width: 3 !important;
+}
+.success-modal h3 {
+    color: #16a34a !important;
+    font-size: 19px !important;
+    font-weight: 700 !important;
+    margin-bottom: 6px !important;
+}
+.success-modal p {
+    color: var(--mx-text-secondary) !important;
+    font-size: 14px !important;
 }

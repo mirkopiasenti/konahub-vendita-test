@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <link rel="icon" type="image/png" href="assets/favicon.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Mirox Vendita</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
+<head> <meta charset="UTF-8"> <link rel="icon" type="image/png" href="assets/favicon.png"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Dashboard - Mirox Vendita</title> <link rel="preconnect" href="https://fonts.googleapis.com"> <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"> <style> :root {
       --primary: #FF6600;
       --primary-dark: #E55A00;
       --primary-light: #FF8533;
@@ -38,25 +30,38 @@
     .topbar {
       background: #fff;
       border-bottom: 1px solid var(--border);
-      padding: 0 36px;
-      display: flex;
+      padding: 6px 36px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      justify-content: space-between;
       position: sticky;
       top: 0;
       z-index: 10;
-      height: 78px;
-      overflow: hidden;
+      gap: 24px;
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      justify-self: start;
+    }
+    .topbar-center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      justify-self: center;
+    }
+    .topbar-actions {
+      justify-self: end;
     }
     .topbar-logo {
-      height: 78px;
-      width: 200px;
+      height: 62px;
+      width: 180px;
       position: relative;
       overflow: hidden;
       flex-shrink: 0;
     }
     .topbar-logo img {
-      height: 240px;
+      height: 200px;
       position: absolute;
       top: 50%;
       left: 50%;
@@ -66,20 +71,20 @@
     .topbar-user {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 8px;
     }
     .user-chip {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 6px 14px 6px 6px;
+      padding: 5px 14px 5px 5px;
       background: var(--bg);
       border-radius: 999px;
       border: 1px solid var(--border);
     }
     .user-avatar {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--primary), var(--primary-light));
       color: #fff;
@@ -87,10 +92,10 @@
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12px;
     }
     .user-name {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text);
     }
@@ -98,9 +103,9 @@
       background: #fff;
       border: 1px solid var(--border);
       color: var(--text-secondary);
-      padding: 9px 18px;
-      border-radius: 10px;
-      font-size: 13px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -112,29 +117,100 @@
       color: #dc2626;
     }
 
+    /* TOPBAR ACTION BUTTONS (Ticket, Call Center, Amministrazione) */
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .action-square {
+      position: relative;
+      width: 78px;
+      height: 70px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+      padding: 6px 4px;
+    }
+    .action-square:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(255, 102, 0, 0.15);
+    }
+    .action-square.disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .action-square.disabled:hover {
+      transform: none;
+      box-shadow: none;
+      border-color: var(--border);
+    }
+    .action-square-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .action-square-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--primary);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .action-square-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.15;
+      letter-spacing: 0.01em;
+    }
+    .action-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 999px;
+      background: #dc2626;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.4);
+      border: 2px solid #fff;
+    }
+    .action-badge.hidden { display: none; }
+
     /* HERO */
     .hero {
       text-align: center;
-      padding: 60px 20px 20px;
-    }
-    .hero-eyebrow {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--primary);
-      background: var(--primary-bg);
-      padding: 5px 14px;
-      border-radius: 999px;
-      margin-bottom: 18px;
+      padding: 32px 20px 8px;
     }
     .hero-greeting {
-      font-size: 42px;
+      font-size: 38px;
       font-weight: 800;
       color: var(--text);
-      margin-bottom: 10px;
+      margin-bottom: 4px;
       letter-spacing: -0.02em;
+      line-height: 1.1;
     }
     .hero-greeting span {
       background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
@@ -143,15 +219,16 @@
       -webkit-text-fill-color: transparent;
     }
     .hero-sub {
-      font-size: 15px;
+      font-size: 14px;
       color: var(--text-secondary);
+      margin-top: 2px;
     }
 
     /* TABS */
     .tabs-wrap {
       display: flex;
       justify-content: center;
-      margin-top: 40px;
+      margin-top: 18px;
     }
     .tabs {
       display: inline-flex;
@@ -190,7 +267,7 @@
       max-width: 1200px;
       width: 100%;
       margin: 0 auto;
-      padding: 40px 36px 80px;
+      padding: 24px 36px 60px;
     }
     .tab-panel {
       display: none;
@@ -206,15 +283,15 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 240px));
-      gap: 22px;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 180px));
+      gap: 18px;
       justify-content: center;
     }
     .card {
       background: #fff;
       border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 32px 22px 26px;
+      border-radius: 16px;
+      padding: 20px 16px 18px;
       text-align: center;
       cursor: pointer;
       transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
@@ -223,7 +300,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 18px;
+      gap: 12px;
       position: relative;
       overflow: hidden;
     }
@@ -238,15 +315,15 @@
       transition: transform 0.3s ease;
     }
     .card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
       border-color: transparent;
     }
     .card:hover::before { transform: scaleX(1); }
     .card-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -255,20 +332,15 @@
     }
     .card:hover .card-icon { transform: scale(1.05) rotate(-3deg); }
     .card-icon svg {
-      width: 34px;
-      height: 34px;
+      width: 26px;
+      height: 26px;
       stroke: var(--primary-dark);
     }
     .card-label {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 700;
       color: var(--text);
       letter-spacing: -0.01em;
-    }
-    .card-sub {
-      font-size: 12.5px;
-      color: var(--text-secondary);
-      margin-top: -10px;
     }
 
     /* EMPTY STATE */
@@ -307,12 +379,11 @@
       .hero-greeting { font-size: 30px; }
       .content { padding: 28px 18px 60px; }
       .tab-btn { padding: 10px 18px; font-size: 14px; }
-    }
-  </style>
+    } </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="topbar-logo"><img src="assets/logo.png" alt="Mirox"></div>
+<div class="topbar">
+  <div class="topbar-left">
     <div class="topbar-user">
       <div class="user-chip">
         <div class="user-avatar" id="userAvatar">M</div>
@@ -322,132 +393,67 @@
     </div>
   </div>
 
-  <div class="hero">
-    <div class="hero-eyebrow">Dashboard Operatore</div>
-    <div class="hero-greeting">Ciao <span id="greetName">Operatore</span></div>
-    <div class="hero-sub">Seleziona un modulo per iniziare</div>
-    <div class="tabs-wrap">
-      <div class="tabs" role="tablist">
-        <button class="tab-btn active" data-tab="vendita" role="tab">Vendita</button>
-        <button class="tab-btn" data-tab="post-vendita" role="tab">Post-Vendita</button>
-      </div>
-    </div>
+  <div class="topbar-center">
+    <div class="topbar-logo"><img src="assets/logo.png" alt="Mirox"></div>
   </div>
 
-  <div class="content">
-    <div class="tab-panel active" id="panel-vendita">
-      <div class="grid">
-        <a class="card" href="upload-contratti-vendita.html">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="12" y1="18" x2="12" y2="12"/>
-              <line x1="9" y1="15" x2="15" y2="15"/>
-            </svg>
-          </div>
-          <div class="card-label">Upload Contratti</div>
-          <div class="card-sub">Carica e gestisci contratti vendita</div>
-        </a>
-
-        <a class="card" href="moduli/apri_chiudi.html">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12a9 9 0 1 1-9-9"/>
-              <polyline points="21 3 21 12 12 12"/>
-            </svg>
-          </div>
-          <div class="card-label">Apri / Chiudi</div>
-          <div class="card-sub">Cambi intestatario e disdette</div>
-        </a>
-
-        <a class="card" href="moduli/switch_sim.html">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="17 1 21 5 17 9"/>
-              <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-              <polyline points="7 23 3 19 7 15"/>
-              <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-            </svg>
-          </div>
-          <div class="card-label">Switch SIM</div>
-          <div class="card-sub">Portabilità e ricariche</div>
-        </a>
-
-        <a class="card" href="moduli/ordini_smartphone.html">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="5" y="2" width="14" height="20" rx="2"/>
-              <line x1="12" y1="18" x2="12.01" y2="18"/>
-            </svg>
-          </div>
-          <div class="card-label">Ordini Smartphone</div>
-          <div class="card-sub">Registrazione e tracking ordini</div>
-        </a>
-
-        <a class="card" href="moduli/simulatore_protecta.html">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-          </div>
-          <div class="card-label">Simulatore Protecta</div>
-          <div class="card-sub">Preventivi e trattative</div>
-        </a>
+  <div class="topbar-actions">
+    <a class="action-square" href="moduli/ticket.html" id="btnTicket">
+      <span class="action-badge hidden" id="ticketBadge">0</span>
+      <div class="action-square-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
       </div>
-    </div>
+      <div class="action-square-label">Ticket</div>
+    </a>
 
-    <div class="tab-panel" id="panel-post-vendita">
-      <div class="grid">
-        <a class="card" href="moduli/dispositivi_comodato.html">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="6" width="18" height="13" rx="2"/>
-              <path d="M8 10h8"/>
-              <path d="M8 14h5"/>
-            </svg>
-          </div>
-          <div class="card-label">Dispositivi Comodato</div>
-          <div class="card-sub">Uscite e rientri dispositivi</div>
-        </a>
-
-        <a class="card" href="moduli/gestione_rimborsi.html">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23"/>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-          </div>
-          <div class="card-label">Gestione Rimborsi</div>
-          <div class="card-sub">PDF e tracking pagamenti</div>
-        </a>
-
-        <a class="card" href="moduli/segnalazioni.html">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-          </div>
-          <div class="card-label">Segnalazioni</div>
-          <div class="card-sub">Gestione ticket e ASK</div>
-        </a>
+    <a class="action-square disabled" href="#" onclick="return false;">
+      <div class="action-square-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
       </div>
-    </div>
+      <div class="action-square-label">Call Center</div>
+    </a>
+
+    <a class="action-square disabled" href="#" onclick="return false;">
+      <div class="action-square-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <div class="action-square-label">Admin</div>
+    </a>
   </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/auth.js"></script>
-  <script>
-    (async () => {
+</div> <div class="hero"> <div class="hero-greeting">Ciao <span id="greetName">Operatore</span></div> <div class="hero-sub">Seleziona un modulo per iniziare</div> <div class="tabs-wrap"> <div class="tabs" role="tablist"> <button class="tab-btn active" data-tab="vendita" role="tab">Vendita</button> <button class="tab-btn" data-tab="post-vendita" role="tab">Post-Vendita</button> </div> </div> </div> <div class="content"> <div class="tab-panel active" id="panel-vendita"> <div class="grid"> <a class="card" href="upload-contratti-vendita.html"> <div class="card-icon"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/> <polyline points="14 2 14 8 20 8"/> <line x1="12" y1="18" x2="12" y2="12"/> <line x1="9" y1="15" x2="15" y2="15"/> </svg> </div> <div class="card-label">Upload Contratti</div> </a> <a class="card" href="moduli/apri_chiudi.html"> <div class="card-icon"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <path d="M21 12a9 9 0 1 1-9-9"/> <polyline points="21 3 21 12 12 12"/> </svg> </div> <div class="card-label">Apri / Chiudi</div> </a> <a class="card" href="moduli/switch_sim.html"> <div class="card-icon"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <polyline points="17 1 21 5 17 9"/> <path d="M3 11V9a4 4 0 0 1 4-4h14"/> <polyline points="7 23 3 19 7 15"/> <path d="M21 13v2a4 4 0 0 1-4 4H3"/> </svg> </div> <div class="card-label">Switch SIM</div> </a> <a class="card" href="moduli/ordini_smartphone.html"> <div class="card-icon"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <rect x="5" y="2" width="14" height="20" rx="2"/> <line x1="12" y1="18" x2="12.01" y2="18"/> </svg> </div> <div class="card-label">Ordini Smartphone</div> </a> <a class="card" href="moduli/simulatore_protecta.html"> <div class="card-icon"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/> </svg> </div> <div class="card-label">Simulatore Protecta</div> </a> </div> </div> <div class="tab-panel" id="panel-post-vendita"> <div class="grid"> <a class="card" href="moduli/storico_cliente.html"> <div class="card-icon"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <circle cx="11" cy="11" r="8"/> <line x1="21" y1="21" x2="16.65" y2="16.65"/> <line x1="11" y1="8" x2="11" y2="14"/> <line x1="8" y1="11" x2="14" y2="11"/> </svg> </div> <div class="card-label">Storico Cliente</div> </a> <a class="card" href="moduli/dispositivi_comodato.html"> <div class="card-icon"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <rect x="3" y="6" width="18" height="13" rx="2"/> <path d="M8 10h8"/> <path d="M8 14h5"/> </svg> </div> <div class="card-label">Dispositivi Comodato</div> </a> <a class="card" href="moduli/gestione_rimborsi.html"> <div class="card-icon"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <line x1="12" y1="1" x2="12" y2="23"/> <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/> </svg> </div> <div class="card-label">Gestione Rimborsi</div> </a> <a class="card" href="moduli/segnalazioni.html"> <div class="card-icon"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <circle cx="12" cy="12" r="10"/> <line x1="12" y1="8" x2="12" y2="12"/> <line x1="12" y1="16" x2="12.01" y2="16"/> </svg> </div> <div class="card-label">Segnalazioni</div> </a> </div> </div> </div> <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script> <script src="js/config.js"></script> <script src="js/auth.js"></script> <script> (async () => {
       const profilo = await Auth.richiediAuth();
       if (!profilo) return;
       const nome = profilo.nome || profilo.email || 'Operatore';
       document.getElementById('greetName').textContent = nome;
       document.getElementById('userName').textContent = nome;
       document.getElementById('userAvatar').textContent = nome.trim().charAt(0).toUpperCase();
+
+      // Aggiorna badge ticket aperti
+      try {
+        const { count } = await db
+          .from('ticket')
+          .select('id', { count: 'exact', head: true })
+          .eq('stato', 'Da gestire');
+        const badge = document.getElementById('ticketBadge');
+        if (badge) {
+          if (count && count > 0) {
+            badge.textContent = count > 99 ? '99+' : String(count);
+            badge.classList.remove('hidden');
+          } else {
+            badge.classList.add('hidden');
+          }
+        }
+      } catch(e) {
+        console.error('Errore caricamento badge ticket:', e);
+      }
     })();
 
     document.getElementById('btnLogout').addEventListener('click', () => Auth.logout());
@@ -468,7 +474,6 @@
           }
         });
       });
-    });
-  </script>
+    }); </script>
 </body>
 </html>

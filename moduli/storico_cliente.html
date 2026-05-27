@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="../assets/favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storico Cliente — Mirox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/mirox-modules.css">
+<style>
+:root {
+  --primary: #FF6600;
+  --primary-dark: #E55A00;
+  --primary-bg: #FFF3E0;
+  --text: #0f172a;
+  --text-secondary: #64748b;
+  --text-light: #94a3b8;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --bg: #f8fafc;
+  --bg-card: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Search section */
+.search-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+  padding: 22px 24px;
+  margin-bottom: 20px;
+}
+.search-card h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-light);
+}
+.search-row {
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  gap: 12px;
+  align-items: end;
+}
+@media (max-width: 600px) {
+  .search-row { grid-template-columns: 1fr; }
+}
+.search-input {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255,102,0,0.12);
+  background: #fff;
+}
+.btn-search {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 11px 22px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-family: inherit;
+}
+.btn-search:hover { background: var(--primary-dark); }
+.btn-search:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Risultati ricerca */
+.results-list {
+  display: grid;
+  gap: 8px;
+}
+.result-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.result-card:hover {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+  transform: translateX(2px);
+}
+.result-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.result-meta {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.result-cluster {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.result-cluster.consumer { background: #EFF6FF; color: #1d4ed8; }
+.result-cluster.business { background: #F0FDF4; color: #047857; }
+.result-cluster.turista  { background: #FFFBEB; color: #b45309; }
+
+/* Scheda cliente */
+.client-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+  padding: 22px 24px;
+  margin-bottom: 20px;
+}
+.client-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-light);
+}
+.client-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.client-cluster-pill {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.client-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.info-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+.info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.info-value.empty { color: var(--text-light); font-weight: 400; }
+
+/* Timeline */
+.timeline-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+  padding: 22px 24px;
+}
+.timeline-card h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-light);
+}
+.timeline {
+  position: relative;
+  padding-left: 28px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--border);
+}
+.timeline-item {
+  position: relative;
+  padding-bottom: 18px;
+}
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -27px;
+  top: 6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--primary);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+.timeline-row {
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.timeline-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.timeline-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--primary-bg);
+  color: var(--primary-dark);
+}
+.timeline-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.timeline-desc {
+  font-size: 13.5px;
+  color: var(--text);
+  font-weight: 600;
+}
+.timeline-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.stato-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.stato-ok { background: #F0FDF4; color: #047857; }
+.stato-pending { background: #EFF6FF; color: #1d4ed8; }
+.stato-warn { background: #FFFBEB; color: #b45309; }
+.stato-ko { background: #FEF2F2; color: #b91c1c; }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+.empty-state-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.empty-state-sub { font-size: 13px; color: var(--text-secondary); }
+
+.loading {
+  text-align: center;
+  padding: 30px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/anagrafica-helper.js"></script>
+<script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-folder.js"></script>
+<script src="../js/mirox-upload.js"></script>
+<script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
+
+<div class="header">
+<div class="header-content">
+<div>
+<h1>Storico Cliente</h1>
+</div>
+<a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
+</div>
+</div>
+
+<div class="container" style="max-width:1100px;margin:24px auto;padding:0 24px;">
+
+<!-- SEZIONE RICERCA -->
+<div class="search-card">
+  <h2>Cerca cliente</h2>
+  <form id="searchForm" class="search-row" onsubmit="return false;">
+    <input type="text" id="searchInput" class="search-input" placeholder="CF / P.IVA / Nome / Cognome / Cellulare..." autocomplete="off">
+    <button type="submit" class="btn-search" id="btnSearch">Cerca</button>
+  </form>
+  <div id="resultsArea" style="margin-top:16px;"></div>
+</div>
+
+<!-- SCHEDA CLIENTE SELEZIONATA -->
+<div id="clientArea" style="display:none;"></div>
+
+<!-- TIMELINE -->
+<div id="timelineArea" style="display:none;"></div>
+
+</div>
+
+<script>
+const sb = db;
+let currentCliente = null;
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+function fmtDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+function fmtDateTime(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  // Se la sorgente è un campo DATE (no time), in UTC sarà 00:00 — mostra solo la data
+  // per evitare offset spurio (es. 13/05/2026 02:00 in CEST).
+  if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0) {
+    return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Rome' });
+  }
+  return d.toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
+}
+function clusterClass(cluster) {
+  const c = (cluster || '').toLowerCase();
+  if (c.includes('business')) return 'business';
+  if (c.includes('consumer')) return 'consumer';
+  if (c.includes('turista')) return 'turista';
+  return 'consumer';
+}
+function clusterPillStyle(cluster) {
+  const c = clusterClass(cluster);
+  if (c === 'business') return 'background:#F0FDF4;color:#047857;';
+  if (c === 'turista') return 'background:#FFFBEB;color:#b45309;';
+  return 'background:#EFF6FF;color:#1d4ed8;';
+}
+
+// Etichette tipi timeline e classe stato
+const TIPI = {
+  'ordine_smartphone':    { label: 'Ordine Smartphone',    icon: 'Smartphone' },
+  'dispositivo_comodato': { label: 'Dispositivo Comodato', icon: 'Comodato' },
+  'rimborso':             { label: 'Rimborso',             icon: 'Rimborso' },
+  'apri_chiudi_vecchio':  { label: 'Apri/Chiudi (cessione)', icon: 'Cessione' },
+  'apri_chiudi_nuovo':    { label: 'Apri/Chiudi (subentro)', icon: 'Subentro' },
+  'switch_sim_attuale':   { label: 'Switch SIM (attuale)', icon: 'Switch' },
+  'switch_sim_rientro':   { label: 'Switch SIM (rientro)', icon: 'Rientro' }
+};
+function statoClasse(stato) {
+  if (!stato) return 'stato-pending';
+  const s = String(stato).toUpperCase();
+  if (s.includes('CHIUSO') || s.includes('VINTO') || s.includes('VENDUTO') || s === 'CONSEGNATO' || s === 'RIENTRATO') return 'stato-ok';
+  if (s.includes('KO') || s.includes('ANNULLAT') || s.includes('PERSO')) return 'stato-ko';
+  if (s.includes('ATTESA') || s.includes('APERTO') || s.includes('DA GESTIRE')) return 'stato-warn';
+  return 'stato-pending';
+}
+
+// === RICERCA ===
+async function eseguiRicerca() {
+  const q = document.getElementById('searchInput').value.trim();
+  const resultsArea = document.getElementById('resultsArea');
+  const btn = document.getElementById('btnSearch');
+
+  if (!q) {
+    resultsArea.innerHTML = '<div class="empty-state"><div class="empty-state-sub">Inserisci almeno un termine di ricerca</div></div>';
+    return;
+  }
+
+  btn.disabled = true;
+  resultsArea.innerHTML = '<div class="loading">Ricerca in corso...</div>';
+
+  try {
+    // Normalizza upper se sembra CF/PIVA per migliorare match (cf_piva è uppercase in DB)
+    const isCfLike = /^[A-Z0-9]+$/i.test(q) && q.length >= 4;
+    const qNorm = isCfLike ? q.toUpperCase() : q;
+
+    const { data, error } = await sb.rpc('ricerca_anagrafica', { p_query: qNorm });
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      resultsArea.innerHTML = '<div class="empty-state"><div class="empty-state-title">Nessun cliente trovato</div><div class="empty-state-sub">Prova con un altro criterio</div></div>';
+      return;
+    }
+
+    resultsArea.innerHTML = '<div class="results-list">' + data.map(c => {
+      const cluster = c.cluster || 'Consumer';
+      const meta = [
+        c.cf_piva,
+        c.cellulare,
+        [c.via, c.civico].filter(Boolean).join(' '),
+        c.comune
+      ].filter(Boolean).join(' · ');
+      return `
+        <div class="result-card" onclick="selezionaCliente('${escapeHtml(c.id)}')">
+          <div>
+            <div class="result-name">${escapeHtml(c.ragione_sociale || '(senza nome)')}</div>
+            <div class="result-meta">${escapeHtml(meta || '-')}</div>
+          </div>
+          <span class="result-cluster ${clusterClass(cluster)}">${escapeHtml(cluster)}</span>
+        </div>
+      `;
+    }).join('') + '</div>';
+  } catch (err) {
+    resultsArea.innerHTML = '<div class="empty-state"><div class="empty-state-title">Errore</div><div class="empty-state-sub">' + escapeHtml(err.message) + '</div></div>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('btnSearch').addEventListener('click', eseguiRicerca);
+document.getElementById('searchInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); eseguiRicerca(); }
+});
+
+// === SELEZIONA CLIENTE ===
+async function selezionaCliente(uuid) {
+  const clientArea = document.getElementById('clientArea');
+  const timelineArea = document.getElementById('timelineArea');
+  clientArea.style.display = 'block';
+  timelineArea.style.display = 'block';
+  clientArea.innerHTML = '<div class="client-card"><div class="loading">Caricamento scheda cliente...</div></div>';
+  timelineArea.innerHTML = '<div class="timeline-card"><h2>Storico Operazioni</h2><div class="loading">Caricamento storico...</div></div>';
+
+  try {
+    // 1. Carica anagrafica
+    const { data: cliente, error: errC } = await sb
+      .from('anagrafica')
+      .select('*')
+      .eq('id', uuid)
+      .single();
+    if (errC) throw errC;
+    if (!cliente) throw new Error('Cliente non trovato');
+    currentCliente = cliente;
+    renderClienteCard(cliente);
+
+    // 2. Carica timeline
+    const { data: storico, error: errS } = await sb
+      .from('storico_cliente')
+      .select('*')
+      .eq('anagrafica_id', uuid)
+      .order('data_op', { ascending: false });
+    if (errS) throw errS;
+    renderTimeline(storico || []);
+
+    // Scroll alla scheda
+    clientArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    clientArea.innerHTML = '<div class="client-card"><div class="empty-state"><div class="empty-state-title">Errore</div><div class="empty-state-sub">' + escapeHtml(err.message) + '</div></div></div>';
+    timelineArea.style.display = 'none';
+  }
+}
+
+function renderClienteCard(c) {
+  const cluster = c.cluster || 'Consumer';
+  document.getElementById('clientArea').innerHTML = `
+    <div class="client-card">
+      <div class="client-header">
+        <div>
+          <div class="client-name">${escapeHtml(c.ragione_sociale || '(senza nome)')}</div>
+          <div style="font-size:12.5px;color:var(--text-secondary);margin-top:4px;">CF / P.IVA: <strong>${escapeHtml(c.cf_piva || '-')}</strong></div>
+        </div>
+        <span class="client-cluster-pill" style="${clusterPillStyle(cluster)}">${escapeHtml(cluster)}</span>
+      </div>
+      <div class="client-info-grid">
+        <div class="info-item">
+          <span class="info-label">Nome Referente</span>
+          <span class="info-value ${c.nome_referente ? '' : 'empty'}">${escapeHtml(c.nome_referente || '—')}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Cellulare</span>
+          <span class="info-value ${c.cellulare ? '' : 'empty'}">${escapeHtml(c.cellulare || '—')}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Indirizzo</span>
+          <span class="info-value ${(c.via || c.civico) ? '' : 'empty'}">${escapeHtml([c.via, c.civico].filter(Boolean).join(' ') || '—')}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Comune</span>
+          <span class="info-value ${c.comune ? '' : 'empty'}">${escapeHtml([c.comune, c.provincia].filter(Boolean).join(' ') || '—')}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Cliente dal</span>
+          <span class="info-value">${fmtDate(c.created_at)}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Ultima modifica</span>
+          <span class="info-value">${fmtDate(c.updated_at)}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderTimeline(storico) {
+  const wrap = document.getElementById('timelineArea');
+  if (!storico.length) {
+    wrap.innerHTML = `
+      <div class="timeline-card">
+        <h2>Storico Operazioni</h2>
+        <div class="empty-state">
+          <div class="empty-state-title">Nessuna operazione registrata</div>
+          <div class="empty-state-sub">Questo cliente non ha ancora pratiche o operazioni a sistema</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="timeline-card">
+      <h2>Storico Operazioni (${storico.length})</h2>
+      <div class="timeline">
+        ${storico.map(op => {
+          const t = TIPI[op.tipo] || { label: op.tipo, icon: '?' };
+          return `
+            <div class="timeline-item">
+              <div class="timeline-row">
+                <div class="timeline-head">
+                  <span class="timeline-tag">${escapeHtml(t.label)}</span>
+                  <span class="timeline-date">${fmtDateTime(op.data_op)}</span>
+                </div>
+                <div class="timeline-desc">${escapeHtml(op.descrizione || '-')}</div>
+                <div class="timeline-meta">
+                  ${op.riferimento ? '<span>Rif: <strong>' + escapeHtml(op.riferimento) + '</strong></span>' : ''}
+                  ${op.operatore_nome ? '<span>Operatore: ' + escapeHtml(op.operatore_nome) + '</span>' : ''}
+                  <span class="stato-badge ${statoClasse(op.stato)}">${escapeHtml(op.stato || '-')}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// Esposizione per onclick inline
+window.selezionaCliente = selezionaCliente;
+
+// Auto-focus sul campo ricerca
+setTimeout(() => {
+  const inp = document.getElementById('searchInput');
+  if (inp) inp.focus();
+}, 100);
+</script>
+</body>
+</html>
