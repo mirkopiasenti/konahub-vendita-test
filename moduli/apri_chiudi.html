@@ -1171,10 +1171,11 @@
      .replace(/_+/g, '_')
      .substring(0, 80) || 'ND';
  }
- // Estensione da nome file (default .pdf)
+ // Estensione del file caricato: per policy Mirox tutti gli upload sono PDF.
+ // Ignoriamo l'estensione originale e forziamo sempre .pdf (anche se il file
+ // ha estensione diversa, il contentType all'upload è 'application/pdf').
  function fileExt(name) {
-   const m = /\.([A-Za-z0-9]{1,8})$/.exec(name || '');
-   return m ? '.' + m[1].toLowerCase() : '.pdf';
+   return '.pdf';
  }
  // Costruisci nome cartella nel formato unificato Mirox:
  //   <RAG_VECCHIO>_<RAG_NUOVO>_<GG_MM_AA>
@@ -1196,8 +1197,10 @@
      const buf = new Uint8Array(bin.length);
      for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
      const blob = new Blob([buf], { type: 'application/octet-stream' });
-     const path = `${folderPath}/${fileName}`;
-     const { error } = await sb.storage.from(APRI_CHIUDI_BUCKET).upload(path, blob, { upsert: true });
+     // Garantiamo che il path termini in .pdf
+     const safeName = /\.pdf$/i.test(fileName) ? fileName : (fileName.replace(/\.[a-z0-9]+$/i, '') + '.pdf');
+     const path = `${folderPath}/${safeName}`;
+     const { error } = await sb.storage.from(APRI_CHIUDI_BUCKET).upload(path, blob, { upsert: true, contentType: 'application/pdf' });
      if (error) throw error;
      return sb.storage.from(APRI_CHIUDI_BUCKET).getPublicUrl(path).data?.publicUrl || null;
    } catch (e) { console.error('Upload errore (' + fileName + '):', e); return null; }

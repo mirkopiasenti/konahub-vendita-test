@@ -267,11 +267,15 @@
         } else {
             const rows = items.map(it => {
                 const name = esc(it.displayName || it.name || 'Documento');
-                const ext = (it.name || '').split('.').pop().toUpperCase().slice(0, 4) || 'FILE';
+                // Policy Mirox: tutti gli allegati sono PDF. L'icona mostra sempre "PDF".
+                const ext = 'PDF';
                 const openUrl = it.url || it.downloadUrl;
                 const dlUrl = it.downloadUrl || it.url;
+                // Forza il nome del download in .pdf usando il displayName come base
+                const baseDl = (it.displayName || it.name || 'documento').replace(/\.[a-z0-9]+$/i, '');
+                const dlName = baseDl + '.pdf';
                 const openBtn = openUrl ? `<a href="${esc(openUrl)}" target="_blank" rel="noopener">${esc(it.openText || 'Apri')}</a>` : '';
-                const dlBtn = dlUrl ? `<a href="${esc(dlUrl)}" download="${esc(it.name || '')}">${esc(it.downloadText || 'Scarica')}</a>` : '';
+                const dlBtn = dlUrl ? `<a href="${esc(dlUrl)}" download="${esc(dlName)}">${esc(it.downloadText || 'Scarica')}</a>` : '';
                 return `<div class="mx-attach-item">
                     <div class="mx-attach-icon">${esc(ext)}</div>
                     <div class="mx-attach-name">${name}</div>

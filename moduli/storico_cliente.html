@@ -889,7 +889,9 @@ async function scaricaDocumentoIdentita(uuid) {
       a.href = best.url;
       a.target = '_blank';
       a.rel = 'noopener';
-      a.download = best.fileName || 'documento.pdf';
+      // Policy Mirox: tutti i file sono PDF — forziamo estensione .pdf nel download
+      const baseDl = (best.fileName || 'documento_identita').replace(/\.[a-z0-9]+$/i, '');
+      a.download = baseDl + '.pdf';
       document.body.appendChild(a);
       a.click();
       a.remove();

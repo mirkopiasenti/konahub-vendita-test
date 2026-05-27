@@ -664,7 +664,9 @@
  const buf = new Uint8Array(bin.length);
  for (let i = 0; i< bin.length; i++) buf[i] = bin.charCodeAt(i);
  const blob = new Blob([buf], { type: 'application/pdf' });
- const path = `rimborso_${rimborsoId}/${Date.now()}_${filename}`;
+ // Forza estensione .pdf (policy Mirox: tutti gli allegati sono PDF)
+ const baseName = (filename || 'modulo').replace(/\.[a-z0-9]+$/i, '');
+ const path = `rimborso_${rimborsoId}/${Date.now()}_${baseName}.pdf`;
  const { error } = await sb.storage.from(RIMBORSI_BUCKET).upload(path, blob, { upsert: true, contentType: 'application/pdf' });
  if (error) throw error;
  return sb.storage.from(RIMBORSI_BUCKET).getPublicUrl(path).data?.publicUrl || null;

@@ -2119,8 +2119,11 @@ Mostra anche ricariche in OK
  for (let i = 0; i< bin.length; i++) buf[i] = bin.charCodeAt(i);
  const blob = new Blob([buf], { type: 'application/octet-stream' });
  const safeFolder = folderName || 'pratica';
- const path = `${safeFolder}/${label}_${Date.now()}_${filename || 'file'}`;
- const { error } = await sb.storage.from(SWITCH_SIM_BUCKET).upload(path, blob, { upsert: true });
+ // Forza sempre estensione .pdf (policy Mirox: ogni allegato deve essere PDF)
+ const rawName = filename || 'file';
+ const baseName = rawName.replace(/\.[a-z0-9]+$/i, '');
+ const path = `${safeFolder}/${label}_${Date.now()}_${baseName}.pdf`;
+ const { error } = await sb.storage.from(SWITCH_SIM_BUCKET).upload(path, blob, { upsert: true, contentType: 'application/pdf' });
  if (error) throw error;
  return sb.storage.from(SWITCH_SIM_BUCKET).getPublicUrl(path).data?.publicUrl || null;
  } catch (e) { console.error('Upload switch-sim errore (' + label + '):', e); return null; }
