@@ -1,0 +1,4001 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Switch Sim</title>
+<style> * {
+ margin: 0;
+ padding: 0;
+ box-sizing: border-box;
+ }
+
+ :root {
+ --windtre-orange: #FF6600;
+ --windtre-gray: #58595B;
+ --light-gray: #F5F5F5;
+ --white: #FFFFFF;
+ --error-red: #D32F2F;
+ --success-green: #388E3C;
+ }
+
+ body {
+ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ background-color: var(--light-gray);
+ color: var(--windtre-gray);
+ }
+
+ .header {
+ background: linear-gradient(135deg, var(--windtre-gray) 0%, #3d3e40 100%);
+ color: var(--white);
+ padding: 1.5rem 2rem;
+ box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+ }
+
+ .header h1 {
+ font-size: 1.8rem;
+ margin-bottom: 0.5rem;
+ }
+
+ .header .subtitle {
+ font-size: 0.9rem;
+ opacity: 0.9;
+ }
+
+ .header-content {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ }
+
+ .btn-back {
+ padding: 8px 20px;
+ background-color: transparent;
+ color: var(--white);
+ border: 2px solid var(--white);
+ border-radius: 6px;
+ font-size: 0.9rem;
+ font-weight: 600;
+ cursor: pointer;
+ transition: all 0.3s ease;
+ text-decoration: none;
+ }
+
+ .btn-back:hover {
+ background-color: var(--white);
+ color: var(--windtre-gray);
+ }
+
+ .nav-tabs {
+ background: linear-gradient(135deg, var(--windtre-gray) 0%, #3d3e40 100%);
+ display: flex;
+ padding: 1rem 1.5rem;
+ gap: 1rem;
+ }
+
+ .nav-tab {
+ flex: 1;
+ padding: 1rem 1.5rem;
+ text-align: center;
+ cursor: pointer;
+ border: 2px solid var(--windtre-gray);
+ background: var(--white);
+ font-size: 1rem;
+ font-weight: 600;
+ color: var(--windtre-gray);
+ transition: all 0.3s ease;
+ border-radius: 30px;
+ box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+ }
+
+ .nav-tab:hover {
+ background-color: var(--light-gray);
+ transform: translateY(-2px);
+ }
+
+ .nav-tab.active {
+ background: var(--windtre-orange);
+ color: var(--white);
+ border-color: var(--windtre-orange);
+ box-shadow: 0 4px 15px rgba(255, 102, 0, 0.4);
+ }
+
+ .nav-tab.active:hover {
+ background: #e55c00;
+ }
+
+ .container {
+ max-width: 95%;
+ margin: 2rem auto;
+ padding: 0 0.5rem;
+ }
+ /* Pagine Attesa, Riepilogo e Ricariche: usa tutta la larghezza per evitare wrap a capo */
+ #pageAttesa.page, #pageRiepilogo.page, #pageRicariche.page {
+   max-width: none;
+   width: 100%;
+   padding: 1.25rem 1rem; /* riduce padding laterale per dare più larghezza al data area */
+ }
+ #pageAttesa table, #pageRiepilogo table, #pageRicariche table {
+   width: 100%;
+   table-layout: auto;
+ }
+ #pageAttesa table th, #pageAttesa table td,
+ #pageRiepilogo table th, #pageRiepilogo table td,
+ #pageRicariche table th, #pageRicariche table td {
+   white-space: nowrap;
+   padding: 8px 10px;
+   font-size: 12.5px;
+ }
+ /* Colonna Azioni (ultima): sticky a destra, sempre visibile anche con scroll orizzontale.
+    Garantisce che il pulsante "KO" sia sempre raggiungibile senza scroll manuale. */
+ #pageRiepilogo .data-table thead th.col-azioni,
+ #pageRiepilogo .data-table tbody td.riepilogo-actions {
+   position: sticky;
+   right: 0;
+   background: #fff;
+   z-index: 2;
+   box-shadow: -2px 0 6px rgba(15,23,42,0.05);
+   border-left: 1px solid #e2e8f0;
+ }
+ #pageRiepilogo .data-table thead th.col-azioni {
+   background: #f8fafc;
+ }
+ /* Allarga il container principale solo quando siamo su pagine "wide" */
+ .container.wide-layout { max-width: 100%; padding: 0 12px; }
+
+ .page {
+ display: none;
+ background-color: var(--white);
+ border-radius: 8px;
+ padding: 2rem;
+ box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+ }
+
+ .page.active {
+ display: block;
+ animation: fadeIn 0.3s ease;
+ }
+
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(10px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
+
+ .form-content {
+ padding: 40px 30px;
+ }
+
+ /* Stili Tabella Riepilogo */
+ .filters-section {
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+ gap: 1rem;
+ margin-bottom: 2rem;
+ padding: 1.5rem;
+ background: var(--light-gray);
+ border-radius: 8px;
+ }
+
+ .filter-group {
+ display: flex;
+ flex-direction: column;
+ }
+
+ .filter-group label {
+ margin-bottom: 0.5rem;
+ font-weight: 600;
+ color: var(--windtre-gray);
+ }
+
+ .filter-group input,
+ .filter-group select {
+ padding: 0.75rem;
+ border: 2px solid #e0e0e0;
+ border-radius: 6px;
+ font-size: 1rem;
+ transition: all 0.3s ease;
+ }
+
+ .filter-group input:focus,
+ .filter-group select:focus {
+ outline: none;
+ border-color: var(--windtre-orange);
+ }
+
+ .table-container {
+ overflow-x: auto;
+ border-radius: 8px;
+ border: 1px solid #e0e0e0;
+ }
+
+ .data-table {
+ width: 100%;
+ border-collapse: collapse;
+ table-layout: fixed;
+ font-size: 0.85rem;
+ }
+
+ .data-table thead {
+ background: var(--windtre-gray);
+ color: var(--white);
+ }
+
+ .data-table th {
+ padding: 0.6rem 0.4rem;
+ text-align: left;
+ font-weight: 600;
+ font-size: 0.8rem;
+ white-space: nowrap;
+ }
+
+ .data-table td {
+ padding: 0.6rem 0.4rem;
+ border-bottom: 1px solid #e0e0e0;
+ font-size: 0.8rem;
+ overflow-wrap: break-word;
+ word-break: break-all;
+ }
+
+ /* Larghezze colonne ottimizzate */
+ .data-table th:nth-child(1), .data-table td:nth-child(1) { width: 9%; } /* Stato */
+ .data-table th:nth-child(2), .data-table td:nth-child(2) { width: 13%; } /* Attuale Intestatario */
+ .data-table th:nth-child(3), .data-table td:nth-child(3) { 
+ width: 12%; 
+ font-family: monospace;
+ font-size: 0.75rem;
+ } /* Attuale CF - monospace */
+ .data-table th:nth-child(4), .data-table td:nth-child(4) { width: 13%; } /* Nuovo Intestatario */
+ .data-table th:nth-child(5), .data-table td:nth-child(5) { 
+ width: 12%; 
+ font-family: monospace;
+ font-size: 0.75rem;
+ } /* Nuovo CF - monospace */
+ .data-table th:nth-child(6), .data-table td:nth-child(6) { width: 10%; } /* Numero MNP */
+ .data-table th:nth-child(7), .data-table td:nth-child(7) { width: 10%; } /* Note */
+ .data-table th:nth-child(8), .data-table td:nth-child(8) { width: 2%; text-align: center; padding: 0.3rem; } /* Cartella - STRETTO */
+ .data-table th:nth-child(9), .data-table td:nth-child(9) { width: 9%; text-align: center; } /* Dettagli */
+ .data-table th:nth-child(10), .data-table td:nth-child(10) { width: 10%; text-align: center; } /* Azioni */
+
+ .data-table tbody tr:hover {
+ background-color: #f8f9fa;
+ }
+
+ .highlight-yellow {
+ background-color: #FFF9C4 !important;
+ font-weight: 600;
+ color: #333;
+ }
+
+ .badge {
+ display: inline-block;
+ padding: 0.25rem 0.5rem;
+ border-radius: 12px;
+ font-size: 0.7rem;
+ font-weight: 600;
+ text-align: center;
+ white-space: nowrap;
+ }
+
+ .badge-attesa {
+ background: #E3F2FD;
+ color: #1565C0;
+ }
+
+ .badge-in-corso {
+ background: #FFF9C4;
+ color: #F57F17;
+ }
+
+ .badge-chiuso {
+ background: #E8F5E9;
+ color: #2E7D32;
+ }
+
+ .badge-ko {
+ background: #FFEBEE;
+ color: #C62828;
+ }
+
+ .action-btn {
+ padding: 0.4rem 0.6rem;
+ border: none;
+ border-radius: 4px;
+ cursor: pointer;
+ font-weight: 600;
+ transition: all 0.3s ease;
+ font-size: 0.75rem;
+ white-space: nowrap;
+ }
+
+ .btn-update {
+ background: var(--windtre-orange);
+ color: white;
+ }
+
+ .btn-update:hover {
+ background: #e55a00;
+ transform: translateY(-2px);
+ }
+
+ .link-drive {
+ color: var(--windtre-orange);
+ text-decoration: none;
+ font-weight: 600;
+ font-size: 1.2rem;
+ display: inline-block;
+ }
+
+ .link-drive:hover {
+ text-decoration: none;
+ transform: scale(1.2);
+ transition: transform 0.2s;
+ }
+
+ .empty-cell {
+ color: #999;
+ font-style: italic;
+ }
+
+ .no-results {
+ text-align: center;
+ padding: 3rem;
+ color: #999;
+ font-size: 1.1rem;
+ }
+
+ .loading-spinner {
+ text-align: center;
+ padding: 3rem;
+ }
+
+ .spinner-icon {
+ border: 4px solid var(--light-gray);
+ border-top: 4px solid var(--windtre-orange);
+ border-radius: 50%;
+ width: 50px;
+ height: 50px;
+ animation: spin 1s linear infinite;
+ margin: 0 auto;
+ }
+
+ @keyframes spin {
+ 0% { transform: rotate(0deg); }
+ 100% { transform: rotate(360deg); }
+ }
+
+ .section {
+ margin-bottom: 35px;
+ padding: 25px;
+ background: var(--light-gray);
+ border-radius: 8px;
+ border-left: 4px solid var(--windtre-orange);
+ }
+
+ .section-title {
+ font-size: 1.4em;
+ color: var(--windtre-gray);
+ margin-bottom: 20px;
+ font-weight: 600;
+ display: flex;
+ align-items: center;
+ }
+
+ .section-title::before {
+ content: '●';
+ color: var(--windtre-orange);
+ margin-right: 10px;
+ font-size: 0.8em;
+ }
+
+ .form-group {
+ margin-bottom: 20px;
+ }
+
+ .form-row {
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+ gap: 20px;
+ margin-bottom: 20px;
+ }
+
+ label {
+ display: block;
+ margin-bottom: 8px;
+ color: #555;
+ font-weight: 500;
+ font-size: 0.95em;
+ }
+
+ input[type="text"],
+ input[type="number"],
+ select,
+ textarea {
+ width: 100%;
+ padding: 12px 15px;
+ border: 2px solid #e0e0e0;
+ border-radius: 8px;
+ font-size: 1em;
+ transition: all 0.3s ease;
+ font-family: inherit;
+ }
+
+ input[type="text"]:focus,
+ input[type="number"]:focus,
+ select:focus,
+ textarea:focus {
+ outline: none;
+ border-color: var(--windtre-orange);
+ box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+ }
+
+ textarea {
+ min-height: 100px;
+ resize: vertical;
+ }
+
+ .radio-group {
+ display: flex;
+ gap: 20px;
+ margin-top: 10px;
+ }
+
+ .radio-option {
+ display: flex;
+ align-items: center;
+ cursor: pointer;
+ padding: 10px 20px;
+ border: 2px solid #e0e0e0;
+ border-radius: 8px;
+ transition: all 0.3s ease;
+ }
+
+ .radio-option:hover {
+ border-color: var(--windtre-orange);
+ background: #fff3e6;
+ }
+
+ .radio-option input[type="radio"] {
+ margin-right: 8px;
+ cursor: pointer;
+ width: 18px;
+ height: 18px;
+ }
+
+ .radio-option input[type="radio"]:checked + label {
+ color: var(--windtre-orange);
+ font-weight: 600;
+ }
+
+ .file-upload {
+ margin-top: 10px;
+ }
+
+ .file-label {
+ display: inline-block;
+ padding: 12px 25px;
+ background: var(--windtre-orange);
+ color: var(--white);
+ border-radius: 8px;
+ cursor: pointer;
+ transition: all 0.3s ease;
+ font-weight: 500;
+ }
+
+ .file-label:hover {
+ background: #e55a00;
+ transform: translateY(-2px);
+ box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4);
+ }
+
+ input[type="file"] {
+ display: none;
+ }
+
+ .file-name {
+ margin-left: 15px;
+ color: #666;
+ font-style: italic;
+ }
+
+ .file-name.selected {
+ color: var(--windtre-orange);
+ font-weight: 500;
+ }
+
+ .hidden {
+ display: none;
+ }
+
+ .submit-btn {
+ width: 100%;
+ padding: 16px;
+ background: var(--windtre-orange);
+ color: var(--white);
+ border: none;
+ border-radius: 8px;
+ font-size: 1.2em;
+ font-weight: 600;
+ cursor: pointer;
+ transition: all 0.3s ease;
+ margin-top: 30px;
+ }
+
+ .submit-btn:hover {
+ background: #e55a00;
+ transform: translateY(-2px);
+ box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4);
+ }
+
+ .submit-btn:disabled {
+ background: #ccc;
+ cursor: not-allowed;
+ transform: none;
+ }
+
+ .alert {
+ padding: 15px 20px;
+ border-radius: 8px;
+ margin-bottom: 20px;
+ font-weight: 500;
+ }
+
+ .alert-success {
+ background: #d4edda;
+ color: #155724;
+ border: 1px solid #c3e6cb;
+ }
+
+ .alert-error {
+ background: #f8d7da;
+ color: #721c24;
+ border: 1px solid #f5c6cb;
+ }
+
+ .alert-info {
+ background: #d1ecf1;
+ color: #0c5460;
+ border: 1px solid #bee5eb;
+ }
+
+ .loading {
+ text-align: center;
+ padding: 20px;
+ }
+
+ .spinner {
+ border: 4px solid var(--light-gray);
+ border-top: 4px solid var(--windtre-orange);
+ border-radius: 50%;
+ width: 50px;
+ height: 50px;
+ animation: spin 1s linear infinite;
+ margin: 0 auto;
+ }
+
+ @keyframes spin {
+ 0% { transform: rotate(0deg); }
+ 100% { transform: rotate(360deg); }
+ }
+
+ .required::after {
+ content: " *";
+ color: var(--error-red);
+ }
+
+ .flag-container {
+ background: var(--white);
+ padding: 20px;
+ border-radius: 8px;
+ border: 2px solid var(--windtre-orange);
+ }
+
+ .flag-title {
+ font-size: 1.1em;
+ font-weight: 600;
+ color: #333;
+ margin-bottom: 15px;
+ }
+
+ /* ========================================
+ MNP + OFFERTA INPUT BOX - NUOVO DESIGN
+ ======================================== */
+ 
+ .mnp-input-box {
+ background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+ border: 2px solid #dee2e6;
+ border-radius: 12px;
+ padding: 20px;
+ transition: all 0.3s ease;
+ }
+ 
+ .mnp-input-box:focus-within {
+ border-color: var(--windtre-orange);
+ box-shadow: 0 4px 12px rgba(255, 102, 0, 0.15);
+ }
+ 
+ .mnp-input-row {
+ display: flex;
+ gap: 15px;
+ align-items: flex-end;
+ }
+ 
+ .mnp-input-field {
+ flex: 1;
+ display: flex;
+ flex-direction: column;
+ }
+ 
+ .mnp-input-field label {
+ font-size: 0.85rem;
+ font-weight: 600;
+ color: var(--windtre-gray);
+ margin-bottom: 6px;
+ }
+ 
+ .mnp-input-field input {
+ padding: 12px 15px;
+ border: 2px solid #e0e0e0;
+ border-radius: 8px;
+ font-size: 1rem;
+ transition: all 0.3s ease;
+ }
+ 
+ .mnp-input-field input:focus {
+ outline: none;
+ border-color: var(--windtre-orange);
+ box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+ }
+ 
+ .mnp-input-error {
+ margin-top: 10px;
+ padding: 8px 12px;
+ background: #fff3cd;
+ color: #856404;
+ border-radius: 6px;
+ font-size: 0.9rem;
+ font-weight: 500;
+ }
+ 
+ .add-number-btn {
+ padding: 12px 24px;
+ background: linear-gradient(135deg, var(--windtre-orange) 0%, #e55c00 100%);
+ color: white;
+ border: none;
+ border-radius: 8px;
+ font-weight: 600;
+ cursor: pointer;
+ transition: all 0.3s ease;
+ white-space: nowrap;
+ min-height: 48px;
+ }
+
+ .add-number-btn:hover:not(:disabled) {
+ background: linear-gradient(135deg, #e55c00 0%, #cc5200 100%);
+ transform: translateY(-2px);
+ box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4);
+ }
+ 
+ .add-number-btn:disabled {
+ background: #ccc;
+ cursor: not-allowed;
+ transform: none;
+ box-shadow: none;
+ }
+
+ /* ========================================
+ MNP LIST - NUOVO DESIGN
+ ======================================== */
+ 
+ .mnp-list-container {
+ background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+ border-radius: 12px;
+ border: 2px solid #81c784;
+ overflow: hidden;
+ }
+ 
+ .mnp-list-header {
+ background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+ color: white;
+ padding: 12px 20px;
+ font-weight: 600;
+ font-size: 1rem;
+ }
+ 
+ .mnp-list {
+ padding: 15px;
+ display: flex;
+ flex-direction: column;
+ gap: 12px;
+ max-height: 400px;
+ overflow-y: auto;
+ }
+
+ .mnp-item {
+ display: flex;
+ align-items: center;
+ background: white;
+ padding: 15px;
+ border-radius: 10px;
+ border: 1px solid #a5d6a7;
+ box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+ transition: all 0.2s ease;
+ }
+ 
+ .mnp-item:hover {
+ box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+ transform: translateX(5px);
+ }
+ 
+ .mnp-item-index {
+ background: var(--windtre-orange);
+ color: white;
+ width: 32px;
+ height: 32px;
+ border-radius: 50%;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-weight: 700;
+ font-size: 0.9rem;
+ margin-right: 15px;
+ flex-shrink: 0;
+ }
+ 
+ .mnp-item-content {
+ flex: 1;
+ display: flex;
+ flex-direction: column;
+ gap: 4px;
+ }
+ 
+ .mnp-item-numero {
+ font-weight: 700;
+ font-size: 1.1rem;
+ color: var(--windtre-gray);
+ font-family: 'Courier New', monospace;
+ }
+ 
+ .mnp-item-offerta {
+ font-size: 0.9rem;
+ color: #666;
+ display: flex;
+ align-items: center;
+ gap: 5px;
+ }
+ 
+ .mnp-item-offerta-badge {
+ background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+ color: white;
+ padding: 3px 10px;
+ border-radius: 12px;
+ font-size: 0.8rem;
+ font-weight: 600;
+ }
+
+ .remove-number-btn {
+ background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+ color: white;
+ border: none;
+ padding: 8px 14px;
+ border-radius: 6px;
+ cursor: pointer;
+ font-weight: 600;
+ transition: all 0.3s ease;
+ font-size: 0.85rem;
+ }
+
+ .remove-number-btn:hover {
+ background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+ transform: scale(1.05);
+ box-shadow: 0 3px 8px rgba(244, 67, 54, 0.4);
+ }
+ 
+ /* Responsive */
+ @media (max-width: 768px) {
+ .mnp-input-row {
+ flex-direction: column;
+ gap: 12px;
+ }
+ 
+ .add-number-btn {
+ width: 100%;
+ }
+ 
+ .mnp-item {
+ flex-wrap: wrap;
+ }
+ }
+
+ /* ========================================
+ MODAL STYLES
+ ======================================== */
+
+ /* Modal Overlay */
+ .modal-overlay {
+ display: none;
+ position: fixed;
+ top: 0;
+ left: 0;
+ width: 100%;
+ height: 100%;
+ background: rgba(0, 0, 0, 0.6);
+ z-index: 9999;
+ justify-content: center;
+ align-items: center;
+ backdrop-filter: blur(5px);
+ }
+
+ .modal-overlay.active {
+ display: flex;
+ }
+
+ /* Modal Container */
+ .modal-container {
+ background: white;
+ border-radius: 16px;
+ padding: 2.5rem;
+ max-width: 500px;
+ width: 90%;
+ box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+ animation: modalSlideIn 0.3s ease;
+ }
+
+ @keyframes modalSlideIn {
+ from {
+ opacity: 0;
+ transform: translateY(-50px);
+ }
+ to {
+ opacity: 1;
+ transform: translateY(0);
+ }
+ }
+
+ /* Loading Modal */
+ .loading-modal {
+ text-align: center;
+ }
+
+ .loading-modal .spinner-large {
+ border: 6px solid var(--light-gray);
+ border-top: 6px solid var(--windtre-orange);
+ border-radius: 50%;
+ width: 80px;
+ height: 80px;
+ animation: spin 1s linear infinite;
+ margin: 0 auto 1.5rem;
+ }
+
+ .loading-modal h3 {
+ font-size: 1.5rem;
+ color: var(--windtre-gray);
+ margin-bottom: 0.5rem;
+ }
+
+ .loading-modal p {
+ color: #666;
+ font-size: 0.95rem;
+ }
+
+ /* Success Modal */
+ .success-modal {
+ text-align: center;
+ }
+
+ .success-modal .success-icon {
+ width: 80px;
+ height: 80px;
+ border-radius: 50%;
+ background: #E8F5E9;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ margin: 0 auto 1.5rem;
+ font-size: 3rem;
+ }
+
+ .success-modal h3 {
+ font-size: 1.5rem;
+ color: var(--success-green);
+ margin-bottom: 0.5rem;
+ }
+
+ /* State Selection Modal */
+ .state-modal h3 {
+ text-align: center;
+ font-size: 1.5rem;
+ color: var(--windtre-gray);
+ margin-bottom: 1.5rem;
+ }
+
+ .state-options {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 1rem;
+ margin-bottom: 1.5rem;
+ }
+
+ .state-option {
+ padding: 2rem 1rem;
+ border: 3px solid #e0e0e0;
+ border-radius: 12px;
+ text-align: center;
+ cursor: pointer;
+ transition: all 0.3s ease;
+ background: white;
+ }
+
+ .state-option:hover {
+ transform: translateY(-5px);
+ box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+ }
+
+ .state-option.chiuso {
+ border-color: #A5D6A7;
+ }
+
+ .state-option.chiuso:hover {
+ border-color: #2E7D32;
+ background: #E8F5E9;
+ }
+
+ .state-option.ko {
+ border-color: #EF9A9A;
+ }
+
+ .state-option.ko:hover {
+ border-color: #C62828;
+ background: #FFEBEE;
+ }
+
+ .state-option .icon {
+ font-size: 3rem;
+ margin-bottom: 0.5rem;
+ }
+
+ .state-option .label {
+ font-size: 1.2rem;
+ font-weight: 600;
+ }
+
+ .state-option.chiuso .label {
+ color: #2E7D32;
+ }
+
+ .state-option.ko .label {
+ color: #C62828;
+ }
+
+ .modal-buttons {
+ display: flex;
+ gap: 1rem;
+ justify-content: center;
+ margin-top: 1.5rem;
+ }
+
+ .modal-btn {
+ padding: 0.75rem 2rem;
+ border: none;
+ border-radius: 8px;
+ font-weight: 600;
+ font-size: 1rem;
+ cursor: pointer;
+ transition: all 0.3s ease;
+ }
+
+ .modal-btn-cancel {
+ background: #e0e0e0;
+ color: var(--windtre-gray);
+ }
+
+ .modal-btn-cancel:hover {
+ background: #bdbdbd;
+ }
+
+ /* Dettagli Modal */
+ .dettagli-modal {
+ max-width: 900px;
+ max-height: 90vh;
+ overflow-y: auto;
+ padding: 0;
+ }
+
+ .dettagli-header {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ padding: 2rem;
+ border-bottom: 2px solid #e0e0e0;
+ background: linear-gradient(135deg, #58595B 0%, #3d3e40 100%);
+ border-radius: 16px 16px 0 0;
+ }
+
+ .dettagli-header h2 {
+ color: white;
+ margin: 0;
+ font-size: 1.5rem;
+ }
+
+ .dettagli-header .close-btn {
+ background: rgba(255, 255, 255, 0.2);
+ color: #fff !important;
+ border: 1px solid rgba(255, 255, 255, 0.3);
+ width: 38px;
+ height: 38px;
+ border-radius: 50%;
+ font-size: 22px;
+ line-height: 1;
+ font-weight: 300;
+ cursor: pointer;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ transition: all 0.2s ease;
+ padding: 0;
+ }
+
+ .dettagli-header .close-btn:hover {
+ background: rgba(255, 255, 255, 0.3);
+ transform: rotate(90deg);
+ }
+
+ .dettagli-section {
+ padding: 2rem;
+ border-bottom: 1px solid #e0e0e0;
+ }
+
+ .dettagli-section:last-of-type {
+ border-bottom: none;
+ }
+
+ .dettagli-section h3 {
+ font-size: 1.2rem;
+ color: var(--windtre-gray);
+ margin-bottom: 1.5rem;
+ padding-bottom: 0.5rem;
+ border-bottom: 2px solid var(--windtre-orange);
+ display: inline-block;
+ }
+
+ .field-hint {
+ display: block;
+ font-size: 0.85rem;
+ color: #999;
+ margin-top: 0.25rem;
+ font-style: italic;
+ }
+
+ #dettagliForm .form-row {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 1rem;
+ margin-bottom: 1.5rem;
+ }
+
+ #dettagliForm .form-group {
+ margin-bottom: 1.5rem;
+ }
+
+ #dettagliForm .form-group label {
+ display: block;
+ margin-bottom: 0.5rem;
+ font-weight: 600;
+ color: var(--windtre-gray);
+ }
+
+ #dettagliForm input[type="text"],
+ #dettagliForm input[type="number"],
+ #dettagliForm select,
+ #dettagliForm textarea {
+ width: 100%;
+ padding: 0.75rem;
+ border: 2px solid #e0e0e0;
+ border-radius: 6px;
+ font-size: 1rem;
+ font-family: inherit;
+ }
+
+ #dettagliForm input:focus,
+ #dettagliForm select:focus,
+ #dettagliForm textarea:focus {
+ outline: none;
+ border-color: var(--windtre-orange);
+ }
+
+ #dettagliForm textarea {
+ resize: vertical;
+ min-height: 60px;
+ }
+
+ .modal-actions {
+ display: flex;
+ gap: 1rem;
+ justify-content: flex-end;
+ padding: 2rem;
+ background: #f5f5f5;
+ border-radius: 0 0 16px 16px;
+ }
+
+ .modal-actions .btn-primary,
+ .modal-actions .btn-secondary {
+ padding: 0.75rem 2rem;
+ border: none;
+ border-radius: 8px;
+ font-weight: 600;
+ font-size: 1rem;
+ cursor: pointer;
+ transition: all 0.3s;
+ }
+
+ .modal-actions .btn-primary {
+ background: var(--windtre-orange);
+ color: white;
+ }
+
+ .modal-actions .btn-primary:hover {
+ background: #e55a00;
+ transform: translateY(-2px);
+ box-shadow: 0 5px 15px rgba(255, 102, 0, 0.3);
+ }
+
+ .modal-actions .btn-secondary {
+ background: #e0e0e0;
+ color: var(--windtre-gray);
+ }
+
+ .modal-actions .btn-secondary:hover {
+ background: #bdbdbd;
+ }
+
+ @media (max-width: 768px) {
+ .dettagli-modal {
+ max-width: 95%;
+ }
+
+ #dettagliForm .form-row {
+ grid-template-columns: 1fr;
+ }
+
+ .modal-actions {
+ flex-direction: column;
+ }
+
+ .header h1 {
+ font-size: 1.8em;
+ }
+
+ .form-content {
+ padding: 30px 20px;
+ }
+
+ .section {
+ padding: 20px 15px;
+ }
+
+ .form-row {
+ grid-template-columns: 1fr;
+ }
+
+ .state-options {
+ grid-template-columns: 1fr;
+ }
+
+ .modal-container {
+ padding: 1.5rem;
+ }
+ }
+ 
+ /* ============================================
+ PAGINA RICARICHE
+ ============================================ */
+ 
+ .ricariche-header {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ margin-bottom: 2rem;
+ padding-bottom: 1rem;
+ border-bottom: 2px solid #e0e0e0;
+ }
+ 
+ .ricariche-stats {
+ display: flex;
+ gap: 2rem;
+ }
+ 
+ .stat-box {
+ text-align: center;
+ padding: 0.75rem 1.5rem;
+ border-radius: 8px;
+ box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+ }
+ 
+ .stat-box.urgente {
+ background: #FFEBEE;
+ border-left: 4px solid #D32F2F;
+ }
+ 
+ .stat-box.presto {
+ background: #FFF9C4;
+ border-left: 4px solid #F57C00;
+ }
+ 
+ .stat-box.effettuate {
+ background: #E8F5E9;
+ border-left: 4px solid #388E3C;
+ }
+ 
+ .stat-number {
+ font-size: 2rem;
+ font-weight: bold;
+ margin-bottom: 0.25rem;
+ }
+ 
+ .stat-label {
+ font-size: 0.85rem;
+ opacity: 0.8;
+ }
+ 
+ .ricariche-filters {
+ display: flex;
+ gap: 1rem;
+ margin-bottom: 1.5rem;
+ }
+ 
+ .filter-btn {
+ padding: 0.5rem 1rem;
+ border: 2px solid #e0e0e0;
+ background: white;
+ border-radius: 6px;
+ cursor: pointer;
+ transition: all 0.2s;
+ font-size: 0.9rem;
+ }
+ 
+ .filter-btn:hover {
+ border-color: var(--windtre-orange);
+ }
+ 
+ .filter-btn.active {
+ background: var(--windtre-orange);
+ color: white;
+ border-color: var(--windtre-orange);
+ }
+ 
+ .ricariche-table {
+ width: 100%;
+ border-collapse: collapse;
+ margin-top: 1rem;
+ }
+ 
+ .ricariche-table thead {
+ background: var(--windtre-gray);
+ color: white;
+ }
+ 
+ .ricariche-table th {
+ padding: 1rem;
+ text-align: left;
+ font-weight: 600;
+ }
+ 
+ .ricariche-table td {
+ padding: 1rem;
+ border-bottom: 1px solid #e0e0e0;
+ }
+ 
+ .ricariche-table tbody tr:hover {
+ background: #f9f9f9;
+ }
+ 
+ .ricariche-table tr.scaduta {
+ background: #FFEBEE;
+ }
+ 
+ .ricariche-table tr.scaduta:hover {
+ background: #FFCDD2;
+ }
+ 
+ .ricariche-table tr.presto {
+ background: #FFF9C4;
+ }
+ 
+ .ricariche-table tr.presto:hover {
+ background: #FFF59D;
+ }
+ 
+ .ricariche-table tr.effettuata {
+ background: #f5f5f5;
+ opacity: 0.7;
+ }
+ 
+ .ricariche-table tr.effettuata:hover {
+ background: #eeeeee;
+ }
+ 
+ .ricarica-cell {
+ position: relative;
+ }
+ 
+ .ricarica-data {
+ font-weight: 600;
+ margin-bottom: 0.25rem;
+ }
+ 
+ .ricarica-data.scaduta {
+ color: #D32F2F;
+ }
+ 
+ .ricarica-data.presto {
+ color: #F57C00;
+ }
+ 
+ .ricarica-status {
+ font-size: 0.85rem;
+ color: #388E3C;
+ font-weight: 600;
+ }
+ 
+ .ricarica-esito {
+ font-size: 0.75rem;
+ color: #666;
+ margin-top: 0.25rem;
+ }
+ 
+ .btn-gestisci {
+ background: var(--windtre-orange);
+ color: white;
+ border: none;
+ padding: 0.5rem 1rem;
+ border-radius: 6px;
+ cursor: pointer;
+ font-weight: 600;
+ transition: all 0.2s;
+ }
+ 
+ .btn-gestisci:hover {
+ background: #e55a00;
+ transform: translateY(-1px);
+ box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+ }
+ 
+ /* Modal Ricarica */
+ .modal-ricarica {
+ display: none;
+ position: fixed;
+ top: 0;
+ left: 0;
+ width: 100%;
+ height: 100%;
+ background: rgba(0,0,0,0.5);
+ z-index: 10000;
+ align-items: center;
+ justify-content: center;
+ }
+ 
+ .modal-ricarica.active {
+ display: flex;
+ }
+ 
+ .modal-ricarica-content {
+ background: white;
+ border-radius: 12px;
+ padding: 2rem;
+ max-width: 500px;
+ width: 90%;
+ box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+ }
+ 
+ .modal-ricarica-header {
+ margin-bottom: 1.5rem;
+ padding-bottom: 1rem;
+ border-bottom: 2px solid #e0e0e0;
+ }
+ 
+ .modal-ricarica-header h3 {
+ font-size: 1.5rem;
+ color: var(--windtre-gray);
+ margin-bottom: 0.5rem;
+ }
+ 
+ .modal-ricarica-info {
+ background: #f5f5f5;
+ padding: 1rem;
+ border-radius: 6px;
+ margin-bottom: 1.5rem;
+ }
+ 
+ .modal-ricarica-info p {
+ margin: 0.5rem 0;
+ font-size: 0.95rem;
+ }
+ 
+ .modal-ricarica-info strong {
+ color: var(--windtre-orange);
+ }
+ 
+ .modal-ricarica-buttons {
+ display: flex;
+ flex-direction: column;
+ gap: 1rem;
+ }
+ 
+ .modal-ricarica-btn {
+ padding: 1rem;
+ border: none;
+ border-radius: 8px;
+ font-size: 1rem;
+ font-weight: 600;
+ cursor: pointer;
+ transition: all 0.2s;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ gap: 0.5rem;
+ }
+ 
+ .modal-ricarica-btn.eseguita {
+ background: #4CAF50;
+ color: white;
+ }
+ 
+ .modal-ricarica-btn.eseguita:hover {
+ background: #388E3C;
+ }
+ 
+ .modal-ricarica-btn.non-necessaria {
+ background: #FFA726;
+ color: white;
+ }
+ 
+ .modal-ricarica-btn.non-necessaria:hover {
+ background: #F57C00;
+ }
+ 
+ .modal-ricarica-btn.annulla {
+ background: #E0E0E0;
+ color: #666;
+ }
+ 
+ .modal-ricarica-btn.annulla:hover {
+ background: #BDBDBD;
+ }
+ 
+ .importo-input-group {
+ margin: 1rem 0;
+ }
+ 
+ .importo-input-group label {
+ display: block;
+ margin-bottom: 0.5rem;
+ font-weight: 600;
+ }
+ 
+ .importo-input-group input {
+ width: 100%;
+ padding: 0.75rem;
+ border: 2px solid #e0e0e0;
+ border-radius: 6px;
+ font-size: 1rem;
+ }
+ 
+ .importo-input-group input:focus {
+ outline: none;
+ border-color: var(--windtre-orange);
+ }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/mirox-modules.css">
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/anagrafica-helper.js"></script>
+<script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-folder.js"></script>
+<script src="../js/mirox-upload.js"></script>
+<style>
+.split-anag { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.split-anag > .section { margin-bottom: 0 !important; }
+@media (max-width: 900px) { .split-anag { grid-template-columns: 1fr; } }
+.coincide-row { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--mx-primary-bg, #FFF3E0); border: 1px solid #ffe0b2; border-radius: 10px; margin-bottom: 14px; }
+.coincide-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #ff6600; cursor: pointer; }
+.coincide-row label { font-weight: 700; color: #b45309; cursor: pointer; }
+</style>
+<script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
+<!-- Header -->
+<div class="header">
+<div class="header-content">
+<div>
+<h1>Switch Sim</h1>
+</div>
+<a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
+</div>
+</div> <!-- Navigation Tabs -->
+<div class="nav-tabs">
+<button type="button" class="nav-tab active" onclick="switchTab('inserimento', event)"> Inserimento Dati
+</button>
+<button type="button" class="nav-tab" onclick="switchTab('attesa', event)"> Attesa Inserimento
+</button>
+<button type="button" class="nav-tab" onclick="switchTab('riepilogo', event)"> Riepilogo
+</button>
+<button type="button" class="nav-tab" onclick="switchTab('ricariche', event)"> Ricariche
+</button>
+</div> <div class="container">
+<!-- PAGINA 1: INSERIMENTO DATI -->
+<div id="pageInserimento" class="page active">
+<div class="form-content">
+<form id="switchForm"> <!-- Sezione Informazioni Base -->
+<div class="section">
+<div class="section-title">Informazioni Base</div> <div class="form-group">
+<label for="operatore" class="required">Operatore</label>
+<input type="text" id="operatore" name="operatore" readonly required>
+</div> <div class="form-group">
+<label for="gestoreSim" class="required">Gestore SIM</label>
+<select id="gestoreSim" name="gestoreSim" required>
+<option value="">-- Seleziona Gestore --</option>
+<option value="OPTIMA">OPTIMA</option>
+<option value="E-MOBILE">E-MOBILE</option>
+</select>
+</div>
+</div> <!-- CHECKBOX COINCIDE -->
+<div class="coincide-row">
+<input type="checkbox" id="coincide-check">
+<label for="coincide-check">Nuovo Intestatario (Rientro) coincide con Attuale</label>
+</div>
+
+<!-- SPLIT SCREEN: SX = RIENTRO (Nuovo), DX = ATTUALE (Vecchio) -->
+<div class="split-anag">
+
+<!-- ATTUALE INTESTATARIO (SX) -->
+<div class="section">
+<div class="section-title">Attuale Intestatario Sim</div>
+<div class="form-group">
+<label class="required">Codice Fiscale / P.IVA</label>
+<input type="text" id="anag_vecchio_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
+<small style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori</small>
+</div>
+<div id="anag_vecchio_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
+<div id="anag_vecchio_fields" class="hidden">
+<div class="form-row">
+<div class="form-group">
+<label>Cluster</label>
+<input type="text" id="anag_vecchio_cluster" readonly style="background:#f3f4f6;cursor:not-allowed;">
+</div>
+<div class="form-group">
+<label class="required">Ragione Sociale / Intestatario</label>
+<input type="text" id="anag_vecchio_ragione_sociale">
+</div>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label class="required">Nome Referente</label>
+<input type="text" id="anag_vecchio_nome_referente">
+</div>
+<div class="form-group">
+<label class="required">Cellulare</label>
+<input type="tel" id="anag_vecchio_cellulare">
+</div>
+</div>
+</div>
+</div>
+
+<!-- NUOVO INTESTATARIO (DX) -->
+<div class="section">
+<div class="section-title">Nuovo Intestatario (Rientro)</div>
+<div class="form-group">
+<label class="required">Codice Fiscale / P.IVA</label>
+<input type="text" id="anag_nuovo_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
+<small style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori</small>
+</div>
+<div id="anag_nuovo_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
+<div id="anag_nuovo_fields" class="hidden">
+<div class="form-row">
+<div class="form-group">
+<label>Cluster</label>
+<input type="text" id="anag_nuovo_cluster" readonly style="background:#f3f4f6;cursor:not-allowed;">
+</div>
+<div class="form-group">
+<label class="required">Ragione Sociale / Intestatario</label>
+<input type="text" id="anag_nuovo_ragione_sociale">
+</div>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label class="required">Nome Referente</label>
+<input type="text" id="anag_nuovo_nome_referente">
+</div>
+<div class="form-group">
+<label class="required">Cellulare</label>
+<input type="tel" id="anag_nuovo_cellulare">
+</div>
+</div>
+</div>
+</div>
+
+</div> <!-- Sezione Dati Switch -->
+<div class="section">
+<div class="section-title">Dati Switch</div> <div class="form-group">
+<label class="required">Aggiungi Numero MNP con Offerta</label>
+<p style="font-size: 0.9em; color: #666; margin-bottom: 12px;"> Ogni numero deve avere la sua offerta di rientro. Compila entrambi i campi e clicca"Aggiungi".
+</p> <!-- Box di inserimento con design migliorato -->
+<div class="mnp-input-box">
+<div class="mnp-input-row">
+<div class="mnp-input-field">
+<label for="numeroMNP"> Numero MNP</label>
+<input type="text" id="numeroMNP" placeholder="Es: 3331234567" maxlength="10">
+</div>
+<div class="mnp-input-field" style="flex: 1.5;">
+<label for="offertaMNP"> Offerta Rientro</label>
+<input type="text" id="offertaMNP" placeholder="Es: Super Fibra, Call Your Country...">
+</div>
+<button type="button" id="aggiungiNumeroBtn" class="add-number-btn" disabled> Aggiungi
+</button>
+</div>
+<div id="mnpInputError" class="mnp-input-error hidden"> ️ Inserisci sia il numero che l'offerta
+</div>
+</div>
+</div> <!-- Lista numeri aggiunti con offerte -->
+<div id="numeriMNPContainer" class="hidden" style="margin-top: 20px;">
+<div class="mnp-list-container">
+<div class="mnp-list-header">
+<span> Numeri MNP con Offerte (<span id="conteggioNumeri">0</span>)</span>
+</div>
+<div id="listaNumeriMNP" class="mnp-list"></div>
+</div>
+</div> <div class="form-row">
+<div class="form-group">
+<label for="costoSwitch" class="required">Costo Switch Per Sim (€)</label>
+<input type="number" id="costoSwitch" name="costoSwitch" step="0.01" min="0" placeholder="0.00" required>
+</div> <div class="form-group">
+<label for="modalitaPagamento" class="required">Modalità Pagamento</label>
+<select id="modalitaPagamento" name="modalitaPagamento" required>
+<option value="">-- Seleziona --</option>
+<option value="POS">POS</option>
+<option value="CASH">CASH</option>
+</select>
+</div>
+</div> <div class="form-group">
+<label for="note">Note</label>
+<textarea id="note" name="note" placeholder="Inserisci eventuali note aggiuntive..."></textarea>
+</div>
+</div> <!-- Sezione Upload Documenti -->
+<style>
+.mx-drop-zone { border: 2px dashed #cbd5e1; border-radius: 10px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all .2s ease; background: #fafbfc; }
+.mx-drop-zone:hover, .mx-drop-zone.dragover { border-color: #FF6600; background: #FFF3E0; }
+.mx-drop-zone .mx-drop-text { font-weight: 600; color: #475569; font-size: 14px; }
+.mx-drop-zone .mx-drop-hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+.mx-drop-zone.has-file { border-color: #16a34a; background: #F0FDF4; }
+.mx-drop-zone.has-file .mx-drop-text { color: #047857; }
+.mx-files-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.mx-file-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; }
+.mx-file-row .mx-file-name { flex: 1; color: #1e293b; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.mx-file-row .mx-file-remove { background: transparent; border: none; color: #dc2626; cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; }
+</style>
+<div class="section">
+<div class="section-title">Upload Documenti (PDF)</div>
+
+<div class="form-group">
+<label class="required">Documenti Personali Attuale Intestatario</label>
+<div class="mx-drop-zone" data-target="docAttualeIntestatario">
+<div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
+</div>
+<input type="file" id="docAttualeIntestatario" accept=".pdf" required style="display:none;">
+<div class="mx-files-list" data-list-for="docAttualeIntestatario"></div>
+</div>
+
+<div class="form-group hidden" id="docNuovoIntestatarioGroup">
+<label class="required">Documenti Personali Nuovo Intestatario</label>
+<div class="mx-drop-zone" data-target="docNuovoIntestatario">
+<div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
+</div>
+<input type="file" id="docNuovoIntestatario" accept=".pdf" style="display:none;">
+<div class="mx-files-list" data-list-for="docNuovoIntestatario"></div>
+</div>
+
+<div class="form-group hidden" id="visuraCameraleGroup">
+<label class="required">Visura Camerale</label>
+<div class="mx-drop-zone" data-target="visuraCamerale">
+<div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
+</div>
+<input type="file" id="visuraCamerale" accept=".pdf" style="display:none;">
+<div class="mx-files-list" data-list-for="visuraCamerale"></div>
+</div>
+
+<div class="form-group">
+<label class="required">Fotocopia Sim Cliente</label>
+<div class="mx-drop-zone" data-target="fotoSimCliente">
+<div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
+</div>
+<input type="file" id="fotoSimCliente" accept=".pdf" required style="display:none;">
+<div class="mx-files-list" data-list-for="fotoSimCliente"></div>
+</div>
+
+<div class="form-group">
+<label class="required">Fotocopia Sim per Switch</label>
+<div class="mx-drop-zone" data-target="fotoSimSwitch">
+<div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+<div class="mx-drop-hint">PDF — un solo file</div>
+</div>
+<input type="file" id="fotoSimSwitch" accept=".pdf" required style="display:none;">
+<div class="mx-files-list" data-list-for="fotoSimSwitch"></div>
+</div>
+</div>
+
+<div id="alertContainer"></div>
+
+<div style="display:flex;justify-content:center;margin-top:18px;">
+<button type="submit" class="submit-btn" id="submitBtn" style="min-width:300px;padding:14px 32px;font-size:15px;font-weight:700;background:#FF6600;color:#fff;border:none;border-radius:10px;cursor:pointer;">Salva Switch</button>
+</div>
+</form>
+</div>
+</div> <!-- PAGINA 2: ATTESA INSERIMENTO (NUOVA!) -->
+<div id="pageAttesa" class="page">
+<!-- Sezione Filtri Attesa -->
+<div class="filters-section">
+<div class="filter-group">
+<label for="filterAttesaRagioneSociale"> Ragione Sociale</label>
+<input type="text" id="filterAttesaRagioneSociale" placeholder="Cerca per ragione sociale...">
+</div>
+<div class="filter-group">
+<label for="filterAttesaNumero"> Numero MNP</label>
+<input type="text" id="filterAttesaNumero" placeholder="Cerca per numero...">
+</div>
+</div> <div style="background: #E3F2FD; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #1565C0;">
+<strong> Pratiche in attesa di attivazione SIM</strong>
+<p style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;">Queste pratiche sono in attesa che venga inserito il Giorno Attivazione. Una volta inserito, passeranno automaticamente allo stato"IN CORSO".</p>
+</div> <!-- Tabella Attesa -->
+<div class="table-container">
+<table class="data-table">
+<thead>
+<tr>
+<th>Stato</th>
+<th>Attuale</th>
+<th>CF/P.IVA</th>
+<th>Nuovo</th>
+<th>CF/P.IVA</th>
+<th>Num. MNP</th>
+<th>Data Ins.</th>
+<th>Cartella</th>
+<th>Azioni</th>
+</tr>
+</thead>
+<tbody id="attesaTableBody">
+<tr>
+<td colspan="9" class="loading-spinner">
+<div class="spinner-icon"></div>
+<p style="margin-top: 1rem;">Caricamento dati...</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div> <!-- PAGINA 3: RIEPILOGO -->
+<div id="pageRiepilogo" class="page">
+<!-- Sezione Filtri -->
+<div class="filters-section">
+<div class="filter-group">
+<label for="filterRagioneSociale"> Ragione Sociale</label>
+<input type="text" id="filterRagioneSociale" placeholder="Cerca per ragione sociale...">
+</div>
+<div class="filter-group">
+<label for="filterStato"> Stato</label>
+<select id="filterStato">
+<option value="">-- Tutti gli stati --</option>
+<option value="IN CORSO">IN CORSO</option>
+<option value="CHIUSO">CHIUSO</option>
+<option value="KO">KO</option>
+</select>
+</div>
+<div class="filter-group">
+<label for="filterNumero"> Numero MNP</label>
+<input type="text" id="filterNumero" placeholder="Cerca per numero...">
+</div>
+</div> <!-- Tabella Dati -->
+<div class="table-container">
+<table class="data-table">
+<thead>
+<tr>
+<th>Stato</th>
+<th>Attuale</th>
+<th>CF/P.IVA</th>
+<th>Nuovo</th>
+<th>CF/P.IVA</th>
+<th>Num. MNP</th>
+<th>Giorno Rientro</th>
+<th>Allegati</th>
+<th class="col-azioni">Azioni</th>
+</tr>
+</thead>
+<tbody id="tableBody">
+<tr>
+<td colspan="9" class="loading-spinner">
+<div class="spinner-icon"></div>
+<p style="margin-top: 1rem;">Caricamento dati...</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div> <!-- PAGINA 3: RICARICHE -->
+<div id="pageRicariche" class="page">
+<div class="ricariche-header">
+<h2>Gestione Ricariche</h2>
+</div>
+
+<!-- Tab 1°/2° + filtro Mostra OK -->
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+<div style="display:inline-flex;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:4px;">
+<button type="button" class="ric-tab active" data-ric-tab="prima" style="padding:9px 22px;font-weight:700;font-size:13px;border:none;background:#FF6600;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">1° Ricarica</button>
+<button type="button" class="ric-tab" data-ric-tab="seconda" style="padding:9px 22px;font-weight:600;font-size:13px;border:none;background:transparent;color:#64748b;border-radius:8px;cursor:pointer;font-family:inherit;">2° Ricarica</button>
+</div>
+<label style="display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#475569;cursor:pointer;">
+<input type="checkbox" id="ric-mostra-ok" style="width:16px;height:16px;accent-color:#FF6600;cursor:pointer;">
+Mostra anche ricariche in OK
+</label>
+</div>
+
+<div class="table-container">
+<table class="ricariche-table">
+<thead>
+<tr>
+<th>Ragione Sociale</th>
+<th>C.F./P.IVA</th>
+<th>Gestore</th>
+<th>Numero MNP</th>
+<th id="ric-col-data">Data Ricarica</th>
+<th>Stato</th>
+<th>Azione</th>
+</tr>
+</thead>
+<tbody id="ricaricheTableBody">
+<tr><td colspan="7" style="text-align: center; padding: 2rem;"><div class="spinner-icon"></div><p style="margin-top: 1rem;">Caricamento ricariche...</p></td></tr>
+</tbody>
+</table>
+</div>
+</div> <!-- MODAL: Loading -->
+<div id="loadingModal" class="modal-overlay">
+<div class="modal-container loading-modal">
+<div class="spinner-large"></div>
+<h3>Salvataggio in corso...</h3>
+<p>Attendere prego, stiamo salvando i dati</p>
+</div>
+</div> <!-- MODAL: Success -->
+<div id="successModal" class="modal-overlay">
+<div class="modal-container success-modal">
+<div class="success-icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:42px;height:42px;">
+<polyline points="20 6 9 17 4 12"/>
+</svg>
+</div>
+<h3>Switch salvato con successo!</h3>
+<p id="successMessage"></p>
+</div>
+</div> <!-- MODAL: State Selection -->
+<div id="stateModal" class="modal-overlay">
+<div class="modal-container state-modal">
+<h3>Seleziona Nuovo Stato</h3>
+<div class="state-options">
+<div class="state-option chiuso" onclick="selectState(' CHIUSO')">
+<div class="icon"></div>
+<div class="label">CHIUSO</div>
+</div>
+<div class="state-option ko" onclick="selectState(' KO')">
+<div class="icon"></div>
+<div class="label">KO</div>
+</div>
+</div>
+<div class="modal-buttons">
+<button type="button" class="modal-btn modal-btn-cancel" onclick="closeStateModal()">Annulla</button>
+</div>
+</div>
+</div> <!-- MODAL: Dettagli Tecnici -->
+<div id="dettagliModal" class="modal-overlay">
+<div class="modal-container dettagli-modal">
+<div class="dettagli-header">
+<h2> Dettagli Tecnici</h2>
+<button type="button" class="close-btn" onclick="chiudiDettagli()" aria-label="Chiudi">×</button>
+</div> <form id="dettagliForm">
+<!-- Sezione Dati Principali -->
+<div class="dettagli-section">
+<h3> Dati Principali</h3> <!-- OFFERTA RIENTRO - PRIMA VOCE IN EVIDENZA -->
+<div class="form-group" style="background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); padding: 15px; border-radius: 8px; border-left: 4px solid #FF6600; margin-bottom: 20px;">
+<label style="color: #E65100; font-weight: 700; font-size: 1.1rem;">Offerta Rientro</label>
+<input type="text" id="dettaglio_offertaRientro" placeholder="Es: Offerta WindTre..." style="font-size: 1.05rem; font-weight: 600; border: 2px solid #FF6600;">
+</div> <div class="form-row">
+<div class="form-group">
+<label>Data Richiesta Switch</label>
+<input type="text" id="dettaglio_dataRichiesta" readonly style="background: #f5f5f5; cursor: not-allowed;">
+</div>
+<div class="form-group">
+<label>Operatore</label>
+<select id="dettaglio_operatore">
+<option value="Matteo">Matteo</option>
+<option value="Francesca">Francesca</option>
+<option value="Mirko">Mirko</option>
+<option value="Cerea">Cerea</option>
+</select>
+</div>
+</div> <div class="form-row">
+<div class="form-group">
+<label>Gestore SIM</label>
+<select id="dettaglio_gestoreSim">
+<option value="OPTIMA">OPTIMA</option>
+<option value="E-MOBILE">E-MOBILE</option>
+</select>
+</div>
+<div class="form-group">
+<!-- Spazio vuoto per allineamento -->
+</div>
+</div> <div class="form-row">
+<div class="form-group">
+<label>Attuale Intestatario</label>
+<input type="text" id="dettaglio_attualeIntestatario">
+</div>
+<div class="form-group">
+<label>Attuale CF/P.IVA</label>
+<input type="text" id="dettaglio_attualeCFPIVA" readonly style="background: #f5f5f5; cursor: not-allowed;">
+</div>
+</div> <div class="form-row">
+<div class="form-group">
+<label>Nuovo Intestatario</label>
+<input type="text" id="dettaglio_nuovoIntestatario">
+</div>
+<div class="form-group">
+<label>Nuovo CF/P.IVA</label>
+<input type="text" id="dettaglio_nuovoCFPIVA" readonly style="background: #f5f5f5; cursor: not-allowed;">
+</div>
+</div> <div class="form-group">
+<label>Numero MNP</label>
+<input type="text" id="dettaglio_numeroMNP" maxlength="10">
+</div> <div class="form-row">
+<div class="form-group">
+<label>Modalità Pagamento</label>
+<select id="dettaglio_modalitaPagamento">
+<option value="POS">POS</option>
+<option value="CASH">CASH</option>
+</select>
+</div>
+<div class="form-group">
+<label>Importo (€)</label>
+<input type="number" id="dettaglio_costoSwitch" step="0.01" min="0">
+</div>
+</div> <div class="form-group">
+<label>Note</label>
+<textarea id="dettaglio_note" rows="2"></textarea>
+</div>
+</div> <!-- Sezione Dati Tecnici -->
+<div class="dettagli-section">
+<h3> Dati Tecnici</h3> <div class="form-row">
+<div class="form-group">
+<label>ICCID SIM</label>
+<input type="text" id="dettaglio_iccidSim" placeholder="Inserisci ICCID (numeri)">
+</div>
+<div class="form-group">
+<label>Numero Provvisorio</label>
+<input type="text" id="dettaglio_numeroProvvisorio" maxlength="10" placeholder="10 cifre">
+<small class="field-hint">Formato: 10 cifre numeriche</small>
+</div>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label>Giorno Attivazione</label>
+<input type="date" id="dettaglio_giornoAttivazione">
+<small class="field-hint">Cambia stato + Auto-calcola 1°Ric (+25gg) e 2°Ric (+55gg)</small>
+</div>
+<div class="form-group">
+<label>Giorno Portabilità</label>
+<input type="date" id="dettaglio_giornoPortabilita">
+<small class="field-hint">Auto-calcola Rientro (+61gg)</small>
+</div>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label>Giorno Rientro</label>
+<input type="date" id="dettaglio_giornoRientro" readonly style="background: #f5f5f5; cursor: not-allowed; font-style: italic;">
+<small class="field-hint">Auto-calcolato: Portabilità + 61 giorni</small>
+</div>
+<div class="form-group">
+<label>SIM Definitiva Rientro</label>
+<input type="text" id="dettaglio_simDefinitiva" maxlength="10" placeholder="10 cifre">
+<small class="field-hint">Formato: 10 cifre numeriche</small>
+</div>
+</div>
+</div> <div class="modal-actions">
+<button type="button" class="btn-secondary" onclick="chiudiDettagli()"> Annulla</button>
+<button type="submit" class="btn-primary"> Salva Modifiche</button>
+</div>
+</form>
+</div>
+</div> <!-- MODAL: Gestione Ricarica -->
+<div id="ricaricaModal" class="modal-ricarica">
+<div class="modal-ricarica-content">
+<div class="modal-ricarica-header">
+<h3> Gestisci Ricarica</h3>
+</div> <div class="modal-ricarica-info" id="ricaricaInfo">
+<p><strong>Numero:</strong><span id="ricaricaNumero">-</span></p>
+<p><strong>Cliente:</strong><span id="ricaricaCliente">-</span></p>
+<p><strong>Data prevista:</strong><span id="ricaricaData">-</span></p>
+<p><strong>Tipo:</strong><span id="ricaricaTipo">-</span></p>
+</div> <div id="ricaricaStepScelta" class="modal-ricarica-buttons">
+<button type="button" class="modal-ricarica-btn eseguita" onclick="sceltaRicarica(' eseguita')"> Ricarica Eseguita
+</button>
+<button type="button" class="modal-ricarica-btn non-necessaria" onclick="sceltaRicarica(' non-necessaria')"> Non Necessaria
+</button>
+<button type="button" class="modal-ricarica-btn annulla" onclick="chiudiModalRicarica()"> Annulla
+</button>
+</div> <div id="ricaricaStepImporto" style="display: none;">
+<div class="importo-input-group">
+<label for="importoRicarica">Importo Ricarica (€)</label>
+<input type="number" id="importoRicarica" placeholder="es: 10" step="0.01" min="0">
+</div>
+<div class="modal-ricarica-buttons">
+<button type="button" class="modal-ricarica-btn eseguita" onclick="confermaRicarica()"> Conferma
+</button>
+<button type="button" class="modal-ricarica-btn annulla" onclick="tornaScelta()"> ← Indietro
+</button>
+</div>
+</div>
+</div>
+</div> <script> // ========================================
+ // CONFIGURAZIONE
+ // ========================================
+ // Migrato su Supabase: tabella vendita_switch_sim + storage bucket switch-sim-files
+ const sb = db;
+ const SWITCH_SIM_BUCKET = 'switch-sim-files';
+
+ // Drag-drop bindings su tutte le .mx-drop-zone della pagina
+ function renderSwitchFileList(inputId) {
+   const inp = document.getElementById(inputId);
+   const list = document.querySelector(`.mx-files-list[data-list-for="${inputId}"]`);
+   const dz = document.querySelector(`.mx-drop-zone[data-target="${inputId}"]`);
+   if (!list || !dz) return;
+   list.innerHTML = '';
+   if (inp.files && inp.files.length > 0) {
+     dz.classList.add('has-file');
+     Array.from(inp.files).forEach(f => {
+       const row = document.createElement('div');
+       row.className = 'mx-file-row';
+       row.innerHTML = `<span class="mx-file-name">${f.name}</span><button type="button" class="mx-file-remove" title="Rimuovi" onclick="clearSwitchFile('${inputId}')">×</button>`;
+       list.appendChild(row);
+     });
+   } else {
+     dz.classList.remove('has-file');
+   }
+ }
+ function clearSwitchFile(inputId) {
+   const inp = document.getElementById(inputId);
+   if (inp) { inp.value = ''; renderSwitchFileList(inputId); }
+ }
+ window.clearSwitchFile = clearSwitchFile;
+ document.querySelectorAll('.mx-drop-zone').forEach(dz => {
+   const targetId = dz.dataset.target;
+   if (!targetId) return;
+   const inp = document.getElementById(targetId);
+   if (!inp) return;
+   dz.addEventListener('click', () => inp.click());
+   inp.addEventListener('change', () => renderSwitchFileList(targetId));
+   dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+   dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+   dz.addEventListener('drop', (e) => {
+     e.preventDefault();
+     dz.classList.remove('dragover');
+     const file = (e.dataTransfer.files || [])[0];
+     if (!file) return;
+     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) return;
+     const dt = new DataTransfer();
+     dt.items.add(file);
+     inp.files = dt.files;
+     renderSwitchFileList(targetId);
+   });
+ });
+
+ // Auto-fill operatore dal profilo
+ (async () => {
+ const p = window.__profilo || await Auth.getSessione();
+ if (p) {
+ const el = document.getElementById('operatore');
+ if (el && el.tagName === 'INPUT') el.value = p.nome || p.email || 'Operatore';
+ else if (el && el.tagName === 'SELECT') {
+ const v = p.nome || '';
+ [...el.options].forEach(o => { if (o.value.toLowerCase() === v.toLowerCase()) el.value = o.value; });
+ }
+ }
+ })();
+
+ async function uploadSwitchSimFile(folderName, base64, filename, label) {
+ try {
+ if (!base64) return null;
+ const bin = atob(base64);
+ const buf = new Uint8Array(bin.length);
+ for (let i = 0; i< bin.length; i++) buf[i] = bin.charCodeAt(i);
+ const blob = new Blob([buf], { type: 'application/octet-stream' });
+ const safeFolder = folderName || 'pratica';
+ // Forza sempre estensione .pdf (policy Mirox: ogni allegato deve essere PDF)
+ const rawName = filename || 'file';
+ const baseName = rawName.replace(/\.[a-z0-9]+$/i, '');
+ const path = `${safeFolder}/${label}_${Date.now()}_${baseName}.pdf`;
+ const { error } = await sb.storage.from(SWITCH_SIM_BUCKET).upload(path, blob, { upsert: true, contentType: 'application/pdf' });
+ if (error) throw error;
+ return sb.storage.from(SWITCH_SIM_BUCKET).getPublicUrl(path).data?.publicUrl || null;
+ } catch (e) { console.error('Upload switch-sim errore (' + label + '):', e); return null; }
+ }
+
+ // Mappa label tecnico -> nome leggibile descrittivo (popup allegati)
+ const SWITCH_SIM_LABELS = {
+   docAttualeIntestatario: 'Documento Identità Attuale Intestatario',
+   docNuovoIntestatario: 'Documento Identità Nuovo Intestatario',
+   docVisuraCamerale: 'Visura Camerale',
+   docContrattoSwitch: 'Contratto Switch SIM firmato',
+   docCarrello: 'Stampa Carrello',
+   docModuloPrivacy: 'Modulo Privacy',
+   docDelegaConsenso: 'Delega/Consenso',
+   docAltro: 'Altro documento'
+ };
+
+ function _displayNameSwitchSim(rawFileName) {
+   // I file vengono salvati come "<label>_<timestamp>_<original>". Rimuoviamo timestamp + original.
+   if (!rawFileName) return 'Documento';
+   const m = /^([A-Za-z]+)_(\d+)_(.+)$/.exec(rawFileName);
+   if (!m) return rawFileName;
+   const label = m[1];
+   if (SWITCH_SIM_LABELS[label]) return SWITCH_SIM_LABELS[label];
+   // Fallback: trasforma camelCase in parole separate, capitalizzate
+   return label.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase()).trim();
+ }
+
+ /**
+  * Apre il popup MiroxUI.allegati con tutti i file della cartella della pratica.
+  * Usa cartella_url (path della cartella nel bucket switch-sim-files) per il
+  * formato nuovo, oppure tenta i fallback legacy `pratica_<id>`.
+  */
+ async function apriAllegatiSwitchSim(rowIndex) {
+   if (!window.MiroxUI) { console.error('MiroxUI non caricato'); return; }
+   const loader = window.MiroxUI.loading.show('Caricamento allegati', 'Sto leggendo i file dallo storage...');
+   try {
+     // Recupera cartella_url e dati del record
+     const { data: rec, error: errRec } = await sb
+       .from('vendita_switch_sim')
+       .select('id, cartella_url, ragione_sociale_attuale, ragione_sociale_rientro, data_inserimento')
+       .eq('id', rowIndex)
+       .single();
+     if (errRec) throw errRec;
+     // Path candidati (priorità: cartella_url salvata, poi fallback)
+     const candidates = [];
+     if (rec && rec.cartella_url) {
+       // cartella_url legacy poteva essere un URL completo di publicUrl; estraiamo solo il path
+       const folderOnly = rec.cartella_url
+         .replace(/^https?:\/\/[^/]+\/storage\/v1\/object\/public\/[^/]+\//, '')
+         .replace(/\/[^/]+$/, '');
+       if (folderOnly && folderOnly !== rec.cartella_url) candidates.push(folderOnly);
+       candidates.push(rec.cartella_url);
+     }
+     // Fallback: nuovo formato ricostruito
+     if (rec && window.MiroxFolder) {
+       candidates.push(window.MiroxFolder.build(rec.ragione_sociale_attuale, rec.ragione_sociale_rientro, rec.data_inserimento));
+     }
+     // Fallback legacy
+     candidates.push(`pratica_${rec ? rec.id : rowIndex}`);
+
+     let items = [];
+     for (const folder of candidates) {
+       if (!folder) continue;
+       const { data: files, error } = await sb.storage.from(SWITCH_SIM_BUCKET).list(folder, { limit: 100, offset: 0 });
+       if (error) continue;
+       const filtered = (files || []).filter(f => f.name && !f.name.startsWith('.') && f.metadata);
+       if (filtered.length) {
+         items = filtered.map(f => {
+           const path = `${folder}/${f.name}`;
+           const url = sb.storage.from(SWITCH_SIM_BUCKET).getPublicUrl(path).data?.publicUrl || '#';
+           return { name: f.name, displayName: _displayNameSwitchSim(f.name), url };
+         });
+         break;
+       }
+     }
+     loader.hide();
+     window.MiroxUI.allegati({
+       title: `Allegati pratica #${rowIndex}`,
+       items,
+       emptyText: 'Nessun allegato disponibile per questa pratica.'
+     });
+   } catch (e) {
+     loader.error('Errore di caricamento');
+     console.error('Errore lettura allegati switch-sim:', e);
+     setTimeout(() => window.MiroxUI.alert('Impossibile leggere gli allegati: ' + e.message, { type: 'error', title: 'Errore' }), 200);
+   }
+ }
+
+ function fmtItDate(iso) {
+ if (!iso) return'';
+ const d = new Date(iso);
+ if (isNaN(d)) return iso;
+ return d.toLocaleDateString('it-IT');
+ }
+ function parseItDateInput(s) {
+ if (!s) return null;
+ if (typeof s !== 'string') return null;
+ const parts = s.includes('/') ? s.split('/') : null;
+ if (parts && parts.length === 3) {
+ const d = parts[0].padStart(2,'0'), m = parts[1].padStart(2,'0'), y = parts[2];
+ return`${y}-${m}-${d}`;
+ }
+ // Se già YYYY-MM-DD
+ if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+ return null;
+ }
+
+ // Mappa record DB → struttura legacy attesa dalle render functions
+ function mapDbToLegacy(r) {
+ const attuale = r.ragione_sociale_attuale || '';
+ const nuovo = r.ragione_sociale_rientro || '';
+ return {
+ rowIndex: r.id,
+ stato: r.stato,
+ attualeNomeCognome: attuale,
+ attualeCFPIVA: r.cf_piva_attuale || '',
+ ragioneSociale: attuale,
+ nuovoNomeCognome: nuovo,
+ nuovoCFPIVA: r.cf_piva_rientro || '',
+ numeroMNP: r.numero_portabilita || '',
+ dataInserimento: r.data_inserimento ? new Date(r.data_inserimento).toLocaleDateString('it-IT') : '',
+ folderUrl: r.cartella_url || '',
+ operatore: r.operatore_nome || '',
+ gestoreSim: r.gestore || '',
+ attualeIntestatario: attuale,
+ nuovoIntestatario: nuovo,
+ offertaRientro: r.offerta_rientro || '',
+ modalitaPagamento: r.modalita_pagamento || '',
+ costoSwitch: r.importo || '',
+ note: r.note || '',
+ iccidSim: r.iccid_sim || '',
+ numeroProvvisorio: r.numero_provvisorio || '',
+ giornoAttivazione: r.giorno_attivazione ? fmtItDate(r.giorno_attivazione) : '',
+ giornoPortabilita: r.giorno_portabilita ? fmtItDate(r.giorno_portabilita) : '',
+ giornoRientro: r.giorno_rientro ? fmtItDate(r.giorno_rientro) : '',
+ simDefinitiva: r.sim_definitiva_rientro || '',
+ primaRicarica: r.prima_ricarica_giorno_pianificato ? fmtItDate(r.prima_ricarica_giorno_pianificato) : '',
+ secondaRicarica: r.seconda_ricarica_giorno_pianificato ? fmtItDate(r.seconda_ricarica_giorno_pianificato) : '',
+ dataEsecuzionePrima: r.prima_ricarica_data_esecuzione ? fmtItDate(r.prima_ricarica_data_esecuzione) : '',
+ dataEsecuzioneSeconda: r.seconda_ricarica_data_esecuzione ? fmtItDate(r.seconda_ricarica_data_esecuzione) : '',
+ importoPrima: r.prima_ricarica_importo != null ? '€ ' + Number(r.prima_ricarica_importo).toFixed(2) : '',
+ importoSeconda: r.seconda_ricarica_importo != null ? '€ ' + Number(r.seconda_ricarica_importo).toFixed(2) : ''
+ };
+ }
+
+ // Array per memorizzare i numeri MNP
+ let numeriMNP = [];
+
+ // Dati globali per la tabella
+ let allData = [];
+ let filteredData = [];
+
+ // ========================================
+ // GESTIONE FORM - CLUSTER E CAMPI CONDIZIONALI
+ // ========================================
+
+ // Gestione visualizzazione nome file selezionati
+ const fileInputs = [
+ { input: 'docAttualeIntestatario', display: 'docAttualeIntestatarioName' },
+ { input: 'docNuovoIntestatario', display: 'docNuovoIntestatarioName' },
+ { input: 'visuraCamerale', display: 'visuraCameraleName' },
+ { input: 'fotoSimCliente', display: 'fotoSimClienteName' },
+ { input: 'fotoSimSwitch', display: 'fotoSimSwitchName' }
+ ];
+
+ fileInputs.forEach(({ input, display }) => {
+ const inputElement = document.getElementById(input);
+ const displayElement = document.getElementById(display);
+ 
+ if (inputElement && displayElement) {
+ inputElement.addEventListener('change', function() {
+ if (this.files && this.files[0]) {
+ displayElement.textContent = this.files[0].name;
+ displayElement.style.color = '#2E7D32';
+ displayElement.style.fontWeight = '600';
+ } else {
+ displayElement.textContent = 'Nessun file selezionato';
+ displayElement.style.color = '#999';
+ displayElement.style.fontWeight = 'normal';
+ }
+ });
+ }
+ });
+
+ // ===== SETUP ANAGRAFICHE (RIENTRO/Nuovo + ATTUALE/Vecchio) =====
+ const anagNuovo = window.AnagraficaHelper.setupAnagraficaSection('anag_nuovo');
+ const anagVecchio = window.AnagraficaHelper.setupAnagraficaSection('anag_vecchio');
+
+ // Visura camerale: required dinamicamente in base al cluster dell'attuale intestatario
+ // Si attiva quando anagVecchio.state.cluster diventa 'Business'
+ // Hook dentro l'onLookupComplete
+ (function bindVisura() {
+   const visuraGroup = document.getElementById('visuraCameraleGroup');
+   const visuraInput = document.getElementById('visuraCamerale');
+   function aggiornaVisura() {
+     if (!visuraGroup) return;
+     const isBusiness = anagVecchio.state.cluster === 'Business';
+     visuraGroup.classList.toggle('hidden', !isBusiness);
+     if (visuraInput) {
+       if (isBusiness) visuraInput.setAttribute('required', 'required');
+       else visuraInput.removeAttribute('required');
+     }
+   }
+   const cf = document.getElementById('anag_vecchio_cfpiva');
+   if (cf) {
+     cf.addEventListener('blur', () => setTimeout(aggiornaVisura, 50));
+     cf.addEventListener('input', () => { if (visuraGroup) visuraGroup.classList.add('hidden'); });
+   }
+ })();
+
+ // Checkbox "Nuovo Intestatario coincide con Attuale"
+ const coincideCheck = document.getElementById('coincide-check');
+ if (coincideCheck) {
+   coincideCheck.addEventListener('change', async () => {
+     const nuovoSection = document.getElementById('docNuovoIntestatarioGroup');
+     const docNuovoInput = document.getElementById('docNuovoIntestatario');
+     if (coincideCheck.checked) {
+       // Attende eventuale lookup in volo (fix bug primo click subito dopo la ricerca)
+       try { await anagVecchio.awaitLookup(); } catch (_) {}
+       if (!anagVecchio.state.cfPiva || !anagVecchio.state.lookupDone) {
+         await window.MiroxUI.alert(
+           'Compila prima l\'Attuale Intestatario (digita il CF/P.IVA e attendi la ricerca)',
+           { type: 'warning', title: 'Dato mancante' }
+         );
+         coincideCheck.checked = false;
+         return;
+       }
+       // Copia 1:1 dai campi del Vecchio al Nuovo (lettura diretta dal DOM)
+       const pairs = [
+         ['anag_vecchio_cfpiva', 'anag_nuovo_cfpiva'],
+         ['anag_vecchio_cluster', 'anag_nuovo_cluster'],
+         ['anag_vecchio_ragione_sociale', 'anag_nuovo_ragione_sociale'],
+         ['anag_vecchio_nome_referente', 'anag_nuovo_nome_referente'],
+         ['anag_vecchio_cellulare', 'anag_nuovo_cellulare']
+       ];
+       pairs.forEach(([from, to]) => {
+         const src = document.getElementById(from);
+         const dst = document.getElementById(to);
+         if (src && dst) dst.value = src.value || '';
+       });
+       anagNuovo.state.id = anagVecchio.state.id;
+       anagNuovo.state.cfPiva = anagVecchio.state.cfPiva;
+       anagNuovo.state.kind = anagVecchio.state.kind;
+       anagNuovo.state.cluster = anagVecchio.state.cluster;
+       anagNuovo.state.lookupDone = true;
+       anagNuovo.state.exists = anagVecchio.state.exists;
+       document.getElementById('anag_nuovo_fields').classList.remove('hidden');
+       document.getElementById('anag_nuovo_fields').style.display = 'block';
+       ['anag_nuovo_cfpiva','anag_nuovo_cluster','anag_nuovo_ragione_sociale','anag_nuovo_nome_referente','anag_nuovo_cellulare'].forEach(id => {
+         const el = document.getElementById(id);
+         if (el) { el.readOnly = true; el.style.background = '#f3f4f6'; el.style.cursor = 'not-allowed'; }
+       });
+       anagNuovo.setStatus('= identico all\'Attuale Intestatario', 'info');
+       // doc del nuovo intestatario non più richiesto
+       if (nuovoSection) nuovoSection.classList.add('hidden');
+       if (docNuovoInput) docNuovoInput.removeAttribute('required');
+     } else {
+       ['anag_nuovo_cfpiva','anag_nuovo_cluster','anag_nuovo_ragione_sociale','anag_nuovo_nome_referente','anag_nuovo_cellulare'].forEach(id => {
+         const el = document.getElementById(id);
+         if (el) { el.readOnly = false; el.style.background = ''; el.style.cursor = ''; }
+       });
+       anagNuovo.reset();
+       if (nuovoSection) nuovoSection.classList.remove('hidden');
+       if (docNuovoInput) docNuovoInput.setAttribute('required', 'required');
+     }
+   });
+ }
+
+ // ========================================
+ // GESTIONE NUMERI MNP CON OFFERTE
+ // ========================================
+ 
+ // Abilita/disabilita pulsante Aggiungi in base ai campi compilati
+ function checkMNPInputs() {
+ const numero = document.getElementById('numeroMNP').value.trim();
+ const offerta = document.getElementById('offertaMNP').value.trim();
+ const btn = document.getElementById('aggiungiNumeroBtn');
+ const errorDiv = document.getElementById('mnpInputError');
+ 
+ // Abilita solo se entrambi i campi sono compilati
+ const isValid = numero.length> 0 && offerta.length> 0;
+ btn.disabled = !isValid;
+ 
+ // Nascondi errore quando i campi sono validi
+ if (isValid) {
+ errorDiv.classList.add('hidden');
+ }
+ }
+ 
+ // Event listeners per i campi input
+ document.getElementById('numeroMNP').addEventListener('input', checkMNPInputs);
+ document.getElementById('offertaMNP').addEventListener('input', checkMNPInputs);
+
+ document.getElementById('aggiungiNumeroBtn').addEventListener('click', function() {
+ const numeroInput = document.getElementById('numeroMNP');
+ const offertaInput = document.getElementById('offertaMNP');
+ const errorDiv = document.getElementById('mnpInputError');
+ 
+ const numero = numeroInput.value.trim();
+ const offerta = offertaInput.value.trim();
+ 
+ // Validazione: entrambi i campi obbligatori
+ if (!numero || !offerta) {
+ errorDiv.classList.remove('hidden');
+ return;
+ }
+ 
+ // Controllo formato numero (10 cifre)
+ if (!/^\d{10}$/.test(numero)) {
+ window.MiroxUI && window.MiroxUI.alert('️ Il numero deve essere di 10 cifre (es: 3331234567)', {type:'warning', title:'Attenzione'});
+ numeroInput.focus();
+ return;
+ }
+ 
+ // Controllo duplicati (verifica solo il numero)
+ if (numeriMNP.some(item => item.numero === numero)) {
+ window.MiroxUI && window.MiroxUI.alert('️ Questo numero è già stato aggiunto', {type:'warning', title:'Attenzione'});
+ return;
+ }
+ 
+ // Aggiungi oggetto {numero, offerta} all'array
+ numeriMNP.push({
+ numero: numero,
+ offerta: offerta
+ });
+ 
+ // Aggiorna UI
+ aggiornaListaNumeri();
+ 
+ // Pulisci input e disabilita pulsante
+ numeroInput.value = '';
+ offertaInput.value = '';
+ document.getElementById('aggiungiNumeroBtn').disabled = true;
+ errorDiv.classList.add('hidden');
+ 
+ // Focus sul numero per la prossima entry
+ numeroInput.focus();
+ });
+
+ // Permetti l'aggiunta con il tasto Enter su entrambi i campi
+ document.getElementById('numeroMNP').addEventListener('keypress', function(e) {
+ if (e.key === 'Enter') {
+ e.preventDefault();
+ // Se il campo offerta è vuoto, vai lì, altrimenti clicca aggiungi
+ const offertaInput = document.getElementById('offertaMNP');
+ if (!offertaInput.value.trim()) {
+ offertaInput.focus();
+ } else {
+ document.getElementById('aggiungiNumeroBtn').click();
+ }
+ }
+ });
+ 
+ document.getElementById('offertaMNP').addEventListener('keypress', function(e) {
+ if (e.key === 'Enter') {
+ e.preventDefault();
+ document.getElementById('aggiungiNumeroBtn').click();
+ }
+ });
+
+ function aggiornaListaNumeri() {
+ const container = document.getElementById('numeriMNPContainer');
+ const lista = document.getElementById('listaNumeriMNP');
+ const conteggio = document.getElementById('conteggioNumeri');
+ 
+ if (numeriMNP.length === 0) {
+ container.classList.add('hidden');
+ return;
+ }
+ 
+ container.classList.remove('hidden');
+ conteggio.textContent = numeriMNP.length;
+ 
+ lista.innerHTML = numeriMNP.map((item, index) => `
+<div class="mnp-item">
+<div class="mnp-item-index">${index + 1}</div>
+<div class="mnp-item-content">
+<div class="mnp-item-numero"> ${item.numero}</div>
+<div class="mnp-item-offerta">
+<span class="mnp-item-offerta-badge"> ${item.offerta}</span>
+</div>
+</div>
+<button type="button"class="remove-number-btn"onclick="rimuoviNumero(${index})"> ️ Rimuovi
+</button>
+</div> `).join('');
+ }
+
+ function rimuoviNumero(index) {
+ numeriMNP.splice(index, 1);
+ aggiornaListaNumeri();
+ }
+
+ // ========================================
+ // VALIDAZIONE CODICE FISCALE
+ // ========================================
+
+ /**
+ * Estrae le consonanti da una stringa
+ */
+ function estraiConsonanti(str) {
+ return str.toUpperCase().replace(/[^BCDFGHJKLMNPQRSTVWXYZ]/g, '');
+ }
+
+ /**
+ * Estrae le vocali da una stringa
+ */
+ function estraiVocali(str) {
+ return str.toUpperCase().replace(/[^AEIOU]/g, '');
+ }
+
+ /**
+ * Calcola il codice del cognome per il CF
+ */
+ function calcolaCodiceCognome(cognome) {
+ const consonanti = estraiConsonanti(cognome);
+ const vocali = estraiVocali(cognome);
+ let codice = consonanti + vocali + 'XXX';
+ return codice.substring(0, 3);
+ }
+
+ /**
+ * Calcola il codice del nome per il CF
+ */
+ function calcolaCodiceNome(nome) {
+ const consonanti = estraiConsonanti(nome);
+ const vocali = estraiVocali(nome);
+ 
+ // Se ci sono 4 o più consonanti, si prendono la 1ª, 3ª e 4ª
+ if (consonanti.length>= 4) {
+ return consonanti.charAt(0) + consonanti.charAt(2) + consonanti.charAt(3);
+ }
+ 
+ // Altrimenti si procede come per il cognome
+ let codice = consonanti + vocali + 'XXX';
+ return codice.substring(0, 3);
+ }
+
+ /**
+ * Valida il codice fiscale rispetto a nome e cognome
+ */
+ function validaCodiceFiscale(nome, cognome, cf) {
+ if (!nome || !cognome || !cf) {
+ return { valido: false, messaggio: 'Compila tutti i campi' };
+ }
+
+ // Il CF deve essere di 16 caratteri
+ if (cf.length !== 16) {
+ return { valido: false, messaggio: 'Il Codice Fiscale deve essere di 16 caratteri' };
+ }
+
+ // Calcola i codici attesi
+ const codiceCognomeAtteso = calcolaCodiceCognome(cognome);
+ const codiceNomeAtteso = calcolaCodiceNome(nome);
+
+ // Estrai i primi 6 caratteri del CF fornito
+ const cfUpper = cf.toUpperCase();
+ const codiceCognomeCF = cfUpper.substring(0, 3);
+ const codiceNomeCF = cfUpper.substring(3, 6);
+
+ // Verifica corrispondenza
+ if (codiceCognomeCF !== codiceCognomeAtteso) {
+ return { 
+ valido: false, 
+ messaggio: `Il Codice Fiscale non corrisponde al cognome"${cognome}". Previsto: ${codiceCognomeAtteso}..., Trovato: ${codiceCognomeCF}...`
+ };
+ }
+
+ if (codiceNomeCF !== codiceNomeAtteso) {
+ return { 
+ valido: false, 
+ messaggio: `Il Codice Fiscale non corrisponde al nome"${nome}". Previsto: ...${codiceNomeAtteso}..., Trovato: ...${codiceNomeCF}...`
+ };
+ }
+
+ return { valido: true, messaggio: 'Codice Fiscale valido' };
+ }
+
+ // Validazioni CF legacy rimosse: ora la verifica CF/P.IVA è gestita dall'anagrafica-helper
+ // (kind detection + lookup + cluster lock automatici nel blocco split-screen).
+
+ // ========================================
+ // SUBMIT FORM
+ // ========================================
+
+ document.getElementById('switchForm').addEventListener('submit', async function(e) {
+ e.preventDefault();
+
+ // Validazione: almeno un numero MNP
+ if (numeriMNP.length === 0) {
+   window.MiroxUI && window.MiroxUI.alert('⚠ Aggiungi almeno un numero MNP prima di salvare', {type:'warning', title:'Attenzione'});
+   document.getElementById('numeroMNP').focus();
+   return;
+ }
+
+ // Validazione anagrafiche
+ const errAttuale = anagVecchio.validate();
+ if (errAttuale) { window.MiroxUI && window.MiroxUI.alert('Attuale Intestatario: ' + errAttuale, {type:'warning', title:'Attenzione'}); return; }
+ const errNuovo = anagNuovo.validate();
+ if (errNuovo) { window.MiroxUI && window.MiroxUI.alert('Nuovo Intestatario (Rientro): ' + errNuovo, {type:'warning', title:'Attenzione'}); return; }
+
+ const submitBtn = document.getElementById('submitBtn');
+ submitBtn.disabled = true;
+ showLoadingModal();
+
+ try {
+   const profilo = window.__profilo || await Auth.getSessione();
+   const coincide = document.getElementById('coincide-check')?.checked;
+
+   // 1. Risolvi/crea anagrafiche
+   const datiAttuale = anagVecchio.getDati(profilo?.id);
+   const datiNuovo   = anagNuovo.getDati(profilo?.id);
+   const idAttuale = await window.AnagraficaHelper.cercaOcrea(datiAttuale);
+   const idNuovo   = coincide ? idAttuale : await window.AnagraficaHelper.cercaOcrea(datiNuovo);
+
+   // 2. Raccolta dati form
+   const formData = {
+     dataInserimento: new Date().toISOString(),
+     operatore: document.getElementById('operatore').value,
+     gestoreSim: document.getElementById('gestoreSim').value,
+     costoSwitch: document.getElementById('costoSwitch').value,
+     modalitaPagamento: document.getElementById('modalitaPagamento').value,
+     note: document.getElementById('note').value
+   };
+
+   // 3. File
+   const files = await raccogliFile();
+
+   // 4. Inserts: una riga per numero MNP, con FK anagrafiche
+   const inserts = numeriMNP.map(mnp => ({
+     stato: 'ATTESA ATTIVAZIONE SIM',
+     data_inserimento: formData.dataInserimento,
+     operatore_id: profilo?.id || null,
+     operatore_nome: formData.operatore || profilo?.nome || null,
+     gestore: formData.gestoreSim || null,
+     anagrafica_attuale_id: idAttuale,
+     anagrafica_rientro_id: idNuovo,
+     ragione_sociale_attuale: datiAttuale.ragione_sociale || null,
+     cf_piva_attuale: datiAttuale.cf_piva || null,
+     ragione_sociale_rientro: datiNuovo.ragione_sociale || null,
+     cf_piva_rientro: datiNuovo.cf_piva || null,
+     numero_portabilita: mnp.numero,
+     offerta_rientro: mnp.offerta || null,
+     modalita_pagamento: formData.modalitaPagamento || null,
+     importo: formData.costoSwitch ? parseFloat(formData.costoSwitch) : null,
+     note: formData.note || null
+   }));
+
+   const { data: insertedRows, error: insErr } = await sb
+     .from('vendita_switch_sim')
+     .insert(inserts)
+     .select();
+   if (insErr) throw insErr;
+
+   // 5. Upload allegati (sul primo record + replica URL su tutti)
+   if (insertedRows && insertedRows.length) {
+     const primary = insertedRows[0];
+     // Nome cartella unificato Mirox: <RAG_ATTUALE>_<RAG_RIENTRO>_<GG_MM_AA>
+     const folderName = (window.MiroxFolder
+       ? window.MiroxFolder.build(datiAttuale.ragione_sociale, datiNuovo.ragione_sociale, formData.dataInserimento)
+       : `pratica_${primary.id}`);
+     for (const [label, base64] of Object.entries(files)) {
+       if (!base64 || label.endsWith('Nome')) continue;
+       await uploadSwitchSimFile(folderName, base64, label, label);
+     }
+     // In cartella_url salviamo il PATH della cartella (non l'URL del singolo file).
+     // Il pulsante "Allegati" nelle tabelle (Attesa Inserimento / Riepilogo) farà
+     // list() su questa cartella e mostrerà l'elenco completo nel popup MiroxUI.
+     await sb.from('vendita_switch_sim')
+       .update({ cartella_url: folderName })
+       .in('id', insertedRows.map(r => r.id));
+   }
+
+   hideLoadingModal();
+   showSuccessModal(`Create ${numeriMNP.length} pratiche switch SIM`, true);
+
+ } catch (error) {
+   console.error('Errore:', error);
+   hideLoadingModal();
+   window.MiroxUI && window.MiroxUI.alert('Errore durante il salvataggio: ' + error.message, {type:'error', title:'Errore'});
+   submitBtn.disabled = false;
+ }
+ });
+
+ // raccogliDati() legacy rimossa: ora si usano anagVecchio/anagNuovo via helper.
+
+ async function raccogliFile() {
+   const files = {};
+
+   files.docAttualeIntestatario = await fileToBase64('docAttualeIntestatario');
+   files.fotoSimCliente = await fileToBase64('fotoSimCliente');
+   files.fotoSimSwitch = await fileToBase64('fotoSimSwitch');
+
+   // File condizionali: doc nuovo intestatario solo se NON coincide
+   const coincide = document.getElementById('coincide-check')?.checked;
+   if (!coincide) {
+     files.docNuovoIntestatario = await fileToBase64('docNuovoIntestatario');
+   }
+
+   // Visura camerale solo se attuale è Business (deriva da kind detection)
+   if (anagVecchio.state.cluster === 'Business') {
+     files.visuraCamerale = await fileToBase64('visuraCamerale');
+   }
+
+   return files;
+ }
+
+ function fileToBase64(inputId) {
+ return new Promise((resolve, reject) => {
+ const file = document.getElementById(inputId).files[0];
+ if (!file) {
+ resolve(null);
+ return;
+ }
+ 
+ const reader = new FileReader();
+ reader.onload = () => {
+ const base64 = reader.result.split(',')[1];
+ resolve(base64);
+ };
+ reader.onerror = reject;
+ reader.readAsDataURL(file);
+ });
+ }
+
+ // ========================================
+ // GESTIONE TAB
+ // ========================================
+
+ function switchTab(tabName, evt) {
+ // Aggiorna tab attivi
+ document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+ if (evt && evt.target) {
+   evt.target.classList.add('active');
+ } else {
+   const tabs = document.querySelectorAll('.nav-tab');
+   const idx = { inserimento: 0, attesa: 1, riepilogo: 2, ricariche: 3 }[tabName];
+   if (idx !== undefined && tabs[idx]) tabs[idx].classList.add('active');
+ }
+ // Wide layout su tab che hanno tabelle larghe
+ const container = document.querySelector('.container');
+ if (container) {
+   if (['attesa','riepilogo','ricariche'].includes(tabName)) container.classList.add('wide-layout');
+   else container.classList.remove('wide-layout');
+ }
+
+ // Mostra/nascondi pagine
+ document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+ 
+ console.log('Pagine trovate:', document.querySelectorAll('.page').length);
+ 
+ if (tabName === 'inserimento') {
+ console.log('→ Mostro pageInserimento');
+ const pageIns = document.getElementById('pageInserimento');
+ console.log('pageInserimento trovato:', pageIns);
+ if (pageIns) pageIns.classList.add('active');
+ } else if (tabName === 'attesa') {
+ console.log('→ Mostro pageAttesa');
+ const pageAtt = document.getElementById('pageAttesa');
+ console.log('pageAttesa trovato:', pageAtt);
+ if (pageAtt) {
+ pageAtt.classList.add('active');
+ console.log('Carico dati attesa...');
+ caricaDatiAttesa();
+ } else {
+ console.error('pageAttesa NON TROVATO!');
+ }
+ } else if (tabName === 'riepilogo') {
+ console.log('→ Mostro pageRiepilogo');
+ const pageRiep = document.getElementById('pageRiepilogo');
+ console.log('pageRiepilogo trovato:', pageRiep);
+ if (pageRiep) {
+ pageRiep.classList.add('active');
+ console.log('Carico dati riepilogo...');
+ caricaDatiRiepilogo();
+ } else {
+ console.error('pageRiepilogo NON TROVATO!');
+ }
+ } else if (tabName === 'ricariche') {
+ console.log('→ Mostro pageRicariche');
+ const pageRic = document.getElementById('pageRicariche');
+ console.log('pageRicariche trovato:', pageRic);
+ if (pageRic) {
+ pageRic.classList.add('active');
+ 
+ // Imposta automaticamente il filtro su"Solo da Fare"currentFilter = 'da-fare';
+ 
+ // Aggiorna visivamente i bottoni filtro
+ const filterBtns = pageRic.querySelectorAll('.filter-btn');
+ filterBtns.forEach(btn => {
+ btn.classList.remove('active');
+ if (btn.textContent.includes('Solo da Fare')) {
+ btn.classList.add('active');
+ }
+ });
+ 
+ console.log('Carico dati ricariche con filtro"Solo da Fare"...');
+ caricaDatiRicariche();
+ } else {
+ console.error('pageRicariche NON TROVATO!');
+ }
+ }
+ 
+ console.log('switchTab completato');
+ }
+
+ // ========================================
+ // CARICAMENTO DATI RIEPILOGO
+ // ========================================
+
+ // ========================================
+ // RIEPILOGO - VERSIONE PULITA
+ // ========================================
+
+ // Filtri Riepilogo
+ document.getElementById('filterRagioneSociale').addEventListener('input', applyFilters);
+ document.getElementById('filterStato').addEventListener('change', applyFilters);
+ document.getElementById('filterNumero').addEventListener('input', applyFilters);
+
+ // Filtri Attesa
+ document.getElementById('filterAttesaRagioneSociale').addEventListener('input', applyAttesaFilters);
+ document.getElementById('filterAttesaNumero').addEventListener('input', applyAttesaFilters);
+
+ // Dati separati per Attesa
+ let allAttesaData = [];
+ let filteredAttesaData = [];
+
+ // ========================================
+ // PAGINA ATTESA INSERIMENTO
+ // ========================================
+
+ async function caricaDatiAttesa() {
+ console.log('caricaDatiAttesa() AVVIATO');
+ 
+ try {
+ const { data: rows, error } = await sb
+ .from('vendita_switch_sim')
+ .select('*')
+ .eq('stato', 'ATTESA ATTIVAZIONE SIM')
+ .order('data_inserimento', { ascending: false });
+ if (error) throw error;
+ allAttesaData = (rows || []).map(mapDbToLegacy);
+ applyAttesaFilters();
+ } catch (error) {
+ console.error('Errore caricamento:', error);
+ mostraErroreTabellaAttesa('Errore: ' + error.message);
+ }
+ }
+
+ function applyAttesaFilters() {
+ const ragione = document.getElementById('filterAttesaRagioneSociale').value.toLowerCase();
+ const numero = document.getElementById('filterAttesaNumero').value.toLowerCase();
+
+ filteredAttesaData = allAttesaData.filter(record => {
+ const matchRagione = !ragione || 
+ (record.attualeNomeCognome || '').toLowerCase().includes(ragione) ||
+ (record.nuovoNomeCognome || '').toLowerCase().includes(ragione);
+ 
+ const matchNumero = !numero || 
+ String(record.numeroMNP || '').toLowerCase().includes(numero);
+
+ return matchRagione && matchNumero;
+ });
+
+ renderAttesaTable();
+ }
+
+ function renderAttesaTable() {
+ const tbody = document.getElementById('attesaTableBody');
+ 
+ if (!filteredAttesaData || filteredAttesaData.length === 0) {
+ tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 3rem; color: #999;">Nessuna pratica in attesa di attivazione</td></tr>';
+ return;
+ }
+
+ tbody.innerHTML = filteredAttesaData.map(record => {
+ const hasNuovo = record.nuovoNomeCognome && record.nuovoNomeCognome !== '-';
+ const hasNuovoCF = record.nuovoCFPIVA && record.nuovoCFPIVA !== '-';
+
+ return `
+<tr>
+<td><span class="badge badge-attesa" title="ATTESA ATTIVAZIONE SIM">ATTESA</span></td>
+<td title="${record.attualeNomeCognome || ''}">${record.attualeNomeCognome || '-'}</td>
+<td title="${record.attualeCFPIVA || ''}">${record.attualeCFPIVA || '-'}</td>
+<td class="${hasNuovo ? 'highlight-yellow' : ''}" title="${record.nuovoNomeCognome || ''}">${record.nuovoNomeCognome || '-'}</td>
+<td class="${hasNuovoCF ? 'highlight-yellow' : ''}" title="${record.nuovoCFPIVA || ''}">${record.nuovoCFPIVA || '-'}</td>
+<td title="${record.numeroMNP || ''}">${record.numeroMNP || '-'}</td>
+<td title="${record.dataInserimento || ''}">${record.dataInserimento || '-'}</td>
+<td>${record.folderUrl || record.rowIndex ? `<button type="button" class="action-btn" style="background:#fff;border:1px solid #e2e8f0;color:#0f172a;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;" onclick="apriAllegatiSwitchSim(${record.rowIndex})" title="Mostra elenco allegati pratica">📎 Allegati</button>` : '-'}</td>
+<td style="white-space:nowrap;">
+<button type="button" class="action-btn" style="background:#DCFCE7;color:#047857;border:1px solid #BBF7D0;font-weight:700;margin-right:6px;padding:7px 14px;border-radius:8px;cursor:pointer;" onclick="apriAttivazione(${record.rowIndex})" title="Attiva pratica (apri dettagli)">ATTIVAZIONE</button>
+<button type="button" class="action-btn" style="background:#FEE2E2;color:#b91c1c;border:1px solid #FECACA;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;" onclick="cambiaStatoAttesa(${record.rowIndex}, 'KO')" title="Pratica KO">KO</button>
+</td>
+</tr>`;
+ }).join('');
+ }
+
+ function mostraErroreTabellaAttesa(messaggio) {
+ document.getElementById('attesaTableBody').innerHTML =
+ '<tr><td colspan="9" style="text-align: center; padding: 3rem; color: #f44336;">' + messaggio + '</td></tr>';
+ }
+
+ function apriDettagliAttesa(rowIndex) {
+ // Usa la stessa funzione di apriDettagli ma con allAttesaData
+ currentDetailRowIndex = rowIndex;
+ const record = allAttesaData.find(r => String(r.rowIndex) === String(rowIndex));
+ if (!record) {
+ window.MiroxUI && window.MiroxUI.alert('Errore: Record non trovato', {type:'error', title:'Errore'});
+ return;
+ }
+ // Popola il modal con i dati (riutilizza la logica esistente)
+ popolaModalDettagli(record);
+ document.getElementById('dettagliModal').classList.add('active');
+ }
+
+ // ATTIVAZIONE: apre il modal Dettagli per completare i dati e passare a IN CORSO
+ function apriAttivazione(rowIndex) {
+   apriDettagliAttesa(rowIndex);
+ }
+ window.apriAttivazione = apriAttivazione;
+
+ async function cambiaStatoAttesa(rowIndex, nuovoStato) {
+ const ok = await window.MiroxUI.confirm(
+   'Confermi di voler cambiare lo stato in <strong>"' + nuovoStato + '"</strong>?',
+   { title: 'Conferma cambio stato', okText: 'Sì, conferma', cancelText: 'Annulla', html: true, danger: nuovoStato === 'KO' }
+ );
+ if (!ok) return;
+
+ showLoadingModal();
+
+ try {
+ const { error } = await sb
+ .from('vendita_switch_sim')
+ .update({ stato: nuovoStato })
+ .eq('id', rowIndex);
+ hideLoadingModal();
+ if (error) throw error;
+ showSuccessModal('Stato aggiornato a' + nuovoStato);
+ setTimeout(() => {
+ hideSuccessModal();
+ caricaDatiAttesa();
+ }, 1500);
+ } catch (error) {
+ hideLoadingModal();
+ console.error('Errore:', error);
+ window.MiroxUI && window.MiroxUI.alert('Errore di connessione', {type:'error', title:'Errore'});
+ }
+ }
+
+ // ========================================
+ // PAGINA RIEPILOGO
+ // ========================================
+
+ async function caricaDatiRiepilogo() {
+ console.log('caricaDatiRiepilogo() AVVIATO');
+ 
+ // Imposta il filtro stato su"IN CORSO"di default
+ document.getElementById('filterStato').value = 'IN CORSO';
+ 
+ try {
+ const { data: rows, error } = await sb
+ .from('vendita_switch_sim')
+ .select('*')
+ .neq('stato', 'ATTESA ATTIVAZIONE SIM')
+ .order('data_inserimento', { ascending: false });
+ if (error) throw error;
+ allData = (rows || []).map(mapDbToLegacy);
+ applyFilters();
+ } catch (error) {
+ console.error('Errore caricamento:', error);
+ mostraErroreTabella('Errore: ' + error.message);
+ }
+ }
+
+ function applyFilters() {
+ const ragione = document.getElementById('filterRagioneSociale').value.toLowerCase();
+ const stato = document.getElementById('filterStato').value;
+ const numero = document.getElementById('filterNumero').value.toLowerCase();
+
+ filteredData = allData.filter(record => {
+ const matchRagione = !ragione || 
+ (record.attualeNomeCognome || '').toLowerCase().includes(ragione) ||
+ (record.nuovoNomeCognome || '').toLowerCase().includes(ragione);
+ 
+ const matchStato = !stato || record.stato === stato;
+ 
+ const matchNumero = !numero || 
+ String(record.numeroMNP || '').toLowerCase().includes(numero);
+
+ return matchRagione && matchStato && matchNumero;
+ });
+ // Ordinamento Giorno Rientro:
+ // 1. SCADUTI prima (data nel passato), i più vecchi/più scaduti in cima
+ // 2. DA SCADERE dopo, i più vicini ad oggi in alto, i più lontani in basso
+ // 3. Valori vuoti/invalidi alla fine
+ const oggi = new Date();
+ oggi.setHours(0, 0, 0, 0);
+
+ filteredData.sort((a, b) => {
+   const dateA = parseItalianDate(a.giornoRientro);
+   const dateB = parseItalianDate(b.giornoRientro);
+
+   const getPriority = (date) => {
+     if (!date || isNaN(date.getTime())) return 2;
+     return date < oggi ? 0 : 1; // 0 = scaduto, 1 = da scadere
+   };
+
+   const priorityA = getPriority(dateA);
+   const priorityB = getPriority(dateB);
+   if (priorityA !== priorityB) return priorityA - priorityB;
+
+   // All'interno della stessa priorità: ordine cronologico ASC
+   // - scaduti: data più lontana (più scaduto) prima → ASC
+   // - futuri: data più vicina (a oggi) prima → ASC
+   if (priorityA === 2) return 0;
+   return dateA - dateB;
+ });
+
+ renderTable();
+ }
+
+ function renderTable() {
+ const tbody = document.getElementById('tableBody');
+ 
+ if (!filteredData || filteredData.length === 0) {
+ tbody.innerHTML = '<tr><td colspan="10"style="text-align: center; padding: 3rem; color: #999;">Nessun dato trovato</td></tr>';
+ return;
+ }
+
+ tbody.innerHTML = filteredData.map(record => {
+ // Badge stato
+ let badgeClass = 'badge-attesa';
+ if (record.stato === 'ATTESA ATTIVAZIONE SIM') badgeClass = 'badge-attesa';
+ else if (record.stato === 'IN CORSO') badgeClass = 'badge-in-corso';
+ else if (record.stato === 'CHIUSO') badgeClass = 'badge-chiuso';
+ else if (record.stato === 'KO') badgeClass = 'badge-ko';
+
+ // Abbrevia stato per il badge
+ let statoAbbreviato = record.stato || '-';
+ if (record.stato === 'ATTESA ATTIVAZIONE SIM') statoAbbreviato = 'ATTESA';
+ else if (record.stato === 'IN CORSO') statoAbbreviato = 'IN CORSO';
+ else if (record.stato === 'CHIUSO') statoAbbreviato = 'CHIUSO';
+ else if (record.stato === 'KO') statoAbbreviato = 'KO';
+
+ // Mostra azioni solo se non è CHIUSO o KO
+ const showActions = record.stato !== 'CHIUSO' && record.stato !== 'KO';
+
+ // Evidenzia in giallo nuovo intestatario
+ const hasNuovo = record.nuovoNomeCognome && record.nuovoNomeCognome !== '-';
+ const hasNuovoCF = record.nuovoCFPIVA && record.nuovoCFPIVA !== '-';
+
+ return`
+<tr>
+<td><span class="badge ${badgeClass}"title="${record.stato || ''}">${statoAbbreviato}</span></td>
+<td title="${record.attualeNomeCognome || ''}">${record.attualeNomeCognome || '-'}</td>
+<td title="${record.attualeCFPIVA || ''}">${record.attualeCFPIVA || '-'}</td>
+<td class="${hasNuovo ? 'highlight-yellow' : ''}"title="${record.nuovoNomeCognome || ''}">${record.nuovoNomeCognome || '-'}</td>
+<td class="${hasNuovoCF ? 'highlight-yellow' : ''}"title="${record.nuovoCFPIVA || ''}">${record.nuovoCFPIVA || '-'}</td>
+<td title="${record.numeroMNP || ''}">${record.numeroMNP || '-'}</td>
+<td title="${record.giornoRientro || ''}">${record.giornoRientro || '-'}</td>
+<td>${record.folderUrl || record.rowIndex ? `<button type="button" class="action-btn" style="background:#fff;border:1px solid #e2e8f0;color:#0f172a;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;" onclick="apriAllegatiSwitchSim(${record.rowIndex})" title="Mostra elenco allegati pratica">📎 Allegati</button>` : '-'}</td>
+<td class="riepilogo-actions" style="white-space:nowrap;">
+<button type="button" class="action-btn" style="background:#2196F3;color:white;margin-right:.3rem;padding:6px 12px;border-radius:8px;cursor:pointer;border:none;font-weight:600;" onclick="apriDettagli(${record.rowIndex})" title="Apri dettagli tecnici">DETTAGLI</button>
+${showActions
+ ? `<button type="button" class="action-btn btn-update" style="background:#4CAF50;color:#fff;margin-right:.3rem;padding:6px 12px;border-radius:8px;cursor:pointer;border:none;font-weight:600;" onclick="cambiaStato(${record.rowIndex}, 'CHIUSO')" title="Segna come CHIUSO">CHIUSO</button>
+<button type="button" class="action-btn btn-update" style="background:#f44336;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;border:none;font-weight:600;" onclick="cambiaStato(${record.rowIndex}, 'KO')" title="Segna come KO">KO</button>`
+ : ''}
+</td>
+</tr> `;
+ }).join('');
+ }
+
+ async function cambiaStato(rowIndex, nuovoStato) {
+ const ok = await window.MiroxUI.confirm(
+   `Confermi di voler cambiare lo stato in <strong>"${nuovoStato}"</strong>?`,
+   { title: 'Conferma cambio stato', okText: 'Sì, conferma', cancelText: 'Annulla', html: true, danger: nuovoStato === 'KO' }
+ );
+ if (!ok) return;
+
+ showLoadingModal();
+
+ try {
+ const updates = { stato: nuovoStato };
+ if (nuovoStato === 'CHIUSO') updates.giorno_rientro = new Date().toISOString().slice(0,10);
+ const { error } = await sb
+ .from('vendita_switch_sim')
+ .update(updates)
+ .eq('id', rowIndex);
+ hideLoadingModal();
+ if (error) throw error;
+ showSuccessModal(`Stato aggiornato a ${nuovoStato}`);
+ setTimeout(() => {
+ hideSuccessModal();
+ caricaDatiRiepilogo();
+ }, 1500);
+ } catch (error) {
+ hideLoadingModal();
+ console.error('Errore:', error);
+ window.MiroxUI && window.MiroxUI.alert('Errore: ' + error.message, {type:'error', title:'Errore'});
+ }
+ }
+
+ function mostraErroreTabella(messaggio) {
+ document.getElementById('tableBody').innerHTML = 
+ `<tr><td colspan="10"style="text-align: center; padding: 3rem; color: #f44336;">${messaggio}</td></tr>`;
+ }
+
+ // ========================================
+ // GESTIONE MODAL DETTAGLI TECNICI
+ // ========================================
+
+ let currentDetailRowIndex = null;
+
+ // Funzione riutilizzabile per popolare il modal dei dettagli
+ function popolaModalDettagli(record) {
+ // FUNZIONE HELPER PER FORMATTARE DATE
+ const formatDateOnly = (dateValue) => {
+   if (!dateValue) return '';
+   if (typeof dateValue === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateValue)) return dateValue;
+   let date;
+   if (typeof dateValue === 'string') date = new Date(dateValue);
+   else if (dateValue instanceof Date) date = dateValue;
+   else return dateValue.toString();
+   if (isNaN(date.getTime())) return dateValue.toString();
+   const day = String(date.getDate()).padStart(2, '0');
+   const month = String(date.getMonth() + 1).padStart(2, '0');
+   const year = date.getFullYear();
+   return `${day}/${month}/${year}`;
+ };
+ // Per input type="date": ritorna YYYY-MM-DD
+ const formatDateISO = (dateValue) => {
+   if (!dateValue) return '';
+   if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateValue)) return dateValue.slice(0,10);
+   // Se è gg/mm/aaaa convertilo
+   if (typeof dateValue === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateValue)) {
+     const [d,m,y] = dateValue.split('/');
+     return `${y}-${m}-${d}`;
+   }
+   const d = new Date(dateValue);
+   if (isNaN(d.getTime())) return '';
+   const day = String(d.getDate()).padStart(2,'0');
+   const mon = String(d.getMonth()+1).padStart(2,'0');
+   return `${d.getFullYear()}-${mon}-${day}`;
+ };
+
+ // MAPPING CAMPI
+ const campiDaPopolare = [
+ [record.dataInserimento, 'dettaglio_dataRichiesta', formatDateOnly],
+ [record.operatore, 'dettaglio_operatore', (v) => v || ''],
+ [record.gestoreSim, 'dettaglio_gestoreSim', (v) => v || 'OPTIMA'],
+ [record.attualeNomeCognome, 'dettaglio_attualeIntestatario', (v) => v || ''],
+ [record.attualeCFPIVA, 'dettaglio_attualeCFPIVA', (v) => v || ''],
+ [record.nuovoNomeCognome, 'dettaglio_nuovoIntestatario', (v) => v || ''],
+ [record.nuovoCFPIVA, 'dettaglio_nuovoCFPIVA', (v) => v || ''],
+ [record.numeroMNP, 'dettaglio_numeroMNP', (v) => v || ''],
+ [record.offertaRientro, 'dettaglio_offertaRientro', (v) => v || ''],
+ [record.iccidSim, 'dettaglio_iccidSim', (v) => v || ''],
+ [record.numeroProvvisorio, 'dettaglio_numeroProvvisorio', (v) => v || ''],
+ [record.giornoAttivazione, 'dettaglio_giornoAttivazione', formatDateISO],
+ [record.giornoPortabilita, 'dettaglio_giornoPortabilita', formatDateISO],
+ [record.giornoRientro, 'dettaglio_giornoRientro', formatDateISO],
+ [record.simDefinitiva, 'dettaglio_simDefinitiva', (v) => v || ''],
+ [record.modalitaPagamento, 'dettaglio_modalitaPagamento', (v) => v || 'POS'],
+ [record.costoSwitch, 'dettaglio_costoSwitch', (v) => v ? v.toString().replace(/€\s?/, '') : ''],
+ [record.note, 'dettaglio_note', (v) => v || '']
+ ];
+ 
+ campiDaPopolare.forEach(([valore, idCampo, trasformazione]) => {
+ const campo = document.getElementById(idCampo);
+ if (campo) {
+ campo.value = trasformazione(valore);
+ }
+ });
+ }
+
+ function apriDettagli(rowIndex) {
+ console.log('Apertura dettagli per rowIndex:', rowIndex);
+ 
+ currentDetailRowIndex = rowIndex;
+ 
+ // Trova il record corrispondente
+ const record = allData.find(r => String(r.rowIndex) === String(rowIndex));
+ 
+ if (!record) {
+ window.MiroxUI && window.MiroxUI.alert('Errore: Record non trovato', {type:'error', title:'Errore'});
+ return;
+ }
+ 
+ console.log('Record trovato:', record);
+ 
+ // ========================================
+ // FUNZIONE HELPER PER FORMATTARE DATE
+ // ========================================
+ const formatDateOnly = (dateValue) => {
+ if (!dateValue) return'';
+ 
+ // Se è già in formato gg/mm/aaaa, restituiscilo così com'è
+ if (typeof dateValue === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateValue)) {
+ return dateValue;
+ }
+ 
+ // Se contiene orario o formato ISO, converti
+ let date;
+ if (typeof dateValue === 'string') {
+ date = new Date(dateValue);
+ } else if (dateValue instanceof Date) {
+ date = dateValue;
+ } else {
+ return dateValue.toString();
+ }
+ 
+ // Verifica che sia una data valida
+ if (isNaN(date.getTime())) {
+ return dateValue.toString();
+ }
+ 
+ // Formatta come gg/mm/aaaa
+ const day = String(date.getDate()).padStart(2, '0');
+ const month = String(date.getMonth() + 1).padStart(2, '0');
+ const year = date.getFullYear();
+ return`${day}/${month}/${year}`;
+ };
+ 
+ // ========================================
+ // ARRAY DI MAPPING: GOOGLE SHEET → MODAL
+ // ========================================
+ const campiDaVerificare = [
+ // [Nome Campo, Valore Google Sheet, ID Campo Modal, Trasformazione]
+ ['Data Richiesta (B)', record.dataInserimento, 'dettaglio_dataRichiesta', formatDateOnly],
+ ['Operatore (C)', record.operatore, 'dettaglio_operatore', (v) => v || ''],
+ ['Gestore SIM (D)', record.gestoreSim, 'dettaglio_gestoreSim', (v) => v || 'OPTIMA'],
+ ['Ragione Sociale Attuale (E)', record.attualeNomeCognome, 'dettaglio_attualeIntestatario', (v) => v || ''],
+ ['CF/P.IVA Attuale (F)', record.attualeCFPIVA, 'dettaglio_attualeCFPIVA', (v) => v || ''],
+ ['Ragione Sociale Nuovo (G)', record.nuovoNomeCognome, 'dettaglio_nuovoIntestatario', (v) => v || ''],
+ ['CF/P.IVA Nuovo (H)', record.nuovoCFPIVA, 'dettaglio_nuovoCFPIVA', (v) => v || ''],
+ ['Numero MNP (I)', record.numeroMNP, 'dettaglio_numeroMNP', (v) => v || ''],
+ ['Offerta Rientro (R)', record.offertaRientro, 'dettaglio_offertaRientro', (v) => v || ''],
+ ['ICCID SIM (J)', record.iccidSim, 'dettaglio_iccidSim', (v) => v || ''],
+ ['Numero Provvisorio (K)', record.numeroProvvisorio, 'dettaglio_numeroProvvisorio', (v) => v || ''],
+ ['Giorno Attivazione (L)', record.giornoAttivazione, 'dettaglio_giornoAttivazione', formatDateOnly],
+ ['Giorno Portabilità (M)', record.giornoPortabilita, 'dettaglio_giornoPortabilita', formatDateOnly],
+ ['Giorno Rientro (P)', record.giornoRientro, 'dettaglio_giornoRientro', formatDateOnly],
+ ['SIM Definitiva (Q)', record.simDefinitiva, 'dettaglio_simDefinitiva', (v) => v || ''],
+ ['Modalità Pagamento (S)', record.modalitaPagamento, 'dettaglio_modalitaPagamento', (v) => v || 'POS'],
+ ['Costo Switch (T)', record.costoSwitch, 'dettaglio_costoSwitch', (v) => v ? v.toString().replace(/€\s?/, '') : ''],
+ ['Note (U)', record.note, 'dettaglio_note', (v) => v || '']
+ ];
+ 
+ // ========================================
+ // POPOLA E VERIFICA OGNI CAMPO
+ // ========================================
+ 
+ console.group('VERIFICA COMPLETA GOOGLE SHEET ↔ MODAL');
+ 
+ let tuttiCampiOK = true;
+ const errori = [];
+ 
+ campiDaVerificare.forEach(([nomeCampo, valoreSheet, idCampoModal, trasformazione]) => {
+ // Applica la trasformazione al valore da Google Sheet
+ const valoreElaborato = trasformazione(valoreSheet);
+ 
+ // Popola il campo nel modal
+ const campoModal = document.getElementById(idCampoModal);
+ if (campoModal) {
+ campoModal.value = valoreElaborato;
+ 
+ // VERIFICA: il valore impostato corrisponde?
+ const valoreEffettivoModal = campoModal.value;
+ 
+ if (valoreElaborato !== valoreEffettivoModal) {
+ tuttiCampiOK = false;
+ const errore = ` ${nomeCampo}: DISCREPANZA!\n` +
+ `Google Sheet: "${valoreSheet}"\n` +
+ `Elaborato: "${valoreElaborato}"\n` +
+ `Modal: "${valoreEffettivoModal}"`;
+ errori.push(errore);
+ console.error(errore);
+ } else {
+ console.log(` ${nomeCampo}:`, 
+ `Sheet="${valoreSheet}"`, 
+ `→`, 
+ `Modal="${valoreEffettivoModal}"`);
+ }
+ } else {
+ tuttiCampiOK = false;
+ const errore = ` ${nomeCampo}: CAMPO MODAL NON TROVATO (${idCampoModal})`;
+ errori.push(errore);
+ console.error(errore);
+ }
+ });
+ 
+ // ========================================
+ // CAMPI READONLY (solo visualizzazione)
+ // ========================================
+ 
+ // A - Stato (non modificabile, solo info)
+ console.log('ℹ️ Stato (A - readonly):', record.stato);
+ 
+ // U - Cartella Drive (link, non modificabile)
+ console.log('ℹ️ Cartella Drive (U - link):', record.folderUrl);
+ 
+ // N, O - Ricariche (non presenti in dettagli, gestite in pagina Ricariche)
+ console.log('ℹ️ 1° Ricarica (N):', record.primaRicarica || '(gestita in Ricariche)');
+ console.log('ℹ️ 2° Ricarica (O):', record.secondaRicarica || '(gestita in Ricariche)');
+ 
+ console.groupEnd();
+ 
+ // ========================================
+ // RISULTATO VERIFICA
+ // ========================================
+ 
+ if (tuttiCampiOK) {
+ console.log('%c VERIFICA COMPLETATA: TUTTI I CAMPI CORRISPONDONO!', 
+ 'background: #4CAF50; color: white; padding: 5px; font-weight: bold;');
+ } else {
+ console.error('%c VERIFICA FALLITA: TROVATE DISCREPANZE!', 
+ 'background: #f44336; color: white; padding: 5px; font-weight: bold;');
+ console.group('Elenco Errori');
+ errori.forEach(err => console.error(err));
+ console.groupEnd();
+ 
+ // ALERT ALL'UTENTE
+ const messaggioErrore = '️ ATTENZIONE: Rilevate discrepanze tra Google Sheet e Modal!\n\n' +
+ errori.join('\n\n') +
+ '\n\nControlla la Console (F12) per dettagli.';
+ window.MiroxUI && window.MiroxUI.alert(messaggioErrore, {type:'error', title:'Errore'});
+ }
+ 
+ // ========================================
+ // LOG COMPLETO RECORD ORIGINALE
+ // ========================================
+ 
+ console.group('RECORD COMPLETO DA GOOGLE SHEET');
+ console.table(record);
+ console.groupEnd();
+ 
+ // Mostra il modal
+ document.getElementById('dettagliModal').classList.add('active');
+ }
+
+ function chiudiDettagli() {
+ document.getElementById('dettagliModal').classList.remove('active');
+ currentDetailRowIndex = null;
+ }
+
+ // Chiudi modal cliccando fuori
+ document.getElementById('dettagliModal').addEventListener('click', function(e) {
+ if (e.target === this) {
+ chiudiDettagli();
+ }
+ });
+
+ // Gestione submit form dettagli
+ document.getElementById('dettagliForm').addEventListener('submit', async function(e) {
+ e.preventDefault();
+
+ // Protezione contro doppio click: identifichiamo il pulsante submit del form
+ const submitBtnEl = e.submitter || this.querySelector('button[type="submit"]') || document.querySelector('#dettagliForm button[type="submit"]');
+ if (submitBtnEl && submitBtnEl.disabled) return;
+
+ if (!currentDetailRowIndex) {
+ await window.MiroxUI.alert('Nessuna riga selezionata', { type: 'error', title: 'Errore' });
+ return;
+ }
+
+ // Raccogli i dati
+ const dati = {
+ operatore: document.getElementById('dettaglio_operatore').value,
+ gestoreSim: document.getElementById('dettaglio_gestoreSim').value,
+ attualeIntestatario: document.getElementById('dettaglio_attualeIntestatario').value,
+ nuovoIntestatario: document.getElementById('dettaglio_nuovoIntestatario').value || '',
+ numeroMNP: document.getElementById('dettaglio_numeroMNP').value,
+ offertaRientro: document.getElementById('dettaglio_offertaRientro').value || '',
+ modalitaPagamento: document.getElementById('dettaglio_modalitaPagamento').value,
+ costoSwitch: document.getElementById('dettaglio_costoSwitch').value,
+ note: document.getElementById('dettaglio_note').value || '',
+ iccidSim: document.getElementById('dettaglio_iccidSim').value.trim() || '',
+ numeroProvvisorio: document.getElementById('dettaglio_numeroProvvisorio').value.trim() || '',
+ giornoAttivazione: document.getElementById('dettaglio_giornoAttivazione').value || '',
+ giornoPortabilita: document.getElementById('dettaglio_giornoPortabilita').value || '',
+ simDefinitiva: document.getElementById('dettaglio_simDefinitiva').value || ''
+ };
+
+ // VALIDAZIONI
+
+ // CAMPI OBBLIGATORI ATTESA INSERIMENTO (richiesta Mirox §5.2):
+ // ICCID SIM, Numero Provvisorio, Giorno Attivazione, Giorno Portabilità.
+ const mancanti = [];
+ if (!dati.iccidSim) mancanti.push('ICCID SIM');
+ if (!dati.numeroProvvisorio) mancanti.push('Numero Provvisorio');
+ if (!dati.giornoAttivazione) mancanti.push('Giorno Attivazione');
+ if (!dati.giornoPortabilita) mancanti.push('Giorno Portabilità');
+ if (mancanti.length) {
+ await window.MiroxUI.alert(
+ 'Per salvare la pratica devi prima compilare i seguenti campi obbligatori:<br><br><strong>• ' + mancanti.join('<br>• ') + '</strong>',
+ { type: 'warning', title: 'Campi obbligatori mancanti', html: true }
+ );
+ const firstId = ({
+ 'ICCID SIM': 'dettaglio_iccidSim',
+ 'Numero Provvisorio': 'dettaglio_numeroProvvisorio',
+ 'Giorno Attivazione': 'dettaglio_giornoAttivazione',
+ 'Giorno Portabilità': 'dettaglio_giornoPortabilita'
+ })[mancanti[0]];
+ if (firstId) { const el = document.getElementById(firstId); if (el) el.focus(); }
+ return;
+ }
+
+ // Numero Provvisorio: 10 cifre
+ if (!/^\d{10}$/.test(dati.numeroProvvisorio)) {
+ await window.MiroxUI.alert('Il Numero Provvisorio deve essere di 10 cifre numeriche.', { type: 'warning', title: 'Numero non valido' });
+ document.getElementById('dettaglio_numeroProvvisorio').focus();
+ return;
+ }
+
+ // SIM Definitiva: 10 cifre (opzionale, ma se compilata deve essere valida)
+ if (dati.simDefinitiva && !/^\d{10}$/.test(dati.simDefinitiva)) {
+ await window.MiroxUI.alert('La SIM Definitiva Rientro deve essere di 10 cifre numeriche.', { type: 'warning', title: 'Numero non valido' });
+ document.getElementById('dettaglio_simDefinitiva').focus();
+ return;
+ }
+
+ // POPUP CONFERMA Mirox
+ const conferma = await window.MiroxUI.confirm(
+ 'Confermi di voler salvare le modifiche ai dettagli tecnici di questa pratica?',
+ { title: 'Conferma salvataggio', okText: 'Sì, salva', cancelText: 'Annulla' }
+ );
+ if (!conferma) return;
+
+ // Disabilita pulsante per evitare doppio click
+ const originalBtnText = submitBtnEl ? submitBtnEl.textContent : '';
+ if (submitBtnEl) { submitBtnEl.disabled = true; submitBtnEl.textContent = 'Salvataggio…'; }
+
+ // Mostra loading Mirox
+ const loader = window.MiroxUI.loading.show('Salvataggio modifiche', 'Attendere la conferma dal server...');
+
+ try {
+ // Inizio timer per garantire che loading sia visibile almeno 500ms
+ const startTime = Date.now();
+ 
+ // Costruisci patch DB
+ const patch = {
+ operatore_nome: dati.operatore || null,
+ gestore: dati.gestoreSim || null,
+ numero_portabilita: dati.numeroMNP || null,
+ offerta_rientro: dati.offertaRientro || null,
+ modalita_pagamento: dati.modalitaPagamento || null,
+ importo: dati.costoSwitch ? parseFloat(dati.costoSwitch) : null,
+ note: dati.note || null,
+ iccid_sim: dati.iccidSim || null,
+ numero_provvisorio: dati.numeroProvvisorio || null,
+ giorno_attivazione: parseItDateInput(dati.giornoAttivazione),
+ giorno_portabilita: parseItDateInput(dati.giornoPortabilita),
+ sim_definitiva_rientro: dati.simDefinitiva || null
+ };
+ // Se iccidSim presente, lo stato passa automaticamente a IN CORSO
+ let statoAggiornato = false, nuovoStato = '';
+ if (dati.iccidSim) {
+ patch.stato = 'IN CORSO';
+ statoAggiornato = true;
+ nuovoStato = 'IN CORSO';
+ }
+
+ const { error } = await sb
+ .from('vendita_switch_sim')
+ .update(patch)
+ .eq('id', currentDetailRowIndex);
+
+ const elapsed = Date.now() - startTime;
+ const minDelay = 800;
+ if (elapsed< minDelay) {
+ await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
+ }
+
+ if (error) {
+ loader.error('Errore di salvataggio');
+ if (submitBtnEl) { submitBtnEl.disabled = false; submitBtnEl.textContent = originalBtnText; }
+ await window.MiroxUI.alert('Errore: ' + error.message, { type: 'error', title: 'Errore di salvataggio' });
+ return;
+ }
+
+ loader.success(statoAggiornato ? 'Aggiornato — stato: ' + nuovoStato : 'Modifiche salvate!');
+ setTimeout(() => {
+ chiudiDettagli();
+ caricaDatiRiepilogo();
+ if (submitBtnEl) { submitBtnEl.disabled = false; submitBtnEl.textContent = originalBtnText; }
+ }, 1200);
+
+ } catch (error) {
+ loader.error('Errore di connessione');
+ if (submitBtnEl) { submitBtnEl.disabled = false; submitBtnEl.textContent = originalBtnText; }
+ console.error('Errore salvataggio dettagli:', error);
+ await window.MiroxUI.alert('Errore di connessione: ' + error.message, { type: 'error', title: 'Errore' });
+ }
+ });
+
+ // Funzione per parsare data italiana (gg/mm/aaaa)
+ function parseItalianDate(dateStr) {
+ if (!dateStr) return null;
+
+ if (dateStr instanceof Date) {
+ if (isNaN(dateStr.getTime())) return null;
+ return new Date(dateStr.getFullYear(), dateStr.getMonth(), dateStr.getDate());
+ }
+
+ const value = String(dateStr).trim();
+ if (!value || value === '-') return null;
+
+ const parts = value.split('/');
+ if (parts.length === 3) {
+ const day = parseInt(parts[0], 10);
+ const month = parseInt(parts[1], 10) - 1; // I mesi in JS partono da 0
+ const year = parseInt(parts[2], 10);
+
+ const parsed = new Date(year, month, day);
+ if (parsed.getFullYear() === year && parsed.getMonth() === month && parsed.getDate() === day) {
+ return parsed;
+ }
+ return null;
+ }
+
+ const fallback = new Date(value);
+ if (isNaN(fallback.getTime())) return null;
+
+ return new Date(fallback.getFullYear(), fallback.getMonth(), fallback.getDate());
+ }
+
+ // ========================================
+ // GESTIONE MODAL
+ // ========================================
+
+ function showLoadingModal() {
+ try {
+ console.log('Mostro loadingModal...');
+ document.getElementById('loadingModal').classList.add('active');
+ console.log('loadingModal mostrato');
+ } catch (e) {
+ console.error('Errore showLoadingModal:', e);
+ }
+ }
+
+ function hideLoadingModal() {
+ try {
+ console.log('Nascondo loadingModal...');
+ document.getElementById('loadingModal').classList.remove('active');
+ console.log('loadingModal nascosto');
+ } catch (e) {
+ console.error('Errore hideLoadingModal:', e);
+ }
+ }
+
+ function showSuccessModal(message, redirect = false) {
+ try {
+ console.log('Mostro successModal:', message);
+ document.getElementById('successMessage').textContent = message;
+ document.getElementById('successModal').classList.add('active');
+ console.log('successModal mostrato');
+ 
+ if (redirect) {
+ setTimeout(() => {
+ window.location.href = '../dashboard.html';
+ }, 2000);
+ }
+ } catch (e) {
+ console.error('Errore showSuccessModal:', e);
+ window.MiroxUI && window.MiroxUI.alert(' ' + message, {type:'warning', title:'Attenzione'});
+ if (redirect) {
+ window.location.href = '../dashboard.html';
+ }
+ }
+ }
+
+ function hideSuccessModal() {
+ try {
+ console.log('Nascondo successModal...');
+ document.getElementById('successModal').classList.remove('active');
+ console.log('successModal nascosto');
+ } catch (e) {
+ console.error('Errore hideSuccessModal:', e);
+ }
+ }
+
+ // ========================================
+ // PAGINA RICARICHE
+ // ========================================
+ 
+ let allRicariche = [];
+ let currentFilter = 'da-fare';
+ let currentRicaricaData = null;
+ 
+ function caricaDatiRicariche() {
+ console.log('Caricamento dati ricariche...');
+ 
+ (async () => {
+ try {
+ // Solo switch che sono nella pagina RIEPILOGO: non KO e non ATTESA ATTIVAZIONE SIM
+ const { data: rows, error } = await sb
+ .from('vendita_switch_sim')
+ .select('*')
+ .neq('stato', 'KO')
+ .neq('stato', 'ATTESA ATTIVAZIONE SIM')
+ .order('data_inserimento', { ascending: false });
+ if (error) throw error;
+ allRicariche = (rows || []).map(mapDbToLegacy);
+ renderRicariche();
+ aggiornaStatistiche();
+ } catch (error) {
+ document.getElementById('ricaricheTableBody').innerHTML = `
+<tr><td colspan="4" style="text-align: center; color: red; padding: 2rem;">Errore: ${error.message}</td></tr>`;
+ }
+ })();
+ }
+ 
+ // Stato corrente tab Ricariche
+ let ricaricheTab = 'prima'; // 'prima' | 'seconda'
+ let ricaricheMostraOk = false;
+
+ function setRicaricheTab(tab) {
+   ricaricheTab = tab;
+   document.querySelectorAll('.ric-tab').forEach(b => {
+     const active = b.dataset.ricTab === tab;
+     b.classList.toggle('active', active);
+     b.style.background = active ? '#FF6600' : 'transparent';
+     b.style.color = active ? '#fff' : '#64748b';
+     b.style.fontWeight = active ? '700' : '600';
+   });
+   const col = document.getElementById('ric-col-data');
+   if (col) col.textContent = tab === 'prima' ? 'Data 1° Ricarica' : 'Data 2° Ricarica';
+   renderRicariche();
+ }
+ window.setRicaricheTab = setRicaricheTab;
+ // Bind dei pulsanti tab e checkbox una volta solo
+ document.addEventListener('DOMContentLoaded', () => {
+   document.querySelectorAll('.ric-tab').forEach(b => {
+     b.addEventListener('click', () => setRicaricheTab(b.dataset.ricTab));
+   });
+   const cb = document.getElementById('ric-mostra-ok');
+   if (cb) cb.addEventListener('change', () => { ricaricheMostraOk = cb.checked; renderRicariche(); });
+ });
+
+ function renderRicariche() {
+   const tbody = document.getElementById('ricaricheTableBody');
+   if (!tbody) return;
+
+   if (allRicariche.length === 0) {
+     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;">Nessuna ricarica da gestire</td></tr>';
+     return;
+   }
+
+   const tipo = ricaricheTab; // 'prima' | 'seconda'
+   const oggi = new Date(); oggi.setHours(0,0,0,0);
+
+   // Per ogni pratica, considera la ricarica del tipo corrente
+   let righe = allRicariche.map(r => {
+     const dataPrevista = tipo === 'prima' ? r.primaRicarica : r.secondaRicarica;
+     const dataEsec = tipo === 'prima' ? r.dataEsecuzionePrima : r.dataEsecuzioneSeconda;
+     const importo = tipo === 'prima' ? r.importoPrima : r.importoSeconda;
+     const effettuata = isRicaricaEffettuata(r, tipo);
+     return { r, dataPrevista, dataEsec, importo, effettuata };
+   }).filter(x => x.dataPrevista); // escludi pratiche senza data ricarica per questo tipo
+
+   // Filtro OK
+   if (!ricaricheMostraOk) {
+     righe = righe.filter(x => !x.effettuata);
+   }
+
+   // Ordina: scaduti prima (più scaduti in cima), poi futuri (più vicini prima)
+   righe.sort((a, b) => {
+     const da = parseItalianDate(a.dataPrevista);
+     const db = parseItalianDate(b.dataPrevista);
+     const prio = (d) => (!d || isNaN(d.getTime())) ? 2 : (d < oggi ? 0 : 1);
+     const pa = prio(da), pb = prio(db);
+     if (pa !== pb) return pa - pb;
+     if (pa === 2) return 0;
+     return da - db;
+   });
+
+   if (!righe.length) {
+     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;">Nessuna ricarica da visualizzare</td></tr>';
+     return;
+   }
+
+   tbody.innerHTML = righe.map(({ r, dataPrevista, dataEsec, importo, effettuata }) => {
+     let stato = '';
+     if (effettuata) {
+       stato = `<span style="background:#DCFCE7;color:#047857;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;">OK</span>`;
+     } else {
+       const d = parseItalianDate(dataPrevista);
+       if (d && d < oggi) {
+         stato = `<span style="background:#FEE2E2;color:#b91c1c;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;">SCADUTA</span>`;
+       } else {
+         stato = `<span style="background:#FFF7ED;color:#b45309;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;">DA FARE</span>`;
+       }
+     }
+     const azione = effettuata
+       ? `<span style="color:#94a3b8;font-size:12px;">${dataEsec || ''} · ${importo || ''}</span>`
+       : `<button type="button" class="action-btn" style="background:#DCFCE7;color:#047857;border:1px solid #BBF7D0;font-weight:700;padding:6px 12px;border-radius:8px;cursor:pointer;" onclick="apriRicarica(${r.rowIndex},'${tipo}')">Registra</button>`;
+     return `<tr>
+       <td><strong>${r.ragioneSociale || '-'}</strong></td>
+       <td style="font-family:monospace;font-size:12.5px;">${r.attualeCFPIVA || '-'}</td>
+       <td>${r.gestoreSim || '-'}</td>
+       <td>${r.numeroMNP || '-'}</td>
+       <td>${dataPrevista || '-'}</td>
+       <td>${stato}</td>
+       <td>${azione}</td>
+     </tr>`;
+   }).join('');
+ }
+ 
+ function renderCellaRicarica(ricarica, tipo) {
+ const dataPrevista = tipo === 'prima' ? ricarica.primaRicarica : ricarica.secondaRicarica;
+ const dataEsecuzione = tipo === 'prima' ? ricarica.dataEsecuzionePrima : ricarica.dataEsecuzioneSeconda;
+ const importo = tipo === 'prima' ? ricarica.importoPrima : ricarica.importoSeconda;
+ const effettuata = isRicaricaEffettuata(ricarica, tipo);
+ 
+ if (!dataPrevista) {
+ return'<span style="color: #4CAF50; font-weight: bold; font-size: 1.1rem;">OK</span>';
+ }
+ 
+ if (effettuata) {
+ return`
+<div class="ricarica-status"> Effettuata</div>
+<div class="ricarica-esito">${dataEsecuzione || '-'} - ${importo || '€ 0.00'}</div> `;
+ }
+ 
+ const scaduta = isRicaricaScaduta(ricarica, tipo);
+ const presto = isRicaricaDaFarePresto(ricarica, tipo);
+ 
+ let classeData = '';
+ if (scaduta) classeData = 'scaduta';
+ else if (presto) classeData = 'presto';
+ 
+ return`
+<div style="margin-bottom: 0.5rem;">
+<div style="font-size: 0.75rem; color: #666; margin-bottom: 0.25rem;">Ricarica Entro:</div>
+<div class="ricarica-data ${classeData}">${dataPrevista} ${scaduta ? '️' : (presto ? '' : '')}</div>
+</div>
+<button type="button" class="btn-gestisci"onclick="apriModalRicarica(${ricarica.rowIndex}, '${tipo}')"> GESTISCI
+</button> `;
+ }
+ 
+ function isRicaricaEffettuata(ricarica, tipo) {
+ if (tipo === 'prima') {
+ return ricarica.statoNPrima === 'Effettuata';
+ } else {
+ return ricarica.statoOSeconda === 'Effettuata';
+ }
+ }
+ 
+ function isRicaricaScaduta(ricarica, tipo) {
+ const dataPrevista = tipo === 'prima' ? ricarica.primaRicarica : ricarica.secondaRicarica;
+ if (!dataPrevista || isRicaricaEffettuata(ricarica, tipo)) return false;
+ 
+ const oggi = new Date();
+ oggi.setHours(0, 0, 0, 0);
+ const data = parseItalianDate(dataPrevista);
+ 
+ return data< oggi;
+ }
+ 
+ function isRicaricaDaFarePresto(ricarica, tipo) {
+ const dataPrevista = tipo === 'prima' ? ricarica.primaRicarica : ricarica.secondaRicarica;
+ if (!dataPrevista || isRicaricaEffettuata(ricarica, tipo)) return false;
+ 
+ const oggi = new Date();
+ oggi.setHours(0, 0, 0, 0);
+ const data = parseItalianDate(dataPrevista);
+ const diffGiorni = Math.ceil((data - oggi) / (1000 * 60 * 60 * 24));
+ 
+ return diffGiorni>= 0 && diffGiorni<= 7;
+ }
+ 
+ function calcolaPriorita(ricarica) {
+ // Priorità più bassa = più importante
+ let priorita = 1000;
+ 
+ // Prima ricarica
+ if (!isRicaricaEffettuata(ricarica, 'prima')) {
+ if (isRicaricaScaduta(ricarica, 'prima')) {
+ priorita = Math.min(priorita, 1);
+ } else if (isRicaricaDaFarePresto(ricarica, 'prima')) {
+ priorita = Math.min(priorita, 2);
+ } else {
+ priorita = Math.min(priorita, 3);
+ }
+ }
+ 
+ // Seconda ricarica
+ if (!isRicaricaEffettuata(ricarica, 'seconda')) {
+ if (isRicaricaScaduta(ricarica, 'seconda')) {
+ priorita = Math.min(priorita, 1);
+ } else if (isRicaricaDaFarePresto(ricarica, 'seconda')) {
+ priorita = Math.min(priorita, 2);
+ } else {
+ priorita = Math.min(priorita, 3);
+ }
+ }
+ 
+ // Se entrambe effettuate
+ if (isRicaricaEffettuata(ricarica, 'prima') && isRicaricaEffettuata(ricarica, 'seconda')) {
+ priorita = 10;
+ }
+ 
+ return priorita;
+ }
+ 
+ function getClasseRiga(ricarica) {
+ const primaEffettuata = isRicaricaEffettuata(ricarica, 'prima');
+ const secondaEffettuata = isRicaricaEffettuata(ricarica, 'seconda');
+ 
+ if (primaEffettuata && secondaEffettuata) {
+ return'effettuata';
+ }
+ 
+ if (isRicaricaScaduta(ricarica, 'prima') || isRicaricaScaduta(ricarica, 'seconda')) {
+ return'scaduta';
+ }
+ 
+ if (isRicaricaDaFarePresto(ricarica, 'prima') || isRicaricaDaFarePresto(ricarica, 'seconda')) {
+ return'presto';
+ }
+ 
+ return'';
+ }
+ 
+ function aggiornaStatistiche() {
+ let scadute = 0;
+ let presto = 0;
+ let effettuate = 0;
+ 
+ allRicariche.forEach(ricarica => {
+ const primaEffettuata = isRicaricaEffettuata(ricarica, 'prima');
+ const secondaEffettuata = isRicaricaEffettuata(ricarica, 'seconda');
+ 
+ // Conta ricariche effettuate
+ if (primaEffettuata) effettuate++;
+ if (secondaEffettuata) effettuate++;
+ 
+ // Conta scadute
+ if (!primaEffettuata && isRicaricaScaduta(ricarica, 'prima')) scadute++;
+ if (!secondaEffettuata && isRicaricaScaduta(ricarica, 'seconda')) scadute++;
+ 
+ // Conta da fare presto
+ if (!primaEffettuata && isRicaricaDaFarePresto(ricarica, 'prima')) presto++;
+ if (!secondaEffettuata && isRicaricaDaFarePresto(ricarica, 'seconda')) presto++;
+ });
+ 
+ document.getElementById('statScadute').textContent = scadute;
+ document.getElementById('statPresto').textContent = presto;
+ document.getElementById('statEffettuate').textContent = effettuate;
+ }
+ 
+ function filterRicariche(filtro) {
+ currentFilter = filtro;
+ 
+ // Aggiorna bottoni attivi
+ document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+ event.target.classList.add('active');
+ 
+ renderRicariche();
+ }
+ 
+ // Alias usato dai bottoni della tabella Ricariche
+ function apriRicarica(rowIndex, tipo) { apriModalRicarica(rowIndex, tipo); }
+ window.apriRicarica = apriRicarica;
+
+ function apriModalRicarica(rowIndex, tipo) {
+ const ricarica = allRicariche.find(r => String(r.rowIndex) === String(rowIndex));
+ 
+ if (!ricarica) {
+ window.MiroxUI && window.MiroxUI.alert('Errore: ricarica non trovata', {type:'error', title:'Errore'});
+ return;
+ }
+ 
+ currentRicaricaData = {
+ rowIndex: rowIndex,
+ tipo: tipo,
+ ricarica: ricarica
+ };
+ 
+ const dataPrevista = tipo === 'prima' ? ricarica.primaRicarica : ricarica.secondaRicarica;
+ const tipoLabel = tipo === 'prima' ? '1° Ricarica' : '2° Ricarica';
+ 
+ document.getElementById('ricaricaNumero').textContent = ricarica.numeroMNP;
+ document.getElementById('ricaricaCliente').textContent = ricarica.ragioneSociale;
+ document.getElementById('ricaricaData').textContent = dataPrevista;
+ document.getElementById('ricaricaTipo').textContent = tipoLabel;
+ 
+ document.getElementById('ricaricaStepScelta').style.display = 'block';
+ document.getElementById('ricaricaStepImporto').style.display = 'none';
+ document.getElementById('importoRicarica').value = '';
+ 
+ document.getElementById('ricaricaModal').classList.add('active');
+ }
+ 
+ function chiudiModalRicarica() {
+ document.getElementById('ricaricaModal').classList.remove('active');
+ currentRicaricaData = null;
+ }
+ 
+ function sceltaRicarica(scelta) {
+ if (scelta === 'eseguita') {
+ document.getElementById('ricaricaStepScelta').style.display = 'none';
+ document.getElementById('ricaricaStepImporto').style.display = 'block';
+ document.getElementById('importoRicarica').focus();
+ } else if (scelta === 'non-necessaria') {
+ salvaRicarica(0);
+ }
+ }
+ 
+ function tornaScelta() {
+ document.getElementById('ricaricaStepScelta').style.display = 'block';
+ document.getElementById('ricaricaStepImporto').style.display = 'none';
+ }
+ 
+ function confermaRicarica() {
+ const importo = parseFloat(document.getElementById('importoRicarica').value);
+ 
+ if (isNaN(importo) || importo< 0) {
+ window.MiroxUI && window.MiroxUI.alert('Inserisci un importo valido', {type:'warning', title:'Attenzione'});
+ return;
+ }
+ 
+ salvaRicarica(importo);
+ }
+ 
+ function salvaRicarica(importo) {
+ if (!currentRicaricaData) return;
+ 
+ const { rowIndex, tipo } = currentRicaricaData;
+ 
+ console.log('Salvataggio ricarica:', { rowIndex, tipo, importo });
+ 
+ // Chiudi modal ricarica
+ document.getElementById('ricaricaModal').classList.remove('active');
+ 
+ // Mostra loading
+ showLoadingModal();
+ 
+ // Timer per garantire visibilità minima del loading
+ const startTime = Date.now();
+ 
+ // Usa lo stesso metodo di cambiaStato
+ (async () => {
+ try {
+ const today = new Date().toISOString().slice(0,10);
+ const patch = tipo === 'prima'
+ ? { prima_ricarica_data_esecuzione: today, prima_ricarica_importo: importo }
+ : { seconda_ricarica_data_esecuzione: today, seconda_ricarica_importo: importo };
+ const { error } = await sb
+ .from('vendita_switch_sim')
+ .update(patch)
+ .eq('id', rowIndex);
+
+ const elapsed = Date.now() - startTime;
+ const minDelay = 800;
+ if (elapsed< minDelay) await new Promise(r => setTimeout(r, minDelay - elapsed));
+
+ hideLoadingModal();
+ if (error) { window.MiroxUI && window.MiroxUI.alert('Errore: ' + error.message, {type:'error', title:'Errore'}); return; }
+
+ const tipoLabel = tipo === 'prima' ? '1°' : '2°';
+ const importoLabel = importo === 0 ? 'Non necessaria' : `€ ${importo.toFixed(2)}`;
+ showSuccessModal(`${tipoLabel} Ricarica registrata: ${importoLabel}`);
+ setTimeout(() => {
+ hideSuccessModal();
+ caricaDatiRicariche();
+ }, 2000);
+ } catch (error) {
+ hideLoadingModal();
+ window.MiroxUI && window.MiroxUI.alert('Errore: ' + error.message, {type:'error', title:'Errore'});
+ }
+ })();
+ } </script>
+</body>
+</html>
