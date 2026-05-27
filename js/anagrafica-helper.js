@@ -193,7 +193,10 @@
       kind: null,
       cluster: null,
       lookupDone: false,
-      exists: false
+      exists: false,
+      // Promise del lookup attualmente in corso (null se nessuno).
+      // Permette ad altri handler (es. flag "coincide") di attenderne il completamento.
+      lookupPromise: null
     };
 
     function setStatus(msg, type) {
@@ -226,6 +229,7 @@
       state.cluster = null;
       state.lookupDone = false;
       state.exists = false;
+      state.lookupPromise = null;
       ['cluster', 'ragione_sociale', 'nome_referente', 'cellulare'].forEach((s) => {
         const el = $(s);
         if (el) el.value = '';
@@ -236,55 +240,102 @@
       if (typeof opts.onReset === 'function') opts.onReset();
     }
 
-    async function executeLookup() {
-      const raw = $('cfpiva').value;
-      const cfPiva = normalizeCfPiva(raw);
-      $('cfpiva').value = cfPiva;
+    function _doLookup() {
+      // Logica interna del lookup. Avvolta in una funzione perchè wrappata
+      // in una Promise tracciabile (state.lookupPromise).
+      return (async () => {
+        const raw = $('cfpiva').value;
+        const cfPiva = normalizeCfPiva(raw);
+        $('cfpiva').value = cfPiva;
 
-      reset();
-      if (!cfPiva) return;
+        reset(); // azzera tutto (incluso lookupPromise) — la ripristiniamo subito sotto
+        if (!cfPiva) return;
 
-      const kind = detectKind(cfPiva);
-      if (!kind) {
-        setStatus("Il valore inserito non è un CF (16 caratteri) né una P.IVA (11 cifre). Verifica il dato.", 'err');
-        return;
-      }
-      state.cfPiva = cfPiva;
-      state.kind = kind;
-      state.cluster = clusterFromKind(kind);
-      if ($('cluster')) $('cluster').value = state.cluster;
-
-      setStatus('Ricerca cliente in corso...', 'info');
-      try {
-        const res = await cerca(cfPiva);
-        state.lookupDone = true;
-        if (res.found) {
-          state.id = res.data.id;
-          state.exists = true;
-          if ($('ragione_sociale')) $('ragione_sociale').value = res.data.ragione_sociale || '';
-          if ($('nome_referente')) $('nome_referente').value = res.data.nome_referente || '';
-          if ($('cellulare')) $('cellulare').value = res.data.cellulare || '';
-          const dbCluster = (res.data.cluster || '').trim();
-          if (dbCluster && dbCluster !== state.cluster) {
-            setStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-') +
-              ' — ⚠ cluster in DB era "' + dbCluster + '" ma è stato corretto a "' + state.cluster +
-              '" in base al ' + (kind === 'cf' ? 'CF' : 'P.IVA'), 'warn');
-          } else {
-            setStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-'), 'ok');
-          }
-          setFieldsReadonly(true);
-          showFields(true);
-        } else {
-          state.id = null;
-          state.exists = false;
-          setFieldsReadonly(false);
-          showFields(true);
-          setStatus('Cliente nuovo — compila i dati di censimento.', 'warn');
-          if ($('ragione_sociale')) $('ragione_sociale').focus();
+        const kind = detectKind(cfPiva);
+        if (!kind) {
+          setStatus("Il valore inserito non è un CF (16 caratteri) né una P.IVA (11 cifre). Verifica il dato.", 'err');
+          return;
         }
-        if (typeof opts.onLookupComplete === 'function') opts.onLookupComplete({ state, found: res.found });
-      } catch (err) {
-        setStatus('Errore ricerca: ' + err.message, 'err');
+        state.cfPiva = cfPiva;
+        state.kind = kind;
+        state.cluster = clusterFromKind(kind);
+        if ($('cluster')) $('cluster').value = state.cluster;
+
+        setStatus('Ricerca cliente in corso...', 'info');
+        try {
+          const res = await cerca(cfPiva);
+          state.lookupDone = true;
+          if (res.found) {
+            state.id = res.data.id;
+            state.exists = true;
+            if ($('ragione_sociale')) $('ragione_sociale').value = res.data.ragione_sociale || '';
+            if ($('nome_referente')) $('nome_referente').value = res.data.nome_referente || '';
+            if ($('cellulare')) $('cellulare').value = res.data.cellulare || '';
+            const dbCluster = (res.data.cluster || '').trim();
+            if (dbCluster && dbCluster !== state.cluster) {
+              setStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-') +
+                ' — ⚠ cluster in DB era "' + dbCluster + '" ma è stato corretto a "' + state.cluster +
+                '" in base al ' + (kind === 'cf' ? 'CF' : 'P.IVA'), 'warn');
+            } else {
+              setStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-'), 'ok');
+            }
+            setFieldsReadonly(true);
+            showFields(true);
+          } else {
+            state.id = null;
+            state.exists = false;
+            setFieldsReadonly(false);
+            showFields(true);
+            setStatus('Cliente nuovo — compila i dati di censimento.', 'warn');
+            if ($('ragione_sociale')) $('ragione_sociale').focus();
+          }
+          if (typeof opts.onLookupComplete === 'function') opts.onLookupComplete({ state, found: res.found });
+        } catch (err) {
+          setStatus('Errore ricerca: ' + err.message, 'err');
+        }
+      })();
+    }
+
+    /**
+     * Avvia un lookup e registra la sua Promise su state.lookupPromise.
+     * Se è già in corso un lookup, ne attende il completamento e poi ne avvia uno nuovo.
+     * Restituisce la Promise del lookup corrente.
+     */
+    async function executeLookup() {
+      // Se c'è già un lookup in volo, riusiamo la sua promise (idempotenza per
+      // i casi in cui blur + change vengano scatenati a brevissima distanza).
+      if (state.lookupPromise) {
+        try { await state.lookupPromise; } catch (_) { /* ignora errori del precedente */ }
+      }
+      const p = _doLookup();
+      state.lookupPromise = p;
+      try { await p; } finally {
+        // Manteniamo lookupPromise valorizzata: chi chiama awaitLookup() dopo che
+        // è già finito riceverà una promise già risolta (zero-cost).
+      }
+      return p;
+    }
+
+    /**
+     * Se è in corso un lookup, ne attende il completamento. Se il campo CF/P.IVA
+     * contiene un valore ma nessun lookup è mai stato fatto (es. l'utente clicca un
+     * altro pulsante prima che scatti il blur), avvia il lookup e lo attende.
+     * Risolve quando lo state riflette il risultato attuale del campo.
+     */
+    async function awaitLookup() {
+      // Caso 1: un lookup è in corso o appena terminato → aspettalo.
+      if (state.lookupPromise) {
+        try { await state.lookupPromise; } catch (_) {}
+      }
+      // Caso 2: il campo contiene un CF/PIVA diverso da quello su cui abbiamo lo
+      // stato corrente → triggera un nuovo lookup. Questo cattura il "click prima
+      // del blur" senza richiedere modifiche ai consumer.
+      const cfInputEl = $('cfpiva');
+      if (cfInputEl) {
+        const current = normalizeCfPiva(cfInputEl.value);
+        if (current && current !== state.cfPiva) {
+          await executeLookup();
+        }
       }
     }
 
@@ -316,7 +367,7 @@
       });
     }
 
-    return { state, reset, executeLookup, getDati, validate, setStatus };
+    return { state, reset, executeLookup, awaitLookup, getDati, validate, setStatus };
   }
 
   // Esposizione globale

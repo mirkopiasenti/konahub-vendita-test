@@ -337,6 +337,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/auth.js"></script>
+<script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-folder.js"></script>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
 <div class="top-nav">
 <h2>Simulatore Protecta</h2>
@@ -836,7 +838,7 @@
  const operatore = document.getElementById('operatoreSelect').value;
 
  if (!clienteNome || !clienteTel || !operatore) {
- alert('Compila tutti i campi obbligatori:\n- Nome e Cognome\n- Numero cellulare\n- Operatore');
+ window.MiroxUI && window.MiroxUI.alert('Compila tutti i campi obbligatori:\n- Nome e Cognome\n- Numero cellulare\n- Operatore', {type:'warning', title:'Dati mancanti'});
  return;
  }
 
@@ -1104,7 +1106,7 @@
 
  } catch (err) {
  console.error('Errore generazione PDF:', err);
- alert('Errore nella generazione del PDF: ' + err.message);
+ window.MiroxUI && window.MiroxUI.alert('Errore nella generazione del PDF: ' + err.message, {type:'error', title:'Errore'});
  } finally {
  // Restore
  document.getElementById('loadingOverlay').style.display = 'none';
@@ -1241,7 +1243,7 @@
  if (error) throw error;
  apriTrattative();
  } catch(e) {
- alert('Errore aggiornamento: ' + e.message);
+ window.MiroxUI && window.MiroxUI.alert('Errore aggiornamento: ' + e.message, {type:'error', title:'Errore'});
  btn.disabled = false;
  btn.textContent = nuovoStato;
  }

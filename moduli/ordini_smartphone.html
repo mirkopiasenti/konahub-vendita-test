@@ -592,6 +592,9 @@
 <script src="../js/auth.js"></script>
 <script src="../js/anagrafica-helper.js"></script>
 <script src="../js/mirox-mailer.js"></script>
+<script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-folder.js"></script>
+<script src="../js/mirox-upload.js"></script>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
 <!-- Header -->
 <div class="header">
@@ -603,8 +606,8 @@
 </div>
 </div> <!-- Navigation Tabs -->
 <div class="nav-tabs">
-<button class="nav-tab active" onclick="switchTab(0)"> Nuova Richiesta</button>
-<button class="nav-tab" onclick="switchTab(1)"> Riepilogo Ordini</button>
+<button type="button" class="nav-tab active" onclick="switchTab(0)"> Nuova Richiesta</button>
+<button type="button" class="nav-tab" onclick="switchTab(1)"> Riepilogo Ordini</button>
 </div> <!-- Container -->
 <div class="container">
 <!-- PAGINA 1: Registrazione Ordine -->
@@ -742,7 +745,7 @@
 <div class="modal-content">
 <div class="modal-header">
 <h2>Dettagli Ordine</h2>
-<button class="modal-close" onclick="closeModal()">×</button>
+<button type="button" class="modal-close" onclick="closeModal()">×</button>
 </div>
 <div id="modal-body"></div>
 </div>
@@ -1053,7 +1056,7 @@
 <td>${order.marca} ${order.modello} - ${order.memoria}</td>
 <td>${order.dataRegistrazione}</td>
 <td><span class="status-badge status-${getStatusClass(order.stato)}">${order.stato}</span></td>
-<td><button class="btn-dettaglio"onclick="showOrderDetail('${order.id}')">Dettaglio</button></td>
+<td><button type="button" class="btn-dettaglio"onclick="showOrderDetail('${order.id}')">Dettaglio</button></td>
 </tr> `).join('')}
 </tbody>
 </table> `;
@@ -1126,9 +1129,9 @@
 </div> <div class="status-update-section">
 <h3>Aggiorna Stato</h3>
 <div class="status-buttons">
-<button class="btn-status btn-status-ordinato"onclick="updateStatus('Ordinato')">Ordinato</button>
-<button class="btn-status btn-status-venduto"onclick="updateStatus('Venduto')">Venduto</button>
-<button class="btn-status btn-status-annullato"onclick="updateStatus('Annullato')">Annullato</button>
+<button type="button" class="btn-status btn-status-ordinato"onclick="updateStatus('Ordinato')">Ordinato</button>
+<button type="button" class="btn-status btn-status-venduto"onclick="updateStatus('Venduto')">Venduto</button>
+<button type="button" class="btn-status btn-status-annullato"onclick="updateStatus('Annullato')">Annullato</button>
 </div>
 </div> `;
 

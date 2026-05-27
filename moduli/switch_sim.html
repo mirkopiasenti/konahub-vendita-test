@@ -114,6 +114,7 @@
  #pageAttesa.page, #pageRiepilogo.page, #pageRicariche.page {
    max-width: none;
    width: 100%;
+   padding: 1.25rem 1rem; /* riduce padding laterale per dare più larghezza al data area */
  }
  #pageAttesa table, #pageRiepilogo table, #pageRicariche table {
    width: 100%;
@@ -123,8 +124,22 @@
  #pageRiepilogo table th, #pageRiepilogo table td,
  #pageRicariche table th, #pageRicariche table td {
    white-space: nowrap;
-   padding: 10px 12px;
+   padding: 8px 10px;
    font-size: 12.5px;
+ }
+ /* Colonna Azioni (ultima): sticky a destra, sempre visibile anche con scroll orizzontale.
+    Garantisce che il pulsante "KO" sia sempre raggiungibile senza scroll manuale. */
+ #pageRiepilogo .data-table thead th.col-azioni,
+ #pageRiepilogo .data-table tbody td.riepilogo-actions {
+   position: sticky;
+   right: 0;
+   background: #fff;
+   z-index: 2;
+   box-shadow: -2px 0 6px rgba(15,23,42,0.05);
+   border-left: 1px solid #e2e8f0;
+ }
+ #pageRiepilogo .data-table thead th.col-azioni {
+   background: #f8fafc;
  }
  /* Allarga il container principale solo quando siamo su pagine "wide" */
  .container.wide-layout { max-width: 100%; padding: 0 12px; }
@@ -1479,6 +1494,9 @@
 <script src="../js/config.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/anagrafica-helper.js"></script>
+<script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-folder.js"></script>
+<script src="../js/mirox-upload.js"></script>
 <style>
 .split-anag { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .split-anag > .section { margin-bottom: 0 !important; }
@@ -1498,13 +1516,13 @@
 </div>
 </div> <!-- Navigation Tabs -->
 <div class="nav-tabs">
-<button class="nav-tab active" onclick="switchTab('inserimento', event)"> Inserimento Dati
+<button type="button" class="nav-tab active" onclick="switchTab('inserimento', event)"> Inserimento Dati
 </button>
-<button class="nav-tab" onclick="switchTab('attesa', event)"> Attesa Inserimento
+<button type="button" class="nav-tab" onclick="switchTab('attesa', event)"> Attesa Inserimento
 </button>
-<button class="nav-tab" onclick="switchTab('riepilogo', event)"> Riepilogo
+<button type="button" class="nav-tab" onclick="switchTab('riepilogo', event)"> Riepilogo
 </button>
-<button class="nav-tab" onclick="switchTab('ricariche', event)"> Ricariche
+<button type="button" class="nav-tab" onclick="switchTab('ricariche', event)"> Ricariche
 </button>
 </div> <div class="container">
 <!-- PAGINA 1: INSERIMENTO DATI -->
@@ -1792,14 +1810,13 @@
 <th>CF/P.IVA</th>
 <th>Num. MNP</th>
 <th>Giorno Rientro</th>
-<th></th>
-<th>Dettagli</th>
-<th>Azioni</th>
+<th>Allegati</th>
+<th class="col-azioni">Azioni</th>
 </tr>
 </thead>
 <tbody id="tableBody">
 <tr>
-<td colspan="10" class="loading-spinner">
+<td colspan="9" class="loading-spinner">
 <div class="spinner-icon"></div>
 <p style="margin-top: 1rem;">Caricamento dati...</p>
 </td>
@@ -1877,7 +1894,7 @@ Mostra anche ricariche in OK
 </div>
 </div>
 <div class="modal-buttons">
-<button class="modal-btn modal-btn-cancel" onclick="closeStateModal()">Annulla</button>
+<button type="button" class="modal-btn modal-btn-cancel" onclick="closeStateModal()">Annulla</button>
 </div>
 </div>
 </div> <!-- MODAL: Dettagli Tecnici -->
@@ -1885,7 +1902,7 @@ Mostra anche ricariche in OK
 <div class="modal-container dettagli-modal">
 <div class="dettagli-header">
 <h2> Dettagli Tecnici</h2>
-<button class="close-btn" onclick="chiudiDettagli()" aria-label="Chiudi">×</button>
+<button type="button" class="close-btn" onclick="chiudiDettagli()" aria-label="Chiudi">×</button>
 </div> <form id="dettagliForm">
 <!-- Sezione Dati Principali -->
 <div class="dettagli-section">
@@ -2009,11 +2026,11 @@ Mostra anche ricariche in OK
 <p><strong>Data prevista:</strong><span id="ricaricaData">-</span></p>
 <p><strong>Tipo:</strong><span id="ricaricaTipo">-</span></p>
 </div> <div id="ricaricaStepScelta" class="modal-ricarica-buttons">
-<button class="modal-ricarica-btn eseguita" onclick="sceltaRicarica(' eseguita')"> Ricarica Eseguita
+<button type="button" class="modal-ricarica-btn eseguita" onclick="sceltaRicarica(' eseguita')"> Ricarica Eseguita
 </button>
-<button class="modal-ricarica-btn non-necessaria" onclick="sceltaRicarica(' non-necessaria')"> Non Necessaria
+<button type="button" class="modal-ricarica-btn non-necessaria" onclick="sceltaRicarica(' non-necessaria')"> Non Necessaria
 </button>
-<button class="modal-ricarica-btn annulla" onclick="chiudiModalRicarica()"> Annulla
+<button type="button" class="modal-ricarica-btn annulla" onclick="chiudiModalRicarica()"> Annulla
 </button>
 </div> <div id="ricaricaStepImporto" style="display: none;">
 <div class="importo-input-group">
@@ -2021,9 +2038,9 @@ Mostra anche ricariche in OK
 <input type="number" id="importoRicarica" placeholder="es: 10" step="0.01" min="0">
 </div>
 <div class="modal-ricarica-buttons">
-<button class="modal-ricarica-btn eseguita" onclick="confermaRicarica()"> Conferma
+<button type="button" class="modal-ricarica-btn eseguita" onclick="confermaRicarica()"> Conferma
 </button>
-<button class="modal-ricarica-btn annulla" onclick="tornaScelta()"> ← Indietro
+<button type="button" class="modal-ricarica-btn annulla" onclick="tornaScelta()"> ← Indietro
 </button>
 </div>
 </div>
@@ -2094,18 +2111,103 @@ Mostra anche ricariche in OK
  }
  })();
 
- async function uploadSwitchSimFile(praticaId, base64, filename, label) {
+ async function uploadSwitchSimFile(folderName, base64, filename, label) {
  try {
  if (!base64) return null;
  const bin = atob(base64);
  const buf = new Uint8Array(bin.length);
  for (let i = 0; i< bin.length; i++) buf[i] = bin.charCodeAt(i);
  const blob = new Blob([buf], { type: 'application/octet-stream' });
- const path = `pratica_${praticaId}/${label}_${Date.now()}_${filename || 'file'}`;
+ const safeFolder = folderName || 'pratica';
+ const path = `${safeFolder}/${label}_${Date.now()}_${filename || 'file'}`;
  const { error } = await sb.storage.from(SWITCH_SIM_BUCKET).upload(path, blob, { upsert: true });
  if (error) throw error;
  return sb.storage.from(SWITCH_SIM_BUCKET).getPublicUrl(path).data?.publicUrl || null;
  } catch (e) { console.error('Upload switch-sim errore (' + label + '):', e); return null; }
+ }
+
+ // Mappa label tecnico -> nome leggibile descrittivo (popup allegati)
+ const SWITCH_SIM_LABELS = {
+   docAttualeIntestatario: 'Documento Identità Attuale Intestatario',
+   docNuovoIntestatario: 'Documento Identità Nuovo Intestatario',
+   docVisuraCamerale: 'Visura Camerale',
+   docContrattoSwitch: 'Contratto Switch SIM firmato',
+   docCarrello: 'Stampa Carrello',
+   docModuloPrivacy: 'Modulo Privacy',
+   docDelegaConsenso: 'Delega/Consenso',
+   docAltro: 'Altro documento'
+ };
+
+ function _displayNameSwitchSim(rawFileName) {
+   // I file vengono salvati come "<label>_<timestamp>_<original>". Rimuoviamo timestamp + original.
+   if (!rawFileName) return 'Documento';
+   const m = /^([A-Za-z]+)_(\d+)_(.+)$/.exec(rawFileName);
+   if (!m) return rawFileName;
+   const label = m[1];
+   if (SWITCH_SIM_LABELS[label]) return SWITCH_SIM_LABELS[label];
+   // Fallback: trasforma camelCase in parole separate, capitalizzate
+   return label.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase()).trim();
+ }
+
+ /**
+  * Apre il popup MiroxUI.allegati con tutti i file della cartella della pratica.
+  * Usa cartella_url (path della cartella nel bucket switch-sim-files) per il
+  * formato nuovo, oppure tenta i fallback legacy `pratica_<id>`.
+  */
+ async function apriAllegatiSwitchSim(rowIndex) {
+   if (!window.MiroxUI) { console.error('MiroxUI non caricato'); return; }
+   const loader = window.MiroxUI.loading.show('Caricamento allegati', 'Sto leggendo i file dallo storage...');
+   try {
+     // Recupera cartella_url e dati del record
+     const { data: rec, error: errRec } = await sb
+       .from('vendita_switch_sim')
+       .select('id, cartella_url, ragione_sociale_attuale, ragione_sociale_rientro, data_inserimento')
+       .eq('id', rowIndex)
+       .single();
+     if (errRec) throw errRec;
+     // Path candidati (priorità: cartella_url salvata, poi fallback)
+     const candidates = [];
+     if (rec && rec.cartella_url) {
+       // cartella_url legacy poteva essere un URL completo di publicUrl; estraiamo solo il path
+       const folderOnly = rec.cartella_url
+         .replace(/^https?:\/\/[^/]+\/storage\/v1\/object\/public\/[^/]+\//, '')
+         .replace(/\/[^/]+$/, '');
+       if (folderOnly && folderOnly !== rec.cartella_url) candidates.push(folderOnly);
+       candidates.push(rec.cartella_url);
+     }
+     // Fallback: nuovo formato ricostruito
+     if (rec && window.MiroxFolder) {
+       candidates.push(window.MiroxFolder.build(rec.ragione_sociale_attuale, rec.ragione_sociale_rientro, rec.data_inserimento));
+     }
+     // Fallback legacy
+     candidates.push(`pratica_${rec ? rec.id : rowIndex}`);
+
+     let items = [];
+     for (const folder of candidates) {
+       if (!folder) continue;
+       const { data: files, error } = await sb.storage.from(SWITCH_SIM_BUCKET).list(folder, { limit: 100, offset: 0 });
+       if (error) continue;
+       const filtered = (files || []).filter(f => f.name && !f.name.startsWith('.') && f.metadata);
+       if (filtered.length) {
+         items = filtered.map(f => {
+           const path = `${folder}/${f.name}`;
+           const url = sb.storage.from(SWITCH_SIM_BUCKET).getPublicUrl(path).data?.publicUrl || '#';
+           return { name: f.name, displayName: _displayNameSwitchSim(f.name), url };
+         });
+         break;
+       }
+     }
+     loader.hide();
+     window.MiroxUI.allegati({
+       title: `Allegati pratica #${rowIndex}`,
+       items,
+       emptyText: 'Nessun allegato disponibile per questa pratica.'
+     });
+   } catch (e) {
+     loader.error('Errore di caricamento');
+     console.error('Errore lettura allegati switch-sim:', e);
+     setTimeout(() => window.MiroxUI.alert('Impossibile leggere gli allegati: ' + e.message, { type: 'error', title: 'Errore' }), 200);
+   }
  }
 
  function fmtItDate(iso) {
@@ -2233,12 +2335,17 @@ Mostra anche ricariche in OK
  // Checkbox "Nuovo Intestatario coincide con Attuale"
  const coincideCheck = document.getElementById('coincide-check');
  if (coincideCheck) {
-   coincideCheck.addEventListener('change', () => {
+   coincideCheck.addEventListener('change', async () => {
      const nuovoSection = document.getElementById('docNuovoIntestatarioGroup');
      const docNuovoInput = document.getElementById('docNuovoIntestatario');
      if (coincideCheck.checked) {
+       // Attende eventuale lookup in volo (fix bug primo click subito dopo la ricerca)
+       try { await anagVecchio.awaitLookup(); } catch (_) {}
        if (!anagVecchio.state.cfPiva || !anagVecchio.state.lookupDone) {
-         alert('⚠ Compila prima l\'Attuale Intestatario (digita il CF/P.IVA e attendi la ricerca)');
+         await window.MiroxUI.alert(
+           'Compila prima l\'Attuale Intestatario (digita il CF/P.IVA e attendi la ricerca)',
+           { type: 'warning', title: 'Dato mancante' }
+         );
          coincideCheck.checked = false;
          return;
        }
@@ -2324,14 +2431,14 @@ Mostra anche ricariche in OK
  
  // Controllo formato numero (10 cifre)
  if (!/^\d{10}$/.test(numero)) {
- alert('️ Il numero deve essere di 10 cifre (es: 3331234567)');
+ window.MiroxUI && window.MiroxUI.alert('️ Il numero deve essere di 10 cifre (es: 3331234567)', {type:'warning', title:'Attenzione'});
  numeroInput.focus();
  return;
  }
  
  // Controllo duplicati (verifica solo il numero)
  if (numeriMNP.some(item => item.numero === numero)) {
- alert('️ Questo numero è già stato aggiunto');
+ window.MiroxUI && window.MiroxUI.alert('️ Questo numero è già stato aggiunto', {type:'warning', title:'Attenzione'});
  return;
  }
  
@@ -2504,16 +2611,16 @@ Mostra anche ricariche in OK
 
  // Validazione: almeno un numero MNP
  if (numeriMNP.length === 0) {
-   alert('⚠ Aggiungi almeno un numero MNP prima di salvare');
+   window.MiroxUI && window.MiroxUI.alert('⚠ Aggiungi almeno un numero MNP prima di salvare', {type:'warning', title:'Attenzione'});
    document.getElementById('numeroMNP').focus();
    return;
  }
 
  // Validazione anagrafiche
  const errAttuale = anagVecchio.validate();
- if (errAttuale) { alert('Attuale Intestatario: ' + errAttuale); return; }
+ if (errAttuale) { window.MiroxUI && window.MiroxUI.alert('Attuale Intestatario: ' + errAttuale, {type:'warning', title:'Attenzione'}); return; }
  const errNuovo = anagNuovo.validate();
- if (errNuovo) { alert('Nuovo Intestatario (Rientro): ' + errNuovo); return; }
+ if (errNuovo) { window.MiroxUI && window.MiroxUI.alert('Nuovo Intestatario (Rientro): ' + errNuovo, {type:'warning', title:'Attenzione'}); return; }
 
  const submitBtn = document.getElementById('submitBtn');
  submitBtn.disabled = true;
@@ -2571,16 +2678,20 @@ Mostra anche ricariche in OK
    // 5. Upload allegati (sul primo record + replica URL su tutti)
    if (insertedRows && insertedRows.length) {
      const primary = insertedRows[0];
-     const uploaded = {};
+     // Nome cartella unificato Mirox: <RAG_ATTUALE>_<RAG_RIENTRO>_<GG_MM_AA>
+     const folderName = (window.MiroxFolder
+       ? window.MiroxFolder.build(datiAttuale.ragione_sociale, datiNuovo.ragione_sociale, formData.dataInserimento)
+       : `pratica_${primary.id}`);
      for (const [label, base64] of Object.entries(files)) {
        if (!base64 || label.endsWith('Nome')) continue;
-       uploaded[label] = await uploadSwitchSimFile(primary.id, base64, label, label);
+       await uploadSwitchSimFile(folderName, base64, label, label);
      }
-     if (uploaded.docAttualeIntestatario) {
-       await sb.from('vendita_switch_sim')
-         .update({ cartella_url: uploaded.docAttualeIntestatario })
-         .in('id', insertedRows.map(r => r.id));
-     }
+     // In cartella_url salviamo il PATH della cartella (non l'URL del singolo file).
+     // Il pulsante "Allegati" nelle tabelle (Attesa Inserimento / Riepilogo) farà
+     // list() su questa cartella e mostrerà l'elenco completo nel popup MiroxUI.
+     await sb.from('vendita_switch_sim')
+       .update({ cartella_url: folderName })
+       .in('id', insertedRows.map(r => r.id));
    }
 
    hideLoadingModal();
@@ -2589,7 +2700,7 @@ Mostra anche ricariche in OK
  } catch (error) {
    console.error('Errore:', error);
    hideLoadingModal();
-   alert('Errore durante il salvataggio: ' + error.message);
+   window.MiroxUI && window.MiroxUI.alert('Errore durante il salvataggio: ' + error.message, {type:'error', title:'Errore'});
    submitBtn.disabled = false;
  }
  });
@@ -2798,10 +2909,10 @@ Mostra anche ricariche in OK
 <td class="${hasNuovoCF ? 'highlight-yellow' : ''}" title="${record.nuovoCFPIVA || ''}">${record.nuovoCFPIVA || '-'}</td>
 <td title="${record.numeroMNP || ''}">${record.numeroMNP || '-'}</td>
 <td title="${record.dataInserimento || ''}">${record.dataInserimento || '-'}</td>
-<td>${record.folderUrl ? '<a href="' + record.folderUrl + '" target="_blank" class="link-drive" title="Apri cartella">📁</a>' : '-'}</td>
+<td>${record.folderUrl || record.rowIndex ? `<button type="button" class="action-btn" style="background:#fff;border:1px solid #e2e8f0;color:#0f172a;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;" onclick="apriAllegatiSwitchSim(${record.rowIndex})" title="Mostra elenco allegati pratica">📎 Allegati</button>` : '-'}</td>
 <td style="white-space:nowrap;">
-<button class="action-btn" style="background:#DCFCE7;color:#047857;border:1px solid #BBF7D0;font-weight:700;margin-right:6px;padding:7px 14px;border-radius:8px;cursor:pointer;" onclick="apriAttivazione(${record.rowIndex})" title="Attiva pratica (apri dettagli)">ATTIVAZIONE</button>
-<button class="action-btn" style="background:#FEE2E2;color:#b91c1c;border:1px solid #FECACA;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;" onclick="cambiaStatoAttesa(${record.rowIndex}, 'KO')" title="Pratica KO">KO</button>
+<button type="button" class="action-btn" style="background:#DCFCE7;color:#047857;border:1px solid #BBF7D0;font-weight:700;margin-right:6px;padding:7px 14px;border-radius:8px;cursor:pointer;" onclick="apriAttivazione(${record.rowIndex})" title="Attiva pratica (apri dettagli)">ATTIVAZIONE</button>
+<button type="button" class="action-btn" style="background:#FEE2E2;color:#b91c1c;border:1px solid #FECACA;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;" onclick="cambiaStatoAttesa(${record.rowIndex}, 'KO')" title="Pratica KO">KO</button>
 </td>
 </tr>`;
  }).join('');
@@ -2817,7 +2928,7 @@ Mostra anche ricariche in OK
  currentDetailRowIndex = rowIndex;
  const record = allAttesaData.find(r => String(r.rowIndex) === String(rowIndex));
  if (!record) {
- alert('Errore: Record non trovato');
+ window.MiroxUI && window.MiroxUI.alert('Errore: Record non trovato', {type:'error', title:'Errore'});
  return;
  }
  // Popola il modal con i dati (riutilizza la logica esistente)
@@ -2832,9 +2943,11 @@ Mostra anche ricariche in OK
  window.apriAttivazione = apriAttivazione;
 
  async function cambiaStatoAttesa(rowIndex, nuovoStato) {
- if (!confirm('Confermi di voler cambiare lo stato in "' + nuovoStato + '"?')) {
- return;
- }
+ const ok = await window.MiroxUI.confirm(
+   'Confermi di voler cambiare lo stato in <strong>"' + nuovoStato + '"</strong>?',
+   { title: 'Conferma cambio stato', okText: 'Sì, conferma', cancelText: 'Annulla', html: true, danger: nuovoStato === 'KO' }
+ );
+ if (!ok) return;
 
  showLoadingModal();
 
@@ -2853,7 +2966,7 @@ Mostra anche ricariche in OK
  } catch (error) {
  hideLoadingModal();
  console.error('Errore:', error);
- alert('Errore di connessione');
+ window.MiroxUI && window.MiroxUI.alert('Errore di connessione', {type:'error', title:'Errore'});
  }
  }
 
@@ -2968,28 +3081,24 @@ Mostra anche ricariche in OK
 <td class="${hasNuovoCF ? 'highlight-yellow' : ''}"title="${record.nuovoCFPIVA || ''}">${record.nuovoCFPIVA || '-'}</td>
 <td title="${record.numeroMNP || ''}">${record.numeroMNP || '-'}</td>
 <td title="${record.giornoRientro || ''}">${record.giornoRientro || '-'}</td>
-<td> ${record.folderUrl ? 
- `<a href="${record.folderUrl}"target="_blank"class="link-drive"title="Apri cartella Google Drive"></a>` : 
- '-'
- }
-</td>
-<td>
-<button class="action-btn"style="background: #2196F3; color: white;"onclick="apriDettagli(${record.rowIndex})"title="Apri dettagli tecnici">DETTAGLI</button>
-</td>
-<td> ${showActions ? 
- `<button class="action-btn btn-update"style="background: #4CAF50; margin-right: 0.3rem;"onclick="cambiaStato(${record.rowIndex}, 'CHIUSO')"title="Segna come CHIUSO">CHIUSO</button>
-<button class="action-btn btn-update"style="background: #f44336;"onclick="cambiaStato(${record.rowIndex}, 'KO')"title="Segna come KO">KO</button>` : 
- '-'
- }
+<td>${record.folderUrl || record.rowIndex ? `<button type="button" class="action-btn" style="background:#fff;border:1px solid #e2e8f0;color:#0f172a;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;" onclick="apriAllegatiSwitchSim(${record.rowIndex})" title="Mostra elenco allegati pratica">📎 Allegati</button>` : '-'}</td>
+<td class="riepilogo-actions" style="white-space:nowrap;">
+<button type="button" class="action-btn" style="background:#2196F3;color:white;margin-right:.3rem;padding:6px 12px;border-radius:8px;cursor:pointer;border:none;font-weight:600;" onclick="apriDettagli(${record.rowIndex})" title="Apri dettagli tecnici">DETTAGLI</button>
+${showActions
+ ? `<button type="button" class="action-btn btn-update" style="background:#4CAF50;color:#fff;margin-right:.3rem;padding:6px 12px;border-radius:8px;cursor:pointer;border:none;font-weight:600;" onclick="cambiaStato(${record.rowIndex}, 'CHIUSO')" title="Segna come CHIUSO">CHIUSO</button>
+<button type="button" class="action-btn btn-update" style="background:#f44336;color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;border:none;font-weight:600;" onclick="cambiaStato(${record.rowIndex}, 'KO')" title="Segna come KO">KO</button>`
+ : ''}
 </td>
 </tr> `;
  }).join('');
  }
 
  async function cambiaStato(rowIndex, nuovoStato) {
- if (!confirm(`Confermi di voler cambiare lo stato in"${nuovoStato}"?`)) {
- return;
- }
+ const ok = await window.MiroxUI.confirm(
+   `Confermi di voler cambiare lo stato in <strong>"${nuovoStato}"</strong>?`,
+   { title: 'Conferma cambio stato', okText: 'Sì, conferma', cancelText: 'Annulla', html: true, danger: nuovoStato === 'KO' }
+ );
+ if (!ok) return;
 
  showLoadingModal();
 
@@ -3010,7 +3119,7 @@ Mostra anche ricariche in OK
  } catch (error) {
  hideLoadingModal();
  console.error('Errore:', error);
- alert('Errore: ' + error.message);
+ window.MiroxUI && window.MiroxUI.alert('Errore: ' + error.message, {type:'error', title:'Errore'});
  }
  }
 
@@ -3096,7 +3205,7 @@ Mostra anche ricariche in OK
  const record = allData.find(r => String(r.rowIndex) === String(rowIndex));
  
  if (!record) {
- alert('Errore: Record non trovato');
+ window.MiroxUI && window.MiroxUI.alert('Errore: Record non trovato', {type:'error', title:'Errore'});
  return;
  }
  
@@ -3237,7 +3346,7 @@ Mostra anche ricariche in OK
  const messaggioErrore = '️ ATTENZIONE: Rilevate discrepanze tra Google Sheet e Modal!\n\n' +
  errori.join('\n\n') +
  '\n\nControlla la Console (F12) per dettagli.';
- alert(messaggioErrore);
+ window.MiroxUI && window.MiroxUI.alert(messaggioErrore, {type:'error', title:'Errore'});
  }
  
  // ========================================
@@ -3267,14 +3376,16 @@ Mostra anche ricariche in OK
  // Gestione submit form dettagli
  document.getElementById('dettagliForm').addEventListener('submit', async function(e) {
  e.preventDefault();
- 
- console.log('Salvataggio dettagli per rowIndex:', currentDetailRowIndex);
- 
+
+ // Protezione contro doppio click: identifichiamo il pulsante submit del form
+ const submitBtnEl = e.submitter || this.querySelector('button[type="submit"]') || document.querySelector('#dettagliForm button[type="submit"]');
+ if (submitBtnEl && submitBtnEl.disabled) return;
+
  if (!currentDetailRowIndex) {
- alert('Errore: Nessuna riga selezionata');
+ await window.MiroxUI.alert('Nessuna riga selezionata', { type: 'error', title: 'Errore' });
  return;
  }
- 
+
  // Raccogli i dati
  const dati = {
  operatore: document.getElementById('dettaglio_operatore').value,
@@ -3286,37 +3397,65 @@ Mostra anche ricariche in OK
  modalitaPagamento: document.getElementById('dettaglio_modalitaPagamento').value,
  costoSwitch: document.getElementById('dettaglio_costoSwitch').value,
  note: document.getElementById('dettaglio_note').value || '',
- iccidSim: document.getElementById('dettaglio_iccidSim').value || '',
- numeroProvvisorio: document.getElementById('dettaglio_numeroProvvisorio').value || '',
+ iccidSim: document.getElementById('dettaglio_iccidSim').value.trim() || '',
+ numeroProvvisorio: document.getElementById('dettaglio_numeroProvvisorio').value.trim() || '',
  giornoAttivazione: document.getElementById('dettaglio_giornoAttivazione').value || '',
  giornoPortabilita: document.getElementById('dettaglio_giornoPortabilita').value || '',
  simDefinitiva: document.getElementById('dettaglio_simDefinitiva').value || ''
  };
- 
+
  // VALIDAZIONI
- 
+
+ // CAMPI OBBLIGATORI ATTESA INSERIMENTO (richiesta Mirox §5.2):
+ // ICCID SIM, Numero Provvisorio, Giorno Attivazione, Giorno Portabilità.
+ const mancanti = [];
+ if (!dati.iccidSim) mancanti.push('ICCID SIM');
+ if (!dati.numeroProvvisorio) mancanti.push('Numero Provvisorio');
+ if (!dati.giornoAttivazione) mancanti.push('Giorno Attivazione');
+ if (!dati.giornoPortabilita) mancanti.push('Giorno Portabilità');
+ if (mancanti.length) {
+ await window.MiroxUI.alert(
+ 'Per salvare la pratica devi prima compilare i seguenti campi obbligatori:<br><br><strong>• ' + mancanti.join('<br>• ') + '</strong>',
+ { type: 'warning', title: 'Campi obbligatori mancanti', html: true }
+ );
+ const firstId = ({
+ 'ICCID SIM': 'dettaglio_iccidSim',
+ 'Numero Provvisorio': 'dettaglio_numeroProvvisorio',
+ 'Giorno Attivazione': 'dettaglio_giornoAttivazione',
+ 'Giorno Portabilità': 'dettaglio_giornoPortabilita'
+ })[mancanti[0]];
+ if (firstId) { const el = document.getElementById(firstId); if (el) el.focus(); }
+ return;
+ }
+
  // Numero Provvisorio: 10 cifre
- if (dati.numeroProvvisorio && !/^\d{10}$/.test(dati.numeroProvvisorio)) {
- alert('Numero Provvisorio: deve essere di 10 cifre numeriche');
+ if (!/^\d{10}$/.test(dati.numeroProvvisorio)) {
+ await window.MiroxUI.alert('Il Numero Provvisorio deve essere di 10 cifre numeriche.', { type: 'warning', title: 'Numero non valido' });
  document.getElementById('dettaglio_numeroProvvisorio').focus();
  return;
  }
- 
- // SIM Definitiva: 10 cifre
+
+ // SIM Definitiva: 10 cifre (opzionale, ma se compilata deve essere valida)
  if (dati.simDefinitiva && !/^\d{10}$/.test(dati.simDefinitiva)) {
- alert('SIM Definitiva Rientro: deve essere di 10 cifre numeriche');
+ await window.MiroxUI.alert('La SIM Definitiva Rientro deve essere di 10 cifre numeriche.', { type: 'warning', title: 'Numero non valido' });
  document.getElementById('dettaglio_simDefinitiva').focus();
  return;
  }
- 
- // POPUP CONFERMA
- if (!confirm('Confermi di voler salvare le modifiche ai dettagli tecnici?')) {
- return;
- }
- 
- // Mostra loading
- showLoadingModal();
- 
+
+ // POPUP CONFERMA Mirox
+ const conferma = await window.MiroxUI.confirm(
+ 'Confermi di voler salvare le modifiche ai dettagli tecnici di questa pratica?',
+ { title: 'Conferma salvataggio', okText: 'Sì, salva', cancelText: 'Annulla' }
+ );
+ if (!conferma) return;
+
+ // Disabilita pulsante per evitare doppio click
+ const originalBtnText = submitBtnEl ? submitBtnEl.textContent : '';
+ if (submitBtnEl) { submitBtnEl.disabled = true; submitBtnEl.textContent = 'Salvataggio…'; }
+
+ // Mostra loading Mirox
+ const loader = window.MiroxUI.loading.show('Salvataggio modifiche', 'Attendere la conferma dal server...');
+
  try {
  // Inizio timer per garantire che loading sia visibile almeno 500ms
  const startTime = Date.now();
@@ -3355,22 +3494,25 @@ Mostra anche ricariche in OK
  await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
  }
 
- hideLoadingModal();
- if (error) { alert('Errore: ' + error.message); return; }
+ if (error) {
+ loader.error('Errore di salvataggio');
+ if (submitBtnEl) { submitBtnEl.disabled = false; submitBtnEl.textContent = originalBtnText; }
+ await window.MiroxUI.alert('Errore: ' + error.message, { type: 'error', title: 'Errore di salvataggio' });
+ return;
+ }
 
- let messaggio = 'Dettagli aggiornati con successo!';
- if (statoAggiornato) messaggio += `\n\n Stato aggiornato: ${nuovoStato}`;
- showSuccessModal(messaggio);
+ loader.success(statoAggiornato ? 'Aggiornato — stato: ' + nuovoStato : 'Modifiche salvate!');
  setTimeout(() => {
- hideSuccessModal();
  chiudiDettagli();
  caricaDatiRiepilogo();
- }, 2000);
- 
+ if (submitBtnEl) { submitBtnEl.disabled = false; submitBtnEl.textContent = originalBtnText; }
+ }, 1200);
+
  } catch (error) {
- hideLoadingModal();
+ loader.error('Errore di connessione');
+ if (submitBtnEl) { submitBtnEl.disabled = false; submitBtnEl.textContent = originalBtnText; }
  console.error('Errore salvataggio dettagli:', error);
- alert('Errore di connessione: ' + error.message);
+ await window.MiroxUI.alert('Errore di connessione: ' + error.message, { type: 'error', title: 'Errore' });
  }
  });
 
@@ -3443,7 +3585,7 @@ Mostra anche ricariche in OK
  }
  } catch (e) {
  console.error('Errore showSuccessModal:', e);
- alert(' ' + message);
+ window.MiroxUI && window.MiroxUI.alert(' ' + message, {type:'warning', title:'Attenzione'});
  if (redirect) {
  window.location.href = '../dashboard.html';
  }
@@ -3615,7 +3757,7 @@ Mostra anche ricariche in OK
 <div style="font-size: 0.75rem; color: #666; margin-bottom: 0.25rem;">Ricarica Entro:</div>
 <div class="ricarica-data ${classeData}">${dataPrevista} ${scaduta ? '️' : (presto ? '' : '')}</div>
 </div>
-<button class="btn-gestisci"onclick="apriModalRicarica(${ricarica.rowIndex}, '${tipo}')"> GESTISCI
+<button type="button" class="btn-gestisci"onclick="apriModalRicarica(${ricarica.rowIndex}, '${tipo}')"> GESTISCI
 </button> `;
  }
  
@@ -3748,7 +3890,7 @@ Mostra anche ricariche in OK
  const ricarica = allRicariche.find(r => String(r.rowIndex) === String(rowIndex));
  
  if (!ricarica) {
- alert('Errore: ricarica non trovata');
+ window.MiroxUI && window.MiroxUI.alert('Errore: ricarica non trovata', {type:'error', title:'Errore'});
  return;
  }
  
@@ -3797,7 +3939,7 @@ Mostra anche ricariche in OK
  const importo = parseFloat(document.getElementById('importoRicarica').value);
  
  if (isNaN(importo) || importo< 0) {
- alert('Inserisci un importo valido');
+ window.MiroxUI && window.MiroxUI.alert('Inserisci un importo valido', {type:'warning', title:'Attenzione'});
  return;
  }
  
@@ -3837,7 +3979,7 @@ Mostra anche ricariche in OK
  if (elapsed< minDelay) await new Promise(r => setTimeout(r, minDelay - elapsed));
 
  hideLoadingModal();
- if (error) { alert('Errore: ' + error.message); return; }
+ if (error) { window.MiroxUI && window.MiroxUI.alert('Errore: ' + error.message, {type:'error', title:'Errore'}); return; }
 
  const tipoLabel = tipo === 'prima' ? '1°' : '2°';
  const importoLabel = importo === 0 ? 'Non necessaria' : `€ ${importo.toFixed(2)}`;
@@ -3848,7 +3990,7 @@ Mostra anche ricariche in OK
  }, 2000);
  } catch (error) {
  hideLoadingModal();
- alert('Errore: ' + error.message);
+ window.MiroxUI && window.MiroxUI.alert('Errore: ' + error.message, {type:'error', title:'Errore'});
  }
  })();
  } </script>

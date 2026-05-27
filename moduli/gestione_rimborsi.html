@@ -474,6 +474,9 @@
 <script src="../js/config.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/anagrafica-helper.js"></script>
+<script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-folder.js"></script>
+<script src="../js/mirox-upload.js"></script>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
 <div class="header">
 <div class="header-content">
@@ -483,14 +486,18 @@
 <a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
 </div>
 </div> <div class="nav-tabs">
-<button class="tab-button active" onclick="switchTab(1)"> Nuova Richiesta</button>
-<button class="tab-button" onclick="switchTab(2)"> In Attesa</button>
-<button class="tab-button" onclick="switchTab(3)"> Completati</button>
+<button type="button" class="tab-button active" onclick="switchTab(1)"> Nuova Richiesta</button>
+<button type="button" class="tab-button" onclick="switchTab(2)"> In Attesa</button>
+<button type="button" class="tab-button" onclick="switchTab(3)"> Completati</button>
 </div> <div class="container">
 <div class="content-card">
 <!-- PAGINA 1: Nuova Richiesta -->
 <div id="page1" class="page active">
 <div id="alertContainer"></div>
+<!-- Pulsante per registrazione manuale rimborso (no firme, no PDF) -->
+<div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+<button type="button" id="btnRimborsoManuale" class="btn" style="background:#fff;color:#0f172a;border:1px solid #e2e8f0;padding:8px 16px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;" onclick="apriRimborsoManuale()" title="Registra un rimborso senza generare PDF / senza firma cliente">+ Aggiungi rimborso manuale</button>
+</div>
 <form id="rimborsoForm">
 <div class="form-section">
 <h2>Cliente</h2>
@@ -632,7 +639,7 @@
 <div class="modal-content">
 <div class="modal-header">
 <h2>Gestione Rimborso</h2>
-<button class="close-modal" onclick="closeModal()">&times;</button>
+<button type="button" class="close-modal" onclick="closeModal()">&times;</button>
 </div>
 <div id="modalBody"></div>
 </div>
@@ -641,7 +648,7 @@
 <div class="modal-content">
 <div class="modal-header">
 <h2>Dettagli Rimborso</h2>
-<button class="close-modal" onclick="closeModalDettagli()">&times;</button>
+<button type="button" class="close-modal" onclick="closeModalDettagli()">&times;</button>
 </div>
 <div id="modalDettagliBody"></div>
 </div>
@@ -1046,7 +1053,7 @@
 <td>€ ${parseFloat(rimborso.importo).toFixed(2)}</td>
 <td>${new Date(rimborso.dataCreazione).toLocaleDateString('it-IT')}</td>
 <td>
-<button class="btn btn-primary btn-small"onclick='gestisciRimborso(${JSON.stringify(rimborso)})'> Gestisci
+<button type="button" class="btn btn-primary btn-small"onclick='gestisciRimborso(${JSON.stringify(rimborso)})'> Gestisci
 </button>
 </td> `;
  });
@@ -1112,7 +1119,7 @@
 <td>€ ${parseFloat(rimborso.importo).toFixed(2)}</td>
 <td>${rimborso.dataConsegna ? new Date(rimborso.dataConsegna).toLocaleDateString('it-IT') : '-'}</td>
 <td>
-<button class="btn btn-secondary btn-small"onclick='mostraDettagli(${JSON.stringify(rimborso)})'> Dettagli
+<button type="button" class="btn btn-secondary btn-small"onclick='mostraDettagli(${JSON.stringify(rimborso)})'> Dettagli
 </button>
 </td> `;
  });
@@ -1310,6 +1317,100 @@
  if (event.target.classList.contains('modal')) {
  event.target.classList.remove('active');
  }
+ }
+
+ // =====================================================================
+ // RIMBORSO MANUALE (richiesta Mirox §8 — protetto da password 1234)
+ // =====================================================================
+ // Flusso:
+ //   1. Operatore clicca "+ Aggiungi rimborso manuale"
+ //   2. Popup Mirox chiede password (default: 1234)
+ //   3. Se password corretta → secondo popup chiede importo + beneficiario
+ //   4. Salvataggio diretto su post_vendita_gestione_rimborsi (stato 'Manuale')
+ //   5. Nessun PDF, nessuna firma, nessun documento aggiuntivo
+ const RIMBORSO_MANUALE_PASSWORD = '1234';
+
+ async function apriRimborsoManuale() {
+   if (!window.MiroxUI) { console.error('MiroxUI non caricato'); return; }
+   const pwd = await window.MiroxUI.prompt({
+     title: 'Conferma password',
+     label: 'Per registrare un rimborso manuale è richiesta la password operativa',
+     type: 'password',
+     placeholder: 'Password',
+     okText: 'Verifica'
+   });
+   if (pwd === null) return; // utente ha annullato
+   if (pwd !== RIMBORSO_MANUALE_PASSWORD) {
+     await window.MiroxUI.alert('Password errata. Operazione annullata.', { type: 'error', title: 'Accesso negato' });
+     return;
+   }
+   await mostraFormRimborsoManuale();
+ }
+
+ async function mostraFormRimborsoManuale() {
+   // Costruisce un form inline dentro un modale Mirox custom
+   const html = `
+     <div style="display:flex;flex-direction:column;gap:14px;">
+       <div>
+         <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#0f172a;">Beneficiario (a chi viene corrisposto il rimborso) <span style="color:#FF6600;">*</span></label>
+         <input type="text" id="rmManBeneficiario" class="mx-input" placeholder="Es: Mario Rossi" autocomplete="off">
+       </div>
+       <div>
+         <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#0f172a;">Importo rimborso (€) <span style="color:#FF6600;">*</span></label>
+         <input type="number" id="rmManImporto" class="mx-input" placeholder="0,00" step="0.01" min="0">
+       </div>
+       <div>
+         <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#0f172a;">Note (opzionale)</label>
+         <input type="text" id="rmManNote" class="mx-input" placeholder="Es: rimborso senza contratto associato">
+       </div>
+       <p style="margin:0;font-size:12px;color:#64748b;">Questa registrazione NON genera PDF, NON richiede moduli firmati o documenti aggiuntivi.</p>
+     </div>`;
+   const footer = `<button type="button" class="mx-btn mx-btn-secondary" data-rm-cancel>Annulla</button>` +
+                  `<button type="button" class="mx-btn mx-btn-primary" data-rm-save>Salva rimborso</button>`;
+   const m = window.MiroxUI._build({
+     title: 'Nuovo rimborso manuale',
+     bodyHtml: html,
+     footerHtml: footer,
+     large: false
+   });
+   m.foot.querySelector('[data-rm-cancel]').addEventListener('click', m.close);
+   m.foot.querySelector('[data-rm-save]').addEventListener('click', async () => {
+     const beneficiario = m.body.querySelector('#rmManBeneficiario').value.trim();
+     const importo = parseFloat(m.body.querySelector('#rmManImporto').value);
+     const note = m.body.querySelector('#rmManNote').value.trim();
+     if (!beneficiario) { await window.MiroxUI.alert('Il beneficiario è obbligatorio.', { type: 'warning' }); return; }
+     if (!Number.isFinite(importo) || importo <= 0) { await window.MiroxUI.alert('Inserisci un importo valido maggiore di zero.', { type: 'warning' }); return; }
+     m.close();
+     const loader = window.MiroxUI.loading.show('Salvataggio rimborso manuale', 'Sto registrando il rimborso...');
+     try {
+       const profilo = window.__profilo || (Auth ? await Auth.getSessione() : null);
+       const codice = await sb.rpc('genera_codice_rimborso').then(r => r.data).catch(() => null);
+       const rec = {
+         codice: codice || null,
+         intestatario: beneficiario,
+         importo,
+         motivazione: 'Rimborso manuale (senza contratto associato)',
+         note_aggiuntive: note || null,
+         stato: 'Manuale',
+         data_richiesta: new Date().toISOString(),
+         data_consegna: new Date().toISOString(),
+         operatore_richiesta_id: profilo?.id || null,
+         operatore_richiesta_nome: profilo?.nome || profilo?.email || null
+       };
+       const { error } = await sb.from('post_vendita_gestione_rimborsi').insert(rec);
+       if (error) throw error;
+       loader.success('Rimborso registrato!');
+       setTimeout(() => {
+         // Aggiorna la tab "Completati" se disponibile, altrimenti la lista in attesa
+         if (typeof caricaCompletati === 'function') caricaCompletati();
+         if (typeof caricaInAttesa === 'function') caricaInAttesa();
+       }, 1100);
+     } catch (e) {
+       loader.error('Errore di salvataggio');
+       console.error('Errore rimborso manuale:', e);
+       setTimeout(() => window.MiroxUI.alert('Impossibile salvare il rimborso: ' + e.message, { type: 'error', title: 'Errore' }), 200);
+     }
+   });
  }
 </script>
 </body>
