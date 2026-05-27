@@ -535,6 +535,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/auth.js"></script>
+    <script src="../js/mirox-ui.js"></script>
+    <script src="../js/mirox-folder.js"></script>
+<script src="../js/mirox-upload.js"></script>
     <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
 
     <!-- HEADER -->
@@ -550,11 +553,11 @@
     <!-- TOOLBAR -->
     <div class="toolbar">
         <div class="toolbar-left">
-            <button class="filter-btn active" id="filterDaGestire" onclick="setFilter('da_gestire')">Da gestire</button>
-            <button class="filter-btn" id="filterTutte" onclick="setFilter('tutte')">Tutte</button>
+            <button type="button" class="filter-btn active" id="filterDaGestire" onclick="setFilter('da_gestire')">Da gestire</button>
+            <button type="button" class="filter-btn" id="filterTutte" onclick="setFilter('tutte')">Tutte</button>
             <span class="ticket-count" id="ticketCount"></span>
         </div>
-        <button class="btn-new-ticket" onclick="openNewTicketModal()">+ Nuovo Ticket</button>
+        <button type="button" class="btn-new-ticket" onclick="openNewTicketModal()">+ Nuovo Ticket</button>
     </div>
 
     <!-- CONTENT -->
@@ -581,7 +584,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h2>Nuovo Ticket</h2>
-                <button class="modal-close" onclick="closeModal('newTicketModal')">&times;</button>
+                <button type="button" class="modal-close" onclick="closeModal('newTicketModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="newTicketForm">
@@ -608,8 +611,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn-cancel" onclick="closeModal('newTicketModal')">Annulla</button>
-                <button class="btn-submit" id="btnSubmitTicket" onclick="submitNewTicket()">Crea Ticket</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('newTicketModal')">Annulla</button>
+                <button type="button" class="btn-submit" id="btnSubmitTicket" onclick="submitNewTicket()">Crea Ticket</button>
             </div>
         </div>
     </div>
@@ -619,7 +622,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h2>Segna come Lavorata</h2>
-                <button class="modal-close" onclick="closeModal('lavorataModal')">&times;</button>
+                <button type="button" class="modal-close" onclick="closeModal('lavorataModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <p style="margin-bottom:16px; color:#666;">Stai segnando come lavorato il ticket di <strong id="lavorataClienteName"></strong></p>
@@ -629,8 +632,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-cancel" onclick="closeModal('lavorataModal')">Annulla</button>
-                <button class="btn-submit" id="btnSubmitLavorata" onclick="submitLavorata()" style="background: var(--success-green);">Conferma</button>
+                <button type="button" class="btn-cancel" onclick="closeModal('lavorataModal')">Annulla</button>
+                <button type="button" class="btn-submit" id="btnSubmitLavorata" onclick="submitLavorata()" style="background: var(--success-green);">Conferma</button>
             </div>
         </div>
     </div>
@@ -762,7 +765,7 @@
                         <div class="ticket-actions">
                             ${isLavorata
                                 ? '<span class="badge-lavorata">Lavorata</span>'
-                                : `<button class="btn-lavorata" onclick="openLavorataModal(${ticket.rowIndex}, '${escapeHtml(ticket.intestatario)}')">Lavorata</button>`
+                                : `<button type="button" class="btn-lavorata" onclick="openLavorataModal(${ticket.rowIndex}, '${escapeHtml(ticket.intestatario)}')">Lavorata</button>`
                             }
                         </div>
                     </div>

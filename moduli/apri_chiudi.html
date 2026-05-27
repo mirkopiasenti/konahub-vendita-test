@@ -227,34 +227,27 @@
  margin: 0 !important;
  }
 
+ /* .file-upload-group: ora wrapper puro (niente bordo: lo fornisce .mx-drop-zone interna,
+    pattern condiviso definito in css/mirox-modules.css). */
  .file-upload-group {
- border: 2px dashed #ddd;
- border-radius: 4px;
- padding: 1.5rem;
- background-color: #FAFAFA;
- transition: all 0.3s ease;
- }
-
- .file-upload-group:hover {
- border-color: var(--windtre-orange);
- background-color: #FFF3E0;
- }
-
- .file-upload-group.has-file {
- border-color: var(--success-green);
- background-color: #F1F8F4;
+ padding: 0;
+ background: transparent;
+ border: none;
+ margin-bottom: 12px;
  }
 
  .file-upload-header {
  display: flex;
  justify-content: space-between;
  align-items: center;
- margin-bottom: 1rem;
+ margin-bottom: 8px;
  }
 
  .file-upload-header h3 {
- color: var(--windtre-gray);
- font-size: 1.1rem;
+ color: #0f172a;
+ font-size: 14px;
+ font-weight: 700;
+ margin: 0;
  }
 
  .download-btn {
@@ -698,6 +691,9 @@
 <script src="../js/config.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/anagrafica-helper.js"></script>
+<script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-folder.js"></script>
+<script src="../js/mirox-upload.js"></script>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
 <div class="header">
 <div class="header-content">
@@ -707,8 +703,8 @@
 <a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
 </div>
 </div> <div class="nav-tabs">
-<button class="nav-tab active" onclick="switchPage('inserimento')">Inserimento Dati</button>
-<button class="nav-tab" onclick="switchPage('riepilogo')">Riepilogo</button>
+<button type="button" class="nav-tab active" onclick="switchPage('inserimento')">Inserimento Dati</button>
+<button type="button" class="nav-tab" onclick="switchPage('riepilogo')">Riepilogo</button>
 </div>
 <style>
 .split-anag { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -886,7 +882,7 @@
 <div class="mx-drop-hint">PDF — un solo file</div>
 </div>
 <input type="file" id="doc-vecchio" accept=".pdf" required style="display:none;" onchange="handleFileChange('vecchio')">
-<div class="mx-files-list" id="files-vecchio"></div>
+<div class="mx-files-list" id="files-vecchio" data-list-for="doc-vecchio"></div>
 </div>
 
 <!-- 2. Documento Nuovo Intestatario -->
@@ -899,7 +895,7 @@
 <div class="mx-drop-hint">PDF — un solo file</div>
 </div>
 <input type="file" id="doc-nuovo" accept=".pdf" required style="display:none;" onchange="handleFileChange('nuovo')">
-<div class="mx-files-list" id="files-nuovo"></div>
+<div class="mx-files-list" id="files-nuovo" data-list-for="doc-nuovo"></div>
 </div>
 
 <!-- 3. Disdetta Linea Fissa -->
@@ -916,7 +912,7 @@
 <div class="mx-drop-hint">PDF — un solo file</div>
 </div>
 <input type="file" id="doc-fisso" accept=".pdf" required style="display:none;" onchange="handleFileChange('fisso')">
-<div class="mx-files-list" id="files-fisso"></div>
+<div class="mx-files-list" id="files-fisso" data-list-for="doc-fisso"></div>
 </div>
 
 <!-- 4. Disdetta Sim Mobile (condizionale) -->
@@ -934,7 +930,7 @@
 <div class="mx-drop-hint">PDF — un solo file</div>
 </div>
 <input type="file" id="doc-sim" accept=".pdf" style="display:none;" onchange="handleFileChange('sim')">
-<div class="mx-files-list" id="files-sim"></div>
+<div class="mx-files-list" id="files-sim" data-list-for="doc-sim"></div>
 </div>
 </div>
 </div> <div class="info-box">
@@ -1018,7 +1014,7 @@
 <div class="modal-content">
 <div class="modal-header">
 <h2> Aggiungi Dati Disdetta</h2>
-<button class="close-modal" onclick="chiudiModalDisdetta()"></button>
+<button type="button" class="close-modal" onclick="chiudiModalDisdetta()"></button>
 </div>
 <div class="modal-body">
 <div id="form-disdetta">
@@ -1040,8 +1036,8 @@
 </div>
 </div>
 <div class="modal-footer">
-<button class="btn btn-secondary" onclick="chiudiModalDisdetta()">Annulla</button>
-<button class="btn btn-primary" id="btn-salva-disdetta" onclick="salvaDatiDisdetta()"> Salva Dati</button>
+<button type="button" class="btn btn-secondary" onclick="chiudiModalDisdetta()">Annulla</button>
+<button type="button" class="btn btn-primary" id="btn-salva-disdetta" onclick="salvaDatiDisdetta()"> Salva Dati</button>
 </div>
 </div>
 </div> <!-- Modal KO -->
@@ -1049,7 +1045,7 @@
 <div class="modal-content">
 <div class="modal-header">
 <h2>️ Imposta Pratica come KO</h2>
-<button class="close-modal" onclick="chiudiModalKO()"></button>
+<button type="button" class="close-modal" onclick="chiudiModalKO()"></button>
 </div>
 <div class="modal-body">
 <div class="info-box">
@@ -1059,8 +1055,8 @@
 </div>
 </div>
 <div class="modal-footer">
-<button class="btn btn-secondary" onclick="chiudiModalKO()">Annulla</button>
-<button class="btn btn-primary" id="btn-conferma-ko" style="background-color: var(--error-red);" onclick="confermaKO()">Conferma KO</button>
+<button type="button" class="btn btn-secondary" onclick="chiudiModalKO()">Annulla</button>
+<button type="button" class="btn btn-primary" id="btn-conferma-ko" style="background-color: var(--error-red);" onclick="confermaKO()">Conferma KO</button>
 </div>
 </div>
 </div>
@@ -1180,9 +1176,17 @@
    const m = /\.([A-Za-z0-9]{1,8})$/.exec(name || '');
    return m ? '.' + m[1].toLowerCase() : '.pdf';
  }
- // Costruisci nome cartella: A_P_<vecchio>_<nuovo>
- function buildFolderName(ragVecchio, ragNuovo) {
-   return `A_P_${sanitizeFsName(ragVecchio)}_${sanitizeFsName(ragNuovo)}`;
+ // Costruisci nome cartella nel formato unificato Mirox:
+ //   <RAG_VECCHIO>_<RAG_NUOVO>_<GG_MM_AA>
+ // Esempio: AZIENDA_VECCHIA_SRL_AZIENDA_NUOVA_SRL_27_05_26
+ function buildFolderName(ragVecchio, ragNuovo, dataPratica) {
+   if (window.MiroxFolder) return window.MiroxFolder.build(ragVecchio, ragNuovo, dataPratica);
+   // Fallback locale se per qualche motivo l'helper non è caricato
+   const d = dataPratica ? new Date(dataPratica) : new Date();
+   const dd = String(d.getDate()).padStart(2, '0');
+   const mm = String(d.getMonth() + 1).padStart(2, '0');
+   const yy = String(d.getFullYear()).slice(-2);
+   return `${sanitizeFsName(ragVecchio)}_${sanitizeFsName(ragNuovo)}_${dd}_${mm}_${yy}`;
  }
 
  // Upload generico: ora prende folderPath + fileName espliciti
@@ -1224,10 +1228,12 @@
 
  // Checkbox "Nuovo Intestatario coincide con Vecchio"
  const coincideCheck = document.getElementById('coincide-check');
- coincideCheck.addEventListener('change', () => {
+ coincideCheck.addEventListener('change', async () => {
    if (coincideCheck.checked) {
+     // Attende il completamento di un eventuale lookup in corso (fix bug primo click)
+     try { await anagVecchio.awaitLookup(); } catch (_) {}
      if (!anagVecchio.state.cfPiva || !anagVecchio.state.lookupDone) {
-       mxAlert('Compila prima il Vecchio Intestatario (digita il CF/P.IVA e attendi la ricerca)', 'warn');
+       await mxAlert('Compila prima il Vecchio Intestatario (digita il CF/P.IVA e attendi la ricerca)', 'warn');
        coincideCheck.checked = false;
        return;
      }
@@ -1337,30 +1343,11 @@
    renderFileList(tipo);
  }
  window.removeFile = removeFile;
- // Bind drag-drop + click su tutte le dropzone
- document.querySelectorAll('.mx-drop-zone').forEach(dz => {
-   const targetId = dz.dataset.target;
-   const inp = document.getElementById(targetId);
-   if (!inp) return;
-   dz.addEventListener('click', () => inp.click());
-   dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
-   dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
-   dz.addEventListener('drop', (e) => {
-     e.preventDefault();
-     dz.classList.remove('dragover');
-     const allowMulti = inp.hasAttribute('multiple');
-     const dt = new DataTransfer();
-     if (allowMulti && inp.files) { Array.from(inp.files).forEach(f => dt.items.add(f)); }
-     Array.from(e.dataTransfer.files || []).forEach(f => {
-       if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) return;
-       dt.items.add(f);
-       if (!allowMulti) return false;
-     });
-     inp.files = dt.files;
-     const tipo = targetId.replace('doc-', '');
-     renderFileList(tipo);
-   });
- });
+ // Bind drag-drop + click ora gestito globalmente da js/mirox-upload.js
+ // (pattern unificato con Switch SIM e altri moduli). MiroxUpload.bindAll()
+ // viene chiamato automaticamente al load. Manteniamo solo il binding del
+ // change per chiamare renderFileList legacy (compatibilità con la logica
+ // di submit di questo modulo).
 
  // ===== POPOLAMENTO LINK TEMPLATE DA SUPABASE STORAGE =====
  (function setupTemplateLinks() {
@@ -1576,7 +1563,7 @@
 
  // Bottoni azione
  let azioniHtml = `
-<button class="btn-action"style="background: #2196F3; margin-right: 5px;"onclick="apriModalDettagli(${d.rowIndex})"> Dettagli
+<button type="button" class="btn-action"style="background: #2196F3; margin-right: 5px;"onclick="apriModalDettagli(${d.rowIndex})"> Dettagli
 </button> `;
  
  html += `
@@ -1658,7 +1645,8 @@
        return;
      }
 
-     // Mappa label leggibili
+     // Mappa label leggibili (richiesta Mirox §2.2: mostrare SOLO il nome descrittivo,
+     // mai il nome originale del file caricato dall'utente).
      function prettyLabel(name) {
        const base = name.replace(/\.[a-z0-9]+$/i, '');
        const lab = base
@@ -1667,7 +1655,10 @@
          .replace(/^disdetta_fisso.*/i,          'Disdetta Linea Fissa')
          .replace(/^disdetta_sim.*/i,            'Disdetta SIM Mobile')
          .replace(/^ask_(.+?)(?:_(\d+))?$/i, (m, num, idx) => `ASK ${num}${idx ? ' • #' + idx : ''}`);
-       return lab === base ? name : lab + ' (' + name + ')';
+       // Se la riscrittura non ha matchato (lab == base), il file non rispetta i nostri
+       // pattern: mostriamo solo il "base" (senza estensione) per non leakare il nome
+       // originale uploadato. Se ha matchato, mostriamo SOLO il label pulito.
+       return lab === base ? base : lab;
      }
 
      container.innerHTML = files.map(f => {
@@ -1757,12 +1748,12 @@
  
  // Footer con azioni (centrate, no Chiudi - la X in alto a destra basta)
  let footerHtml = `
-<button class="btn btn-primary" onclick="attivaModificaDettagli()">Modifica</button>`;
+<button type="button" class="btn btn-primary" onclick="attivaModificaDettagli()">Modifica</button>`;
 
  if (d.stato === 'IN CORSO') {
  footerHtml += `
-<button class="btn btn-primary" style="background:#FF6600;" onclick="chiudiModalDettagli(); apriModalDisdetta(${d.rowIndex})">Disdetta</button>
-<button class="btn btn-primary" style="background:#dc2626;" onclick="chiudiModalDettagli(); apriModalKO(${d.rowIndex})">KO</button>`;
+<button type="button" class="btn btn-primary" style="background:#FF6600;" onclick="chiudiModalDettagli(); apriModalDisdetta(${d.rowIndex})">Disdetta</button>
+<button type="button" class="btn btn-primary" style="background:#dc2626;" onclick="chiudiModalDettagli(); apriModalKO(${d.rowIndex})">KO</button>`;
  }
 
  footer.innerHTML = footerHtml;
@@ -1862,8 +1853,8 @@
 </div> `;
  
  footer.innerHTML = `
-<button class="btn btn-secondary"onclick="annullaModifica()">Annulla</button>
-<button class="btn btn-primary"style="background: #4CAF50;"onclick="salvaModifiche()"> Salva Modifiche</button> `;
+<button type="button" class="btn btn-secondary"onclick="annullaModifica()">Annulla</button>
+<button type="button" class="btn btn-primary"style="background: #4CAF50;"onclick="salvaModifiche()"> Salva Modifiche</button> `;
  }
  
  function annullaModifica() {
@@ -2046,7 +2037,7 @@
      const files = Array.from(e.dataTransfer.files || []);
      files.forEach(file => {
        if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-         alert('Solo file PDF sono consentiti: ' + file.name);
+         window.MiroxUI && window.MiroxUI.alert('Solo file PDF sono consentiti: ' + file.name, {type:'warning', title:'Attenzione'});
          return;
        }
        if (!filesDisdettaSelezionati.find(f => f.name === file.name && f.size === file.size)) {

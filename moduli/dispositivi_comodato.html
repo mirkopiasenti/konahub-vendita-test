@@ -329,6 +329,26 @@
  border-bottom: 1px solid #ddd;
  }
 
+ /* Tabella Visualizza Assistenze: layout più compatto, colonne leggibili
+    (Stato non deve andare a capo, bottoni Azioni sempre visibili). */
+ #page-visualizzazione { padding: 1.5rem 1rem; }
+ #tabella-dispositivi th,
+ #tabella-dispositivi td {
+   padding: 10px 12px;
+   font-size: 13px;
+ }
+ #tabella-dispositivi th:nth-child(7),
+ #tabella-dispositivi td:nth-child(7) {
+   white-space: nowrap;
+   min-width: 130px;
+ }
+ #tabella-dispositivi td:nth-child(7) .status-badge { white-space: nowrap; }
+ #tabella-dispositivi th:last-child,
+ #tabella-dispositivi td:last-child {
+   white-space: nowrap;
+   text-align: right;
+ }
+
  table tbody tr:hover {
  background-color: var(--light-gray);
  }
@@ -448,6 +468,9 @@
 <script src="../js/config.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/anagrafica-helper.js"></script>
+<script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-folder.js"></script>
+<script src="../js/mirox-upload.js"></script>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
 <div class="header">
 <div class="header-content">
@@ -457,8 +480,8 @@
 <a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
 </div>
 </div> <div class="nav-tabs">
-<button class="nav-tab active" onclick="switchPage('uscita')">Consegna Dispositivo</button>
-<button class="nav-tab" onclick="switchPage('visualizzazione')">Visualizza Assistenze</button>
+<button type="button" class="nav-tab active" onclick="switchPage('uscita')">Consegna Dispositivo</button>
+<button type="button" class="nav-tab" onclick="switchPage('visualizzazione')">Visualizza Assistenze</button>
 </div> <div class="container">
 <!-- PAGINA 1: USCITA -->
 <div id="page-uscita" class="page active">
@@ -635,6 +658,61 @@
  }
  })();
  const COMODATO_BUCKET = 'comodato-files';
+
+ /**
+  * Apre il popup MiroxUI.allegati con i moduli (consegna / riconsegna) del dispositivo.
+  * Logica (richiesta Mirox §7.2):
+  *   - Sempre visibile: modulo di consegna (il PDF più vecchio).
+  *   - Se la pratica è chiusa (stato 'rientrato') E esiste un secondo PDF caricato:
+  *     mostra anche il modulo di riconsegna (il PDF più recente).
+  *   - Ogni file deve poter essere scaricato singolarmente.
+  */
+ async function apriAllegatiComodato(deviceId) {
+   if (!window.MiroxUI) { console.error('MiroxUI non caricato'); return; }
+   const dispositivo = (window.tuttiDispositivi || []).find(d => String(d.id) === String(deviceId));
+   const loader = window.MiroxUI.loading.show('Caricamento allegati', 'Sto leggendo i moduli firmati...');
+   try {
+     const { data: files, error } = await sb.storage.from(COMODATO_BUCKET).list(`dispositivo_${deviceId}`, { limit: 50 });
+     if (error) throw error;
+     const all = (files || [])
+       .filter(f => f.name && !f.name.startsWith('.') && f.metadata)
+       .sort((a, b) => {
+         const ta = parseInt((a.name.match(/^(\d+)_/) || [0, 0])[1], 10);
+         const tb = parseInt((b.name.match(/^(\d+)_/) || [0, 0])[1], 10);
+         return ta - tb;
+       });
+     const items = [];
+     if (all.length >= 1) {
+       const consegna = all[0];
+       items.push({
+         name: consegna.name,
+         displayName: 'Modulo di Consegna',
+         url: sb.storage.from(COMODATO_BUCKET).getPublicUrl(`dispositivo_${deviceId}/${consegna.name}`).data?.publicUrl
+       });
+     }
+     // Modulo riconsegna visibile solo a pratica chiusa (rientrato) E se esiste un secondo PDF
+     const isChiusa = dispositivo && dispositivo.stato === 'rientrato';
+     if (isChiusa && all.length >= 2) {
+       const riconsegna = all[all.length - 1];
+       items.push({
+         name: riconsegna.name,
+         displayName: 'Modulo di Riconsegna',
+         url: sb.storage.from(COMODATO_BUCKET).getPublicUrl(`dispositivo_${deviceId}/${riconsegna.name}`).data?.publicUrl
+       });
+     }
+     loader.hide();
+     const title = dispositivo ? `Allegati — ${dispositivo.nome || ''} ${dispositivo.cognome || ''}`.trim() : 'Allegati pratica';
+     window.MiroxUI.allegati({
+       title,
+       items,
+       emptyText: 'Nessun modulo disponibile per questa pratica.'
+     });
+   } catch (e) {
+     loader.error('Errore di caricamento');
+     console.error('Errore lettura allegati comodato:', e);
+     setTimeout(() => window.MiroxUI.alert('Impossibile leggere gli allegati: ' + e.message, { type: 'error', title: 'Errore' }), 200);
+   }
+ }
  async function uploadComodatoPdf(deviceId, base64, filename) {
  try {
  const bin = atob(base64);
@@ -656,8 +734,8 @@
  function apriRientroDispositivo(dispositivoId) {
    if (!window.tuttiDispositivi) return;
    const d = window.tuttiDispositivi.find(x => String(x.id) === String(dispositivoId));
-   if (!d) { alert('⚠ Dispositivo non trovato'); return; }
-   if (d.stato !== 'fuori') { alert('⚠ Questo dispositivo è già rientrato'); return; }
+   if (!d) { window.MiroxUI && window.MiroxUI.alert('⚠ Dispositivo non trovato', {type:'error', title:'Errore'}); return; }
+   if (d.stato !== 'fuori') { window.MiroxUI && window.MiroxUI.alert('⚠ Questo dispositivo è già rientrato', {type:'warning', title:'Attenzione'}); return; }
    dispositivoSelezionato = {
      id: d.id,
      nome: d.nome,
@@ -798,7 +876,7 @@
 
  function generaPDFUscita() {
  if (!validaFormUscita()) {
- alert('⚠ Compila correttamente tutti i campi obbligatori prima di generare il PDF');
+ window.MiroxUI && window.MiroxUI.alert('⚠ Compila correttamente tutti i campi obbligatori prima di generare il PDF', {type:'warning', title:'Attenzione'});
  return;
  }
 
@@ -943,22 +1021,24 @@
  document.querySelectorAll('input').forEach(i => i.classList.remove('error'));
  }
 
- function annullaUscita() {
- if (confirm('Vuoi annullare l\'operazione? I dati inseriti andranno persi.')) {
- resetFormUscita();
- }
+ async function annullaUscita() {
+ const ok = await window.MiroxUI.confirm(
+   'Vuoi annullare l\'operazione? I dati inseriti andranno persi.',
+   { title: 'Annulla operazione', okText: 'Sì, annulla', cancelText: 'No, continua', danger: true }
+ );
+ if (ok) resetFormUscita();
  }
 
  async function salvaDatiUscita() {
  const fileInput = document.getElementById('upload-pdf-uscita');
  
  if (!fileInput.files.length) {
- alert('️ Carica il PDF firmato prima di procedere');
+ window.MiroxUI && window.MiroxUI.alert('️ Carica il PDF firmato prima di procedere', {type:'warning', title:'Attenzione'});
  return;
  }
 
  if (!datiUscitaTemp) {
- alert('️ Errore: dati non trovati. Rigenera il PDF.');
+ window.MiroxUI && window.MiroxUI.alert('️ Errore: dati non trovati. Rigenera il PDF.', {type:'error', title:'Errore'});
  return;
  }
 
@@ -1005,13 +1085,13 @@
  }
 
  nascondiLoading();
- alert('Dispositivo registrato con successo!');
+ window.MiroxUI && window.MiroxUI.alert('Dispositivo registrato con successo!', {type:'success', title:'Operazione completata'});
  setTimeout(() => { window.location.href = '../dashboard.html'; }, 500);
 
  } catch (error) {
  nascondiLoading();
  console.error('Errore:', error);
- alert('Errore durante il salvataggio: ' + error.message);
+ window.MiroxUI && window.MiroxUI.alert('Errore durante il salvataggio: ' + error.message, {type:'error', title:'Errore'});
  }
  }
 
@@ -1026,7 +1106,7 @@
  const usaNomeCognome = false;
 
  if (!usaCF && !usaNomeCognome) {
- alert('⚠ Inserisci il Codice Fiscale del cliente per cercare');
+ window.MiroxUI && window.MiroxUI.alert('⚠ Inserisci il Codice Fiscale del cliente per cercare', {type:'warning', title:'Attenzione'});
  return;
  }
 
@@ -1068,13 +1148,13 @@
  };
  mostraRisultatoRicerca(dispositivoSelezionato);
  } else {
- alert('Nessun dispositivo trovato con questi dati o già rientrato');
+ window.MiroxUI && window.MiroxUI.alert('Nessun dispositivo trovato con questi dati o già rientrato', {type:'warning', title:'Attenzione'});
  annullaRicerca();
  }
  } catch (error) {
  nascondiLoading();
  console.error('Errore:', error);
- alert('Errore durante la ricerca: ' + error.message);
+ window.MiroxUI && window.MiroxUI.alert('Errore durante la ricerca: ' + error.message, {type:'error', title:'Errore'});
  }
  }
 
@@ -1103,12 +1183,12 @@
  const operatore = document.getElementById('rientro-operatore').value.trim();
  
  if (!operatore) {
- alert('️ Inserisci chi riceve il dispositivo');
+ window.MiroxUI && window.MiroxUI.alert('️ Inserisci chi riceve il dispositivo', {type:'warning', title:'Attenzione'});
  return;
  }
 
  if (!dispositivoSelezionato) {
- alert('️ Errore: dispositivo non selezionato');
+ window.MiroxUI && window.MiroxUI.alert('️ Errore: dispositivo non selezionato', {type:'error', title:'Errore'});
  return;
  }
 
@@ -1247,7 +1327,7 @@
  const fileInput = document.getElementById('upload-pdf-rientro');
  
  if (!fileInput.files.length) {
- alert('️ Carica il PDF firmato prima di procedere');
+ window.MiroxUI && window.MiroxUI.alert('️ Carica il PDF firmato prima di procedere', {type:'warning', title:'Attenzione'});
  return;
  }
 
@@ -1275,14 +1355,14 @@
  if (error) throw error;
 
  nascondiLoading();
- alert('Rientro registrato con successo!');
+ window.MiroxUI && window.MiroxUI.alert('Rientro registrato con successo!', {type:'success', title:'Operazione completata'});
  chiudiModalRientro();
  caricaDatiVisualizzazione();
 
  } catch (error) {
  nascondiLoading();
  console.error('Errore:', error);
- alert('Errore durante il salvataggio: ' + error.message);
+ window.MiroxUI && window.MiroxUI.alert('Errore durante il salvataggio: ' + error.message, {type:'error', title:'Errore'});
  }
  }
 
@@ -1385,8 +1465,12 @@
  dataUscita = new Date(d.dataUscita).toLocaleDateString('it-IT');
  }
  
- const azioneHtml = d.stato === 'fuori'
-   ? `<button class="btn btn-primary" style="padding:6px 12px;font-size:12px;" onclick="apriRientroDispositivo('${d.id}')">Rientro</button>`
+ const azioneRientroHtml = d.stato === 'fuori'
+   ? `<button type="button" class="btn btn-primary" style="padding:6px 12px;font-size:12px;" onclick="apriRientroDispositivo('${d.id}')">Rientro</button>`
+   : '';
+ const azioneAllegatiHtml = `<button type="button" class="btn" style="padding:6px 10px;font-size:12px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-weight:600;margin-left:6px;" onclick="apriAllegatiComodato('${d.id}')" title="Mostra allegati pratica">📎 Allegati</button>`;
+ const azioniRowHtml = (azioneRientroHtml || azioneAllegatiHtml)
+   ? `${azioneRientroHtml}${azioneAllegatiHtml}`
    : '<span style="color:#94a3b8;font-size:12px;">—</span>';
  html += `
 <tr class="${rowClass}">
@@ -1397,7 +1481,7 @@
 <td>${dataRientro}</td>
 <td>${giorniFuori}</td>
 <td><span class="status-badge ${d.stato}">${d.stato === 'fuori' ? 'In Assistenza' : 'Rientrato'}</span></td>
-<td>${azioneHtml}</td>
+<td>${azioniRowHtml}</td>
 </tr> `;
  });
  
@@ -1459,7 +1543,7 @@
  window.addEventListener('DOMContentLoaded', () => {
  // Verifica configurazione
  if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
- alert('️ ATTENZIONE: Configura prima l\'URL di Google Apps Script nella variabile APPS_SCRIPT_URL');
+ window.MiroxUI && window.MiroxUI.alert('️ ATTENZIONE: Configura prima l\'URL di Google Apps Script nella variabile APPS_SCRIPT_URL', {type:'warning', title:'Attenzione'});
  }
  });
 </script>

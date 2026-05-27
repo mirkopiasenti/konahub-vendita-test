@@ -780,6 +780,219 @@ form > button.btn-primary {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ============================================================
+   REFACTOR ESTETICO GLOBALE
+   Override aggiuntivi per uniformare i moduli al pattern Apri/Chiudi
+   (escluso simulatore_protecta che non carica questo CSS).
+   ============================================================ */
+
+/* PAGE WRAPPER — ogni .page diventa una card bianca pulita */
+.page,
+.tab-content,
+.content-card {
+    background: var(--mx-bg-card) !important;
+    border-radius: var(--mx-radius-lg) !important;
+    box-shadow: var(--mx-shadow-sm) !important;
+    border: 1px solid var(--mx-border) !important;
+    color: var(--mx-text) !important;
+    padding: 24px !important;
+    margin-bottom: 18px !important;
+}
+.tab-content:not(.active) { display: none !important; }
+
+/* FILTERS / FILTERS-SECTION / FILTERS-BAR — coerenti tra i moduli */
+.filters,
+.filters-section,
+.filters-bar,
+.filter-section {
+    background: var(--mx-bg-card) !important;
+    border: 1px solid var(--mx-border) !important;
+    border-radius: var(--mx-radius-lg) !important;
+    padding: 16px 18px !important;
+    margin-bottom: 16px !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+    gap: 12px !important;
+    align-items: end !important;
+}
+.filters .form-group,
+.filters-section .form-group {
+    margin-bottom: 0 !important;
+}
+
+/* HEADER LINEAR-GRADIENT LEGACY → bianco moderno (forziamo) */
+.header,
+.page-header,
+.top-nav,
+header[role="banner"] {
+    background-image: none !important;
+}
+
+/* NAV-TABS LEGACY → stile sottolineatura coerente con mirox-modules originale */
+.nav-tabs,
+.tab-nav {
+    background-image: none !important;
+    padding: 0 28px !important;
+    gap: 0 !important;
+}
+.nav-tab,
+.tab-button,
+.tab-btn {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    color: var(--mx-text-secondary) !important;
+    padding: 14px 22px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    transform: none !important;
+}
+.nav-tab.active,
+.tab-button.active,
+.tab-btn.active {
+    background: transparent !important;
+    color: var(--mx-primary) !important;
+    border-bottom-color: var(--mx-primary) !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* PULSANTI Carica/Salva/Annulla — variante consistente */
+.btn-danger,
+button.btn-danger,
+.btn-error {
+    background: var(--mx-danger) !important;
+    color: #fff !important;
+    border: none !important;
+}
+.btn-success,
+button.btn-success {
+    background: var(--mx-success) !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+/* MODALI legacy con classe .modal (non .modal-overlay) — anche queste */
+.modal {
+    background: var(--mx-bg-card) !important;
+    border-radius: var(--mx-radius-lg) !important;
+    box-shadow: var(--mx-shadow-lg) !important;
+}
+
+/* STATUS BADGE legacy → coerenti con badge mirox */
+.status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 4px 10px !important;
+    border-radius: 999px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.03em !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+}
+.status-badge.fuori,
+.status-badge.attivo,
+.status-badge.attesa { background: var(--mx-warning-bg) !important; color: #b45309 !important; }
+.status-badge.rientrato,
+.status-badge.chiuso,
+.status-badge.completato { background: var(--mx-success-bg) !important; color: #047857 !important; }
+.status-badge.in-corso,
+.status-badge.ordinato { background: var(--mx-info-bg) !important; color: #1d4ed8 !important; }
+.status-badge.ko,
+.status-badge.annullato { background: var(--mx-danger-bg) !important; color: #b91c1c !important; }
+
+/* LOADING SPINNER legacy con animazione 'spin' */
+.spinner-icon,
+.spinner-large,
+.loading-spinner {
+    border-color: var(--mx-border) !important;
+    border-top-color: var(--mx-primary) !important;
+}
+
+/* ============================================================
+   UPLOAD FILE — Pattern condiviso (riferimento: Switch SIM)
+   Classi: .mx-drop-zone, .mx-files-list, .mx-file-row
+   Markup atteso:
+     <div class="mx-drop-zone" data-target="myInput">
+       <div class="mx-drop-text">Trascina qui il file PDF o clicca per selezionare</div>
+       <div class="mx-drop-hint">PDF — un solo file</div>
+     </div>
+     <input type="file" id="myInput" accept=".pdf" style="display:none">
+     <div class="mx-files-list" data-list-for="myInput"></div>
+   Binding JS: js/mirox-upload.js (MiroxUpload.bindAll())
+   ============================================================ */
+.mx-drop-zone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 22px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s ease;
+    background: #fafbfc;
+}
+.mx-drop-zone:hover,
+.mx-drop-zone.dragover {
+    border-color: #FF6600;
+    background: #FFF3E0;
+}
+.mx-drop-zone .mx-drop-text {
+    font-weight: 600;
+    color: #475569;
+    font-size: 14px;
+}
+.mx-drop-zone .mx-drop-hint {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+.mx-drop-zone.has-file {
+    border-color: #16a34a;
+    background: #F0FDF4;
+}
+.mx-drop-zone.has-file .mx-drop-text {
+    color: #047857;
+}
+.mx-files-list {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.mx-file-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+}
+.mx-file-row .mx-file-name {
+    flex: 1;
+    color: #1e293b;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mx-file-row .mx-file-remove {
+    background: transparent;
+    border: none;
+    color: #dc2626;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 6px;
+}
+.mx-file-row .mx-file-remove:hover {
+    color: #b91c1c;
+}
+
 /* Success modal con cerchio verde + check icon (uniforme con switch_sim & apri_chiudi) */
 .success-modal {
     text-align: center !important;
