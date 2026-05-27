@@ -1387,15 +1387,19 @@
        const codice = await sb.rpc('genera_codice_rimborso').then(r => r.data).catch(() => null);
        const rec = {
          codice: codice || null,
-         intestatario: beneficiario,
+         // Lo schema di post_vendita_gestione_rimborsi richiede nome + cognome (entrambi NOT NULL).
+         // Splittiamo il beneficiario sullo spazio. Se non c'è spazio, mettiamo tutto in nome
+         // e un placeholder in cognome (cognome NOT NULL).
+         nome: (function(){ const parts = beneficiario.split(/\s+/).filter(Boolean); return parts[0] || beneficiario; })(),
+         cognome: (function(){ const parts = beneficiario.split(/\s+/).filter(Boolean); return parts.slice(1).join(' ') || '-'; })(),
          importo,
          motivazione: 'Rimborso manuale (senza contratto associato)',
+         note_interne: 'Rimborso manuale registrato a mano dall\'operatore' + (profilo?.nome ? ' (' + profilo.nome + ')' : ''),
          note_aggiuntive: note || null,
-         stato: 'Manuale',
-         data_richiesta: new Date().toISOString(),
-         data_consegna: new Date().toISOString(),
-         operatore_richiesta_id: profilo?.id || null,
-         operatore_richiesta_nome: profilo?.nome || profilo?.email || null
+         // Stato consentito dal CHECK constraint: 'Aperto','In Lavorazione','Consegnato','Annullato'.
+         // Un rimborso manuale è considerato già evaso → 'Consegnato'.
+         stato: 'Consegnato',
+         data_consegna: new Date().toISOString().slice(0, 10)
        };
        const { error } = await sb.from('post_vendita_gestione_rimborsi').insert(rec);
        if (error) throw error;
