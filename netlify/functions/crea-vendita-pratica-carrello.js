@@ -179,7 +179,21 @@ function normalizeContractInput(contract, index) {
     fascia_prezzo: dispositivoAssociato ? cleanString(contract?.fascia_prezzo) : null,
     tipo_acquisto: dispositivoAssociato ? tipoAcquisto : null,
     finanziaria: dispositivoAssociato && tipoAcquisto && tipoAcquisto.toLowerCase() === 'finanziamento' ? finanziaria : null,
-    kolme: dispositivoAssociato ? parseBoolean(contract?.kolme, null) : null
+    kolme: dispositivoAssociato ? parseBoolean(contract?.kolme, null) : null,
+    // Campi nuovi (Mirox §): predisposizione dei dati extra
+    //  - pod_pdr: identificatore contatore (solo Energia)
+    //  - numero_contratto_energia: predisposto, popolato a posteriori
+    //  - prezzo_fisso: prezzo di vendita per contratti Fisso (chiesto da popup UI)
+    //  - reload_exchange: solo Mobile / Customer Base
+    pod_pdr: cleanString(contract?.pod_pdr) || null,
+    numero_contratto_energia: cleanString(contract?.numero_contratto_energia) || null,
+    prezzo_fisso: (() => {
+      const v = contract?.prezzo_fisso;
+      if (v === null || v === undefined || v === '') return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    })(),
+    reload_exchange: parseBoolean(contract?.reload_exchange, false) === true
   };
 }
 
@@ -677,6 +691,12 @@ exports.handler = async (event) => {
         tipo_acquisto: item.tipo_acquisto,
         finanziaria: item.finanziaria,
         kolme: item.kolme,
+
+        // Campi extra Mirox (vedi migration 012_contratti_extra_fields.sql)
+        pod_pdr: item.pod_pdr,
+        numero_contratto_energia: item.numero_contratto_energia,
+        prezzo_fisso: item.prezzo_fisso,
+        reload_exchange: item.reload_exchange,
 
         stato_controllo: 'da_controllare'
       };

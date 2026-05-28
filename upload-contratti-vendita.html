@@ -845,6 +845,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/mirox-ui.js"></script>
 <script> // Auth guard: blocca rendering se non loggato
  (async () => {
  const profilo = await Auth.richiediAuth();
@@ -1013,6 +1014,20 @@
 <option value="Anticipo">Anticipo</option>
 </select>
 </div>
+<!-- POD/PDR — visibile/obbligatorio solo per Energia -->
+<div id="fieldPodPdr" class="field hidden">
+<label for="pod_pdr">POD / PDR contatore *</label>
+<input id="pod_pdr" type="text" autocomplete="off" placeholder="es. IT001E12345678" maxlength="32">
+</div>
+<!-- Reload Exchange — visibile solo per Mobile o Customer Base -->
+<div id="fieldReloadExchange" class="field hidden" style="display:flex;align-items:center;">
+<label for="reload_exchange" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:13.5px;color:#0f172a;">
+<input id="reload_exchange" type="checkbox" style="width:18px;height:18px;accent-color:#FF6600;cursor:pointer;">
+Reload Exchange
+</label>
+</div>
+<!-- Numero contratto Energia: predisposto in DB ma NON visibile/obbligatorio in UI -->
+<input id="numero_contratto_energia" type="hidden" value="">
 </div>
 </section> <section id="deviceSection" class="card panel hidden">
 <h2>Smartphone / Dispositivo</h2>
@@ -1242,6 +1257,14 @@
  fieldIntestatario: document.getElementById('fieldIntestatario'),
  fieldSwitchSim: document.getElementById('fieldSwitchSim'),
  fieldModalitaPagamento: document.getElementById('fieldModalitaPagamento'),
+ // Campi nuovi: POD/PDR (Energia), Reload Exchange (Mobile/Customer Base),
+ // Numero contratto Energia (nascosto, predisposizione futura),
+ // Prezzo Fisso (chiesto via popup all'avanzamento da step 2 a step 3)
+ podPdr: document.getElementById('pod_pdr'),
+ fieldPodPdr: document.getElementById('fieldPodPdr'),
+ reloadExchange: document.getElementById('reload_exchange'),
+ fieldReloadExchange: document.getElementById('fieldReloadExchange'),
+ numeroContrattoEnergia: document.getElementById('numero_contratto_energia'),
  fieldCluster: document.getElementById('fieldCluster'),
  fieldProvincia: document.getElementById('fieldProvincia'),
  fieldComune: document.getElementById('fieldComune'),
@@ -2395,6 +2418,16 @@
  refs.fieldTipoAttivazione.classList.toggle('hidden', !isCategory(categoriaNome, 'Fisso'));
  refs.fieldApriChiudi.classList.toggle('hidden', !isCategory(categoriaNome, 'Fisso'));
  refs.fieldModalitaPagamento.classList.toggle('hidden', !isCategory(categoriaNome, 'Allarmi'));
+ // POD/PDR: visibile e obbligatorio solo per Energia
+ const isEnergia = isCategory(categoriaNome, 'Energia');
+ refs.fieldPodPdr.classList.toggle('hidden', !isEnergia);
+ if (!isEnergia) { refs.podPdr.value = ''; }
+ // Reload Exchange: visibile solo per Mobile o Customer Base
+ const isMobile = isCategory(categoriaNome, 'Mobile');
+ const isCustomerBase = isCategory(categoriaNome, 'Customer Base');
+ const showReloadExchange = isMobile || isCustomerBase;
+ refs.fieldReloadExchange.classList.toggle('hidden', !showReloadExchange);
+ if (!showReloadExchange && refs.reloadExchange) { refs.reloadExchange.checked = false; }
 
  if (!opzioneVisible) refs.opzione.value = '';
  if (!reloadVisible) refs.reload.value = '';
@@ -2565,6 +2598,11 @@
  throw new Error('Seleziona Modalita Pagamento');
  }
 
+ // POD/PDR obbligatorio solo se categoria = Energia
+ if (isCategory(categoriaNome, 'Energia') && !refs.podPdr.value.trim()) {
+ throw new Error('Per i contratti Energia è obbligatorio inserire il POD/PDR del contatore');
+ }
+
  if (deviceVisible && refs.dispositivoAssociato.value === '') {
  throw new Error('Seleziona se è stato associato un dispositivo');
  }
@@ -2638,6 +2676,21 @@
  kolme: hasDevice
  ? (refs.kolme.value === '' ? null : refs.kolme.value === 'true')
  : null,
+ // Campi nuovi (Mirox §):
+ //  - pod_pdr: solo per Energia
+ //  - numero_contratto_energia: hidden, popolato a posteriori
+ //  - prezzo_fisso: valorizzato dal popup quando categoria = Fisso (vedi btnStep2Next)
+ //  - reload_exchange: solo per Mobile / Customer Base
+ pod_pdr: isCategory(categoriaNome, 'Energia') ? (refs.podPdr.value.trim() || null) : null,
+ numero_contratto_energia: isCategory(categoriaNome, 'Energia')
+   ? (refs.numeroContrattoEnergia.value.trim() || null)
+   : null,
+ prezzo_fisso: isCategory(categoriaNome, 'Fisso')
+   ? (Number.isFinite(parseFloat(refs.numeroContrattoEnergia.dataset.prezzoFisso)) ? parseFloat(refs.numeroContrattoEnergia.dataset.prezzoFisso) : null)
+   : null,
+ reload_exchange: (isCategory(categoriaNome, 'Mobile') || isCategory(categoriaNome, 'Customer Base'))
+   ? !!(refs.reloadExchange && refs.reloadExchange.checked)
+   : false,
  score: {
  punteggio_gara: Number(punteggioGara.toFixed(2)),
  punteggio_extra_gara: Number(punteggioExtra.toFixed(2))
@@ -3235,7 +3288,12 @@
  fascia_prezzo: item.fascia_prezzo,
  tipo_acquisto: item.tipo_acquisto,
  finanziaria: item.finanziaria,
- kolme: item.kolme
+ kolme: item.kolme,
+ // Campi nuovi propagati al backend (buildInvioPayload)
+ pod_pdr: item.pod_pdr || null,
+ numero_contratto_energia: item.numero_contratto_energia || null,
+ prezzo_fisso: (item.prezzo_fisso !== null && item.prezzo_fisso !== undefined) ? item.prezzo_fisso : null,
+ reload_exchange: item.reload_exchange === true
  };
  });
 
@@ -3649,7 +3707,12 @@
  fascia_prezzo: refs.fasciaPrezzo.value || '',
  tipo_acquisto: refs.tipoAcquisto.value || '',
  finanziaria: refs.finanziaria.value || '',
- kolme: refs.kolme.value || ''
+ kolme: refs.kolme.value || '',
+ // Campi nuovi (draft autosave)
+ pod_pdr: refs.podPdr ? (refs.podPdr.value || '') : '',
+ numero_contratto_energia: refs.numeroContrattoEnergia ? (refs.numeroContrattoEnergia.value || '') : '',
+ prezzo_fisso: (refs.numeroContrattoEnergia && refs.numeroContrattoEnergia.dataset.prezzoFisso) || '',
+ reload_exchange: !!(refs.reloadExchange && refs.reloadExchange.checked)
  };
  }
 
@@ -3762,6 +3825,14 @@
  refs.tipoAcquisto.value = contractForm.tipo_acquisto || '';
  refs.finanziaria.value = contractForm.finanziaria || '';
  refs.kolme.value = contractForm.kolme || '';
+ // Campi nuovi (restore)
+ if (refs.podPdr) refs.podPdr.value = contractForm.pod_pdr || '';
+ if (refs.numeroContrattoEnergia) {
+   refs.numeroContrattoEnergia.value = contractForm.numero_contratto_energia || '';
+   if (contractForm.prezzo_fisso) refs.numeroContrattoEnergia.dataset.prezzoFisso = String(contractForm.prezzo_fisso);
+   else delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
+ }
+ if (refs.reloadExchange) refs.reloadExchange.checked = !!contractForm.reload_exchange;
  renderDynamicSections();
  }
 
@@ -3842,9 +3913,47 @@
  }
  }
 
+// Policy Mirox: il popup di "ripristino bozza" deve apparire SOLO se l'utente
+ // ha realmente iniziato a lavorare sul contratto. Concretamente:
+ //   - aveva già almeno un contratto aggiunto al carrello, OPPURE
+ //   - era almeno alla pagina 2 del wizard (step >= 2) E aveva fatto almeno una
+ //     selezione in pagina 2 (categoria, offerta, opzione, reload, tipo
+ //     attivazione, apri/chiudi, intestatario, switch sim, modalità pagamento,
+ //     dispositivo associato, imei, fascia prezzo, tipo acquisto, finanziaria,
+ //     kolme).
+ // Se queste condizioni non sono soddisfatte, il draft viene scartato
+ // silenziosamente: l'operatore non vedrà alcun popup all'apertura.
+ function draftMeetsRestoreRequirements(draft) {
+   if (!draft || typeof draft !== 'object') return false;
+   // Caso 1: carrello non vuoto → l'utente ha completato almeno una volta la pagina 2
+   const contrattiCount = Array.isArray(draft?.cart?.contratti) ? draft.cart.contratti.length : 0;
+   if (contrattiCount > 0) return true;
+   // Caso 2: era nel wizard step 2 (o oltre) con almeno una selezione
+   const ui = draft.ui || {};
+   const stepNum = Number(ui.step || 0);
+   const inStep2OrLater = ui.view === 'wizard' && stepNum >= 2;
+   if (!inStep2OrLater) return false;
+   const cf = draft.contract_form || {};
+   const hasAlmenoUnaSelezione = !!(
+     cf.categoria_id || cf.offerta_id || cf.opzione_id || cf.reload_id ||
+     cf.tipo_attivazione || cf.apri_chiudi || cf.intestatario ||
+     cf.switch_sim || cf.modalita_pagamento ||
+     cf.dispositivo_associato || cf.imei || cf.fascia_prezzo ||
+     cf.tipo_acquisto || cf.finanziaria || cf.kolme
+   );
+   return hasAlmenoUnaSelezione;
+ }
+
  async function promptRestoreDraftIfNeeded() {
  const draft = loadDraftFromSession();
  if (!draft) return false;
+
+ // Gate Mirox: scartiamo bozze "premature" (utente non era ancora arrivato a
+ // fare una selezione in pagina 2). Nessun popup mostrato in quel caso.
+ if (!draftMeetsRestoreRequirements(draft)) {
+   clearDraftFromSession();
+   return false;
+ }
 
  const summary = {
  cliente: draft?.cliente_form?.ragione_sociale || draft?.cart?.cliente?.ragione_sociale || '-',
@@ -3951,9 +4060,39 @@
  goToStep(1);
  });
 
- refs.btnStep2Next.addEventListener('click', () => {
+ refs.btnStep2Next.addEventListener('click', async () => {
  try {
+ // Esegui prima la validazione standard
  collectContractDraft({}, { skipFileValidation: true });
+ // Se la categoria è "Fisso", chiediamo via popup Mirox il prezzo
+ // di vendita prima di passare alla pagina 3. Il valore viene
+ // memorizzato in refs.numeroContrattoEnergia.dataset.prezzoFisso
+ // e letto da collectContractDraft al momento del salvataggio.
+ const categoriaNome = getCategoriaName();
+ if (isCategory(categoriaNome, 'Fisso')) {
+   if (!window.MiroxUI) {
+     showUserError('Modulo UI Mirox non caricato. Ricarica la pagina.', 'Errore');
+     return;
+   }
+   const prev = refs.numeroContrattoEnergia.dataset.prezzoFisso || '';
+   const input = await window.MiroxUI.prompt({
+     title: 'Prezzo di vendita',
+     label: 'Inserisci il prezzo a cui è stato venduto questo contratto Fisso (€)',
+     placeholder: 'Es. 29.90',
+     value: prev,
+     okText: 'Conferma prezzo'
+   });
+   if (input === null) return; // annullato → resta in step 2
+   const num = parseFloat(String(input).replace(',', '.').trim());
+   if (!Number.isFinite(num) || num < 0) {
+     await window.MiroxUI.alert('Inserisci un prezzo valido (numero ≥ 0).', { type: 'warning', title: 'Prezzo non valido' });
+     return;
+   }
+   refs.numeroContrattoEnergia.dataset.prezzoFisso = String(num);
+ } else {
+   // Categoria diversa da Fisso: pulisce eventuale valore residuo
+   delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
+ }
  goToStep(3);
  } catch (error) {
  showUserError(error.message, 'Verifica contratto');

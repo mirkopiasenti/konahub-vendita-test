@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="../assets/favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verifica Contratti — Mirox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/mirox-modules.css">
+<style>
+:root {
+  --primary: #FF6600;
+  --primary-dark: #E55A00;
+  --primary-bg: #FFF3E0;
+  --text: #0f172a;
+  --text-secondary: #64748b;
+  --text-light: #94a3b8;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --bg: #f8fafc;
+  --bg-card: #ffffff;
+  --success: #16a34a;
+  --success-bg: #DCFCE7;
+  --warning: #d97706;
+  --warning-bg: #FEF3C7;
+  --danger: #b91c1c;
+  --danger-bg: #FEE2E2;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+}
+
+.filters-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: 1fr 200px 160px;
+  gap: 12px;
+  align-items: end;
+}
+@media (max-width: 800px) { .filters-card { grid-template-columns: 1fr; } }
+.filters-card label { font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;display:block; }
+.filters-card input, .filters-card select {
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:10px;font-size:13.5px;font-family:inherit;background:#fff;
+}
+.filters-card input:focus, .filters-card select:focus { outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,102,0,.12); }
+
+.contracts-table-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.contracts-table { width:100%;border-collapse:separate;border-spacing:0; }
+.contracts-table thead th {
+  background: var(--border-light);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.contracts-table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 13.5px;
+  color: var(--text);
+  vertical-align: middle;
+}
+.contracts-table tbody tr:hover { background: var(--bg); }
+.contracts-table tbody tr:last-child td { border-bottom: none; }
+.contracts-table .cell-cliente { font-weight: 700; }
+.contracts-table .cell-meta { color: var(--text-secondary); font-size: 12.5px; }
+
+.stato-pill {
+  display: inline-flex; align-items:center; padding:4px 10px; border-radius:999px;
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.stato-pill.da_controllare { background: var(--warning-bg); color: var(--warning); }
+.stato-pill.controllato { background: var(--success-bg); color: var(--success); }
+.stato-pill.errore { background: var(--danger-bg); color: var(--danger); }
+.stato-pill.annullato { background: #f1f5f9; color: #64748b; }
+
+.btn-mini {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; font-size: 12px; font-weight: 600; font-family: inherit;
+  background: #fff; color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; cursor: pointer; transition: all .15s ease;
+  text-decoration: none;
+}
+.btn-mini:hover { background: var(--primary-bg); color: var(--primary-dark); border-color: var(--primary); }
+.btn-mini.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-mini.btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+
+.empty-state { padding: 50px 20px; text-align: center; color: var(--text-secondary); }
+.empty-state .empty-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.45; }
+.empty-state h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.empty-state p { font-size: 13px; }
+
+/* Popup dettagli — griglia campi a 2 col */
+.det-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 720px) { .det-grid { grid-template-columns: 1fr; } }
+.det-section {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-light);
+}
+.det-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.det-section h4 {
+  font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--primary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-light);
+}
+.det-field { display: flex; flex-direction: column; gap: 4px; }
+.det-field label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+.det-field input, .det-field select, .det-field textarea {
+  padding: 9px 11px; font-size: 13.5px; font-family: inherit;
+  border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--text);
+}
+.det-field input:focus, .det-field select:focus, .det-field textarea:focus {
+  outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255,102,0,.12);
+}
+.det-field input[readonly], .det-field input[disabled] {
+  background: var(--bg); color: var(--text-secondary); cursor: not-allowed;
+}
+.det-field .field-readonly-value {
+  padding: 9px 0; font-size: 13.5px; color: var(--text); font-weight: 600;
+}
+.det-field .required { color: var(--primary); margin-left: 2px; }
+
+.allegati-list { display: flex; flex-direction: column; gap: 8px; }
+.allegato-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+}
+.allegato-row .att-icon {
+  width: 36px; height: 36px; border-radius: 8px; background: #fff;
+  border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 11px; color: var(--primary); flex-shrink: 0;
+}
+.allegato-row .att-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--text); word-break: break-word; }
+.allegato-row .att-actions { display: flex; gap: 6px; }
+.allegato-row .att-actions a, .allegato-row .att-actions button {
+  padding: 5px 10px; font-size: 11.5px; font-weight: 600; font-family: inherit;
+  border-radius: 7px; cursor: pointer; text-decoration: none;
+  border: 1px solid var(--border); background: #fff; color: var(--text);
+}
+.allegato-row .att-actions a:hover, .allegato-row .att-actions button:hover {
+  background: var(--primary-bg); color: var(--primary-dark); border-color: var(--primary);
+}
+
+.allegato-upload {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px; background: var(--primary-bg); border: 1px dashed var(--primary);
+  border-radius: 10px; margin-top: 10px;
+}
+.allegato-upload input[type="file"] {
+  flex: 1; font-size: 12.5px;
+}
+
+.foot-actions {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; flex-wrap: wrap;
+}
+.foot-actions .left { display: flex; gap: 8px; }
+.foot-actions .right { display: flex; gap: 8px; }
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-folder.js"></script>
+<script src="../js/mirox-upload.js"></script>
+<script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
+
+<!-- Header uniforme Mirox -->
+<div class="header">
+<div class="header-content">
+<div>
+<h1>Verifica Contratti</h1>
+<p class="subtitle">Post-vendita — controllo manuale dei contratti caricati</p>
+</div>
+<a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
+</div>
+</div>
+
+<!-- Tab bar -->
+<div class="nav-tabs">
+<button type="button" class="nav-tab active" data-tab="da-verificare" onclick="switchTabVC('da-verificare', this)">Da Verificare <span id="cntDaVerificare" class="tab-counter zero" style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:0 7px;margin-left:6px;">0</span></button>
+<button type="button" class="nav-tab" data-tab="verificati" onclick="switchTabVC('verificati', this)">Verificati <span id="cntVerificati" class="tab-counter zero" style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:0 7px;margin-left:6px;">0</span></button>
+</div>
+
+<div class="container">
+
+<!-- TAB: Da Verificare -->
+<div id="tab-da-verificare" class="tab-content active">
+  <div class="filters-card">
+    <div>
+      <label>Cerca</label>
+      <input type="text" id="searchDaVerificare" placeholder="Ragione sociale, CF, offerta...">
+    </div>
+    <div>
+      <label>Categoria</label>
+      <select id="filterCategoriaDaVerificare"><option value="">Tutte</option></select>
+    </div>
+    <div>
+      <label>&nbsp;</label>
+      <button type="button" class="btn-mini" onclick="caricaContratti('da_controllare')">🔄 Aggiorna</button>
+    </div>
+  </div>
+  <div class="contracts-table-wrap">
+    <div id="listaDaVerificare">
+      <div class="empty-state"><div class="empty-icon">⏳</div><h3>Caricamento...</h3></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: Verificati -->
+<div id="tab-verificati" class="tab-content">
+  <div class="filters-card">
+    <div>
+      <label>Cerca</label>
+      <input type="text" id="searchVerificati" placeholder="Ragione sociale, CF, offerta...">
+    </div>
+    <div>
+      <label>Categoria</label>
+      <select id="filterCategoriaVerificati"><option value="">Tutte</option></select>
+    </div>
+    <div>
+      <label>&nbsp;</label>
+      <button type="button" class="btn-mini" onclick="caricaContratti('controllato')">🔄 Aggiorna</button>
+    </div>
+  </div>
+  <div class="contracts-table-wrap">
+    <div id="listaVerificati">
+      <div class="empty-state"><div class="empty-icon">⏳</div><h3>Caricamento...</h3></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const sb = db;
+const CONTRATTI_BUCKET = 'contratti-vendita';
+// Stato runtime: dati caricati per tab + cache categorie
+const VCState = {
+  daVerificare: [],
+  verificati: [],
+  categorie: [],
+  filtroCatDaVerificare: '',
+  filtroCatVerificati: '',
+  searchDaVerificare: '',
+  searchVerificati: ''
+};
+
+// ============================================================
+// UTILITY
+// ============================================================
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+}
+function fmtDateTime(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso); if (isNaN(d)) return iso;
+  return d.toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Rome' });
+}
+function fmtDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso); if (isNaN(d)) return iso;
+  return d.toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+function setCount(id, n) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = n;
+  if (n > 0) {
+    el.style.background = 'var(--primary-bg)';
+    el.style.color = 'var(--primary)';
+  } else {
+    el.style.background = '#f1f5f9';
+    el.style.color = '#64748b';
+  }
+}
+
+// ============================================================
+// TAB SWITCH
+// ============================================================
+function switchTabVC(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const target = document.getElementById('tab-' + name);
+  if (target) target.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ============================================================
+// CARICAMENTO LISTA CONTRATTI
+// ============================================================
+async function caricaContratti(statoControllo) {
+  // statoControllo = 'da_controllare' | 'controllato'
+  const containerId = statoControllo === 'da_controllare' ? 'listaDaVerificare' : 'listaVerificati';
+  const stateKey = statoControllo === 'da_controllare' ? 'daVerificare' : 'verificati';
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><h3>Caricamento...</h3></div>';
+  try {
+    // Join: contratti + anagrafica + operatore (profili)
+    const { data, error } = await sb
+      .from('vendita_contratti')
+      .select(`
+        id, anagrafica_id, pratica_id, operatore_id,
+        cluster_cliente, categoria_id, offerta_id, opzione_id, reload_id,
+        categoria_snapshot, nome_offerta_snapshot, nome_opzione_snapshot, nome_reload_snapshot,
+        tipo_attivazione, apri_chiudi, intestatario, switch_sim, modalita_pagamento,
+        dispositivo_associato, imei, fascia_prezzo, tipo_acquisto, finanziaria, kolme,
+        pod_pdr, numero_contratto_energia, prezzo_fisso, reload_exchange,
+        punteggio_offerta, punteggio_opzione, punteggio_extra, punteggio_totale,
+        stato_controllo, controllato_da, controllato_at, note_controllo,
+        data_contratto, created_at, updated_at,
+        anagrafica:anagrafica_id ( id, cf_piva, cluster, ragione_sociale, nome_referente, cellulare, provincia, comune, via, civico ),
+        operatore:operatore_id ( id, nome ),
+        verificatore:controllato_da ( id, nome )
+      `)
+      .eq('stato_controllo', statoControllo)
+      .order('data_contratto', { ascending: false });
+    if (error) throw error;
+    VCState[stateKey] = data || [];
+    renderListaContratti(stateKey);
+  } catch (e) {
+    console.error('Errore caricamento contratti:', e);
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Errore caricamento</h3><p>${escapeHtml(e.message)}</p></div>`;
+  }
+}
+
+function applicaFiltri(items, stateKey) {
+  const searchKey = stateKey === 'daVerificare' ? 'searchDaVerificare' : 'searchVerificati';
+  const catKey = stateKey === 'daVerificare' ? 'filtroCatDaVerificare' : 'filtroCatVerificati';
+  const q = (VCState[searchKey] || '').toLowerCase().trim();
+  const cat = VCState[catKey] || '';
+  return items.filter(c => {
+    if (cat && c.categoria_id !== cat) return false;
+    if (!q) return true;
+    const ana = c.anagrafica || {};
+    const haystack = [
+      ana.ragione_sociale, ana.cf_piva, ana.nome_referente, ana.cellulare,
+      c.categoria_snapshot, c.nome_offerta_snapshot, c.nome_opzione_snapshot,
+      c.operatore && c.operatore.nome
+    ].filter(Boolean).join(' ').toLowerCase();
+    return haystack.includes(q);
+  });
+}
+
+function renderListaContratti(stateKey) {
+  const containerId = stateKey === 'daVerificare' ? 'listaDaVerificare' : 'listaVerificati';
+  const wrap = document.getElementById(containerId);
+  const items = applicaFiltri(VCState[stateKey], stateKey);
+
+  if (stateKey === 'daVerificare') setCount('cntDaVerificare', VCState.daVerificare.length);
+  else setCount('cntVerificati', VCState.verificati.length);
+
+  if (!items.length) {
+    wrap.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>Nessun contratto</h3>
+        <p>${stateKey === 'daVerificare' ? 'Non ci sono contratti da verificare.' : 'Non ci sono contratti verificati.'}</p>
+      </div>`;
+    return;
+  }
+
+  const rows = items.map(c => {
+    const ana = c.anagrafica || {};
+    const operatoreNome = (c.operatore && c.operatore.nome) || '-';
+    const offertaTxt = c.nome_offerta_snapshot || '-';
+    const categoriaTxt = c.categoria_snapshot || '-';
+    const cluster = ana.cluster || c.cluster_cliente || '-';
+    return `
+      <tr>
+        <td><div class="cell-cliente">${escapeHtml(ana.ragione_sociale || '(senza nome)')}</div>
+            <div class="cell-meta">${escapeHtml(fmtDateTime(c.data_contratto))}</div></td>
+        <td>${escapeHtml(ana.cf_piva || '-')}</td>
+        <td>${escapeHtml(operatoreNome)}</td>
+        <td><span class="stato-pill ${escapeHtml(String(cluster).toLowerCase())}">${escapeHtml(cluster)}</span></td>
+        <td>${escapeHtml(categoriaTxt)}</td>
+        <td>${escapeHtml(offertaTxt)}</td>
+        <td><span class="stato-pill ${escapeHtml(c.stato_controllo)}">${escapeHtml(c.stato_controllo || '-')}</span></td>
+        <td style="text-align:right;white-space:nowrap;">
+          <button type="button" class="btn-mini btn-primary" onclick="apriDettaglioContratto('${escapeHtml(c.id)}', '${stateKey}')">🔍 Dettagli</button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table class="contracts-table">
+      <thead><tr>
+        <th>Ragione Sociale</th>
+        <th>CF / P.IVA</th>
+        <th>Operatore</th>
+        <th>Cluster</th>
+        <th>Categoria</th>
+        <th>Offerta</th>
+        <th>Stato</th>
+        <th style="text-align:right;">Azioni</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+// ============================================================
+// CATEGORIE per filtri
+// ============================================================
+async function caricaCategorie() {
+  try {
+    const { data, error } = await sb.from('vendita_categorie').select('id, nome').eq('attiva', true).order('ordine');
+    if (error) throw error;
+    VCState.categorie = data || [];
+    const opts = '<option value="">Tutte</option>' + VCState.categorie.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.nome)}</option>`).join('');
+    document.getElementById('filterCategoriaDaVerificare').innerHTML = opts;
+    document.getElementById('filterCategoriaVerificati').innerHTML = opts;
+  } catch (e) { console.warn('Errore categorie:', e.message); }
+}
+
+// ============================================================
+// POPUP DETTAGLI / VERIFICA
+// ============================================================
+async function apriDettaglioContratto(id, stateKey) {
+  if (!window.MiroxUI) { alert('UI non pronta. Ricarica la pagina.'); return; }
+  const isReadOnly = stateKey === 'verificati';
+  // Recupera il contratto dallo state
+  const fromState = (VCState.daVerificare.concat(VCState.verificati)).find(x => x.id === id);
+  if (!fromState) {
+    await window.MiroxUI.alert('Contratto non trovato in cache. Aggiorna la lista.', { type: 'error' });
+    return;
+  }
+  const loader = window.MiroxUI.loading.show('Caricamento dettagli', 'Sto recuperando categoria, offerta e opzioni...');
+  try {
+    // Carica liste utili per le tendine (categorie, offerte, opzioni, reload)
+    const [catRes, offRes, opzRes, relRes, filesRes] = await Promise.all([
+      sb.from('vendita_categorie').select('id, nome').eq('attiva', true).order('ordine'),
+      sb.from('vendita_offerte').select('id, categoria_id, nome_offerta, cluster_cliente').eq('attiva', true),
+      sb.from('vendita_opzioni').select('id, categoria_id, offerta_id, nome_opzione, cluster_cliente').eq('attiva', true),
+      sb.from('vendita_reload').select('id, offerta_id, nome').eq('attiva', true),
+      sb.from('vendita_documenti').select('id, tipo_documento, storage_bucket, storage_path, file_name, uploaded_at').eq('anagrafica_id', fromState.anagrafica_id).order('uploaded_at', { ascending: false })
+    ]);
+    if (catRes.error) throw catRes.error;
+    if (offRes.error) throw offRes.error;
+    if (opzRes.error) throw opzRes.error;
+    if (relRes.error) throw relRes.error;
+    // (filesRes errore non fatale)
+    const categorie = catRes.data || [];
+    const offerte = offRes.data || [];
+    const opzioni = opzRes.data || [];
+    const reload = relRes.data || [];
+    const allegati = (filesRes && !filesRes.error) ? (filesRes.data || []) : [];
+    loader.hide();
+    apriPopupDettaglio(fromState, { categorie, offerte, opzioni, reload, allegati, isReadOnly, stateKey });
+  } catch (e) {
+    loader.error('Errore caricamento');
+    console.error('Errore dettaglio:', e);
+    setTimeout(() => window.MiroxUI.alert('Impossibile caricare i dettagli: ' + e.message, { type: 'error' }), 200);
+  }
+}
+
+function apriPopupDettaglio(c, opts) {
+  const { categorie, offerte, opzioni, reload, allegati, isReadOnly, stateKey } = opts;
+  const ana = c.anagrafica || {};
+  const isEnergia = (c.categoria_snapshot || '').toLowerCase().includes('energia');
+  const isFisso = (c.categoria_snapshot || '').toLowerCase().includes('fisso');
+  const isMobile = (c.categoria_snapshot || '').toLowerCase().includes('mobile');
+  const isCustomerBase = (c.categoria_snapshot || '').toLowerCase().includes('customer base');
+  const showReloadExchange = isMobile || isCustomerBase;
+  const ro = isReadOnly ? 'readonly' : '';
+  const disabled = isReadOnly ? 'disabled' : '';
+
+  // Helper select option HTML
+  const selectOpt = (list, val, valKey, labKey) => list.map(o =>
+    `<option value="${escapeHtml(o[valKey])}" ${String(o[valKey]) === String(val) ? 'selected' : ''}>${escapeHtml(o[labKey] || '-')}</option>`
+  ).join('');
+
+  // Filtra offerte/opzioni/reload per i select già contestualizzati
+  const offerteFiltered = offerte.filter(o => !c.categoria_id || o.categoria_id === c.categoria_id);
+  const opzioniFiltered = opzioni.filter(o =>
+    (!c.categoria_id || o.categoria_id === c.categoria_id) &&
+    (!c.offerta_id || o.offerta_id === c.offerta_id)
+  );
+  const reloadFiltered = reload.filter(r => !c.offerta_id || r.offerta_id === c.offerta_id);
+
+  const bodyHtml = `
+    <div class="det-section">
+      <h4>👤 Dati cliente <small style="font-weight:500;text-transform:none;letter-spacing:0;color:#94a3b8;font-size:11px;">(modifiche su tabella anagrafica condivisa)</small></h4>
+      <div class="det-grid">
+        <div class="det-field"><label>CF / P.IVA</label><input type="text" id="vc_cf_piva" value="${escapeHtml(ana.cf_piva || '')}" ${disabled} readonly style="text-transform:uppercase;"></div>
+        <div class="det-field"><label>Cluster</label><input type="text" id="vc_cluster" value="${escapeHtml(ana.cluster || '')}" ${disabled} readonly></div>
+        <div class="det-field"><label>Ragione Sociale</label><input type="text" id="vc_ragione_sociale" value="${escapeHtml(ana.ragione_sociale || '')}" ${ro}></div>
+        <div class="det-field"><label>Nome Referente</label><input type="text" id="vc_nome_referente" value="${escapeHtml(ana.nome_referente || '')}" ${ro}></div>
+        <div class="det-field"><label>Cellulare</label><input type="text" id="vc_cellulare" value="${escapeHtml(ana.cellulare || '')}" ${ro}></div>
+        <div class="det-field"><label>Provincia</label><input type="text" id="vc_provincia" value="${escapeHtml(ana.provincia || '')}" ${ro}></div>
+        <div class="det-field"><label>Comune</label><input type="text" id="vc_comune" value="${escapeHtml(ana.comune || '')}" ${ro}></div>
+        <div class="det-field"><label>Via</label><input type="text" id="vc_via" value="${escapeHtml(ana.via || '')}" ${ro}></div>
+        <div class="det-field"><label>Civico</label><input type="text" id="vc_civico" value="${escapeHtml(ana.civico || '')}" ${ro}></div>
+      </div>
+    </div>
+
+    <div class="det-section">
+      <h4>📋 Dati contratto</h4>
+      <div class="det-grid">
+        <div class="det-field"><label>Categoria</label><select id="vc_categoria_id" ${disabled}><option value="">—</option>${selectOpt(categorie, c.categoria_id, 'id', 'nome')}</select></div>
+        <div class="det-field"><label>Offerta</label><select id="vc_offerta_id" ${disabled}><option value="">—</option>${selectOpt(offerteFiltered, c.offerta_id, 'id', 'nome_offerta')}</select></div>
+        <div class="det-field"><label>Opzione</label><select id="vc_opzione_id" ${disabled}><option value="">—</option>${selectOpt(opzioniFiltered, c.opzione_id, 'id', 'nome_opzione')}</select></div>
+        <div class="det-field"><label>Reload</label><select id="vc_reload_id" ${disabled}><option value="">—</option>${selectOpt(reloadFiltered, c.reload_id, 'id', 'nome')}</select></div>
+        <div class="det-field"><label>Tipo Attivazione</label>
+          <select id="vc_tipo_attivazione" ${disabled}>
+            <option value="">—</option>
+            <option value="Nuova Attivazione" ${c.tipo_attivazione === 'Nuova Attivazione' ? 'selected' : ''}>Nuova Attivazione</option>
+            <option value="Portabilita" ${c.tipo_attivazione === 'Portabilita' ? 'selected' : ''}>Portabilita</option>
+          </select>
+        </div>
+        <div class="det-field"><label>Apri/Chiudi</label>
+          <select id="vc_apri_chiudi" ${disabled}>
+            <option value="">—</option>
+            <option value="Si" ${c.apri_chiudi === 'Si' ? 'selected' : ''}>Si</option>
+            <option value="No" ${c.apri_chiudi === 'No' ? 'selected' : ''}>No</option>
+          </select>
+        </div>
+        <div class="det-field"><label>Intestatario</label>
+          <select id="vc_intestatario" ${disabled}>
+            <option value="">—</option>
+            <option value="Stesso intestatario" ${c.intestatario === 'Stesso intestatario' ? 'selected' : ''}>Stesso intestatario</option>
+            <option value="Intestatario diverso" ${c.intestatario === 'Intestatario diverso' ? 'selected' : ''}>Intestatario diverso</option>
+          </select>
+        </div>
+        <div class="det-field"><label>Switch SIM</label>
+          <select id="vc_switch_sim" ${disabled}>
+            <option value="">—</option>
+            <option value="Si" ${c.switch_sim === 'Si' ? 'selected' : ''}>Si</option>
+            <option value="No" ${c.switch_sim === 'No' ? 'selected' : ''}>No</option>
+          </select>
+        </div>
+        <div class="det-field"><label>Modalità Pagamento</label>
+          <select id="vc_modalita_pagamento" ${disabled}>
+            <option value="">—</option>
+            <option value="Finanziamento" ${c.modalita_pagamento === 'Finanziamento' ? 'selected' : ''}>Finanziamento</option>
+            <option value="Anticipo" ${c.modalita_pagamento === 'Anticipo' ? 'selected' : ''}>Anticipo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="det-section">
+      <h4>📱 Dispositivo associato</h4>
+      <div class="det-grid">
+        <div class="det-field"><label>Dispositivo Associato</label>
+          <select id="vc_dispositivo_associato" ${disabled}>
+            <option value="">—</option>
+            <option value="true" ${c.dispositivo_associato === true ? 'selected' : ''}>Si</option>
+            <option value="false" ${c.dispositivo_associato === false ? 'selected' : ''}>No</option>
+          </select>
+        </div>
+        <div class="det-field"><label>IMEI (15 cifre)</label><input type="text" id="vc_imei" maxlength="15" value="${escapeHtml(c.imei || '')}" ${ro}></div>
+        <div class="det-field"><label>Fascia Prezzo</label>
+          <select id="vc_fascia_prezzo" ${disabled}>
+            <option value="">—</option>
+            ${['0-249','250-599','600-1200','superiore-1200'].map(v => `<option value="${v}" ${c.fascia_prezzo === v ? 'selected' : ''}>${v}</option>`).join('')}
+          </select>
+        </div>
+        <div class="det-field"><label>Tipo Acquisto</label>
+          <select id="vc_tipo_acquisto" ${disabled}>
+            <option value="">—</option>
+            <option value="VAR" ${c.tipo_acquisto === 'VAR' ? 'selected' : ''}>VAR</option>
+            <option value="Finanziamento" ${c.tipo_acquisto === 'Finanziamento' ? 'selected' : ''}>Finanziamento</option>
+          </select>
+        </div>
+        <div class="det-field"><label>Finanziaria</label>
+          <select id="vc_finanziaria" ${disabled}>
+            <option value="">—</option>
+            <option value="Findomestic" ${c.finanziaria === 'Findomestic' ? 'selected' : ''}>Findomestic</option>
+            <option value="Compass" ${c.finanziaria === 'Compass' ? 'selected' : ''}>Compass</option>
+          </select>
+        </div>
+        <div class="det-field"><label>Kolme</label>
+          <select id="vc_kolme" ${disabled}>
+            <option value="">—</option>
+            <option value="true" ${c.kolme === true ? 'selected' : ''}>Si</option>
+            <option value="false" ${c.kolme === false ? 'selected' : ''}>No</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="det-section">
+      <h4>⚡ Campi specifici categoria</h4>
+      <div class="det-grid">
+        <div class="det-field" id="vc_field_pod" style="${isEnergia ? '' : 'display:none;'}">
+          <label>POD / PDR contatore${isEnergia ? ' <span class="required">*</span>' : ''}</label>
+          <input type="text" id="vc_pod_pdr" maxlength="32" value="${escapeHtml(c.pod_pdr || '')}" ${ro} placeholder="Es. IT001E12345678">
+        </div>
+        <div class="det-field" id="vc_field_num_contratto_energia" style="${isEnergia ? '' : 'display:none;'}">
+          <label>Numero Contratto Energia <span class="required">*</span> <small style="font-weight:500;text-transform:none;letter-spacing:0;color:#94a3b8;">(obbligatorio per verificare)</small></label>
+          <input type="text" id="vc_numero_contratto_energia" value="${escapeHtml(c.numero_contratto_energia || '')}" ${ro} placeholder="Inserisci il numero contratto">
+        </div>
+        <div class="det-field" id="vc_field_prezzo_fisso" style="${isFisso ? '' : 'display:none;'}">
+          <label>Prezzo di vendita Fisso (€)</label>
+          <input type="number" id="vc_prezzo_fisso" min="0" step="0.01" value="${c.prezzo_fisso !== null && c.prezzo_fisso !== undefined ? c.prezzo_fisso : ''}" ${ro}>
+        </div>
+        <div class="det-field" id="vc_field_reload_exchange" style="${showReloadExchange ? '' : 'display:none;'}">
+          <label>Reload Exchange</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:9px 0;">
+            <input type="checkbox" id="vc_reload_exchange" ${c.reload_exchange ? 'checked' : ''} ${disabled} style="width:18px;height:18px;accent-color:#FF6600;cursor:pointer;">
+            <span style="font-size:13.5px;font-weight:500;">Attivo</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="det-section">
+      <h4>📎 Allegati pratica</h4>
+      <div id="vc_allegati_list" class="allegati-list"></div>
+      ${isReadOnly ? '' : `
+        <div class="allegato-upload">
+          <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">Carica nuovo allegato</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select id="vc_new_doc_tipo" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12.5px;background:#fff;">
+                <option value="documento_identita">Documento identità</option>
+                <option value="contratto">Contratto</option>
+                <option value="copia_sim_mnp">Copia SIM MNP</option>
+                <option value="copia_bolletta">Copia bolletta</option>
+                <option value="altro">Altro</option>
+              </select>
+              <input type="file" id="vc_new_doc_file" accept=".pdf" style="flex:1;font-size:12.5px;">
+              <button type="button" class="btn-mini btn-primary" onclick="caricaNuovoAllegato('${escapeHtml(c.id)}', '${escapeHtml(c.anagrafica_id)}', '${escapeHtml(c.pratica_id)}')">⬆️ Carica</button>
+            </div>
+          </div>
+        </div>
+      `}
+    </div>
+
+    ${isReadOnly ? `
+      <div class="det-section">
+        <h4>✓ Info verifica</h4>
+        <div class="det-grid">
+          <div class="det-field"><label>Verificato da</label><div class="field-readonly-value">${escapeHtml((c.verificatore && c.verificatore.nome) || '-')}</div></div>
+          <div class="det-field"><label>Data verifica</label><div class="field-readonly-value">${escapeHtml(fmtDateTime(c.controllato_at))}</div></div>
+          ${c.note_controllo ? `<div class="det-field" style="grid-column:1/-1;"><label>Note controllo</label><div class="field-readonly-value">${escapeHtml(c.note_controllo)}</div></div>` : ''}
+        </div>
+      </div>
+    ` : ''}
+  `;
+
+  // Footer azioni: cambia in base a readonly
+  const footerHtml = isReadOnly
+    ? `<div class="foot-actions">
+         <div class="left"></div>
+         <div class="right">
+           <button type="button" class="mx-btn mx-btn-secondary" data-mx-close-popup>Chiudi</button>
+           <button type="button" class="mx-btn mx-btn-primary" onclick="rimettiInVerifica('${escapeHtml(c.id)}')">↩ Rimetti in verifica</button>
+         </div>
+       </div>`
+    : `<div class="foot-actions">
+         <div class="left"></div>
+         <div class="right">
+           <button type="button" class="mx-btn mx-btn-secondary" data-mx-close-popup>Annulla</button>
+           <button type="button" class="mx-btn mx-btn-primary" onclick="confermaVerifica('${escapeHtml(c.id)}')">✓ Conferma verifica</button>
+         </div>
+       </div>`;
+
+  const titolo = `${isReadOnly ? '📄' : '✏️'} Contratto · ${escapeHtml(ana.ragione_sociale || c.id)}`;
+  const m = window.MiroxUI._build({ title: titolo, bodyHtml, footerHtml, large: true });
+  // Trick: rendere il modal extra large
+  m.modal.style.maxWidth = '980px';
+  m.body.style.maxHeight = '70vh';
+  m.body.style.overflowY = 'auto';
+  // Salva ref globale per accesso da bottoni inline
+  window.__currentVerificaModal = m;
+  window.__currentVerificaContratto = c;
+  window.__currentVerificaContratto._allegati = allegati;
+  // Bottone chiudi via attributo
+  m.foot.querySelectorAll('[data-mx-close-popup]').forEach(b => b.addEventListener('click', () => m.close()));
+
+  renderAllegatiPopup(c, allegati, isReadOnly);
+}
+
+function renderAllegatiPopup(c, allegati, isReadOnly) {
+  const list = document.getElementById('vc_allegati_list');
+  if (!list) return;
+  if (!allegati || !allegati.length) {
+    list.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:14px;">Nessun allegato presente</div>';
+    return;
+  }
+  list.innerHTML = allegati.map(d => {
+    const url = sb.storage.from(d.storage_bucket || CONTRATTI_BUCKET).getPublicUrl(d.storage_path).data?.publicUrl || '#';
+    const label = (d.tipo_documento || 'documento').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const baseDl = label.replace(/\.[a-z0-9]+$/i, '');
+    return `
+      <div class="allegato-row">
+        <div class="att-icon">PDF</div>
+        <div class="att-name">${escapeHtml(label)}<div style="font-size:11px;font-weight:500;color:#94a3b8;margin-top:2px;">${escapeHtml(fmtDateTime(d.uploaded_at))}</div></div>
+        <div class="att-actions">
+          <a href="${escapeHtml(url)}" target="_blank" rel="noopener">Apri</a>
+          <a href="${escapeHtml(url)}" download="${escapeHtml(baseDl)}.pdf">Scarica</a>
+          ${isReadOnly ? '' : `<button type="button" onclick="rimuoviAllegato('${escapeHtml(d.id)}', '${escapeHtml(d.storage_path)}', '${escapeHtml(d.storage_bucket || CONTRATTI_BUCKET)}')">🗑</button>`}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ============================================================
+// UPLOAD / REMOVE ALLEGATI nel popup
+// ============================================================
+async function caricaNuovoAllegato(contrattoId, anagraficaId, praticaId) {
+  const fileInp = document.getElementById('vc_new_doc_file');
+  const tipoSel = document.getElementById('vc_new_doc_tipo');
+  if (!fileInp || !fileInp.files || !fileInp.files.length) {
+    await window.MiroxUI.alert('Seleziona prima un file PDF.', { type: 'warning' });
+    return;
+  }
+  const file = fileInp.files[0];
+  const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+  if (!isPdf) { await window.MiroxUI.alert('Sono ammessi solo file PDF.', { type: 'warning' }); return; }
+  const tipo = tipoSel.value || 'altro';
+  const loader = window.MiroxUI.loading.show('Upload in corso', 'Sto caricando il file...');
+  try {
+    const baseName = file.name.replace(/\.[a-z0-9]+$/i, '');
+    const path = `pratica_${praticaId}/${tipo}_${Date.now()}_${baseName}.pdf`;
+    const { error: upErr } = await sb.storage.from(CONTRATTI_BUCKET).upload(path, file, { upsert: true, contentType: 'application/pdf' });
+    if (upErr) throw upErr;
+    // Insert in vendita_documenti
+    const rec = {
+      pratica_id: praticaId,
+      contratto_id: contrattoId,
+      anagrafica_id: anagraficaId,
+      tipo_documento: tipo,
+      storage_bucket: CONTRATTI_BUCKET,
+      storage_path: path,
+      file_name: baseName + '.pdf',
+      mime_type: 'application/pdf',
+      file_size: file.size
+    };
+    const { data: insRow, error: insErr } = await sb.from('vendita_documenti').insert(rec).select().single();
+    if (insErr) throw insErr;
+    // Aggiorna lista allegati in popup
+    const c = window.__currentVerificaContratto;
+    if (c) {
+      c._allegati.unshift(insRow);
+      renderAllegatiPopup(c, c._allegati, false);
+    }
+    fileInp.value = '';
+    loader.success('Allegato caricato');
+  } catch (e) {
+    loader.error('Errore upload');
+    console.error('Errore upload:', e);
+    setTimeout(() => window.MiroxUI.alert('Errore upload: ' + e.message, { type: 'error' }), 200);
+  }
+}
+window.caricaNuovoAllegato = caricaNuovoAllegato;
+
+async function rimuoviAllegato(docId, storagePath, bucket) {
+  const ok = await window.MiroxUI.confirm('Sicuro di voler rimuovere questo allegato?', { title: 'Rimozione allegato', okText: 'Rimuovi', cancelText: 'Annulla', danger: true });
+  if (!ok) return;
+  const loader = window.MiroxUI.loading.show('Rimozione in corso');
+  try {
+    await sb.storage.from(bucket).remove([storagePath]).catch(() => null); // se file già non c'è, ignora
+    const { error } = await sb.from('vendita_documenti').delete().eq('id', docId);
+    if (error) throw error;
+    const c = window.__currentVerificaContratto;
+    if (c) {
+      c._allegati = c._allegati.filter(a => a.id !== docId);
+      renderAllegatiPopup(c, c._allegati, false);
+    }
+    loader.success('Allegato rimosso');
+  } catch (e) {
+    loader.error('Errore');
+    setTimeout(() => window.MiroxUI.alert('Errore rimozione: ' + e.message, { type: 'error' }), 200);
+  }
+}
+window.rimuoviAllegato = rimuoviAllegato;
+
+// ============================================================
+// LEGGE CAMPI POPUP E COSTRUISCE PAYLOAD PER UPDATE
+// ============================================================
+function leggiPayloadDalPopup() {
+  const get = (id) => document.getElementById(id);
+  const v = (id) => get(id) ? get(id).value : '';
+  const ck = (id) => get(id) ? get(id).checked : false;
+  // Anagrafica (subset modificabile)
+  const ana = {
+    ragione_sociale: v('vc_ragione_sociale').trim() || null,
+    nome_referente: v('vc_nome_referente').trim() || null,
+    cellulare: v('vc_cellulare').trim() || null,
+    provincia: v('vc_provincia').trim() || null,
+    comune: v('vc_comune').trim() || null,
+    via: v('vc_via').trim() || null,
+    civico: v('vc_civico').trim() || null
+  };
+  // Contratto
+  const c = window.__currentVerificaContratto || {};
+  const isEnergia = (v('vc_categoria_id') || c.categoria_id) && (
+    document.querySelector('#vc_categoria_id option:checked')?.textContent || c.categoria_snapshot || ''
+  ).toLowerCase().includes('energia');
+  const isFisso = (
+    document.querySelector('#vc_categoria_id option:checked')?.textContent || c.categoria_snapshot || ''
+  ).toLowerCase().includes('fisso');
+  const catText = (document.querySelector('#vc_categoria_id option:checked')?.textContent || '').toLowerCase();
+  const showRX = catText.includes('mobile') || catText.includes('customer base');
+
+  const contratto = {
+    categoria_id: v('vc_categoria_id') || null,
+    offerta_id: v('vc_offerta_id') || null,
+    opzione_id: v('vc_opzione_id') || null,
+    reload_id: v('vc_reload_id') || null,
+    tipo_attivazione: v('vc_tipo_attivazione') || null,
+    apri_chiudi: v('vc_apri_chiudi') || null,
+    intestatario: v('vc_intestatario') || null,
+    switch_sim: v('vc_switch_sim') || null,
+    modalita_pagamento: v('vc_modalita_pagamento') || null,
+    dispositivo_associato: v('vc_dispositivo_associato') === 'true' ? true : (v('vc_dispositivo_associato') === 'false' ? false : null),
+    imei: v('vc_imei').trim() || null,
+    fascia_prezzo: v('vc_fascia_prezzo') || null,
+    tipo_acquisto: v('vc_tipo_acquisto') || null,
+    finanziaria: v('vc_finanziaria') || null,
+    kolme: v('vc_kolme') === 'true' ? true : (v('vc_kolme') === 'false' ? false : null),
+    pod_pdr: isEnergia ? (v('vc_pod_pdr').trim() || null) : null,
+    numero_contratto_energia: isEnergia ? (v('vc_numero_contratto_energia').trim() || null) : null,
+    prezzo_fisso: isFisso ? (() => {
+      const s = v('vc_prezzo_fisso');
+      if (!s) return null;
+      const n = parseFloat(s);
+      return Number.isFinite(n) ? n : null;
+    })() : null,
+    reload_exchange: showRX ? ck('vc_reload_exchange') : false
+  };
+  return { ana, contratto, isEnergia };
+}
+
+// ============================================================
+// CONFERMA VERIFICA
+// ============================================================
+async function confermaVerifica(id) {
+  const { ana, contratto, isEnergia } = leggiPayloadDalPopup();
+  // Validazione: numero contratto energia obbligatorio quando categoria Energia
+  if (isEnergia && !contratto.numero_contratto_energia) {
+    await window.MiroxUI.alert('Per i contratti Energia è obbligatorio inserire il <strong>Numero Contratto Energia</strong> prima di poter confermare la verifica.', { type: 'warning', title: 'Campo obbligatorio', html: true });
+    const inp = document.getElementById('vc_numero_contratto_energia');
+    if (inp) inp.focus();
+    return;
+  }
+  const ok = await window.MiroxUI.confirm(
+    'Confermi di voler salvare le modifiche e marcare questo contratto come <strong>VERIFICATO</strong>?<br><br>Il contratto passerà nella tab "Verificati" e non sarà più visibile qui.',
+    { title: 'Conferma verifica contratto', okText: 'Sì, verifica', cancelText: 'Annulla', html: true }
+  );
+  if (!ok) return;
+  const loader = window.MiroxUI.loading.show('Verifica in corso', 'Sto salvando le modifiche e aggiornando lo stato...');
+  try {
+    const profilo = window.__profilo || (Auth ? await Auth.getSessione() : null);
+    const c = window.__currentVerificaContratto;
+    // Update anagrafica
+    if (c && c.anagrafica_id) {
+      const { error: anaErr } = await sb.from('anagrafica').update(ana).eq('id', c.anagrafica_id);
+      if (anaErr) console.warn('Update anagrafica fallito:', anaErr.message);
+    }
+    // Update contratto + stato_controllo + controllato_da/at
+    const patch = {
+      ...contratto,
+      categoria_snapshot: document.querySelector('#vc_categoria_id option:checked')?.textContent || c.categoria_snapshot,
+      nome_offerta_snapshot: document.querySelector('#vc_offerta_id option:checked')?.textContent || c.nome_offerta_snapshot,
+      nome_opzione_snapshot: document.querySelector('#vc_opzione_id option:checked')?.textContent || c.nome_opzione_snapshot,
+      nome_reload_snapshot: document.querySelector('#vc_reload_id option:checked')?.textContent || c.nome_reload_snapshot,
+      stato_controllo: 'controllato',
+      controllato_da: profilo?.id || null,
+      controllato_at: new Date().toISOString()
+    };
+    const { error } = await sb.from('vendita_contratti').update(patch).eq('id', id);
+    if (error) throw error;
+    loader.success('Contratto verificato!');
+    setTimeout(async () => {
+      // Chiudi popup e ricarica entrambe le liste
+      if (window.__currentVerificaModal) window.__currentVerificaModal.close();
+      await Promise.all([caricaContratti('da_controllare'), caricaContratti('controllato')]);
+    }, 1000);
+  } catch (e) {
+    loader.error('Errore di salvataggio');
+    console.error('Errore conferma:', e);
+    setTimeout(() => window.MiroxUI.alert('Errore: ' + e.message, { type: 'error' }), 200);
+  }
+}
+window.confermaVerifica = confermaVerifica;
+
+// ============================================================
+// RIMETTI IN VERIFICA (dalla tab Verificati)
+// ============================================================
+async function rimettiInVerifica(id) {
+  const ok = await window.MiroxUI.confirm(
+    'Vuoi davvero <strong>rimettere in verifica</strong> questo contratto?<br><br>Tornerà nella tab "Da Verificare" e dovrà essere riconfermato.',
+    { title: 'Riapri verifica', okText: 'Sì, rimetti in verifica', cancelText: 'Annulla', html: true, danger: false }
+  );
+  if (!ok) return;
+  const loader = window.MiroxUI.loading.show('Aggiornamento in corso');
+  try {
+    const patch = {
+      stato_controllo: 'da_controllare',
+      controllato_da: null,
+      controllato_at: null
+    };
+    const { error } = await sb.from('vendita_contratti').update(patch).eq('id', id);
+    if (error) throw error;
+    loader.success('Contratto rimesso in verifica');
+    setTimeout(async () => {
+      if (window.__currentVerificaModal) window.__currentVerificaModal.close();
+      await Promise.all([caricaContratti('da_controllare'), caricaContratti('controllato')]);
+    }, 1000);
+  } catch (e) {
+    loader.error('Errore');
+    setTimeout(() => window.MiroxUI.alert('Errore: ' + e.message, { type: 'error' }), 200);
+  }
+}
+window.rimettiInVerifica = rimettiInVerifica;
+
+// ============================================================
+// EXPORT funzioni inline + BIND filtri + INIT
+// ============================================================
+window.switchTabVC = switchTabVC;
+window.caricaContratti = caricaContratti;
+window.apriDettaglioContratto = apriDettaglioContratto;
+
+// Bind search / categoria
+document.getElementById('searchDaVerificare').addEventListener('input', (e) => {
+  VCState.searchDaVerificare = e.target.value;
+  renderListaContratti('daVerificare');
+});
+document.getElementById('searchVerificati').addEventListener('input', (e) => {
+  VCState.searchVerificati = e.target.value;
+  renderListaContratti('verificati');
+});
+document.getElementById('filterCategoriaDaVerificare').addEventListener('change', (e) => {
+  VCState.filtroCatDaVerificare = e.target.value;
+  renderListaContratti('daVerificare');
+});
+document.getElementById('filterCategoriaVerificati').addEventListener('change', (e) => {
+  VCState.filtroCatVerificati = e.target.value;
+  renderListaContratti('verificati');
+});
+
+// INIT
+(async () => {
+  await caricaCategorie();
+  await Promise.all([caricaContratti('da_controllare'), caricaContratti('controllato')]);
+})();
+</script>
+</body>
+</html>

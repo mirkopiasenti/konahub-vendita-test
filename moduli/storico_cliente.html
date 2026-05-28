@@ -374,7 +374,12 @@ const TIPO_CONFIG = {
   'apri_chiudi_vecchio':  { tabella: 'vendita_apri_chiudi',                bucket: 'apri-chiudi-files',    folderField: 'cartella_url', folderPrefix: null,           label: 'Apri/Chiudi (cessione)' },
   'apri_chiudi_nuovo':    { tabella: 'vendita_apri_chiudi',                bucket: 'apri-chiudi-files',    folderField: 'cartella_url', folderPrefix: null,           label: 'Apri/Chiudi (subentro)' },
   'switch_sim_attuale':   { tabella: 'vendita_switch_sim',                 bucket: 'switch-sim-files',     folderField: 'cartella_url', folderPrefix: null,           label: 'Switch SIM (attuale intestatario)' },
-  'switch_sim_rientro':   { tabella: 'vendita_switch_sim',                 bucket: 'switch-sim-files',     folderField: 'cartella_url', folderPrefix: null,           label: 'Switch SIM (rientro)' }
+  'switch_sim_rientro':   { tabella: 'vendita_switch_sim',                 bucket: 'switch-sim-files',     folderField: 'cartella_url', folderPrefix: null,           label: 'Switch SIM (rientro)' },
+  // Contratti del modulo upload-contratti (gestiti dal modulo Verifica Contratti).
+  // Per gli allegati usiamo una funzione custom perché vivono in vendita_documenti
+  // (non in una cartella diretta del bucket): il bucket+folderField sono settati
+  // solo come marker "ha allegati", la lettura reale è in apriAllegatiOperazione.
+  'contratto_vendita':    { tabella: 'vendita_contratti',                  bucket: 'contratti-vendita',    folderField: null,         folderPrefix: null,            label: 'Contratto Vendita',  usesVenditaDocumenti: true }
 };
 
 // Mappa label tecnici file -> nomi descrittivi (per popup allegati)
@@ -456,7 +461,8 @@ const TIPI = {
   'apri_chiudi_vecchio':  { label: 'Apri/Chiudi (cessione)', icon: 'Cessione' },
   'apri_chiudi_nuovo':    { label: 'Apri/Chiudi (subentro)', icon: 'Subentro' },
   'switch_sim_attuale':   { label: 'Switch SIM (attuale)', icon: 'Switch' },
-  'switch_sim_rientro':   { label: 'Switch SIM (rientro)', icon: 'Rientro' }
+  'switch_sim_rientro':   { label: 'Switch SIM (rientro)', icon: 'Rientro' },
+  'contratto_vendita':    { label: 'Contratto Vendita',    icon: 'Contratto' }
 };
 function statoClasse(stato) {
   if (!stato) return 'stato-pending';
@@ -740,6 +746,28 @@ async function apriAllegatiOperazione(idx) {
   }
   const loader = window.MiroxUI.loading.show('Caricamento allegati', 'Sto leggendo i file dallo storage...');
   try {
+    // Caso speciale: i contratti vendita non hanno una cartella diretta nel bucket
+    // ma indicizzano i file tramite la tabella vendita_documenti.
+    if (cfg.usesVenditaDocumenti) {
+      const { data: docs, error: docsErr } = await sb
+        .from('vendita_documenti')
+        .select('id, tipo_documento, storage_bucket, storage_path, file_name, uploaded_at')
+        .eq('contratto_id', op.record_id)
+        .order('uploaded_at', { ascending: false });
+      if (docsErr) throw docsErr;
+      const items = (docs || []).map(d => {
+        const url = sb.storage.from(d.storage_bucket || 'contratti-vendita').getPublicUrl(d.storage_path).data?.publicUrl || '#';
+        const display = (d.tipo_documento || 'Documento').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        return { name: d.file_name || display, displayName: display, url };
+      });
+      loader.hide();
+      window.MiroxUI.allegati({
+        title: cfg.label + (op.riferimento ? ' — ' + op.riferimento : '') + ' · Allegati',
+        items,
+        emptyText: 'Nessun allegato presente per questo contratto.'
+      });
+      return;
+    }
     // Determina la cartella nel bucket
     let folder;
     if (cfg.folderField) {

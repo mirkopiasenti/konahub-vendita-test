@@ -213,6 +213,15 @@ exports.handler = async (event) => {
   const finanziaria = cleanString(payload.finanziaria);
   const kolme = parseBoolean(payload.kolme, null);
 
+  // Campi extra Mirox (vedi migration 012_contratti_extra_fields.sql)
+  const podPdr = cleanString(payload.pod_pdr) || null;
+  const numeroContrattoEnergia = cleanString(payload.numero_contratto_energia) || null;
+  const prezzoFissoRaw = payload.prezzo_fisso;
+  const prezzoFisso = (prezzoFissoRaw === null || prezzoFissoRaw === undefined || prezzoFissoRaw === '')
+    ? null
+    : (Number.isFinite(Number(prezzoFissoRaw)) ? Number(prezzoFissoRaw) : null);
+  const reloadExchange = parseBoolean(payload.reload_exchange, false) === true;
+
   if (!cfPiva) {
     return response(400, { success: false, error: 'Campo obbligatorio mancante: cf_piva' });
   }
@@ -479,6 +488,12 @@ exports.handler = async (event) => {
       tipo_acquisto: tipoAcquisto,
       finanziaria,
       kolme,
+
+      // Campi extra Mirox (migration 012)
+      pod_pdr: podPdr,
+      numero_contratto_energia: numeroContrattoEnergia,
+      prezzo_fisso: prezzoFisso,
+      reload_exchange: reloadExchange,
 
       stato_controllo: 'da_controllare'
     };
