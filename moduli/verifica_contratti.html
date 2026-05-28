@@ -500,7 +500,9 @@ async function apriDettaglioContratto(id, stateKey) {
       sb.from('vendita_offerte').select('id, categoria_id, nome_offerta, cluster_cliente').eq('attiva', true),
       sb.from('vendita_opzioni').select('id, categoria_id, offerta_id, nome_opzione, cluster_cliente').eq('attiva', true),
       sb.from('vendita_reload').select('id, nome').eq('attivo', true).order('ordine', { ascending: true }),
-      sb.from('vendita_documenti').select('id, tipo_documento, storage_bucket, storage_path, file_name, uploaded_at').eq('anagrafica_id', fromState.anagrafica_id).order('uploaded_at', { ascending: false })
+      // Filtriamo per contratto_id specifico, NON per anagrafica_id (un cliente
+      // può avere N contratti, ognuno con i propri PDF).
+      sb.from('vendita_documenti').select('id, tipo_documento, storage_bucket, storage_path, file_name, uploaded_at').eq('contratto_id', fromState.id).order('uploaded_at', { ascending: false })
     ]);
     if (catRes.error) throw catRes.error;
     if (offRes.error) throw offRes.error;
@@ -677,20 +679,18 @@ function apriPopupDettaglio(c, opts) {
       <h4>📎 Allegati pratica</h4>
       <div id="vc_allegati_list" class="allegati-list"></div>
       ${isReadOnly ? '' : `
-        <div class="allegato-upload">
-          <div style="display:flex;flex-direction:column;gap:4px;flex:1;">
-            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">Carica nuovo allegato</label>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <select id="vc_new_doc_tipo" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12.5px;background:#fff;">
-                <option value="documento_identita">Documento identità</option>
-                <option value="contratto">Contratto</option>
-                <option value="copia_sim_mnp">Copia SIM MNP</option>
-                <option value="copia_bolletta">Copia bolletta</option>
-                <option value="altro">Altro</option>
-              </select>
-              <input type="file" id="vc_new_doc_file" accept=".pdf" style="flex:1;font-size:12.5px;">
-              <button type="button" class="btn-mini btn-primary" onclick="caricaNuovoAllegato('${escapeHtml(c.id)}', '${escapeHtml(c.anagrafica_id)}', '${escapeHtml(c.pratica_id)}')">⬆️ Carica</button>
-            </div>
+        <div class="allegato-upload" style="display:flex;flex-direction:column;gap:10px;">
+          <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">Carica nuovo allegato</label>
+          <div style="display:grid;grid-template-columns:minmax(180px, 200px) 1fr auto;gap:8px;align-items:center;">
+            <select id="vc_new_doc_tipo" style="padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;background:#fff;font-family:inherit;width:100%;">
+              <option value="documento_identita">Documento identità</option>
+              <option value="contratto">Contratto</option>
+              <option value="copia_sim_mnp">Copia SIM MNP</option>
+              <option value="copia_bolletta">Copia bolletta</option>
+              <option value="altro">Altro</option>
+            </select>
+            <input type="file" id="vc_new_doc_file" accept=".pdf" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;background:#fff;width:100%;min-width:0;">
+            <button type="button" class="btn-mini btn-primary" style="padding:9px 16px;white-space:nowrap;" onclick="caricaNuovoAllegato('${escapeHtml(c.id)}', '${escapeHtml(c.anagrafica_id)}', '${escapeHtml(c.pratica_id)}')">⬆️ Carica</button>
           </div>
         </div>
       `}
