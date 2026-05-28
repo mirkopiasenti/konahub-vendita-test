@@ -565,39 +565,39 @@ function apriPopupDettaglio(c, opts) {
     <div class="det-section">
       <h4>📋 Dati contratto</h4>
       <div class="det-grid">
-        <div class="det-field"><label>Categoria</label><select id="vc_categoria_id" ${disabled}><option value="">—</option>${selectOpt(categorie, c.categoria_id, 'id', 'nome')}</select></div>
-        <div class="det-field"><label>Offerta</label><select id="vc_offerta_id" ${disabled}><option value="">—</option>${selectOpt(offerteFiltered, c.offerta_id, 'id', 'nome_offerta')}</select></div>
-        <div class="det-field"><label>Opzione</label><select id="vc_opzione_id" ${disabled}><option value="">—</option>${selectOpt(opzioniFiltered, c.opzione_id, 'id', 'nome_opzione')}</select></div>
-        <div class="det-field"><label>Reload</label><select id="vc_reload_id" ${disabled}><option value="">—</option>${selectOpt(reloadFiltered, c.reload_id, 'id', 'nome')}</select></div>
-        <div class="det-field"><label>Tipo Attivazione</label>
+        <div class="det-field" id="vc_field_categoria"><label>Categoria</label><select id="vc_categoria_id" ${disabled}><option value="">—</option>${selectOpt(categorie, c.categoria_id, 'id', 'nome')}</select></div>
+        <div class="det-field" id="vc_field_offerta"><label>Offerta</label><select id="vc_offerta_id" ${disabled}><option value="">—</option>${selectOpt(offerteFiltered, c.offerta_id, 'id', 'nome_offerta')}</select></div>
+        <div class="det-field" id="vc_field_opzione"><label>Opzione</label><select id="vc_opzione_id" ${disabled}><option value="">—</option>${selectOpt(opzioniFiltered, c.opzione_id, 'id', 'nome_opzione')}</select></div>
+        <div class="det-field" id="vc_field_reload"><label>Reload</label><select id="vc_reload_id" ${disabled}><option value="">—</option>${selectOpt(reloadFiltered, c.reload_id, 'id', 'nome')}</select></div>
+        <div class="det-field" id="vc_field_tipo_attivazione"><label>Tipo Attivazione</label>
           <select id="vc_tipo_attivazione" ${disabled}>
             <option value="">—</option>
             <option value="Nuova Attivazione" ${c.tipo_attivazione === 'Nuova Attivazione' ? 'selected' : ''}>Nuova Attivazione</option>
             <option value="Portabilita" ${c.tipo_attivazione === 'Portabilita' ? 'selected' : ''}>Portabilita</option>
           </select>
         </div>
-        <div class="det-field"><label>Apri/Chiudi</label>
+        <div class="det-field" id="vc_field_apri_chiudi"><label>Apri/Chiudi</label>
           <select id="vc_apri_chiudi" ${disabled}>
             <option value="">—</option>
             <option value="Si" ${c.apri_chiudi === 'Si' ? 'selected' : ''}>Si</option>
             <option value="No" ${c.apri_chiudi === 'No' ? 'selected' : ''}>No</option>
           </select>
         </div>
-        <div class="det-field"><label>Intestatario</label>
+        <div class="det-field" id="vc_field_intestatario"><label>Intestatario</label>
           <select id="vc_intestatario" ${disabled}>
             <option value="">—</option>
             <option value="Stesso intestatario" ${c.intestatario === 'Stesso intestatario' ? 'selected' : ''}>Stesso intestatario</option>
             <option value="Intestatario diverso" ${c.intestatario === 'Intestatario diverso' ? 'selected' : ''}>Intestatario diverso</option>
           </select>
         </div>
-        <div class="det-field"><label>Switch SIM</label>
+        <div class="det-field" id="vc_field_switch_sim"><label>Switch SIM</label>
           <select id="vc_switch_sim" ${disabled}>
             <option value="">—</option>
             <option value="Si" ${c.switch_sim === 'Si' ? 'selected' : ''}>Si</option>
             <option value="No" ${c.switch_sim === 'No' ? 'selected' : ''}>No</option>
           </select>
         </div>
-        <div class="det-field"><label>Modalità Pagamento</label>
+        <div class="det-field" id="vc_field_modalita_pagamento"><label>Modalità Pagamento</label>
           <select id="vc_modalita_pagamento" ${disabled}>
             <option value="">—</option>
             <option value="Finanziamento" ${c.modalita_pagamento === 'Finanziamento' ? 'selected' : ''}>Finanziamento</option>
@@ -607,38 +607,38 @@ function apriPopupDettaglio(c, opts) {
       </div>
     </div>
 
-    <div class="det-section">
+    <div class="det-section" id="vc_section_device">
       <h4>📱 Dispositivo associato</h4>
       <div class="det-grid">
-        <div class="det-field"><label>Dispositivo Associato</label>
+        <div class="det-field" id="vc_field_dispositivo"><label>Dispositivo Associato</label>
           <select id="vc_dispositivo_associato" ${disabled}>
             <option value="">—</option>
             <option value="true" ${c.dispositivo_associato === true ? 'selected' : ''}>Si</option>
             <option value="false" ${c.dispositivo_associato === false ? 'selected' : ''}>No</option>
           </select>
         </div>
-        <div class="det-field"><label>IMEI (15 cifre)</label><input type="text" id="vc_imei" maxlength="15" value="${escapeHtml(c.imei || '')}" ${ro}></div>
-        <div class="det-field"><label>Fascia Prezzo</label>
+        <div class="det-field" id="vc_field_imei"><label>IMEI (15 cifre)</label><input type="text" id="vc_imei" maxlength="15" value="${escapeHtml(c.imei || '')}" ${ro}></div>
+        <div class="det-field" id="vc_field_fascia"><label>Fascia Prezzo</label>
           <select id="vc_fascia_prezzo" ${disabled}>
             <option value="">—</option>
             ${['0-249','250-599','600-1200','superiore-1200'].map(v => `<option value="${v}" ${c.fascia_prezzo === v ? 'selected' : ''}>${v}</option>`).join('')}
           </select>
         </div>
-        <div class="det-field"><label>Tipo Acquisto</label>
+        <div class="det-field" id="vc_field_tipo_acq"><label>Tipo Acquisto</label>
           <select id="vc_tipo_acquisto" ${disabled}>
             <option value="">—</option>
             <option value="VAR" ${c.tipo_acquisto === 'VAR' ? 'selected' : ''}>VAR</option>
             <option value="Finanziamento" ${c.tipo_acquisto === 'Finanziamento' ? 'selected' : ''}>Finanziamento</option>
           </select>
         </div>
-        <div class="det-field"><label>Finanziaria</label>
+        <div class="det-field" id="vc_field_finanziaria"><label>Finanziaria</label>
           <select id="vc_finanziaria" ${disabled}>
             <option value="">—</option>
             <option value="Findomestic" ${c.finanziaria === 'Findomestic' ? 'selected' : ''}>Findomestic</option>
             <option value="Compass" ${c.finanziaria === 'Compass' ? 'selected' : ''}>Compass</option>
           </select>
         </div>
-        <div class="det-field"><label>Kolme</label>
+        <div class="det-field" id="vc_field_kolme"><label>Kolme</label>
           <select id="vc_kolme" ${disabled}>
             <option value="">—</option>
             <option value="true" ${c.kolme === true ? 'selected' : ''}>Si</option>
@@ -648,22 +648,22 @@ function apriPopupDettaglio(c, opts) {
       </div>
     </div>
 
-    <div class="det-section">
+    <div class="det-section" id="vc_section_extra">
       <h4>⚡ Campi specifici categoria</h4>
       <div class="det-grid">
-        <div class="det-field" id="vc_field_pod" style="${isEnergia ? '' : 'display:none;'}">
-          <label>POD / PDR contatore${isEnergia ? ' <span class="required">*</span>' : ''}</label>
+        <div class="det-field" id="vc_field_pod">
+          <label>POD / PDR contatore <span class="required vc-required-energia">*</span></label>
           <input type="text" id="vc_pod_pdr" maxlength="32" value="${escapeHtml(c.pod_pdr || '')}" ${ro} placeholder="Es. IT001E12345678">
         </div>
-        <div class="det-field" id="vc_field_num_contratto_energia" style="${isEnergia ? '' : 'display:none;'}">
+        <div class="det-field" id="vc_field_num_contratto_energia">
           <label>Numero Contratto Energia <span class="required">*</span> <small style="font-weight:500;text-transform:none;letter-spacing:0;color:#94a3b8;">(obbligatorio per verificare)</small></label>
           <input type="text" id="vc_numero_contratto_energia" value="${escapeHtml(c.numero_contratto_energia || '')}" ${ro} placeholder="Inserisci il numero contratto">
         </div>
-        <div class="det-field" id="vc_field_prezzo_fisso" style="${isFisso ? '' : 'display:none;'}">
+        <div class="det-field" id="vc_field_prezzo_fisso">
           <label>Prezzo di vendita Fisso (€)</label>
           <input type="number" id="vc_prezzo_fisso" min="0" step="0.01" value="${c.prezzo_fisso !== null && c.prezzo_fisso !== undefined ? c.prezzo_fisso : ''}" ${ro}>
         </div>
-        <div class="det-field" id="vc_field_reload_exchange" style="${showReloadExchange ? '' : 'display:none;'}">
+        <div class="det-field" id="vc_field_reload_exchange">
           <label>Reload Exchange</label>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:9px 0;">
             <input type="checkbox" id="vc_reload_exchange" ${c.reload_exchange ? 'checked' : ''} ${disabled} style="width:18px;height:18px;accent-color:#FF6600;cursor:pointer;">
@@ -735,10 +735,138 @@ function apriPopupDettaglio(c, opts) {
   window.__currentVerificaModal = m;
   window.__currentVerificaContratto = c;
   window.__currentVerificaContratto._allegati = allegati;
+  // Cache cataloghi per re-popolamento select su change categoria/offerta
+  window.__currentVerificaCataloghi = { categorie, offerte, opzioni, reload };
   // Bottone chiudi via attributo
   m.foot.querySelectorAll('[data-mx-close-popup]').forEach(b => b.addEventListener('click', () => m.close()));
 
   renderAllegatiPopup(c, allegati, isReadOnly);
+
+  // Applica regole di visibilità in base a categoria + bind dei listener
+  applyVisibilityRules();
+  if (!isReadOnly) {
+    // Su cambio categoria → ripopola offerta + opzione + reload + ricalcola visibilità
+    document.getElementById('vc_categoria_id').addEventListener('change', () => {
+      repopulateOfferte();
+      repopulateOpzioni();
+      applyVisibilityRules();
+    });
+    // Su cambio offerta → ripopola opzione + reload (anche se reload è globale)
+    document.getElementById('vc_offerta_id').addEventListener('change', () => {
+      repopulateOpzioni();
+      applyVisibilityRules();
+    });
+    // Su cambio apri/chiudi → rivaluta intestatario
+    const ac = document.getElementById('vc_apri_chiudi');
+    if (ac) ac.addEventListener('change', applyVisibilityRules);
+    // Su cambio dispositivo associato → rivaluta IMEI/fascia/tipo acquisto/finanziaria/kolme
+    const da = document.getElementById('vc_dispositivo_associato');
+    if (da) da.addEventListener('change', applyVisibilityRules);
+    // Su cambio tipo acquisto → rivaluta finanziaria
+    const ta = document.getElementById('vc_tipo_acquisto');
+    if (ta) ta.addEventListener('change', applyVisibilityRules);
+  }
+}
+
+// =============================================================================
+// VISIBILITÀ DINAMICA DEI CAMPI (replica logica modulo Upload Contratti)
+// =============================================================================
+function _categoriaNomeSelezionato() {
+  const sel = document.getElementById('vc_categoria_id');
+  if (!sel) return '';
+  const opt = sel.options[sel.selectedIndex];
+  return opt ? (opt.textContent || '').trim() : '';
+}
+function _isCat(name, expected) {
+  return String(name || '').toLowerCase().includes(String(expected || '').toLowerCase());
+}
+function _show(id, visible) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = visible ? '' : 'none';
+}
+
+function applyVisibilityRules() {
+  const cat = _categoriaNomeSelezionato();
+  const isFisso = _isCat(cat, 'Fisso');
+  const isEnergia = _isCat(cat, 'Energia');
+  const isMobile = _isCat(cat, 'Mobile');
+  const isCustomerBase = _isCat(cat, 'Customer Base');
+  const isAllarmi = _isCat(cat, 'Allarmi');
+
+  // Categoria/Offerta sempre visibili
+  // Opzione: visibile solo se ci sono opzioni disponibili in tendina
+  const opzioneSel = document.getElementById('vc_opzione_id');
+  const hasOpzioni = opzioneSel && opzioneSel.options.length > 1;
+  _show('vc_field_opzione', !!hasOpzioni);
+
+  // Reload: visibile solo per Mobile e Customer Base (consumer base)
+  _show('vc_field_reload', isMobile || isCustomerBase);
+
+  // Tipo Attivazione, Apri/Chiudi, Intestatario: solo Fisso
+  _show('vc_field_tipo_attivazione', isFisso);
+  _show('vc_field_apri_chiudi', isFisso);
+  // Intestatario visibile solo se Fisso E apri_chiudi=Si
+  const apriChiudiVal = (document.getElementById('vc_apri_chiudi') || {}).value || '';
+  _show('vc_field_intestatario', isFisso && apriChiudiVal === 'Si');
+
+  // Switch SIM: visibile per Mobile / Customer Base (categorie con SIM)
+  _show('vc_field_switch_sim', isMobile || isCustomerBase);
+
+  // Modalità Pagamento: solo Allarmi
+  _show('vc_field_modalita_pagamento', isAllarmi);
+
+  // ---- Sezione Dispositivo (visibile solo per Mobile/Customer Base) ----
+  const deviceVisible = isMobile || isCustomerBase;
+  _show('vc_section_device', deviceVisible);
+  // Sotto-campi visibili solo se dispositivo_associato = true
+  const dispVal = (document.getElementById('vc_dispositivo_associato') || {}).value || '';
+  const hasDevice = deviceVisible && dispVal === 'true';
+  _show('vc_field_imei', hasDevice);
+  _show('vc_field_fascia', hasDevice);
+  _show('vc_field_tipo_acq', hasDevice);
+  // Finanziaria solo se tipo acquisto = Finanziamento
+  const tipoAcq = (document.getElementById('vc_tipo_acquisto') || {}).value || '';
+  _show('vc_field_finanziaria', hasDevice && tipoAcq === 'Finanziamento');
+  _show('vc_field_kolme', hasDevice);
+
+  // ---- Sezione Extra (campi specifici categoria) ----
+  _show('vc_field_pod', isEnergia);
+  _show('vc_field_num_contratto_energia', isEnergia);
+  _show('vc_field_prezzo_fisso', isFisso);
+  _show('vc_field_reload_exchange', isMobile || isCustomerBase);
+  // Mostra/nascondi tutta la sezione extra se non c'è nulla da mostrare
+  const extraVisible = isEnergia || isFisso || isMobile || isCustomerBase;
+  _show('vc_section_extra', extraVisible);
+}
+
+// Ripopola la tendina Offerte in base alla categoria selezionata
+function repopulateOfferte() {
+  const cats = window.__currentVerificaCataloghi;
+  if (!cats) return;
+  const catId = document.getElementById('vc_categoria_id').value;
+  const sel = document.getElementById('vc_offerta_id');
+  const cur = sel.value;
+  const filtered = cats.offerte.filter(o => !catId || o.categoria_id === catId);
+  sel.innerHTML = '<option value="">—</option>' + filtered.map(o =>
+    `<option value="${o.id}" ${o.id === cur ? 'selected' : ''}>${(o.nome_offerta || '').replace(/[<>&]/g, '')}</option>`
+  ).join('');
+}
+
+// Ripopola la tendina Opzioni in base a categoria + offerta selezionate
+function repopulateOpzioni() {
+  const cats = window.__currentVerificaCataloghi;
+  if (!cats) return;
+  const catId = document.getElementById('vc_categoria_id').value;
+  const offId = document.getElementById('vc_offerta_id').value;
+  const sel = document.getElementById('vc_opzione_id');
+  const cur = sel.value;
+  const filtered = cats.opzioni.filter(o =>
+    (!catId || o.categoria_id === catId) && (!offId || o.offerta_id === offId)
+  );
+  sel.innerHTML = '<option value="">—</option>' + filtered.map(o =>
+    `<option value="${o.id}" ${o.id === cur ? 'selected' : ''}>${(o.nome_opzione || '').replace(/[<>&]/g, '')}</option>`
+  ).join('');
 }
 
 function renderAllegatiPopup(c, allegati, isReadOnly) {
