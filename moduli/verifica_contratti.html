@@ -492,12 +492,14 @@ async function apriDettaglioContratto(id, stateKey) {
   }
   const loader = window.MiroxUI.loading.show('Caricamento dettagli', 'Sto recuperando categoria, offerta e opzioni...');
   try {
-    // Carica liste utili per le tendine (categorie, offerte, opzioni, reload)
+    // Carica liste utili per le tendine (categorie, offerte, opzioni, reload).
+    // NB: vendita_reload non ha colonna offerta_id (è una lista globale di
+    // reload), e il flag è "attivo" (maschile), non "attiva" come le altre.
     const [catRes, offRes, opzRes, relRes, filesRes] = await Promise.all([
       sb.from('vendita_categorie').select('id, nome').eq('attiva', true).order('ordine'),
       sb.from('vendita_offerte').select('id, categoria_id, nome_offerta, cluster_cliente').eq('attiva', true),
       sb.from('vendita_opzioni').select('id, categoria_id, offerta_id, nome_opzione, cluster_cliente').eq('attiva', true),
-      sb.from('vendita_reload').select('id, offerta_id, nome').eq('attiva', true),
+      sb.from('vendita_reload').select('id, nome').eq('attivo', true).order('ordine', { ascending: true }),
       sb.from('vendita_documenti').select('id, tipo_documento, storage_bucket, storage_path, file_name, uploaded_at').eq('anagrafica_id', fromState.anagrafica_id).order('uploaded_at', { ascending: false })
     ]);
     if (catRes.error) throw catRes.error;
@@ -535,13 +537,14 @@ function apriPopupDettaglio(c, opts) {
     `<option value="${escapeHtml(o[valKey])}" ${String(o[valKey]) === String(val) ? 'selected' : ''}>${escapeHtml(o[labKey] || '-')}</option>`
   ).join('');
 
-  // Filtra offerte/opzioni/reload per i select già contestualizzati
+  // Filtra offerte/opzioni per i select già contestualizzati.
+  // I reload sono globali (non hanno offerta_id) → mostriamo tutti i record attivi.
   const offerteFiltered = offerte.filter(o => !c.categoria_id || o.categoria_id === c.categoria_id);
   const opzioniFiltered = opzioni.filter(o =>
     (!c.categoria_id || o.categoria_id === c.categoria_id) &&
     (!c.offerta_id || o.offerta_id === c.offerta_id)
   );
-  const reloadFiltered = reload.filter(r => !c.offerta_id || r.offerta_id === c.offerta_id);
+  const reloadFiltered = reload;
 
   const bodyHtml = `
     <div class="det-section">
