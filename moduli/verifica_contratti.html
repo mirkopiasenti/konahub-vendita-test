@@ -328,7 +328,10 @@ async function caricaContratti(statoControllo) {
   const wrap = document.getElementById(containerId);
   wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><h3>Caricamento...</h3></div>';
   try {
-    // Join: contratti + anagrafica + operatore (profili)
+    // Step 1: contratti + anagrafica (FK presente: anagrafica_id REFERENCES anagrafica)
+    // NB: operatore_id e controllato_da NON hanno FK esplicite verso profili,
+    // quindi non possiamo fare il join inline lato PostgREST. Risolviamo lato
+    // client con una seconda query e un Map id→nome.
     const { data, error } = await sb
       .from('vendita_contratti')
       .select(`
@@ -341,14 +344,39 @@ async function caricaContratti(statoControllo) {
         punteggio_offerta, punteggio_opzione, punteggio_extra, punteggio_totale,
         stato_controllo, controllato_da, controllato_at, note_controllo,
         data_contratto, created_at, updated_at,
-        anagrafica:anagrafica_id ( id, cf_piva, cluster, ragione_sociale, nome_referente, cellulare, provincia, comune, via, civico ),
-        operatore:operatore_id ( id, nome ),
-        verificatore:controllato_da ( id, nome )
+        anagrafica:anagrafica_id ( id, cf_piva, cluster, ragione_sociale, nome_referente, cellulare, provincia, comune, via, civico )
       `)
       .eq('stato_controllo', statoControllo)
       .order('data_contratto', { ascending: false });
     if (error) throw error;
-    VCState[stateKey] = data || [];
+    const contratti = data || [];
+
+    // Step 2: recuperiamo i nomi degli operatori (operatore_id + controllato_da)
+    // con UNA sola query a profili. Costruiamo il Set degli id univoci.
+    const ids = new Set();
+    contratti.forEach(c => {
+      if (c.operatore_id) ids.add(c.operatore_id);
+      if (c.controllato_da) ids.add(c.controllato_da);
+    });
+    let profiliMap = new Map();
+    if (ids.size > 0) {
+      const { data: profili, error: profErr } = await sb
+        .from('profili')
+        .select('id, nome')
+        .in('id', Array.from(ids));
+      if (profErr) {
+        console.warn('Lookup profili fallito (non fatale):', profErr.message);
+      } else {
+        profili.forEach(p => profiliMap.set(p.id, p));
+      }
+    }
+
+    // Step 3: merge — innestiamo operatore e verificatore come oggetti
+    VCState[stateKey] = contratti.map(c => ({
+      ...c,
+      operatore: c.operatore_id ? (profiliMap.get(c.operatore_id) || { id: c.operatore_id, nome: '-' }) : null,
+      verificatore: c.controllato_da ? (profiliMap.get(c.controllato_da) || { id: c.controllato_da, nome: '-' }) : null
+    }));
     renderListaContratti(stateKey);
   } catch (e) {
     console.error('Errore caricamento contratti:', e);
