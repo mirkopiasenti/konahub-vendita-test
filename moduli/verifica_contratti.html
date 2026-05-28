@@ -349,6 +349,7 @@ async function caricaContratti(statoControllo) {
       .order('data_contratto', { ascending: false });
     if (error) throw error;
     const contratti = data || [];
+    console.log(`[VC] caricaContratti(${statoControllo}) → trovati ${contratti.length} contratti`, contratti);
 
     // Step 2: recuperiamo i nomi degli operatori (operatore_id + controllato_da)
     // con UNA sola query a profili. Costruiamo il Set degli id univoci.
@@ -410,11 +411,16 @@ function renderListaContratti(stateKey) {
   else setCount('cntVerificati', VCState.verificati.length);
 
   if (!items.length) {
+    const tot = VCState[stateKey].length;
+    const filtered = tot > 0 && items.length === 0; // ci sono contratti ma il filtro li nasconde
     wrap.innerHTML = `
       <div class="empty-state">
         <div class="empty-icon">📭</div>
         <h3>Nessun contratto</h3>
-        <p>${stateKey === 'daVerificare' ? 'Non ci sono contratti da verificare.' : 'Non ci sono contratti verificati.'}</p>
+        <p>${filtered
+          ? `Ci sono <strong>${tot}</strong> contratti in totale ma il filtro non ne mostra nessuno. Pulisci i filtri o la ricerca.`
+          : (stateKey === 'daVerificare' ? 'Non ci sono contratti da verificare.' : 'Non ci sono contratti verificati.')}</p>
+        ${!filtered ? `<p style="margin-top:10px;font-size:11.5px;color:#94a3b8;">Se hai appena caricato dei contratti e li vedi su Supabase ma non qui, verifica RLS su <code>vendita_contratti</code> (apri DevTools → Console e cerca log <code>[VC]</code> per dettagli).</p>` : ''}
       </div>`;
     return;
   }
