@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="../assets/favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Pezzi Giornaliera — Mirox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/mirox-modules.css">
+<style>
+:root {
+  --primary: #FF6600;
+  --primary-dark: #E55A00;
+  --primary-bg: #FFF3E0;
+  --text: #0f172a;
+  --text-secondary: #64748b;
+  --text-light: #94a3b8;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --bg: #f8fafc;
+  --bg-card: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text); background: var(--bg);
+  min-height: 100vh; -webkit-font-smoothing: antialiased; font-size: 14px;
+}
+
+.toolbar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.toolbar .date-block {
+  display: flex; align-items: center; gap: 8px;
+}
+.toolbar .date-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-secondary); }
+.toolbar input[type="date"] {
+  padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px;
+  font-size: 13.5px; font-family: inherit; background: #fff; color: var(--text);
+}
+.toolbar input[type="date"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255,102,0,.12); }
+.toolbar .btn-nav {
+  padding: 8px 14px; font-size: 13px; font-weight: 600; font-family: inherit;
+  background: #fff; color: var(--text); border: 1px solid var(--border);
+  border-radius: 10px; cursor: pointer; transition: all .15s ease;
+}
+.toolbar .btn-nav:hover { background: var(--primary-bg); color: var(--primary-dark); border-color: var(--primary); }
+.toolbar .btn-today {
+  background: var(--primary); color: #fff; border-color: var(--primary);
+}
+.toolbar .btn-today:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+.toolbar .spacer { flex: 1; }
+.toolbar .info-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px; background: var(--primary-bg); color: var(--primary-dark);
+  border-radius: 999px; font-size: 12px; font-weight: 600;
+}
+
+.grid-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.grid-wrap .scroll {
+  overflow-x: auto;
+}
+table.pezzi {
+  width: 100%; border-collapse: collapse; min-width: 700px;
+  font-size: 13.5px;
+}
+table.pezzi thead th {
+  background: #fff; color: var(--text);
+  font-weight: 700; font-size: 13px;
+  padding: 14px 12px;
+  border-bottom: 2px solid var(--border);
+  text-align: center; white-space: nowrap;
+}
+table.pezzi thead th.col-data {
+  background: var(--primary); color: #fff; font-size: 16px; text-align: center;
+  letter-spacing: 0.02em;
+}
+table.pezzi thead th.col-label {
+  text-align: left; min-width: 280px;
+}
+table.pezzi tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border-light);
+  text-align: center; vertical-align: middle;
+}
+table.pezzi tbody td.cell-label {
+  text-align: left; font-weight: 700; font-size: 13px; color: var(--text);
+  font-style: italic;
+}
+table.pezzi tbody td.cell-num {
+  font-weight: 700; font-size: 14px;
+}
+table.pezzi tbody td.cell-num.zero { color: var(--text-light); font-weight: 500; }
+table.pezzi tbody td.cell-total {
+  background: #f8fafc; font-weight: 800; color: var(--primary-dark);
+  border-left: 2px solid var(--border);
+}
+table.pezzi tfoot td {
+  padding: 12px; font-weight: 800; font-size: 14px; text-align: center;
+  background: #f8fafc; border-top: 2px solid var(--border);
+}
+table.pezzi tfoot td.cell-label { text-align: left; }
+
+.gruppo-header td {
+  background: var(--border-light) !important;
+  color: var(--text) !important;
+  font-size: 11.5px !important; font-weight: 700 !important;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 8px 12px !important;
+}
+
+.empty-state { padding: 40px 20px; text-align: center; color: var(--text-secondary); }
+.empty-state .empty-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.45; }
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/mirox-ui.js"></script>
+<script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
+
+<!-- Header uniforme Mirox -->
+<div class="header">
+<div class="header-content">
+<div>
+<h1>Dashboard Pezzi Giornaliera</h1>
+</div>
+<a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
+</div>
+</div>
+
+<div class="container">
+
+<!-- Toolbar: date picker + navigazione -->
+<div class="toolbar">
+  <div class="date-block">
+    <span class="date-label">Data</span>
+    <input type="date" id="dataPezzi">
+  </div>
+  <button type="button" class="btn-nav" onclick="cambiaGiorno(-1)">← Giorno precedente</button>
+  <button type="button" class="btn-nav btn-today" onclick="vaiOggi()">Oggi</button>
+  <button type="button" class="btn-nav" onclick="cambiaGiorno(1)">Giorno successivo →</button>
+  <div class="spacer"></div>
+  <span class="info-pill" id="infoTotale">Totale pezzi: 0</span>
+</div>
+
+<!-- Griglia pezzi -->
+<div class="grid-wrap">
+  <div class="scroll">
+    <div id="pezziTable">
+      <div class="empty-state"><div class="empty-icon">⏳</div>Caricamento...</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const sb = db;
+
+// Colonne operatori HARDCODED (richiesta utente).
+// Per aggiungere/rimuovere un operatore modifica questo array.
+const OPERATORI = ['MATTEO', 'MIRKO', 'FRANCESCA', 'CEREA'];
+
+// Stato runtime
+const DPState = {
+  dataSelezionata: null,    // YYYY-MM-DD
+  righe: [],                // dashboard_righe_giornaliera (cache)
+  contratti: []             // vendita_contratti del giorno
+};
+
+// ============================================================
+// UTILITY
+// ============================================================
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+}
+function fmtDataLabel(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d)) return iso;
+  const giorno = d.getDate();
+  const mesi = ['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO','LUGLIO','AGOSTO','SETTEMBRE','OTTOBRE','NOVEMBRE','DICEMBRE'];
+  return giorno + ' ' + mesi[d.getMonth()];
+}
+function isoOggi() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+function normalizzaNome(s) {
+  return String(s || '').trim().toUpperCase();
+}
+
+// ============================================================
+// MATCHING ENGINE — verifica se un contratto soddisfa una regola JSONB
+// ============================================================
+function matchRegola(contratto, regola) {
+  if (!regola || typeof regola !== 'object') return true;
+  const c = contratto;
+
+  // Helper di matching su stringhe
+  const strEq = (got, want) => String(got || '').trim().toLowerCase() === String(want || '').trim().toLowerCase();
+  const strInArr = (got, arr) => Array.isArray(arr) && arr.some(v => strEq(got, v));
+  const reMatch = (got, pattern) => {
+    if (!pattern) return true;
+    try {
+      const re = new RegExp(pattern, 'i');
+      return re.test(String(got || ''));
+    } catch (e) { return false; }
+  };
+
+  // CATEGORIA
+  if (regola.categoria && !strEq(c.categoria_snapshot, regola.categoria)) return false;
+  if (regola.categoria_in && !strInArr(c.categoria_snapshot, regola.categoria_in)) return false;
+
+  // CLUSTER
+  if (regola.cluster && !strEq(c.cluster_cliente, regola.cluster)) return false;
+  if (regola.cluster_in && !strInArr(c.cluster_cliente, regola.cluster_in)) return false;
+
+  // Match diretti
+  if (regola.tipo_attivazione && !strEq(c.tipo_attivazione, regola.tipo_attivazione)) return false;
+  if (regola.apri_chiudi && !strEq(c.apri_chiudi, regola.apri_chiudi)) return false;
+  if (regola.intestatario && !strEq(c.intestatario, regola.intestatario)) return false;
+  if (regola.switch_sim && !strEq(c.switch_sim, regola.switch_sim)) return false;
+  if (regola.modalita_pagamento && !strEq(c.modalita_pagamento, regola.modalita_pagamento)) return false;
+  if (regola.tipo_acquisto && !strEq(c.tipo_acquisto, regola.tipo_acquisto)) return false;
+  if (regola.fascia_prezzo && !strEq(c.fascia_prezzo, regola.fascia_prezzo)) return false;
+  if (regola.fascia_prezzo_in && !strInArr(c.fascia_prezzo, regola.fascia_prezzo_in)) return false;
+  if (regola.finanziaria && !strEq(c.finanziaria, regola.finanziaria)) return false;
+
+  // Boolean
+  if (regola.dispositivo_associato !== undefined && Boolean(c.dispositivo_associato) !== Boolean(regola.dispositivo_associato)) return false;
+  if (regola.kolme !== undefined && Boolean(c.kolme) !== Boolean(regola.kolme)) return false;
+  if (regola.reload_exchange !== undefined && Boolean(c.reload_exchange) !== Boolean(regola.reload_exchange)) return false;
+
+  // Regex su offerta / opzione / reload (case-insensitive)
+  if (regola.offerta_match && !reMatch(c.nome_offerta_snapshot, regola.offerta_match)) return false;
+  if (regola.offerta_not_match && reMatch(c.nome_offerta_snapshot, regola.offerta_not_match)) return false;
+  if (regola.opzione_match && !reMatch(c.nome_opzione_snapshot, regola.opzione_match)) return false;
+  if (regola.reload_match && !reMatch(c.nome_reload_snapshot, regola.reload_match)) return false;
+
+  return true;
+}
+
+// ============================================================
+// MATCHING OPERATORE: confronta il nome operatore del contratto con
+// la colonna hardcoded (MATTEO/MIRKO/FRANCESCA/CEREA).
+// Necessita di un campo "operatore_nome" che ricaviamo da profili (cached).
+// ============================================================
+function operatoreContratto(contratto, profiliMap) {
+  const id = contratto.operatore_id;
+  if (!id) return null;
+  const p = profiliMap.get(id);
+  if (!p) return null;
+  return normalizzaNome(p.nome);
+}
+
+// ============================================================
+// CARICAMENTO DATI
+// ============================================================
+async function caricaRighe() {
+  if (DPState.righe.length) return DPState.righe;
+  const { data, error } = await sb
+    .from('dashboard_righe_giornaliera')
+    .select('id, nome, gruppo, colore_hex, ordine, regola')
+    .eq('attiva', true)
+    .order('ordine', { ascending: true });
+  if (error) throw error;
+  DPState.righe = data || [];
+  return DPState.righe;
+}
+
+async function caricaContrattiDelGiorno(dataIso) {
+  // Filtra per data_contratto (timestamptz) — usiamo range [data 00:00, data+1 00:00)
+  const start = dataIso + 'T00:00:00';
+  const endDate = new Date(dataIso + 'T00:00:00');
+  endDate.setDate(endDate.getDate() + 1);
+  const end = endDate.toISOString().slice(0, 10) + 'T00:00:00';
+  const { data, error } = await sb
+    .from('vendita_contratti')
+    .select(`
+      id, operatore_id, cluster_cliente,
+      categoria_snapshot, nome_offerta_snapshot, nome_opzione_snapshot, nome_reload_snapshot,
+      tipo_attivazione, apri_chiudi, intestatario, switch_sim, modalita_pagamento,
+      dispositivo_associato, tipo_acquisto, fascia_prezzo, finanziaria, kolme,
+      reload_exchange, data_contratto, stato_controllo
+    `)
+    .gte('data_contratto', start)
+    .lt('data_contratto', end);
+  if (error) throw error;
+  return data || [];
+}
+
+async function caricaProfili(ids) {
+  if (!ids || !ids.length) return new Map();
+  const { data, error } = await sb.from('profili').select('id, nome').in('id', ids);
+  if (error) { console.warn('Lookup profili fallito:', error.message); return new Map(); }
+  const map = new Map();
+  (data || []).forEach(p => map.set(p.id, p));
+  return map;
+}
+
+// ============================================================
+// RENDERING GRIGLIA
+// ============================================================
+function renderGriglia() {
+  const righe = DPState.righe;
+  const contratti = DPState.contratti;
+  const profiliMap = DPState.profiliMap;
+
+  // Conteggi: righeId → operatore → count
+  const conteggi = {};
+  righe.forEach(r => {
+    conteggi[r.id] = { __total: 0 };
+    OPERATORI.forEach(op => { conteggi[r.id][op] = 0; });
+  });
+  const totaliOperatore = {};
+  OPERATORI.forEach(op => { totaliOperatore[op] = 0; });
+  let totaleGenerale = 0;
+
+  contratti.forEach(c => {
+    const opNome = operatoreContratto(c, profiliMap);
+    if (!opNome || !OPERATORI.includes(opNome)) return;
+    // Trova le righe che matchano (un contratto può matchare più righe se le
+    // regole sono ampie — di solito ne matcha una sola se ben definite).
+    righe.forEach(r => {
+      if (matchRegola(c, r.regola)) {
+        conteggi[r.id][opNome] += 1;
+        conteggi[r.id].__total += 1;
+        totaliOperatore[opNome] += 1;
+        totaleGenerale += 1;
+      }
+    });
+  });
+
+  // HTML
+  const wrap = document.getElementById('pezziTable');
+  if (!righe.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>Nessuna riga configurata in <code>dashboard_righe_giornaliera</code>.</div>`;
+    return;
+  }
+
+  const opCols = OPERATORI.map(op => `<th>${escapeHtml(op)}</th>`).join('');
+  let html = `<table class="pezzi"><thead><tr>
+    <th class="col-data col-label">${escapeHtml(fmtDataLabel(DPState.dataSelezionata))}</th>
+    ${opCols}
+    <th>TOTALE</th>
+  </tr></thead><tbody>`;
+
+  // Raggruppa per gruppo, mantieni ordine
+  let currentGruppo = null;
+  righe.forEach((r, idx) => {
+    if (r.gruppo !== currentGruppo) {
+      html += `<tr class="gruppo-header"><td colspan="${OPERATORI.length + 2}">${escapeHtml(r.gruppo)}</td></tr>`;
+      currentGruppo = r.gruppo;
+    }
+    const rowColor = r.colore_hex || '#f1f5f9';
+    const tdCells = OPERATORI.map(op => {
+      const v = conteggi[r.id][op];
+      return `<td class="cell-num ${v === 0 ? 'zero' : ''}">${v === 0 ? '' : v}</td>`;
+    }).join('');
+    const tot = conteggi[r.id].__total;
+    html += `<tr style="background:${escapeHtml(rowColor)};">
+      <td class="cell-label">${escapeHtml(r.nome)}</td>
+      ${tdCells}
+      <td class="cell-num cell-total ${tot === 0 ? 'zero' : ''}">${tot === 0 ? '' : tot}</td>
+    </tr>`;
+  });
+  // Footer totali
+  const footCells = OPERATORI.map(op => `<td>${totaliOperatore[op] || 0}</td>`).join('');
+  html += `</tbody><tfoot><tr>
+    <td class="cell-label">TOTALE GIORNO</td>
+    ${footCells}
+    <td style="color:var(--primary-dark);">${totaleGenerale}</td>
+  </tr></tfoot></table>`;
+  wrap.innerHTML = html;
+  document.getElementById('infoTotale').textContent = `Totale pezzi: ${totaleGenerale}`;
+}
+
+// ============================================================
+// FLUSSO PRINCIPALE
+// ============================================================
+async function caricaDati() {
+  const wrap = document.getElementById('pezziTable');
+  wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div>Caricamento...</div>';
+  try {
+    await caricaRighe();
+    const contratti = await caricaContrattiDelGiorno(DPState.dataSelezionata);
+    DPState.contratti = contratti;
+    const opIds = Array.from(new Set(contratti.map(c => c.operatore_id).filter(Boolean)));
+    DPState.profiliMap = await caricaProfili(opIds);
+    renderGriglia();
+  } catch (e) {
+    console.error('[DashboardPezzi] errore:', e);
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div>Errore: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function vaiOggi() {
+  const iso = isoOggi();
+  DPState.dataSelezionata = iso;
+  document.getElementById('dataPezzi').value = iso;
+  caricaDati();
+}
+function cambiaGiorno(delta) {
+  const d = new Date(DPState.dataSelezionata + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  const iso = d.toISOString().slice(0, 10);
+  DPState.dataSelezionata = iso;
+  document.getElementById('dataPezzi').value = iso;
+  caricaDati();
+}
+
+document.getElementById('dataPezzi').addEventListener('change', (e) => {
+  DPState.dataSelezionata = e.target.value || isoOggi();
+  caricaDati();
+});
+
+// Export per onclick inline
+window.cambiaGiorno = cambiaGiorno;
+window.vaiOggi = vaiOggi;
+
+// INIT
+(function init() {
+  DPState.dataSelezionata = isoOggi();
+  document.getElementById('dataPezzi').value = DPState.dataSelezionata;
+  caricaDati();
+})();
+</script>
+</body>
+</html>
