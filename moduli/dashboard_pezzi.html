@@ -146,15 +146,12 @@ table.pezzi tfoot td.cell-label { text-align: left; }
 
 <div class="container">
 
-<!-- Toolbar: date picker + navigazione -->
+<!-- Toolbar: solo date picker (modificabile dal calendarietto del browser) -->
 <div class="toolbar">
   <div class="date-block">
     <span class="date-label">Data</span>
     <input type="date" id="dataPezzi">
   </div>
-  <button type="button" class="btn-nav" onclick="cambiaGiorno(-1)">← Giorno precedente</button>
-  <button type="button" class="btn-nav btn-today" onclick="vaiOggi()">Oggi</button>
-  <button type="button" class="btn-nav" onclick="cambiaGiorno(1)">Giorno successivo →</button>
   <div class="spacer"></div>
   <span class="info-pill" id="infoTotale">Totale pezzi: 0</span>
 </div>

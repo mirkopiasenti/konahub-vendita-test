@@ -2533,14 +2533,20 @@ Reload Exchange
  const opzioneNome = opzione?.nome_opzione || '';
  const isFisso = isCategory(categoriaNome, 'Fisso');
  const isAllarmi = isCategory(categoriaNome, 'Allarmi');
- const opzioneVisible = isFieldVisible(refs.fieldOpzione);
- const reloadVisible = isFieldVisible(refs.fieldReload);
- const switchSimVisible = isFieldVisible(refs.fieldSwitchSim);
- const tipoAttivazioneVisible = isFieldVisible(refs.fieldTipoAttivazione);
- const apriChiudiVisible = isFieldVisible(refs.fieldApriChiudi);
- const intestatarioVisible = isFieldVisible(refs.fieldIntestatario);
- const modalitaPagamentoVisible = isFieldVisible(refs.fieldModalitaPagamento);
- const deviceVisible = isFieldVisible(refs.deviceSection);
+ // BUG FIX: non usare isFieldVisible(...) perché in step 3 (upload PDF) la
+ // step2Section e la deviceSection vengono nascoste, restituendo false anche
+ // per campi che in step 2 erano stati compilati. Usiamo la stessa LOGICA
+ // BUSINESS che renderDynamicSections() applica per mostrare/nascondere i
+ // campi → indipendente dalla pagina corrente del wizard.
+ const opzioniDisponibili = filteredOpzioni();
+ const opzioneVisible = shouldShowOpzione(categoriaNome, opzioniDisponibili);
+ const reloadVisible = filteredReload().length > 0;
+ const switchSimVisible = shouldShowSwitchSim();
+ const tipoAttivazioneVisible = isFisso;
+ const apriChiudiVisible = isFisso;
+ const intestatarioVisible = isFisso && normalizeSiNo(refs.apriChiudi.value) === 'Si';
+ const modalitaPagamentoVisible = isAllarmi;
+ const deviceVisible = shouldShowDevice();
  const hasDevice = deviceVisible && refs.dispositivoAssociato.value === 'true';
  const documentRequirements = getCurrentDocumentRequirements();
 
