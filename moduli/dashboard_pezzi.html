@@ -290,11 +290,16 @@ async function caricaRighe() {
 }
 
 async function caricaContrattiDelGiorno(dataIso) {
-  // Filtra per data_contratto (timestamptz) — usiamo range [data 00:00, data+1 00:00)
-  const start = dataIso + 'T00:00:00';
-  const endDate = new Date(dataIso + 'T00:00:00');
-  endDate.setDate(endDate.getDate() + 1);
-  const end = endDate.toISOString().slice(0, 10) + 'T00:00:00';
+  // Filtra per data_contratto (timestamptz) usando un range [start, end).
+  // Calcoliamo il giorno successivo in modo UTC-safe (la versione con
+  // `new Date(...).setDate(...)` rompeva su browser in TZ != UTC perché
+  // interpretava la stringa come ora locale).
+  const [y, m, d] = dataIso.split('-').map(Number);
+  const nextUtc = new Date(Date.UTC(y, m - 1, d + 1));
+  const nextIso = nextUtc.toISOString().slice(0, 10);
+  const start = `${dataIso}T00:00:00.000Z`;   // 00:00 UTC del giorno
+  const end   = `${nextIso}T00:00:00.000Z`;   // 00:00 UTC del giorno dopo
+  console.log('[DashboardPezzi] range query:', { start, end });
   const { data, error } = await sb
     .from('vendita_contratti')
     .select(`
@@ -306,14 +311,17 @@ async function caricaContrattiDelGiorno(dataIso) {
     `)
     .gte('data_contratto', start)
     .lt('data_contratto', end);
-  if (error) throw error;
+  if (error) { console.error('[DashboardPezzi] errore query contratti:', error); throw error; }
+  console.log(`[DashboardPezzi] contratti trovati: ${(data || []).length}`, data);
   return data || [];
 }
 
 async function caricaProfili(ids) {
-  if (!ids || !ids.length) return new Map();
+  if (!ids || !ids.length) { console.log('[DashboardPezzi] nessun operatore_id da risolvere'); return new Map(); }
+  console.log('[DashboardPezzi] cerco profili per ids:', ids);
   const { data, error } = await sb.from('profili').select('id, nome').in('id', ids);
-  if (error) { console.warn('Lookup profili fallito:', error.message); return new Map(); }
+  if (error) { console.warn('[DashboardPezzi] Lookup profili fallito:', error.message); return new Map(); }
+  console.log(`[DashboardPezzi] profili trovati: ${(data || []).length}`, data);
   const map = new Map();
   (data || []).forEach(p => map.set(p.id, p));
   return map;
@@ -339,18 +347,30 @@ function renderGriglia() {
 
   contratti.forEach(c => {
     const opNome = operatoreContratto(c, profiliMap);
-    if (!opNome || !OPERATORI.includes(opNome)) return;
-    // Trova le righe che matchano (un contratto può matchare più righe se le
-    // regole sono ampie — di solito ne matcha una sola se ben definite).
+    if (!opNome) {
+      console.warn('[DashboardPezzi] contratto senza operatore risolto:', c.id, 'operatore_id:', c.operatore_id);
+      return;
+    }
+    if (!OPERATORI.includes(opNome)) {
+      console.warn(`[DashboardPezzi] contratto ${c.id} → operatore "${opNome}" non è nella lista hardcoded ${JSON.stringify(OPERATORI)}`);
+      return;
+    }
+    let matchato = false;
     righe.forEach(r => {
       if (matchRegola(c, r.regola)) {
+        matchato = true;
         conteggi[r.id][opNome] += 1;
         conteggi[r.id].__total += 1;
         totaliOperatore[opNome] += 1;
         totaleGenerale += 1;
+        console.log(`[DashboardPezzi] ✓ contratto ${c.id} (${c.nome_offerta_snapshot}) → riga "${r.nome}" / ${opNome}`);
       }
     });
+    if (!matchato) {
+      console.warn(`[DashboardPezzi] ✗ contratto ${c.id} (cat=${c.categoria_snapshot}, off=${c.nome_offerta_snapshot}) NON ha matchato NESSUNA riga`);
+    }
   });
+  console.log(`[DashboardPezzi] totale conteggiato: ${totaleGenerale}`);
 
   // HTML
   const wrap = document.getElementById('pezziTable');
