@@ -30,3 +30,8 @@ npm-debug.log*
 
 # Plan files (Claude Code)
 .claude/
+
+# Supabase CLI portable binary (scaricato in locale, non committare)
+.bin/
+supabase/.temp/
+supabase/.branches/
