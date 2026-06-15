@@ -56,6 +56,18 @@ Per le functions in locale servono le env vars (vedi sotto). Mettile in un file 
 3. Imposta le env vars nel pannello Netlify (sezione Site settings → Environment variables)
 4. Deploy automatico al push
 
+## Workflow di aggiornamento
+
+Il repo è sincronizzato con GitHub via `git` (chiave SSH già configurata). Per ogni modifica:
+
+```bash
+git add -A
+git commit -m "Descrizione modifica"
+git push origin main
+```
+
+**Non caricare più file tramite l'interfaccia web GitHub** (`Add files via upload`): si creerebbe drift fra locale e remoto, esattamente il problema che abbiamo risolto in fase di setup. Se proprio serve modificare qualcosa al volo dalla web UI, sincronizza poi qui con `git pull` prima di riprendere a lavorare in locale.
+
 ## Env vars Netlify
 
 | Variabile | Obbligatoria | Note |
