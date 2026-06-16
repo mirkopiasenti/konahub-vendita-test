@@ -29,7 +29,12 @@ body {
   -webkit-font-smoothing: antialiased; font-size: 14px;
   display: flex; flex-direction: column; overflow: hidden;
 }
-.container { flex: 1; min-height: 0; display: flex; flex-direction: column; max-width: none !important; margin: 0 !important; padding: 10px 16px !important; }
+body > .container.dp-page,
+body > .container.dp-page.dp-page {
+  flex: 1; min-height: 0; display: flex; flex-direction: column;
+  max-width: none !important; width: auto !important;
+  margin: 0 !important; padding: 10px 16px !important;
+}
 
 .toolbar {
   background: var(--bg-card);
@@ -146,7 +151,7 @@ table.pezzi tbody td.cell-num.zero { color: var(--text-light); font-weight: 500;
 </div>
 </div>
 
-<div class="container">
+<div class="container dp-page">
 
 <!-- Toolbar: solo date picker (modificabile dal calendarietto del browser) -->
 <div class="toolbar">
