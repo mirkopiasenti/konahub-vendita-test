@@ -84,7 +84,7 @@
 
     const { data, error } = await sbClient
       .from('anagrafica')
-      .select('id, cf_piva, cluster, ragione_sociale, nome_referente, cellulare, provincia, comune, via, civico')
+      .select('id, cf_piva, cluster, ragione_sociale, nome_referente, cellulare, email, provincia, comune, via, civico')
       .ilike('cf_piva', v)
       .limit(1);
 
@@ -125,7 +125,8 @@
       p_comune: dati.comune ? String(dati.comune).trim() : null,
       p_via: dati.via ? String(dati.via).trim() : null,
       p_civico: dati.civico ? String(dati.civico).trim() : null,
-      p_creato_da: dati.creato_da || null
+      p_creato_da: dati.creato_da || null,
+      p_email: dati.email ? String(dati.email).trim().toLowerCase() : null
     };
 
     if (!payload.p_cf_piva) throw new Error('CF/P.IVA obbligatorio');
@@ -155,6 +156,9 @@
     if (!String(dati.ragione_sociale || '').trim()) return 'Ragione sociale obbligatoria';
     if (!String(dati.nome_referente || '').trim()) return 'Nome referente obbligatorio';
     if (!String(dati.cellulare || '').trim()) return 'Cellulare obbligatorio';
+    const emailTrim = String(dati.email || '').trim();
+    if (!emailTrim) return 'Email obbligatoria';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) return 'Email non valida';
     return null;
   }
 
@@ -208,7 +212,7 @@
     }
 
     function setFieldsReadonly(readonly) {
-      ['ragione_sociale', 'nome_referente', 'cellulare'].forEach((s) => {
+      ['ragione_sociale', 'nome_referente', 'cellulare', 'email'].forEach((s) => {
         const el = $(s);
         if (!el) return;
         el.readOnly = !!readonly;
@@ -230,7 +234,7 @@
       state.lookupDone = false;
       state.exists = false;
       state.lookupPromise = null;
-      ['cluster', 'ragione_sociale', 'nome_referente', 'cellulare'].forEach((s) => {
+      ['cluster', 'ragione_sociale', 'nome_referente', 'cellulare', 'email'].forEach((s) => {
         const el = $(s);
         if (el) el.value = '';
       });
@@ -271,6 +275,7 @@
             if ($('ragione_sociale')) $('ragione_sociale').value = res.data.ragione_sociale || '';
             if ($('nome_referente')) $('nome_referente').value = res.data.nome_referente || '';
             if ($('cellulare')) $('cellulare').value = res.data.cellulare || '';
+            if ($('email')) $('email').value = res.data.email || '';
             const dbCluster = (res.data.cluster || '').trim();
             if (dbCluster && dbCluster !== state.cluster) {
               setStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-') +
@@ -346,8 +351,37 @@
         ragione_sociale: $('ragione_sociale') ? $('ragione_sociale').value : '',
         nome_referente: $('nome_referente') ? $('nome_referente').value : '',
         cellulare: $('cellulare') ? $('cellulare').value : '',
+        email: $('email') ? $('email').value : '',
         creato_da: creatoDa || null
       };
+    }
+
+    /**
+     * Popola i campi del form di censimento con dati esterni
+     * (es. risultati OCR). I campi non presenti nel DOM vengono ignorati.
+     * Non chiama il lookup; serve solo per pre-compilazione.
+     */
+    function populate(dati) {
+      if (!dati || typeof dati !== 'object') return;
+      const mapping = {
+        cluster: 'cluster',
+        ragione_sociale: 'ragione_sociale',
+        nome_referente: 'nome_referente',
+        cellulare: 'cellulare',
+        email: 'email',
+        provincia: 'provincia',
+        comune: 'comune',
+        via: 'via',
+        civico: 'civico'
+      };
+      Object.keys(mapping).forEach((src) => {
+        const v = dati[src];
+        if (v === null || v === undefined) return;
+        const el = $(mapping[src]);
+        if (el && (!el.value || String(el.value).trim() === '')) {
+          el.value = String(v);
+        }
+      });
     }
 
     function validate() {
@@ -367,7 +401,7 @@
       });
     }
 
-    return { state, reset, executeLookup, awaitLookup, getDati, validate, setStatus };
+    return { state, reset, executeLookup, awaitLookup, getDati, populate, validate, setStatus };
   }
 
   // Esposizione globale
