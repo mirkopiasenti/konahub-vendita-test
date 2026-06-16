@@ -22,22 +22,26 @@
   --bg-card: #ffffff;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--text); background: var(--bg);
-  min-height: 100vh; -webkit-font-smoothing: antialiased; font-size: 14px;
+  -webkit-font-smoothing: antialiased; font-size: 14px;
+  display: flex; flex-direction: column; overflow: hidden;
 }
+.container { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 
 .toolbar {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 14px 18px;
-  margin-bottom: 14px;
+  padding: 10px 16px;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 .toolbar .date-block {
   display: flex; align-items: center; gap: 8px;
@@ -70,57 +74,55 @@ body {
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
 }
 .grid-wrap .scroll {
-  overflow-x: auto;
+  overflow: auto;
+  flex: 1; min-height: 0;
 }
 table.pezzi {
   width: 100%; border-collapse: collapse; min-width: 700px;
-  font-size: 13.5px;
+  font-size: 12.5px;
 }
 table.pezzi thead th {
   background: #fff; color: var(--text);
-  font-weight: 700; font-size: 13px;
-  padding: 14px 12px;
+  font-weight: 700; font-size: 12.5px;
+  padding: 8px 10px;
   border-bottom: 2px solid var(--border);
   text-align: center; white-space: nowrap;
+  position: sticky; top: 0; z-index: 2;
 }
 table.pezzi thead th.col-data {
-  background: var(--primary); color: #fff; font-size: 16px; text-align: center;
+  background: var(--primary); color: #fff; font-size: 14px; text-align: center;
   letter-spacing: 0.02em;
 }
 table.pezzi thead th.col-label {
   text-align: left; min-width: 280px;
 }
 table.pezzi tbody td {
-  padding: 9px 12px;
+  padding: 3px 10px;
   border-bottom: 1px solid var(--border-light);
   text-align: center; vertical-align: middle;
+  line-height: 1.3;
 }
 table.pezzi tbody td.cell-label {
-  text-align: left; font-weight: 700; font-size: 13px; color: var(--text);
+  text-align: left; font-weight: 700; font-size: 12.5px; color: var(--text);
   font-style: italic;
 }
 table.pezzi tbody td.cell-num {
-  font-weight: 700; font-size: 14px;
+  font-weight: 700; font-size: 13px;
+  text-align: center;
 }
 table.pezzi tbody td.cell-num.zero { color: var(--text-light); font-weight: 500; }
-table.pezzi tbody td.cell-total {
-  background: #f8fafc; font-weight: 800; color: var(--primary-dark);
-  border-left: 2px solid var(--border);
-}
-table.pezzi tfoot td {
-  padding: 12px; font-weight: 800; font-size: 14px; text-align: center;
-  background: #f8fafc; border-top: 2px solid var(--border);
-}
-table.pezzi tfoot td.cell-label { text-align: left; }
 
 .gruppo-header td {
-  background: var(--border-light) !important;
+  background: #f1f5f9 !important;
   color: var(--text) !important;
   font-size: 11.5px !important; font-weight: 700 !important;
-  text-transform: uppercase; letter-spacing: 0.08em;
-  padding: 8px 12px !important;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 4px 10px !important;
+  text-align: left !important;
 }
 
 .empty-state { padding: 40px 20px; text-align: center; color: var(--text-secondary); }
@@ -380,14 +382,13 @@ function renderGriglia() {
   let html = `<table class="pezzi"><thead><tr>
     <th class="col-data col-label">${escapeHtml(fmtDataLabel(DPState.dataSelezionata))}</th>
     ${opCols}
-    <th>TOTALE</th>
   </tr></thead><tbody>`;
 
   // Raggruppa per gruppo, mantieni ordine
   let currentGruppo = null;
   righe.forEach((r, idx) => {
     if (r.gruppo !== currentGruppo) {
-      html += `<tr class="gruppo-header"><td colspan="${OPERATORI.length + 2}">${escapeHtml(r.gruppo)}</td></tr>`;
+      html += `<tr class="gruppo-header"><td colspan="${OPERATORI.length + 1}">${escapeHtml(r.gruppo)}</td></tr>`;
       currentGruppo = r.gruppo;
     }
     const rowColor = r.colore_hex || '#f1f5f9';
@@ -395,20 +396,12 @@ function renderGriglia() {
       const v = conteggi[r.id][op];
       return `<td class="cell-num ${v === 0 ? 'zero' : ''}">${v === 0 ? '' : v}</td>`;
     }).join('');
-    const tot = conteggi[r.id].__total;
-    html += `<tr style="background:${escapeHtml(rowColor)};">
-      <td class="cell-label">${escapeHtml(r.nome)}</td>
+    html += `<tr>
+      <td class="cell-label" style="background:${escapeHtml(rowColor)};">${escapeHtml(r.nome)}</td>
       ${tdCells}
-      <td class="cell-num cell-total ${tot === 0 ? 'zero' : ''}">${tot === 0 ? '' : tot}</td>
     </tr>`;
   });
-  // Footer totali
-  const footCells = OPERATORI.map(op => `<td>${totaliOperatore[op] || 0}</td>`).join('');
-  html += `</tbody><tfoot><tr>
-    <td class="cell-label">TOTALE GIORNO</td>
-    ${footCells}
-    <td style="color:var(--primary-dark);">${totaleGenerale}</td>
-  </tr></tfoot></table>`;
+  html += `</tbody></table>`;
   wrap.innerHTML = html;
   document.getElementById('infoTotale').textContent = `Totale pezzi: ${totaleGenerale}`;
 }
