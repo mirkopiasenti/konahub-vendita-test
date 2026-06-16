@@ -29,6 +29,7 @@ Lo schema reale di Supabase contiene anche modifiche fatte:
 | `012_contratti_extra_fields.sql` | `pod_pdr`, `numero_contratto_energia`, `prezzo_fisso`, `reload_exchange` su `vendita_contratti` |
 | `013_storico_cliente_vendita_contratti.sql` | Vista `storico_cliente` |
 | `014_dashboard_pezzi_giornaliera.sql` | Viste `view_vendita_dashboard_giornaliera` e `_mensile` |
+| `015_anagrafica_email_e_pda_doc_rules.sql` | Aggiunge `anagrafica.email`, aggiorna RPC `cerca_o_crea_anagrafica` con `p_email`, disattiva regole `contratto` per Energia/Allarmi/Assicurazioni (refactor wizard PDA-first) |
 
 ## Linee guida
 

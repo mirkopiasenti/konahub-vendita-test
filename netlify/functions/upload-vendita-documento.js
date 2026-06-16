@@ -262,6 +262,7 @@ exports.handler = async (event) => {
   try {
     const { fields, file } = await readMultipart(event);
 
+    const tempSessionId = normalizeOptional(fields.temp_session_id);
     const praticaId = normalizeOptional(fields.pratica_id);
     const contrattoId = normalizeOptional(fields.contratto_id);
     const anagraficaId = normalizeOptional(fields.anagrafica_id);
@@ -269,6 +270,49 @@ exports.handler = async (event) => {
     const storageBasePath = normalizeOptional(fields.storage_base_path);
     const nomeCartellaStorage = normalizeOptional(fields.nome_cartella_storage);
     const uploadedBy = normalizeOptional(fields.uploaded_by);
+
+    if (file.mimeType !== 'application/pdf') {
+      return response(400, { success: false, error: 'Tipo file non valido: è consentito solo application/pdf' });
+    }
+
+    // Modalita' staging: PDA caricata PRIMA della creazione della pratica.
+    // Salva il file in temp/<temp_session_id>/ senza creare record in vendita_documenti.
+    // Il file verra' promosso a path definitivo da crea-vendita-pratica-carrello al submit.
+    if (tempSessionId) {
+      if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(tempSessionId)) {
+        return response(400, { success: false, error: 'temp_session_id non valido (formato UUID v4 atteso)' });
+      }
+
+      const requestedFileName = normalizeOptional(fields.file_name)
+        || suggestedFileName(tipoDocumento || 'contratto', fields);
+      const finalFileName = sanitizeFileName(requestedFileName, sanitizeSegment(tipoDocumento || 'documento', 'documento'));
+      const storagePath = `temp/${tempSessionId}/${finalFileName}`;
+
+      const supabase = createClient(supabaseUrl, serviceRoleKey, {
+        auth: { autoRefreshToken: false, persistSession: false }
+      });
+
+      const { error: uploadError } = await supabase
+        .storage
+        .from(STORAGE_BUCKET)
+        .upload(storagePath, file.buffer, { contentType: 'application/pdf', upsert: true });
+
+      if (uploadError) {
+        return response(500, {
+          success: false,
+          error: readableErrorMessage(uploadError, 'Upload staging non riuscito')
+        });
+      }
+
+      return response(200, {
+        success: true,
+        staging: true,
+        storage_bucket: STORAGE_BUCKET,
+        storage_path: storagePath,
+        file_name: finalFileName,
+        file_size: file.size
+      });
+    }
 
     if (!praticaId) {
       return response(400, { success: false, error: 'Campo obbligatorio mancante: pratica_id' });
@@ -280,10 +324,6 @@ exports.handler = async (event) => {
 
     if (!tipoDocumento) {
       return response(400, { success: false, error: 'Campo obbligatorio mancante: tipo_documento' });
-    }
-
-    if (file.mimeType !== 'application/pdf') {
-      return response(400, { success: false, error: 'Tipo file non valido: è consentito solo application/pdf' });
     }
 
     const requestedFileName = normalizeOptional(fields.file_name)
