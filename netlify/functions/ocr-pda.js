@@ -85,23 +85,19 @@ function readMultipart(event) {
   });
 }
 
-const SYSTEM_PROMPT = `Sei un assistente specializzato nell'estrazione di dati anagrafici da contratti telefonici, internet ed energia italiani.
-Ti viene fornito un PDF di un contratto. Devi estrarre i campi anagrafici del cliente/intestatario.
-
-Rispondi SOLO con un oggetto JSON valido (niente testo prima o dopo), con queste chiavi esatte:
-- cf_piva: codice fiscale (16 caratteri) o partita IVA (11 cifre) del cliente. SOLO il valore, senza prefissi tipo "CF:" o "P.IVA:".
-- ragione_sociale: per privati il nome + cognome; per aziende la ragione sociale completa.
-- nome_referente: nome della persona di riferimento (solo per aziende; per privati lascia null).
-- cellulare: numero di cellulare italiano (10 cifre con prefisso 3xx). Solo cifre, senza prefisso internazionale.
-- email: email del cliente. Solo l'indirizzo, lowercase.
-- provincia: SIGLA a 2 lettere maiuscole (es. "VR", "MI", "RM"). Se hai solo la citta', desumila.
-- comune: nome del comune.
-- via: nome della via (senza il numero civico).
-- civico: SOLO il numero civico (es. "12", "12/A").
-
-Se un campo non e' presente, non e' leggibile, o non sei sicuro, usa null (NON inventare).
-Esempio risposta valida:
-{"cf_piva":"RSSMRA85M01H501Z","ragione_sociale":"Mario Rossi","nome_referente":null,"cellulare":"3331234567","email":"mario.rossi@example.it","provincia":"RM","comune":"Roma","via":"Via Roma","civico":"12"}`;
+// Prompt compatto per minimizzare token. Output: SOLO JSON.
+const SYSTEM_PROMPT = `Estrai dati del CLIENTE (non operatore) da contratto IT. Solo JSON, no testo extra.
+Null se mancante o non sicuro, NON inventare.
+cf_piva: CF(16) o PIVA(11), solo valore
+ragione_sociale: nome+cognome (privato) o ragione azienda
+nome_referente: solo per aziende, null altrimenti
+cellulare: 10 cifre, prefisso 3xx, solo numero
+email: lowercase
+provincia: sigla 2 lettere maiuscole (VR,MI,RM)
+comune: nome
+via: senza civico
+civico: solo numero (es 12, 12/A)
+Ex: {"cf_piva":"RSSMRA85M01H501Z","ragione_sociale":"Mario Rossi","nome_referente":null,"cellulare":"3331234567","email":"m@b.it","provincia":"RM","comune":"Roma","via":"Via Roma","civico":"12"}`;
 
 const EXPECTED_KEYS = ['cf_piva', 'ragione_sociale', 'nome_referente', 'cellulare', 'email', 'provincia', 'comune', 'via', 'civico'];
 
@@ -143,7 +139,7 @@ exports.handler = async (event) => {
 
     const completion = await client.messages.create({
       model: MODEL,
-      max_tokens: 1024,
+      max_tokens: 400, // output e' ~200 token, 400 e' cap conservativo per non sprecare token
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -153,7 +149,7 @@ exports.handler = async (event) => {
               type: 'document',
               source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 }
             },
-            { type: 'text', text: 'Estrai i dati anagrafici dal contratto. Rispondi solo con JSON.' }
+            { type: 'text', text: 'Estrai dati cliente. Solo JSON.' }
           ]
         }
       ]

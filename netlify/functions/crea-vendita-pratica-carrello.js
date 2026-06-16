@@ -193,8 +193,57 @@ function normalizeContractInput(contract, index) {
       const n = Number(v);
       return Number.isFinite(n) ? n : null;
     })(),
-    reload_exchange: parseBoolean(contract?.reload_exchange, false) === true
+    reload_exchange: parseBoolean(contract?.reload_exchange, false) === true,
+    // PDA caricata in modalita' staging (temp/<session_id>/<file>). null se non applicabile
+    // o se contratto e' in categoria senza PDA (Energia/Allarmi/Assicurazioni).
+    pda_temp_path: cleanString(contract?.pda_temp_path) || null
   };
+}
+
+/**
+ * Promuove un PDA caricato in temp/<session>/<file> alla cartella definitiva
+ * della pratica creata, e crea il record vendita_documenti corrispondente.
+ * Best-effort: ritorna { ok: true } o { ok: false, error } senza throwing.
+ */
+async function promoteTempPda({ supabase, tempPath, basePath, categoriaName, praticaId, contrattoId, anagraficaId, uploadedBy }) {
+  try {
+    const categoriaSlug = sanitizeSegment(categoriaName || 'generico', 'generico').toLowerCase();
+    const finalFileName = `contratto_${categoriaSlug}.pdf`;
+    const cleanBase = String(basePath || '').replace(/\/+$/, '');
+    const newPath = `${cleanBase}/${finalFileName}`;
+
+    const { error: moveError } = await supabase
+      .storage
+      .from('contratti-vendita')
+      .move(tempPath, newPath);
+
+    if (moveError) {
+      return { ok: false, error: `Move PDA fallito (${tempPath} -> ${newPath}): ${moveError.message}` };
+    }
+
+    const { error: insertError } = await supabase
+      .from('vendita_documenti')
+      .insert({
+        pratica_id: praticaId,
+        contratto_id: contrattoId,
+        anagrafica_id: anagraficaId,
+        tipo_documento: 'contratto',
+        storage_bucket: 'contratti-vendita',
+        storage_path: newPath,
+        file_name: finalFileName,
+        mime_type: 'application/pdf',
+        file_size: null,
+        uploaded_by: uploadedBy || null
+      });
+
+    if (insertError) {
+      return { ok: false, error: `Insert record vendita_documenti fallito per PDA ${newPath}: ${insertError.message}` };
+    }
+
+    return { ok: true, storage_path: newPath };
+  } catch (err) {
+    return { ok: false, error: err?.message || 'Errore promozione PDA' };
+  }
 }
 
 function normalizeCategoryName(value) {
@@ -363,6 +412,7 @@ exports.handler = async (event) => {
   const ragioneSociale = cleanString(cliente.ragione_sociale);
   const nomeReferente = cleanString(cliente.nome_referente);
   const cellulare = cleanString(cliente.cellulare);
+  const email = cleanString(cliente.email);
   const provincia = cleanString(cliente.provincia);
   const comune = cleanString(cliente.comune);
   const via = cleanString(cliente.via);
@@ -382,6 +432,26 @@ exports.handler = async (event) => {
 
   if (!ragioneSociale) {
     return response(400, { success: false, error: 'Campo obbligatorio mancante: cliente.ragione_sociale' });
+  }
+
+  // TODO (commit refactor frontend): attivare validazione strict di cellulare + email.
+  //   Per ora il backend resta retrocompatibile con il vecchio wizard. Quando il nuovo
+  //   wizard PDA-first sara' deployato, rimuovere il blocco "if (allowStrictContacts)"
+  //   e fare i 3 check sotto sempre.
+  const allowStrictContacts = false;
+  if (allowStrictContacts) {
+    if (!cellulare) {
+      return response(400, { success: false, error: 'Campo obbligatorio mancante: cliente.cellulare' });
+    }
+    if (!email) {
+      return response(400, { success: false, error: 'Campo obbligatorio mancante: cliente.email' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return response(400, { success: false, error: 'cliente.email non e\' un indirizzo valido' });
+    }
+  } else if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    // Se email passata, valida comunque il formato
+    return response(400, { success: false, error: 'cliente.email non e\' un indirizzo valido' });
   }
 
   if (contrattiRaw.length === 0) {
@@ -419,7 +489,7 @@ exports.handler = async (event) => {
 
     const { data: anagraficaRows, error: anagraficaLookupError } = await supabase
       .from('anagrafica')
-      .select('id, cf_piva, cluster, ragione_sociale, nome_referente, cellulare, provincia, comune, via, civico')
+      .select('id, cf_piva, cluster, ragione_sociale, nome_referente, cellulare, email, provincia, comune, via, civico')
       .ilike('cf_piva', cfPiva)
       .limit(1);
 
@@ -438,6 +508,7 @@ exports.handler = async (event) => {
         ragione_sociale: ragioneSociale,
         nome_referente: nomeReferente,
         cellulare,
+        email,
         provincia,
         comune,
         via,
@@ -476,6 +547,7 @@ exports.handler = async (event) => {
           ragione_sociale: ragioneSociale,
           nome_referente: nomeReferente,
           cellulare,
+          email,
           provincia,
           comune,
           via,
@@ -563,6 +635,7 @@ exports.handler = async (event) => {
     const reloadById = indexById(reloadRes.data);
 
     const createdContracts = [];
+    const pdaWarnings = [];
 
     for (let index = 0; index < normalizedContracts.length; index += 1) {
       const item = normalizedContracts[index];
@@ -727,6 +800,24 @@ exports.handler = async (event) => {
           numeric(insertedContract.punteggio_extra_gara_offerta, 0) + numeric(insertedContract.punteggio_extra_gara_opzione, 0)
         )
       });
+
+      // Promozione PDA temp -> cartella pratica (se applicabile).
+      // Best-effort: warning ma non fa fallire la pratica gia' creata.
+      if (item.pda_temp_path) {
+        const result = await promoteTempPda({
+          supabase,
+          tempPath: item.pda_temp_path,
+          basePath: storageBasePath,
+          categoriaName: categoria.nome,
+          praticaId: praticaRow.id,
+          contrattoId: insertedContract.id,
+          anagraficaId,
+          uploadedBy: operatoreId
+        });
+        if (!result.ok) {
+          pdaWarnings.push({ contratto_index: index, pda_temp_path: item.pda_temp_path, error: result.error });
+        }
+      }
     }
 
     return response(200, {
@@ -735,7 +826,8 @@ exports.handler = async (event) => {
       pratica_id: praticaRow.id,
       storage_base_path: storageBasePath,
       nome_cartella_storage: nomeCartellaStorage,
-      contratti: createdContracts
+      contratti: createdContracts,
+      pda_warnings: pdaWarnings
     });
   } catch (error) {
     if (createdPraticaId) {
