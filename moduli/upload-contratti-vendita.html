@@ -2339,6 +2339,9 @@ Reload Exchange
  refs.tipoAcquisto.value = '';
  refs.finanziaria.value = '';
  refs.kolme.value = '';
+ // POD/PDR (Energia) e prezzo_fisso (Fisso) non devono persistere fra un contratto e l'altro nello stesso carrello
+ if (refs.podPdr) refs.podPdr.value = '';
+ if (refs.numeroContrattoEnergia) delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
  clearInputFile(refs.fileContrattoPdf);
  clearInputFile(refs.fileCopiaSimMnp);
  clearInputFile(refs.fileCopiaBolletta);
