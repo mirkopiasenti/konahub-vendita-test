@@ -34,8 +34,9 @@ Modulo CRM per la gestione di vendite, post-vendita e supporto operativo della r
 |---|---|---|
 | `vendita-config` | GET | Carica catalogo per il wizard contratti |
 | `admin-vendita-config` | GET / POST | CRUD admin del catalogo |
-| `crea-vendita-pratica-carrello` | POST | Crea pratica + N contratti con validazioni |
-| `upload-vendita-documento` | POST multipart | Upload PDF su bucket `contratti-vendita` |
+| `crea-vendita-pratica-carrello` | POST | Crea pratica + N contratti con validazioni; promuove i PDA da staging |
+| `upload-vendita-documento` | POST multipart | Upload PDF su bucket `contratti-vendita` (anche staging `temp/<sess>/`) |
+| `ocr-pda` | POST multipart | OCR del PDA (Pratica di Adesione PDF) via Claude API — pre-compila l'anagrafica |
 | `search-anagrafica` | GET | Ricerca cliente per CF/PIVA |
 | `mirox-send-email` | POST | Invio email con template DB |
 | `cron-rientro-sim` | scheduled | Notifica giornaliera rientro SIM |
@@ -74,6 +75,7 @@ git push origin main
 |---|---|---|
 | `SUPABASE_URL` | sì | `https://lbgwamhjkjjfwgusafbi.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | sì | Service role key (NON la anon/publishable — solo lato server) |
+| `ANTHROPIC_API_KEY` | sì | Chiave Claude API per la function `ocr-pda` (estrazione AI dati dal PDA) |
 | `SMTP_USER` | sì | Account Gmail mittente |
 | `SMTP_PASS` | sì | App Password Gmail |
 | `NOTIFICA_RIENTRO_TO` | no | Default `info@konatech.it` |

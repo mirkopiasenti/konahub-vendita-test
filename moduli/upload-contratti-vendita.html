@@ -179,7 +179,7 @@
 
  .stepper {
  display: grid;
- grid-template-columns: repeat(3, minmax(0, 1fr));
+ grid-template-columns: repeat(4, minmax(0, 1fr));
  gap: 10px;
  padding: 6px 2px 2px;
  }
@@ -408,12 +408,14 @@
  align-items: center;
  }
 
- #step1Actions {
+ #actionsCategoria {
  justify-content: flex-end;
+ gap: 10px;
  }
 
- #step2Actions,
- #step3Actions {
+ #actionsAnagrafica,
+ #actionsContratto,
+ #actionsDocumenti {
  justify-content: space-between;
  }
 
@@ -893,27 +895,41 @@
 <div id="stepper" class="stepper">
 <div id="stepItem1" class="step-item active">
 <span class="step-index">1</span>
-<span class="step-label">Anagrafica</span>
+<span class="step-label">Categoria + PDA</span>
 </div>
 <div id="stepItem2" class="step-item">
 <span class="step-index">2</span>
-<span class="step-label">Contratto</span>
+<span class="step-label">Anagrafica</span>
 </div>
 <div id="stepItem3" class="step-item">
 <span class="step-index">3</span>
-<span class="step-label">Upload</span>
+<span class="step-label">Contratto</span>
 </div>
-</div> <section id="identifySection" class="card panel">
-<div class="identify-card">
-<h2>Inserisci codice fiscale - partita IVA - passaporto</h2>
-<div class="identify-row">
-<input id="initial_identifier" autocomplete="off" placeholder="Inserisci codice fiscale - partita IVA - passaporto">
-<button id="btnInitialContinue" type="button">Continua</button>
+<div id="stepItem4" class="step-item">
+<span class="step-index">4</span>
+<span class="step-label">Documenti</span>
 </div>
-<p class="hint">Premi Invio oppure Continua per avviare la ricerca.</p>
+</div> <section id="stepCategoriaSection" class="card panel">
+<h2>Categoria contratto e PDA</h2>
+<div class="grid">
+<div class="field half">
+<label for="categoria_id">Categoria *</label>
+<select id="categoria_id"></select>
+<p class="hint">Per Mobile, Customer Base e Fisso e' necessario caricare il PDA (Pratica di Adesione PDF).</p>
 </div>
-</section> <section id="step1Section" class="card panel">
+</div>
+<div id="pdaUploadZone" class="hidden" style="margin-top:14px;">
+<h3 style="font-size:15px;margin:0 0 6px;color:#0f172a;">PDA — Pratica di Adesione *</h3>
+<p class="hint" style="margin:0 0 10px;">Carica il PDF del contratto firmato. Puoi farlo analizzare dall'AI per pre-compilare automaticamente i dati anagrafici, oppure procedere manualmente.</p>
+<input id="file_pda" type="file" accept="application/pdf">
+<p id="pdaSelectedInfo" style="margin:8px 0 0;font-size:13px;color:#6b7280;">Nessun file selezionato</p>
+<p id="pdaOcrStatus" class="hint" style="margin:6px 0 0;display:none;"></p>
+</div>
+</section> <section id="stepAnagraficaSection" class="card panel hidden">
 <h2>Dati Anagrafici Cliente</h2>
+<div id="anagraficaOcrBanner" class="hint hidden" style="margin:0 0 10px;padding:8px 10px;background:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;color:#0e7490;">
+Dati pre-compilati dall'AI sulla base del PDA caricato. Verifica e correggi prima di continuare.
+</div>
 <div class="grid">
 <div class="field half">
 <label for="cf_piva">CF/P.IVA *</label>
@@ -937,8 +953,11 @@
 <label for="nome_referente">Nome Referente</label>
 <input id="nome_referente" autocomplete="off">
 </div> <div class="field">
-<label for="cellulare">Cellulare</label>
-<input id="cellulare" autocomplete="off">
+<label for="cellulare">Cellulare *</label>
+<input id="cellulare" autocomplete="off" placeholder="es. 3331234567">
+</div> <div class="field">
+<label for="email">Email *</label>
+<input id="email" type="email" autocomplete="off" placeholder="es. cliente@example.com">
 </div> <div id="fieldProvincia" class="field">
 <label for="provincia">Provincia</label>
 <input id="provincia" autocomplete="off">
@@ -963,13 +982,10 @@
 <input id="operatore_id" type="hidden" autocomplete="off">
 </div>
 </div>
-</section> <section id="step2Section" class="card panel hidden">
+</section> <section id="stepContrattoSection" class="card panel hidden">
 <h2>Dati Contratto</h2>
 <div class="grid">
 <div class="field">
-<label for="categoria_id">Categoria</label>
-<select id="categoria_id"></select>
-</div> <div class="field">
 <label id="labelOfferta" for="offerta_id">Offerta</label>
 <select id="offerta_id"></select>
 </div> <div id="fieldOpzione" class="field hidden">
@@ -1074,15 +1090,13 @@ Reload Exchange
 </select>
 </div>
 </div>
-</section> <section id="step3Section" class="card panel hidden">
-<h2>Upload Documenti</h2>
+</section> <section id="stepDocumentiSection" class="card panel hidden">
+<h2>Upload Documenti Cliente</h2>
+<p class="hint" style="margin:0 0 10px;">Carica i documenti del cliente. Il contratto firmato (PDA) e' gia' stato caricato nello step 1.</p>
 <div class="grid">
 <div id="fieldDocumentoIdentita" class="field half">
 <label for="file_documento_identita">Documento identita *</label>
 <input id="file_documento_identita" type="file" accept="application/pdf" multiple>
-</div> <div id="fieldContrattoPdf" class="field half">
-<label for="file_contratto_pdf">Contratto PDF *</label>
-<input id="file_contratto_pdf" type="file" accept="application/pdf">
 </div> <div id="fieldFileMnp" class="field half hidden">
 <label for="file_copia_sim_mnp">Copia SIM MNP</label>
 <input id="file_copia_sim_mnp" type="file" accept="application/pdf" multiple>
@@ -1092,13 +1106,18 @@ Reload Exchange
 </div>
 </div>
 </section> <section id="wizardActions" class="card panel">
-<div id="step1Actions" class="wizard-actions">
-<button id="btnStep1Next" type="button">Avanti</button>
-</div> <div id="step2Actions" class="wizard-actions hidden">
-<button id="btnStep2Back" type="button" class="ghost">Indietro</button>
-<button id="btnStep2Next" type="button">Avanti</button>
-</div> <div id="step3Actions" class="wizard-actions hidden">
-<button id="btnStep3Back" type="button" class="ghost">Indietro</button>
+<div id="actionsCategoria" class="wizard-actions">
+<button id="btnCategoriaNoPdaNext" type="button" class="hidden">Avanti</button>
+<button id="btnPdaAnalyzeAi" type="button" class="hidden">Analizza con AI</button>
+<button id="btnPdaSkipAi" type="button" class="ghost hidden">Continua senza AI</button>
+</div> <div id="actionsAnagrafica" class="wizard-actions hidden">
+<button id="btnAnagraficaBack" type="button" class="ghost">Indietro</button>
+<button id="btnAnagraficaNext" type="button">Avanti</button>
+</div> <div id="actionsContratto" class="wizard-actions hidden">
+<button id="btnContrattoBack" type="button" class="ghost">Indietro</button>
+<button id="btnContrattoNext" type="button">Avanti</button>
+</div> <div id="actionsDocumenti" class="wizard-actions hidden">
+<button id="btnDocumentiBack" type="button" class="ghost">Indietro</button>
 <div class="wizard-actions-right">
 <button id="btnAddToCart" type="button" class="cta-secondary">Aggiungi un altro contratto</button>
 <button id="btnOpenCarrello" type="button" class="cta-primary">Vai al carrello</button>
@@ -1162,8 +1181,12 @@ Reload Exchange
  let praticaFiles = {
  documento_identita: []
  };
+ // Categorie che richiedono il PDA (Pratica di Adesione PDF) come contratto firmato.
+ // Per Energia, Allarmi, Assicurazioni nessun PDA e nessun PDF contratto.
+ const CATEGORIE_PDA = ['Mobile', 'Customer Base', 'Fisso'];
  const uiState = {
  view: 'wizard',
+ // 1 = Categoria+PDA, 2 = Anagrafica, 3 = Dati Contratto, 4 = Documenti
  step: 1
  };
  const runtimeState = {
@@ -1180,13 +1203,17 @@ Reload Exchange
  lastCompletedCfPiva: '',
  lastRequestedCfPiva: ''
  },
- identificationCompleted: false,
  clusterLocked: false,
- identifierType: null,
  turistaDefaults: null,
  draftSuspended: false,
  draftSaveTimer: null,
- restoreNeedsFileReselection: false
+ restoreNeedsFileReselection: false,
+ // Nuovo flusso: anagrafica gia' completata nella pratica corrente (multi-contratto)
+ anagraficaCompleted: false,
+ // UUID di sessione per gli upload PDA in staging (temp/<uuid>/...). Generato lazy.
+ tempSessionId: null,
+ // PDA correntemente in staging per il contratto in compilazione (path + nome file).
+ pendingPda: null
  };
  const DOC_TYPES = {
  DOCUMENTO_IDENTITA: 'documento_identita',
@@ -1217,21 +1244,24 @@ Reload Exchange
  cartClienteBox: document.getElementById('cartClienteBox'),
  labelOfferta: document.getElementById('labelOfferta'),
  stepper: document.getElementById('stepper'),
- identifySection: document.getElementById('identifySection'),
- initialIdentifier: document.getElementById('initial_identifier'),
- btnInitialContinue: document.getElementById('btnInitialContinue'),
 
  cluster: document.getElementById('cluster_cliente'),
  cfPiva: document.getElementById('cf_piva'),
  ragioneSociale: document.getElementById('ragione_sociale'),
  nomeReferente: document.getElementById('nome_referente'),
  cellulare: document.getElementById('cellulare'),
+ email: document.getElementById('email'),
  provincia: document.getElementById('provincia'),
  comune: document.getElementById('comune'),
  via: document.getElementById('via'),
  civico: document.getElementById('civico'),
  originePratica: document.getElementById('origine_pratica'),
  operatoreId: document.getElementById('operatore_id'),
+ anagraficaOcrBanner: document.getElementById('anagraficaOcrBanner'),
+ pdaUploadZone: document.getElementById('pdaUploadZone'),
+ filePda: document.getElementById('file_pda'),
+ pdaSelectedInfo: document.getElementById('pdaSelectedInfo'),
+ pdaOcrStatus: document.getElementById('pdaOcrStatus'),
 
  categoria: document.getElementById('categoria_id'),
  offerta: document.getElementById('offerta_id'),
@@ -1279,11 +1309,9 @@ Reload Exchange
  fieldKolme: document.getElementById('fieldKolme'),
 
  fileDocumentoIdentita: document.getElementById('file_documento_identita'),
- fileContrattoPdf: document.getElementById('file_contratto_pdf'),
  fileCopiaSimMnp: document.getElementById('file_copia_sim_mnp'),
  fileCopiaBolletta: document.getElementById('file_copia_bolletta'),
  fieldDocumentoIdentita: document.getElementById('fieldDocumentoIdentita'),
- fieldContrattoPdf: document.getElementById('fieldContrattoPdf'),
  fieldFileMnp: document.getElementById('fieldFileMnp'),
  fieldFileBolletta: document.getElementById('fieldFileBolletta'),
 
@@ -1293,23 +1321,35 @@ Reload Exchange
  btnOpenCarrelloTop: document.getElementById('btnOpenCarrelloTop'),
  btnBackToStep2: document.getElementById('btnBackToStep2'),
  btnNuovaPratica: document.getElementById('btnNuovaPratica'),
- btnStep1Next: document.getElementById('btnStep1Next'),
- btnStep2Back: document.getElementById('btnStep2Back'),
- btnStep2Next: document.getElementById('btnStep2Next'),
- btnStep3Back: document.getElementById('btnStep3Back'),
+ // Nuove azioni step 1 (categoria + PDA)
+ btnCategoriaNoPdaNext: document.getElementById('btnCategoriaNoPdaNext'),
+ btnPdaAnalyzeAi: document.getElementById('btnPdaAnalyzeAi'),
+ btnPdaSkipAi: document.getElementById('btnPdaSkipAi'),
+ // Step 2 (anagrafica)
+ btnAnagraficaBack: document.getElementById('btnAnagraficaBack'),
+ btnAnagraficaNext: document.getElementById('btnAnagraficaNext'),
+ // Step 3 (dati contratto)
+ btnContrattoBack: document.getElementById('btnContrattoBack'),
+ btnContrattoNext: document.getElementById('btnContrattoNext'),
+ // Step 4 (documenti)
+ btnDocumentiBack: document.getElementById('btnDocumentiBack'),
  btnSvuotaCarrello: document.getElementById('btnSvuotaCarrello'),
  btnInviaPratica: document.getElementById('btnInviaPratica'),
  carrelloSection: document.getElementById('carrelloSection'),
- step1Section: document.getElementById('step1Section'),
- step2Section: document.getElementById('step2Section'),
- step3Section: document.getElementById('step3Section'),
+ // Sezioni step (nuovi ID semantici)
+ sectionCategoria: document.getElementById('stepCategoriaSection'),
+ sectionAnagrafica: document.getElementById('stepAnagraficaSection'),
+ sectionContratto: document.getElementById('stepContrattoSection'),
+ sectionDocumenti: document.getElementById('stepDocumentiSection'),
  wizardActions: document.getElementById('wizardActions'),
- step1Actions: document.getElementById('step1Actions'),
- step2Actions: document.getElementById('step2Actions'),
- step3Actions: document.getElementById('step3Actions'),
+ actionsCategoria: document.getElementById('actionsCategoria'),
+ actionsAnagrafica: document.getElementById('actionsAnagrafica'),
+ actionsContratto: document.getElementById('actionsContratto'),
+ actionsDocumenti: document.getElementById('actionsDocumenti'),
  stepItem1: document.getElementById('stepItem1'),
  stepItem2: document.getElementById('stepItem2'),
  stepItem3: document.getElementById('stepItem3'),
+ stepItem4: document.getElementById('stepItem4'),
  loadingOverlay: document.getElementById('loadingOverlay'),
  loadingSpinner: document.getElementById('loadingSpinner'),
  loadingIcon: document.getElementById('loadingIcon'),
@@ -1831,7 +1871,6 @@ Reload Exchange
  function initUploadBoxes() {
  const uploadConfig = [
  { input: refs.fileDocumentoIdentita, title: 'Documento identita', hint: 'Trascina i PDF qui o clicca per selezionare', icon: '', multiple: true },
- { input: refs.fileContrattoPdf, title: 'Contratto PDF *', hint: 'Trascina il PDF qui o clicca per selezionarlo', icon: '', multiple: false },
  { input: refs.fileCopiaSimMnp, title: 'Fotocopia SIM', hint: 'Trascina i PDF qui o clicca per selezionare', icon: '', multiple: true },
  { input: refs.fileCopiaBolletta, title: 'Copia bolletta', hint: 'Trascina i PDF qui o clicca per selezionare', icon: '', multiple: true }
  ];
@@ -1918,7 +1957,7 @@ Reload Exchange
  const mustHideIdentity = !requirements.documento_identita || (hasIdentity || hasContracts);
 
  refs.fieldDocumentoIdentita.classList.toggle('hidden', !needsIdentityReselection && mustHideIdentity);
- refs.fieldContrattoPdf.classList.toggle('hidden', !requirements.contratto);
+ // Il contratto PDF (PDA) non si carica piu' allo step 4: e' gestito in staging allo step 1.
  }
 
  function updateStep3ActionsLabels() {
@@ -2003,8 +2042,8 @@ Reload Exchange
  }
 
  function renderStepIndicator() {
- const currentStep = uiState.view === 'wizard' ? uiState.step : 3;
- const items = [refs.stepItem1, refs.stepItem2, refs.stepItem3];
+ const currentStep = uiState.view === 'wizard' ? uiState.step : 4;
+ const items = [refs.stepItem1, refs.stepItem2, refs.stepItem3, refs.stepItem4];
 
  items.forEach((item, index) => {
  const stepNumber = index + 1;
@@ -2015,44 +2054,56 @@ Reload Exchange
  });
  }
 
- function renderWizardLayout() {
- const showInitialIdentification = !runtimeState.identificationCompleted;
- refs.identifySection.classList.toggle('hidden', !showInitialIdentification);
- refs.stepper.classList.toggle('hidden', showInitialIdentification);
-
- if (showInitialIdentification) {
- refs.carrelloSection.classList.add('hidden');
- refs.step1Section.classList.add('hidden');
- refs.step2Section.classList.add('hidden');
- refs.step3Section.classList.add('hidden');
- refs.wizardActions.classList.add('hidden');
- refs.deviceSection.classList.add('hidden');
- refs.step1Actions.classList.add('hidden');
- refs.step2Actions.classList.add('hidden');
- refs.step3Actions.classList.add('hidden');
- return;
+ // Categoria del contratto in compilazione: serve a decidere se mostrare l'upload PDA allo step 1
+ // e se l'anagrafica e' gia' nota nel multi-contratto (skip step 2).
+ function categoriaNeedsPda(categoriaNome) {
+ const target = normalizeText(categoriaNome);
+ if (!target) return false;
+ return CATEGORIE_PDA.some((c) => normalizeText(c) === target);
  }
 
+ function isCurrentCategoriaPda() {
+ const cat = getSelectedCategoria();
+ return cat ? categoriaNeedsPda(cat.nome) : false;
+ }
+
+ function renderWizardLayout() {
  const inWizard = uiState.view === 'wizard';
- let step = Math.max(1, Math.min(3, Number(uiState.step) || 1));
- if (isTuristaCluster(refs.cluster.value) && step === 2) {
+ // Step max 4. Per Turista lo step 3 (dati contratto) e' saltato: defaults applicati.
+ let step = Math.max(1, Math.min(4, Number(uiState.step) || 1));
+ const turista = isTuristaCluster(refs.cluster.value);
+ if (turista && step === 3) {
+ step = 4;
+ }
+ // Multi-contratto: se l'anagrafica e' gia' completata in questa pratica, salta lo step 2.
+ if (runtimeState.anagraficaCompleted && step === 2) {
  step = 3;
+ if (turista) step = 4;
  }
  uiState.step = step;
 
  refs.carrelloSection.classList.toggle('hidden', inWizard);
- refs.step1Section.classList.toggle('hidden', !inWizard || step !== 1);
- refs.step2Section.classList.toggle('hidden', !inWizard || step !== 2 || isTuristaCluster(refs.cluster.value));
- refs.step3Section.classList.toggle('hidden', !inWizard || step !== 3);
- refs.wizardActions.classList.toggle('hidden', !inWizard);
- refs.step1Actions.classList.toggle('hidden', !inWizard || step !== 1);
- refs.step2Actions.classList.toggle('hidden', !inWizard || step !== 2 || isTuristaCluster(refs.cluster.value));
- refs.step3Actions.classList.toggle('hidden', !inWizard || step !== 3);
 
- if (!inWizard || step !== 2) {
+ refs.sectionCategoria.classList.toggle('hidden', !inWizard || step !== 1);
+ refs.sectionAnagrafica.classList.toggle('hidden', !inWizard || step !== 2);
+ refs.sectionContratto.classList.toggle('hidden', !inWizard || step !== 3 || turista);
+ refs.sectionDocumenti.classList.toggle('hidden', !inWizard || step !== 4);
+
+ refs.wizardActions.classList.toggle('hidden', !inWizard);
+ refs.actionsCategoria.classList.toggle('hidden', !inWizard || step !== 1);
+ refs.actionsAnagrafica.classList.toggle('hidden', !inWizard || step !== 2);
+ refs.actionsContratto.classList.toggle('hidden', !inWizard || step !== 3 || turista);
+ refs.actionsDocumenti.classList.toggle('hidden', !inWizard || step !== 4);
+
+ if (!inWizard || step !== 3) {
  refs.deviceSection.classList.add('hidden');
  } else {
  renderDynamicSections();
+ }
+
+ // Visibilita' pulsanti step 1 (categoria + PDA) basata su categoria selezionata
+ if (inWizard && step === 1) {
+ renderCategoriaActions();
  }
 
  applyClusterFieldVisibility();
@@ -2060,11 +2111,41 @@ Reload Exchange
  updateUploadVisibility();
  }
 
+ // Mostra/nasconde il drop-zone PDA e i 3 bottoni in base alla categoria selezionata.
+ function renderCategoriaActions() {
+ const cat = getSelectedCategoria();
+ const needsPda = cat ? categoriaNeedsPda(cat.nome) : false;
+ const hasCategoria = !!cat;
+
+ refs.pdaUploadZone.classList.toggle('hidden', !needsPda);
+
+ // Per categorie SENZA PDA: solo bottone "Avanti".
+ // Per categorie CON PDA: due bottoni "Analizza con AI" / "Continua senza AI".
+ refs.btnCategoriaNoPdaNext.classList.toggle('hidden', !hasCategoria || needsPda);
+ refs.btnPdaAnalyzeAi.classList.toggle('hidden', !hasCategoria || !needsPda);
+ refs.btnPdaSkipAi.classList.toggle('hidden', !hasCategoria || !needsPda);
+
+ // Visualizza nome del file PDA selezionato (o pending dallo state, es. dopo restore parziale)
+ const pdaFile = refs.filePda ? (refs.filePda.files && refs.filePda.files[0]) : null;
+ if (refs.pdaSelectedInfo) {
+ if (pdaFile) {
+ refs.pdaSelectedInfo.textContent = 'File selezionato: ' + pdaFile.name + ' (' + formatFileSize(pdaFile.size) + ')';
+ } else if (runtimeState.pendingPda?.file_name) {
+ refs.pdaSelectedInfo.textContent = 'PDA gia\' caricato in staging: ' + runtimeState.pendingPda.file_name;
+ } else {
+ refs.pdaSelectedInfo.textContent = 'Nessun file selezionato';
+ }
+ }
+ }
+
  function goToStep(step) {
  uiState.view = 'wizard';
- let nextStep = Math.max(1, Math.min(3, Number(step) || 1));
- if (isTuristaCluster(refs.cluster.value) && nextStep === 2) {
+ let nextStep = Math.max(1, Math.min(4, Number(step) || 1));
+ const turista = isTuristaCluster(refs.cluster.value);
+ if (turista && nextStep === 3) nextStep = 4;
+ if (runtimeState.anagraficaCompleted && nextStep === 2) {
  nextStep = 3;
+ if (turista) nextStep = 4;
  }
  uiState.step = nextStep;
  renderDynamicSections();
@@ -2342,7 +2423,6 @@ Reload Exchange
  // POD/PDR (Energia) e prezzo_fisso (Fisso) non devono persistere fra un contratto e l'altro nello stesso carrello
  if (refs.podPdr) refs.podPdr.value = '';
  if (refs.numeroContrattoEnergia) delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
- clearInputFile(refs.fileContrattoPdf);
  clearInputFile(refs.fileCopiaSimMnp);
  clearInputFile(refs.fileCopiaBolletta);
  refs.fieldFinanziaria.classList.add('hidden');
@@ -2357,19 +2437,20 @@ Reload Exchange
  runtimeState.search.lastRequestedCfPiva = '';
  runtimeState.search.lastCompletedCfPiva = '';
  runtimeState.restoreNeedsFileReselection = false;
- runtimeState.identificationCompleted = false;
  runtimeState.clusterLocked = false;
- runtimeState.identifierType = null;
  runtimeState.turistaDefaults = null;
+ runtimeState.anagraficaCompleted = false;
+ runtimeState.tempSessionId = null;
+ runtimeState.pendingPda = null;
 
  praticaFiles.documento_identita = null;
- refs.initialIdentifier.value = '';
 
  refs.cfPiva.value = '';
  setClusterValue('', { lock: false });
  refs.ragioneSociale.value = '';
  refs.nomeReferente.value = '';
  refs.cellulare.value = '';
+ if (refs.email) refs.email.value = '';
  refs.provincia.value = '';
  refs.comune.value = '';
  refs.via.value = '';
@@ -2378,11 +2459,13 @@ Reload Exchange
  refs.operatoreId.value = window.__operatoreProfilo?.id || '';
 
  refs.categoria.value = '';
+ if (refs.filePda) refs.filePda.value = '';
+ if (refs.anagraficaOcrBanner) refs.anagraficaOcrBanner.classList.add('hidden');
+ if (refs.pdaOcrStatus) refs.pdaOcrStatus.style.display = 'none';
 
  resetContractFields();
 
  clearInputFile(refs.fileDocumentoIdentita);
- clearInputFile(refs.fileContrattoPdf);
  clearInputFile(refs.fileCopiaSimMnp);
  clearInputFile(refs.fileCopiaBolletta);
 
@@ -2472,16 +2555,16 @@ Reload Exchange
 
  refs.fieldFileMnp.classList.toggle('hidden', !mnpVisible);
  refs.fieldFileBolletta.classList.toggle('hidden', !bollettaVisible);
- refs.fieldContrattoPdf.classList.toggle('hidden', !requirements.contratto);
 
- if (!requirements.contratto) clearInputFile(refs.fileContrattoPdf);
  if (!mnpVisible) clearInputFiles(refs.fileCopiaSimMnp);
  if (!bollettaVisible) clearInputFiles(refs.fileCopiaBolletta);
 
- if (uiState.view !== 'wizard' || uiState.step !== 2) {
+ // deviceSection visibile solo allo step 3 (Dati Contratto)
+ if (uiState.view !== 'wizard' || uiState.step !== 3) {
  refs.deviceSection.classList.add('hidden');
  }
- if (uiState.view !== 'wizard' || uiState.step !== 3) {
+ // documenti aggiuntivi visibili solo allo step 4
+ if (uiState.view !== 'wizard' || uiState.step !== 4) {
  refs.fieldFileMnp.classList.add('hidden');
  refs.fieldFileBolletta.classList.add('hidden');
  }
@@ -2500,6 +2583,7 @@ Reload Exchange
  ragione_sociale: refs.ragioneSociale.value.trim(),
  nome_referente: refs.nomeReferente.value.trim() || null,
  cellulare: refs.cellulare.value.trim() || null,
+ email: refs.email ? (refs.email.value.trim().toLowerCase() || null) : null,
  provincia: turista ? null : (refs.provincia.value.trim() || null),
  comune: turista ? null : (refs.comune.value.trim() || null),
  via: turista ? null : (refs.via.value.trim() || null),
@@ -2522,6 +2606,17 @@ Reload Exchange
  cliente.cluster !== CLUSTERS.TURISTA
  ) {
  throw new Error('Cluster cliente non valido');
+ }
+
+ // Email e cellulare obbligatori (allineato al backend allowStrictContacts)
+ if (!cliente.cellulare) {
+ throw new Error('Compila il campo Cellulare');
+ }
+ if (!cliente.email) {
+ throw new Error('Compila il campo Email');
+ }
+ if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.email)) {
+ throw new Error('Email non valida (es. cliente@example.com)');
  }
  }
 
@@ -2640,13 +2735,17 @@ Reload Exchange
  }
  }
 
- const contrattoFile = selectedFiles.contratto || null;
  const mnpFiles = normalizeFilesArray(selectedFiles.sim_mnp);
  const bollettaFiles = normalizeFilesArray(selectedFiles.bolletta);
 
+ // Il PDA (contratto firmato) e' stato caricato in staging allo step 1.
+ // Validiamo che, per categorie PDA, ci sia un pendingPda o un path gia' associato.
  if (!skipFileValidation) {
- if (documentRequirements.contratto && !contrattoFile) {
- throw new Error('Carica il PDF contratto per questo contratto');
+ if (isCurrentCategoriaPda()) {
+ const hasPdaPath = !!(runtimeState.pendingPda && runtimeState.pendingPda.storage_path);
+ if (!hasPdaPath) {
+ throw new Error('Carica il PDA (contratto PDF) allo step 1 prima di procedere');
+ }
  }
 
  if (documentRequirements.copia_sim_mnp && mnpFiles.length === 0) {
@@ -2700,6 +2799,9 @@ Reload Exchange
  reload_exchange: (isCategory(categoriaNome, 'Mobile') || isCategory(categoriaNome, 'Customer Base'))
    ? !!(refs.reloadExchange && refs.reloadExchange.checked)
    : false,
+ // PDA gia' in staging (path temp/<session>/...) per categorie PDA. Promosso lato server al submit pratica.
+ pda_temp_path: (runtimeState.pendingPda && runtimeState.pendingPda.storage_path) || null,
+ pda_file_name: (runtimeState.pendingPda && runtimeState.pendingPda.file_name) || null,
  score: {
  punteggio_gara: Number(punteggioGara.toFixed(2)),
  punteggio_extra_gara: Number(punteggioExtra.toFixed(2))
@@ -2711,13 +2813,12 @@ Reload Exchange
  reload: reload?.nome || null
  },
  files: {
- contratto: contrattoFile,
  sim_mnp: mnpFiles,
  bolletta: bollettaFiles
  },
  flags: {
  documento_identita_required: documentRequirements.documento_identita,
- contratto_required: documentRequirements.contratto,
+ contratto_required: isCurrentCategoriaPda(),
  sim_mnp_required: documentRequirements.copia_sim_mnp,
  bolletta_required: documentRequirements.copia_bolletta
  }
@@ -2760,10 +2861,8 @@ Reload Exchange
  refs.cartList.innerHTML = state.cart.contratti
  .map((item, idx) => {
  const docs = [];
- if (item.files?.contratto) {
- docs.push(`contratto: ${item.files.contratto.name}`);
- } else if (item.file_meta?.contratto?.name) {
- docs.push(`contratto: ${item.file_meta.contratto.name} (da riselezionare)`);
+ if (item.pda_file_name) {
+ docs.push(`contratto (PDA): ${item.pda_file_name}`);
  }
  const simFiles = Array.isArray(item.files?.sim_mnp) ? item.files.sim_mnp : [];
  const bollettaFiles = Array.isArray(item.files?.bolletta) ? item.files.bolletta : [];
@@ -2892,92 +2991,9 @@ Reload Exchange
  markTechnicalConnected('Connesso');
  }
 
- function detectIdentifierKind(value) {
- const normalized = normalizeCfPiva(value);
- if (!normalized) return null;
- if (isItalianFiscalCode(normalized)) return'cf';
- if (isItalianVatNumber(normalized)) return'piva';
- return'passaporto';
- }
-
- async function startIdentifiedAnagraficaFlow(cfPiva, cluster, options = {}) {
- const normalizedValue = normalizeCfPiva(cfPiva);
- const normalizedCluster = normalizeClusterValue(cluster);
-
- if (!normalizedValue) {
- throw new Error('Inserisci codice fiscale, partita IVA o passaporto');
- }
-
- if (!normalizedCluster) {
- throw new Error('Cluster non valido per il flusso iniziale');
- }
-
- if (normalizedCluster === CLUSTERS.TURISTA) {
- getTuristaDefaultContractSelection();
- }
-
- runtimeState.identificationCompleted = true;
- runtimeState.identifierType = options.identifierType || null;
- refs.initialIdentifier.value = normalizedValue;
- refs.cfPiva.value = normalizedValue;
- setClusterValue(normalizedCluster, { lock: normalizedCluster === CLUSTERS.TURISTA });
- applyClusterFieldVisibility();
- uiState.view = 'wizard';
- uiState.step = 1;
- renderWizardLayout();
- queueDraftSave();
-
- await cercaCliente({
- force: true,
- cfPiva: normalizedValue,
- presetCluster: normalizedCluster,
- lockCluster: normalizedCluster === CLUSTERS.TURISTA
- });
- }
-
- async function handleInitialIdentifierContinue() {
- const normalizedValue = normalizeCfPiva(refs.initialIdentifier.value);
-
- if (!normalizedValue) {
- showUserError('Inserisci codice fiscale, partita IVA o passaporto', 'Identificazione cliente');
- return;
- }
-
- refs.initialIdentifier.value = normalizedValue;
- const kind = detectIdentifierKind(normalizedValue);
-
- if (kind === 'cf') {
- await startIdentifiedAnagraficaFlow(normalizedValue, CLUSTERS.CONSUMER, { identifierType: 'cf' });
- return;
- }
-
- if (kind === 'piva') {
- await startIdentifiedAnagraficaFlow(normalizedValue, CLUSTERS.BUSINESS, { identifierType: 'piva' });
- return;
- }
-
- showConfirmOverlay({
- title: 'Hai inserito i seguenti valori:',
- text: `${normalizedValue}\nVuoi correggerlo oppure confermi essere un passaporto?`,
- cancelLabel: 'Correggi',
- confirmLabel: 'Passaporto',
- onConfirm: async () => {
- try {
- await startIdentifiedAnagraficaFlow(normalizedValue, CLUSTERS.TURISTA, { identifierType: 'passaporto' });
- } catch (error) {
- showUserError(error.message, 'Identificazione cliente');
- }
- },
- onCancel: () => {
- refs.initialIdentifier.focus();
- }
- });
- }
-
  async function cercaCliente(options = {}) {
  const requestedCfPiva = normalizeCfPiva(options.cfPiva || refs.cfPiva.value);
  refs.cfPiva.value = requestedCfPiva;
- refs.initialIdentifier.value = requestedCfPiva;
  const cfPiva = requestedCfPiva;
  const force = Boolean(options.force);
  const presetCluster = normalizeClusterValue(options.presetCluster || '');
@@ -3037,6 +3053,7 @@ Reload Exchange
  refs.ragioneSociale.value = found.ragione_sociale || refs.ragioneSociale.value;
  refs.nomeReferente.value = found.nome_referente || refs.nomeReferente.value;
  refs.cellulare.value = found.cellulare || refs.cellulare.value;
+ if (refs.email) refs.email.value = found.email || refs.email.value;
  refs.provincia.value = found.provincia || refs.provincia.value;
  refs.comune.value = found.comune || refs.comune.value;
  refs.via.value = found.via || refs.via.value;
@@ -3068,25 +3085,16 @@ Reload Exchange
  validateClienteData(cliente);
 
  const selectedContractFiles = {
- contratto: getInputFile(refs.fileContrattoPdf),
  sim_mnp: getInputFiles(refs.fileCopiaSimMnp),
  bolletta: getInputFiles(refs.fileCopiaBolletta)
  };
- const currentDocumentRequirements = getCurrentDocumentRequirements();
 
  const selectedDocumentoIdentita = getInputFiles(refs.fileDocumentoIdentita);
-
- if (currentDocumentRequirements.contratto && !selectedContractFiles.contratto) {
- throw new Error('Carica il PDF contratto per questo contratto');
- }
 
  if (selectedDocumentoIdentita.length> 0) {
  selectedDocumentoIdentita.forEach((file, idx) => {
  assertValidFile(file, `Documento identita pratica ${idx + 1}`);
  });
- }
- if (selectedContractFiles.contratto) {
- assertValidFile(selectedContractFiles.contratto, 'PDF contratto');
  }
  if (selectedContractFiles.sim_mnp.length> 0) {
  selectedContractFiles.sim_mnp.forEach((file, idx) => {
@@ -3129,7 +3137,14 @@ Reload Exchange
  setMessage('Contratto aggiunto al carrello', 'ok');
  }
 
+ // Aggiunta riuscita: l'anagrafica e' ora completata per la pratica corrente
+ // (il prossimo contratto saltera' lo step 2).
+ runtimeState.anagraficaCompleted = true;
  runtimeState.editingTempId = null;
+ // Pulisci il PDA pending per il prossimo contratto
+ runtimeState.pendingPda = null;
+ if (refs.filePda) refs.filePda.value = '';
+
  updateCartClienteSnapshot();
  renderCarrello();
  updateStep3ActionsLabels();
@@ -3142,12 +3157,14 @@ Reload Exchange
  if (goToCart) {
  openCartView();
  } else {
- if (isTuristaCluster(refs.cluster.value)) {
- applyTuristaContractDefaults();
- goToStep(3);
- } else {
- goToStep(2);
- }
+ // Multi-contratto: torna allo step 1 (Categoria + PDA) per il prossimo contratto.
+ // L'anagrafica e' gia' completata, quindi goToStep gestira' lo skip automatico dello step 2.
+ refs.categoria.value = '';
+ renderOfferte();
+ renderOpzioni();
+ renderReload();
+ renderDynamicSections();
+ goToStep(1);
  }
  } catch (error) {
  showUserError(error.message, 'Verifica contratto');
@@ -3177,7 +3194,16 @@ Reload Exchange
  refs.kolme.value = item.kolme === null ? '' : (item.kolme ? 'true' : 'false');
  renderDynamicSections();
 
- setInputFile(refs.fileContrattoPdf, item.files?.contratto || null);
+ // Carica anche il riferimento al PDA gia' in staging per il contratto in modifica
+ if (item.pda_temp_path) {
+ runtimeState.pendingPda = {
+ storage_path: item.pda_temp_path,
+ file_name: item.pda_file_name || 'PDA caricato'
+ };
+ } else {
+ runtimeState.pendingPda = null;
+ }
+
  setInputFiles(refs.fileCopiaSimMnp, item.files?.sim_mnp || []);
  setInputFiles(refs.fileCopiaBolletta, item.files?.bolletta || []);
  if (Array.isArray(praticaFiles.documento_identita) && praticaFiles.documento_identita.length> 0) {
@@ -3193,7 +3219,9 @@ Reload Exchange
  runtimeState.editingTempId = tempId;
  updateStep3ActionsLabels();
  loadCartContractInForm(item);
- goToStep(2);
+ // Modifica contratto: torna allo step 1 (Categoria + PDA). L'anagrafica e' nota,
+ // quindi goToStep saltera' lo step 2 (anagraficaCompleted=true gia' settato).
+ goToStep(1);
  };
 
  window.removeCartContract = function (tempId) {
@@ -3228,9 +3256,12 @@ Reload Exchange
 
  state.cart.contratti = [];
  runtimeState.editingTempId = null;
+ runtimeState.anagraficaCompleted = false;
+ runtimeState.pendingPda = null;
  praticaFiles.documento_identita = null;
  runtimeState.restoreNeedsFileReselection = false;
  clearInputFile(refs.fileDocumentoIdentita);
+ if (refs.filePda) refs.filePda.value = '';
  resetContractFields();
  renderCarrello();
  updateUploadVisibility();
@@ -3268,8 +3299,8 @@ Reload Exchange
  }
 
  state.cart.contratti.forEach((item, idx) => {
- if (item.flags?.contratto_required && (!item.files || !item.files.contratto)) {
- throw new Error(`Contratto ${idx + 1}: PDF contratto mancante`);
+ if (item.flags?.contratto_required && !item.pda_temp_path) {
+ throw new Error(`Contratto ${idx + 1}: PDA (contratto PDF) mancante. Carica il PDA allo step 1.`);
  }
  });
 
@@ -3302,7 +3333,9 @@ Reload Exchange
  pod_pdr: item.pod_pdr || null,
  numero_contratto_energia: item.numero_contratto_energia || null,
  prezzo_fisso: (item.prezzo_fisso !== null && item.prezzo_fisso !== undefined) ? item.prezzo_fisso : null,
- reload_exchange: item.reload_exchange === true
+ reload_exchange: item.reload_exchange === true,
+ // PDA in staging: il backend promuovera' temp/<sess>/<file> a <cartella_pratica>/contratto_<categoria>.pdf
+ pda_temp_path: item.pda_temp_path || null
  };
  });
 
@@ -3403,50 +3436,10 @@ Reload Exchange
  throw new Error(`Contratto ${idx + 1}: mapping temp_id non trovato in risposta server`);
  }
 
- if (cartItem.files.contratto) {
- assertValidFile(cartItem.files.contratto, `Contratto ${idx + 1} PDF contratto`);
- const contractFileName = getProgressiveContractFileName(
- { ...cartItem, categoria_snapshot: categoriaSnapshot },
- state.cart.contratti
- );
- const contractDebug = {
- tipo_documento: 'contratto',
- contratto_id: created.contratto_id,
- fileName: cartItem.files.contratto.name,
- fileSize: cartItem.files.contratto.size,
- fileType: cartItem.files.contratto.type,
- pratica_id: createResult.pratica_id,
- anagrafica_id: createResult.anagrafica_id,
- storage_base_path: createResult.storage_base_path,
- categoria_snapshot: categoriaSnapshot,
- file_name: contractFileName
- };
- uploadDebug.push(contractDebug);
-
- setMessage(`Upload contratto PDF ${idx + 1}/${state.cart.contratti.length}...`, 'info');
- updateLoadingOverlay(
- 'Caricamento in corso',
- `Upload contratto ${idx + 1} di ${state.cart.contratti.length}...`
- );
- const result = await uploadDocumentoOrTechnicalError({
- file: cartItem.files.contratto,
- pratica_id: createResult.pratica_id,
- contratto_id: created.contratto_id,
- anagrafica_id: createResult.anagrafica_id,
- tipo_documento: 'contratto',
- categoria_snapshot: categoriaSnapshot,
- file_name: contractFileName,
- storage_base_path: createResult.storage_base_path,
- nome_cartella_storage: createResult.nome_cartella_storage
- }, `Errore upload PDF contratto ${idx + 1}`);
-
- uploadResults.push({
- tipo_documento: 'contratto',
- contratto_id: created.contratto_id,
- file_name: contractFileName,
- result
- });
- }
+ // NB: il PDA (contratto firmato) e' gia' stato caricato in staging allo step 1.
+ // Il backend `crea-vendita-pratica-carrello` ha promosso il file da temp/<sess>/ alla
+ // cartella definitiva della pratica e creato il record vendita_documenti.
+ // Qui ci limitiamo a propagare eventuali warning di promozione (createResult.pda_warnings).
 
  const simFiles = Array.isArray(cartItem.files.sim_mnp) ? cartItem.files.sim_mnp : [];
  for (let simIndex = 0; simIndex< simFiles.length; simIndex += 1) {
@@ -3596,10 +3589,15 @@ Reload Exchange
  refs.opzione.value = '';
  refs.reload.value = '';
  refs.switchSim.value = '';
+ // Cambio categoria allo step 1: l'eventuale PDA gia' caricato non e' piu' valido se
+ // si cambia da categoria PDA -> non PDA (o viceversa).
+ if (refs.filePda) refs.filePda.value = '';
+ runtimeState.pendingPda = null;
  renderOfferte();
  renderOpzioni();
  renderReload();
  renderDynamicSections();
+ renderCategoriaActions();
  });
 
  refs.offerta.addEventListener('change', () => {
@@ -3634,21 +3632,20 @@ Reload Exchange
  function hasUnsavedWork() {
  if (runtimeState.isSubmitting) return true;
  if (runtimeState.editingTempId) return true;
- if (runtimeState.identificationCompleted) return true;
+ if (runtimeState.anagraficaCompleted) return true;
+ if (runtimeState.pendingPda) return true;
  if (state.cart.contratti.length> 0) return true;
  if (Array.isArray(praticaFiles.documento_identita) && praticaFiles.documento_identita.length> 0) return true;
  if (getInputFiles(refs.fileDocumentoIdentita).length> 0) return true;
- if (getInputFile(refs.fileContrattoPdf)) return true;
  if (getInputFiles(refs.fileCopiaSimMnp).length> 0) return true;
  if (getInputFiles(refs.fileCopiaBolletta).length> 0) return true;
-
- if (String(refs.initialIdentifier.value || '').trim() !== '') return true;
 
  const hasClienteData = [
  refs.cfPiva.value,
  refs.ragioneSociale.value,
  refs.nomeReferente.value,
  refs.cellulare.value,
+ refs.email ? refs.email.value : '',
  refs.provincia.value,
  refs.comune.value,
  refs.via.value,
@@ -3657,6 +3654,7 @@ Reload Exchange
  ].some((value) => String(value || '').trim() !== '');
 
  if (hasClienteData) return true;
+ if (refs.categoria.value) return true;
  return hasUnsavedContractFields();
  }
 
@@ -3680,7 +3678,6 @@ Reload Exchange
  const currentSimMeta = getFileMetaArray(item?.files?.sim_mnp);
  const currentBollettaMeta = getFileMetaArray(item?.files?.bolletta);
  const fileMeta = {
- contratto: getFileMeta(item?.files?.contratto) || item?.file_meta?.contratto || null,
  sim_mnp: currentSimMeta.length> 0
  ? currentSimMeta
  : (Array.isArray(item?.file_meta?.sim_mnp) ? item.file_meta.sim_mnp : []),
@@ -3692,7 +3689,6 @@ Reload Exchange
  return {
  ...item,
  files: {
- contratto: null,
  sim_mnp: [],
  bolletta: []
  },
@@ -3727,20 +3723,20 @@ Reload Exchange
 
  function serializeDraftState() {
  return {
- version: 1,
+ version: 2,
  saved_at: new Date().toISOString(),
  ui: {
  view: uiState.view,
  step: uiState.step
  },
- entry: {
- completed: runtimeState.identificationCompleted,
- identifier_value: refs.initialIdentifier.value || refs.cfPiva.value || '',
- identifier_type: runtimeState.identifierType || null,
- cluster_locked: runtimeState.clusterLocked
+ multi_contract: {
+ anagrafica_completed: runtimeState.anagraficaCompleted,
+ temp_session_id: runtimeState.tempSessionId || null
  },
+ pending_pda: runtimeState.pendingPda ? { ...runtimeState.pendingPda } : null,
  editing_temp_id: runtimeState.editingTempId || null,
  restore_needs_file_reselection: runtimeState.restoreNeedsFileReselection,
+ cluster_locked: runtimeState.clusterLocked,
  cliente_form: getClienteFormData(),
  pratica: {
  origine_pratica: refs.originePratica.value || 'spontaneo',
@@ -3850,22 +3846,19 @@ Reload Exchange
 
  runtimeState.draftSuspended = true;
  try {
- runtimeState.identificationCompleted = Boolean(
- draft?.entry?.completed ||
- draft?.cliente_form?.cf_piva ||
- (Array.isArray(draft?.cart?.contratti) && draft.cart.contratti.length> 0)
- );
- runtimeState.identifierType = draft?.entry?.identifier_type || null;
- refs.initialIdentifier.value = normalizeCfPiva(draft?.entry?.identifier_value || draft?.cliente_form?.cf_piva || '');
+ runtimeState.anagraficaCompleted = Boolean(draft?.multi_contract?.anagrafica_completed);
+ runtimeState.tempSessionId = draft?.multi_contract?.temp_session_id || null;
+ runtimeState.pendingPda = draft?.pending_pda ? { ...draft.pending_pda } : null;
 
  const cliente = draft.cliente_form || {};
  refs.cfPiva.value = normalizeCfPiva(cliente.cf_piva || '');
  const restoredCluster = normalizeClusterValue(cliente.cluster);
- const lockCluster = Boolean(draft?.entry?.cluster_locked) || isTuristaCluster(restoredCluster);
+ const lockCluster = Boolean(draft?.cluster_locked) || isTuristaCluster(restoredCluster);
  setClusterValue(restoredCluster, { lock: lockCluster });
  refs.ragioneSociale.value = cliente.ragione_sociale || '';
  refs.nomeReferente.value = cliente.nome_referente || '';
  refs.cellulare.value = cliente.cellulare || '';
+ if (refs.email) refs.email.value = cliente.email || '';
  refs.provincia.value = cliente.provincia || '';
  refs.comune.value = cliente.comune || '';
  refs.via.value = cliente.via || '';
@@ -3879,12 +3872,10 @@ Reload Exchange
  state.cart.contratti = (draft.cart?.contratti || []).map((item) => ({
  ...item,
  files: {
- contratto: null,
  sim_mnp: [],
  bolletta: []
  },
  file_meta: {
- contratto: item?.file_meta?.contratto || null,
  sim_mnp: Array.isArray(item?.file_meta?.sim_mnp) ? item.file_meta.sim_mnp : [],
  bolletta: Array.isArray(item?.file_meta?.bolletta) ? item.file_meta.bolletta : []
  }
@@ -3906,14 +3897,13 @@ Reload Exchange
  const nextView = draft.ui?.view === 'cart' ? 'cart' : 'wizard';
  const nextStep = Number(draft.ui?.step || 1);
  uiState.view = nextView;
- uiState.step = Number.isFinite(nextStep) ? Math.max(1, Math.min(3, nextStep)) : 1;
+ uiState.step = Number.isFinite(nextStep) ? Math.max(1, Math.min(4, nextStep)) : 1;
 
  renderCarrello();
  updateStep3ActionsLabels();
  renderWizardLayout();
  updateUploadVisibility();
  clearInputFile(refs.fileDocumentoIdentita);
- clearInputFile(refs.fileContrattoPdf);
  clearInputFile(refs.fileCopiaSimMnp);
  clearInputFile(refs.fileCopiaBolletta);
  return true;
@@ -3923,25 +3913,25 @@ Reload Exchange
  }
 
 // Policy Mirox: il popup di "ripristino bozza" deve apparire SOLO se l'utente
- // ha realmente iniziato a lavorare sul contratto. Concretamente:
+ // ha realmente iniziato a lavorare sulla pratica. Concretamente:
  //   - aveva già almeno un contratto aggiunto al carrello, OPPURE
- //   - era almeno alla pagina 2 del wizard (step >= 2) E aveva fatto almeno una
- //     selezione in pagina 2 (categoria, offerta, opzione, reload, tipo
- //     attivazione, apri/chiudi, intestatario, switch sim, modalità pagamento,
- //     dispositivo associato, imei, fascia prezzo, tipo acquisto, finanziaria,
- //     kolme).
- // Se queste condizioni non sono soddisfatte, il draft viene scartato
- // silenziosamente: l'operatore non vedrà alcun popup all'apertura.
+ //   - aveva un PDA in staging (pendingPda), OPPURE
+ //   - aveva almeno completato anagrafica + categoria, OPPURE
+ //   - era almeno allo step 3 (dati contratto) con qualche selezione fatta
  function draftMeetsRestoreRequirements(draft) {
    if (!draft || typeof draft !== 'object') return false;
-   // Caso 1: carrello non vuoto → l'utente ha completato almeno una volta la pagina 2
+   // Caso 1: carrello non vuoto -> l'utente ha gia' aggiunto almeno un contratto
    const contrattiCount = Array.isArray(draft?.cart?.contratti) ? draft.cart.contratti.length : 0;
    if (contrattiCount > 0) return true;
-   // Caso 2: era nel wizard step 2 (o oltre) con almeno una selezione
+   // Caso 2: PDA gia' caricato in staging (vale la pena ripristinare)
+   if (draft?.pending_pda && draft.pending_pda.storage_path) return true;
+   // Caso 3: anagrafica gia' completata in questa pratica
+   if (draft?.multi_contract?.anagrafica_completed) return true;
+   // Caso 4: era almeno allo step 3 (dati contratto) con almeno una selezione
    const ui = draft.ui || {};
    const stepNum = Number(ui.step || 0);
-   const inStep2OrLater = ui.view === 'wizard' && stepNum >= 2;
-   if (!inStep2OrLater) return false;
+   const inStep3OrLater = ui.view === 'wizard' && stepNum >= 3;
+   if (!inStep3OrLater) return false;
    const cf = draft.contract_form || {};
    const hasAlmenoUnaSelezione = !!(
      cf.categoria_id || cf.offerta_id || cf.opzione_id || cf.reload_id ||
@@ -4000,28 +3990,98 @@ Reload Exchange
  event.returnValue = '';
  }
 
- refs.btnInitialContinue.addEventListener('click', async () => {
- try {
- await handleInitialIdentifierContinue();
- } catch (error) {
- showUserError(error.message, 'Identificazione cliente');
+ // ===== HELPER OCR + STAGING PDA =====
+
+ // Genera (lazy) e ritorna l'UUID v4 di sessione per gli upload PDA in staging.
+ function getOrCreateTempSessionId() {
+ if (runtimeState.tempSessionId) return runtimeState.tempSessionId;
+ // UUID v4 standard (crypto.randomUUID disponibile su tutti i browser moderni)
+ const id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+ ? crypto.randomUUID()
+ : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+ const r = Math.random() * 16 | 0;
+ const v = c === 'x' ? r : ((r & 0x3) | 0x8);
+ return v.toString(16);
+ });
+ runtimeState.tempSessionId = id;
+ return id;
  }
+
+ // Upload PDA in staging (bucket contratti-vendita, path temp/<session>/<filename>).
+ // Ritorna { storage_path, file_name } al successo, throw in caso di errore.
+ async function uploadPdaStaging(file) {
+ assertValidFile(file, 'PDA');
+ const tempSessionId = getOrCreateTempSessionId();
+ const formData = new FormData();
+ formData.append('file', file);
+ formData.append('temp_session_id', tempSessionId);
+ formData.append('tipo_documento', 'contratto');
+ // Forza il nome file (verra' rinominato in step di promozione)
+ formData.append('file_name', 'pda.pdf');
+ const data = await fetchJsonOrTechnicalError(
+ '/.netlify/functions/upload-vendita-documento',
+ { method: 'POST', body: formData },
+ 'Errore upload PDA in staging'
+ );
+ return { storage_path: data.storage_path, file_name: file.name };
+ }
+
+ // Chiama l'endpoint OCR PDA. Ritorna l'oggetto dati (campi null se OCR parziale).
+ // Throw in caso di errore "hard" (es. API down).
+ async function chiamaOcr(file) {
+ const formData = new FormData();
+ formData.append('file', file);
+ const data = await fetchJsonOrTechnicalError(
+ '/.netlify/functions/ocr-pda',
+ { method: 'POST', body: formData },
+ 'Errore OCR PDA'
+ );
+ return data.data || {};
+ }
+
+ // Pre-compila i campi anagrafica con risultati OCR. Mostra il banner "Dati AI".
+ function applyOcrToAnagrafica(ocrData) {
+ if (!ocrData || typeof ocrData !== 'object') return;
+ const mapping = {
+ cf_piva: refs.cfPiva,
+ ragione_sociale: refs.ragioneSociale,
+ nome_referente: refs.nomeReferente,
+ cellulare: refs.cellulare,
+ email: refs.email,
+ provincia: refs.provincia,
+ comune: refs.comune,
+ via: refs.via,
+ civico: refs.civico
+ };
+ let appliedAny = false;
+ Object.keys(mapping).forEach((key) => {
+ const el = mapping[key];
+ const v = ocrData[key];
+ if (!el) return;
+ if (v === null || v === undefined || v === '') return;
+ // Non sovrascrivere se l'utente ha gia' compilato il campo manualmente
+ if (el.value && String(el.value).trim() !== '') return;
+ el.value = key === 'cf_piva' ? normalizeCfPiva(v) : (key === 'email' ? String(v).toLowerCase() : String(v));
+ appliedAny = true;
  });
 
- refs.initialIdentifier.addEventListener('keydown', async (event) => {
- if (event.key !== 'Enter') return;
- event.preventDefault();
- try {
- await handleInitialIdentifierContinue();
- } catch (error) {
- showUserError(error.message, 'Identificazione cliente');
+ // Auto-detect cluster sulla base del CF/PIVA estratto dall'OCR.
+ const cfPivaVal = refs.cfPiva.value;
+ if (cfPivaVal && !refs.cluster.value) {
+ if (isItalianFiscalCode(cfPivaVal)) {
+ setClusterValue(CLUSTERS.CONSUMER, { lock: false });
+ } else if (isItalianVatNumber(cfPivaVal)) {
+ setClusterValue(CLUSTERS.BUSINESS, { lock: false });
  }
- });
+ applyClusterFieldVisibility();
+ }
 
- refs.initialIdentifier.addEventListener('input', () => {
- refs.initialIdentifier.value = normalizeCfPiva(refs.initialIdentifier.value);
- queueDraftSave();
- });
+ if (refs.anagraficaOcrBanner) {
+ refs.anagraficaOcrBanner.classList.toggle('hidden', !appliedAny);
+ }
+ }
+
+ // ===== EVENT HANDLERS =====
 
  refs.btnCercaCliente.addEventListener('click', async () => {
  try {
@@ -4035,8 +4095,20 @@ Reload Exchange
 
  refs.cfPiva.addEventListener('input', () => {
  refs.cfPiva.value = normalizeCfPiva(refs.cfPiva.value);
- refs.initialIdentifier.value = refs.cfPiva.value;
  queueDraftSave();
+ });
+
+ refs.cfPiva.addEventListener('blur', () => {
+ // Auto-detect cluster sulla base del CF/PIVA quando l'utente digita manualmente.
+ const v = normalizeCfPiva(refs.cfPiva.value);
+ if (!v || refs.cluster.value) return;
+ if (isItalianFiscalCode(v)) {
+ setClusterValue(CLUSTERS.CONSUMER, { lock: false });
+ applyClusterFieldVisibility();
+ } else if (isItalianVatNumber(v)) {
+ setClusterValue(CLUSTERS.BUSINESS, { lock: false });
+ applyClusterFieldVisibility();
+ }
  });
 
  refs.cfPiva.addEventListener('keydown', async (event) => {
@@ -4051,7 +4123,105 @@ Reload Exchange
  }
  });
 
- refs.btnStep1Next.addEventListener('click', () => {
+ // STEP 1: Categoria + PDA (file change listener)
+ if (refs.filePda) {
+ refs.filePda.addEventListener('change', () => {
+ renderCategoriaActions();
+ });
+ }
+
+ // Step 1 (categoria SENZA PDA): bottone "Avanti"
+ refs.btnCategoriaNoPdaNext.addEventListener('click', () => {
+ if (!getSelectedCategoria()) {
+ showUserError('Seleziona una categoria prima di continuare', 'Step 1');
+ return;
+ }
+ // Anagrafica gia' nota -> salta step 2
+ if (runtimeState.anagraficaCompleted) {
+ goToStep(3);
+ } else {
+ goToStep(2);
+ }
+ });
+
+ // Step 1 (categoria CON PDA): "Analizza con AI"
+ refs.btnPdaAnalyzeAi.addEventListener('click', async () => {
+ const file = refs.filePda && refs.filePda.files ? refs.filePda.files[0] : null;
+ if (!file) {
+ showUserError('Carica il PDF del PDA prima di proseguire', 'Step 1 - PDA');
+ return;
+ }
+ try {
+ showLoadingOverlay('Analisi AI in corso', 'Estrazione dati anagrafici dal PDA...');
+ // 1) Upload PDA in staging
+ const uploadInfo = await uploadPdaStaging(file);
+ runtimeState.pendingPda = uploadInfo;
+ // 2) OCR (best-effort: in caso di errore proseguo comunque a step 2)
+ let ocrData = null;
+ try {
+ ocrData = await chiamaOcr(file);
+ } catch (ocrErr) {
+ hideLoadingOverlay();
+ await new Promise((res) => {
+ showErrorOverlay(
+ 'Estrazione AI non riuscita',
+ 'Procedo allo step Anagrafica senza pre-compilazione. Compila manualmente i dati.',
+ String(ocrErr?.message || ocrErr || '')
+ );
+ setOverlayActions({ primary: { label: 'Continua', onClick: () => { hideLoadingOverlay(); res(); } } });
+ });
+ if (runtimeState.anagraficaCompleted) {
+ goToStep(3);
+ } else {
+ goToStep(2);
+ }
+ return;
+ }
+ hideLoadingOverlay();
+ // 3) Applica OCR all'anagrafica (solo se non gia' completata)
+ if (!runtimeState.anagraficaCompleted) {
+ applyOcrToAnagrafica(ocrData || {});
+ goToStep(2);
+ } else {
+ goToStep(3);
+ }
+ queueDraftSave();
+ } catch (error) {
+ hideLoadingOverlay();
+ showUserError(error.message || 'Errore upload PDA', 'Step 1 - PDA');
+ }
+ });
+
+ // Step 1 (categoria CON PDA): "Continua senza AI"
+ refs.btnPdaSkipAi.addEventListener('click', async () => {
+ const file = refs.filePda && refs.filePda.files ? refs.filePda.files[0] : null;
+ if (!file) {
+ showUserError('Carica il PDF del PDA prima di proseguire', 'Step 1 - PDA');
+ return;
+ }
+ try {
+ showLoadingOverlay('Upload PDA in corso', 'Caricamento del PDA in staging...');
+ const uploadInfo = await uploadPdaStaging(file);
+ runtimeState.pendingPda = uploadInfo;
+ hideLoadingOverlay();
+ if (runtimeState.anagraficaCompleted) {
+ goToStep(3);
+ } else {
+ goToStep(2);
+ }
+ queueDraftSave();
+ } catch (error) {
+ hideLoadingOverlay();
+ showUserError(error.message || 'Errore upload PDA', 'Step 1 - PDA');
+ }
+ });
+
+ // STEP 2: Anagrafica - back / next
+ refs.btnAnagraficaBack.addEventListener('click', () => {
+ goToStep(1);
+ });
+
+ refs.btnAnagraficaNext.addEventListener('click', () => {
  try {
  const cliente = getClienteFormData();
  validateClienteData(cliente);
@@ -4059,73 +4229,74 @@ Reload Exchange
  applyTuristaContractDefaults();
  }
  updateCartClienteSnapshot();
- goToStep(isTuristaCluster(cliente.cluster) ? 3 : 2);
+ runtimeState.anagraficaCompleted = true;
+ goToStep(isTuristaCluster(cliente.cluster) ? 4 : 3);
  } catch (error) {
  showUserError(error.message, 'Verifica anagrafica');
  }
  });
 
- refs.btnStep2Back.addEventListener('click', () => {
- goToStep(1);
+ // STEP 3: Dati contratto - back / next
+ refs.btnContrattoBack.addEventListener('click', () => {
+ // Se anagrafica gia' nota (multi-contratto), torna a step 1; altrimenti a step 2.
+ goToStep(runtimeState.anagraficaCompleted ? 1 : 2);
  });
 
- refs.btnStep2Next.addEventListener('click', async () => {
+ refs.btnContrattoNext.addEventListener('click', async () => {
  try {
- // Esegui prima la validazione standard
  collectContractDraft({}, { skipFileValidation: true });
- // Se la categoria è "Fisso", chiediamo via popup Mirox il prezzo
- // di vendita prima di passare alla pagina 3. Il valore viene
- // memorizzato in refs.numeroContrattoEnergia.dataset.prezzoFisso
- // e letto da collectContractDraft al momento del salvataggio.
  const categoriaNome = getCategoriaName();
  if (isCategory(categoriaNome, 'Fisso')) {
-   if (!window.MiroxUI) {
-     showUserError('Modulo UI Mirox non caricato. Ricarica la pagina.', 'Errore');
-     return;
-   }
-   const prev = refs.numeroContrattoEnergia.dataset.prezzoFisso || '';
-   const input = await window.MiroxUI.prompt({
-     title: 'Prezzo di vendita',
-     label: 'Inserisci il prezzo a cui è stato venduto questo contratto Fisso (€)',
-     placeholder: 'Es. 29.90',
-     value: prev,
-     okText: 'Conferma prezzo'
-   });
-   if (input === null) return; // annullato → resta in step 2
-   const num = parseFloat(String(input).replace(',', '.').trim());
-   if (!Number.isFinite(num) || num < 0) {
-     await window.MiroxUI.alert('Inserisci un prezzo valido (numero ≥ 0).', { type: 'warning', title: 'Prezzo non valido' });
-     return;
-   }
-   refs.numeroContrattoEnergia.dataset.prezzoFisso = String(num);
- } else {
-   // Categoria diversa da Fisso: pulisce eventuale valore residuo
-   delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
+ if (!window.MiroxUI) {
+ showUserError('Modulo UI Mirox non caricato. Ricarica la pagina.', 'Errore');
+ return;
  }
- goToStep(3);
+ const prev = refs.numeroContrattoEnergia.dataset.prezzoFisso || '';
+ const input = await window.MiroxUI.prompt({
+ title: 'Prezzo di vendita',
+ label: 'Inserisci il prezzo a cui e\' stato venduto questo contratto Fisso (€)',
+ placeholder: 'Es. 29.90',
+ value: prev,
+ okText: 'Conferma prezzo'
+ });
+ if (input === null) return;
+ const num = parseFloat(String(input).replace(',', '.').trim());
+ if (!Number.isFinite(num) || num < 0) {
+ await window.MiroxUI.alert('Inserisci un prezzo valido (numero >= 0).', { type: 'warning', title: 'Prezzo non valido' });
+ return;
+ }
+ refs.numeroContrattoEnergia.dataset.prezzoFisso = String(num);
+ } else {
+ delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
+ }
+ goToStep(4);
  } catch (error) {
  showUserError(error.message, 'Verifica contratto');
  }
  });
 
- refs.btnStep3Back.addEventListener('click', () => {
+ // STEP 4: Documenti - back
+ refs.btnDocumentiBack.addEventListener('click', () => {
  if (isTuristaCluster(refs.cluster.value)) {
- goToStep(1);
+ goToStep(runtimeState.anagraficaCompleted ? 1 : 2);
  } else {
- goToStep(2);
+ goToStep(3);
  }
  });
 
  refs.btnAddToCart.addEventListener('click', () => addContrattoToCart({ goToCart: false }));
  refs.btnOpenCarrello.addEventListener('click', () => addContrattoToCart({ goToCart: true }));
  refs.btnOpenCarrelloTop.addEventListener('click', openCartView);
+ // Da carrello: "Aggiungi altro contratto" -> torna allo step 1 per il prossimo contratto
  refs.btnBackToStep2.addEventListener('click', () => {
- if (isTuristaCluster(refs.cluster.value)) {
- applyTuristaContractDefaults();
- goToStep(3);
- } else {
- goToStep(2);
- }
+ refs.categoria.value = '';
+ if (refs.filePda) refs.filePda.value = '';
+ runtimeState.pendingPda = null;
+ renderOfferte();
+ renderOpzioni();
+ renderReload();
+ renderDynamicSections();
+ goToStep(1);
  });
  refs.btnNuovaPratica.addEventListener('click', startNuovaPraticaFromCart);
  refs.btnSvuotaCarrello.addEventListener('click', clearCart);
@@ -4139,6 +4310,7 @@ Reload Exchange
  refs.ragioneSociale,
  refs.nomeReferente,
  refs.cellulare,
+ refs.email,
  refs.provincia,
  refs.comune,
  refs.via,
@@ -4161,7 +4333,6 @@ Reload Exchange
  refs.finanziaria,
  refs.kolme,
  refs.fileDocumentoIdentita,
- refs.fileContrattoPdf,
  refs.fileCopiaSimMnp,
  refs.fileCopiaBolletta
  ].forEach((el) => {

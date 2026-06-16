@@ -73,12 +73,13 @@ Pagine HTML statiche, no bundler. JS condiviso esposto su `window`:
 
 ### 2. Server (`/netlify/functions/`)
 
-Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 7 functions + 1 lib condivisa:
+Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 functions + 1 lib condivisa:
 
 - `vendita-config.js` (GET) — catalogo per wizard
 - `admin-vendita-config.js` (GET/POST action-based) — CRUD admin offerte/opzioni/reload + replace regole documentali
-- `crea-vendita-pratica-carrello.js` (POST) — multi-contratto: anagrafica upsert → pratica → N contratti con validazioni categoria-specifiche, rollback completo su errore
-- `upload-vendita-documento.js` (POST multipart busboy, max 20MB) — bucket `contratti-vendita`, rollback file se INSERT DB fallisce
+- `crea-vendita-pratica-carrello.js` (POST) — multi-contratto: anagrafica upsert → pratica → N contratti con validazioni categoria-specifiche, rollback completo su errore. **Promuove** i PDA caricati in staging (`temp/<sess>/`) alla cartella definitiva della pratica e crea i record `vendita_documenti` corrispondenti. Cellulare + email obbligatori.
+- `upload-vendita-documento.js` (POST multipart busboy, max 20MB) — bucket `contratti-vendita`, rollback file se INSERT DB fallisce. Supporta modalità staging: se viene passato `temp_session_id` (UUID), salva in `temp/<sess>/` senza creare record DB.
+- `ocr-pda.js` (POST multipart, max 20MB) — OCR del PDA via Claude API (`claude-haiku-4-5-20251001`). Estrae cf_piva/ragione_sociale/nome_referente/cellulare/email/indirizzo. Sempre 200 anche se OCR parziale (campi `null`); 500 solo per errori hard. Richiede `ANTHROPIC_API_KEY`.
 - `search-anagrafica.js` (GET) — lookup CF/PIVA
 - `mirox-send-email.js` (POST) — endpoint pubblico mailer
 - `cron-rientro-sim.js` (scheduled `0 7 * * *`) — notifica giornaliera switch SIM
@@ -94,7 +95,7 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 7 funct
 
 ### Anagrafica & Auth (condiviso)
 - `profili` — utenti CRM, `ruolo` IN ('admin','operatore'), `pagine_accessibili` jsonb per ACL Call Center
-- `anagrafica` — cliente unificato, `cf_piva` UNIQUE, `cluster` IN ('Consumer','Business'). RPC `cerca_o_crea_anagrafica` UPSERT
+- `anagrafica` — cliente unificato, `cf_piva` UNIQUE, `cluster` IN ('Consumer','Business','Turista'). Colonna `email` (text, NULL ammesso a livello DB ma obbligatoria lato wizard vendita). RPC `cerca_o_crea_anagrafica(p_..., p_email)` UPSERT
 
 ### Call Center (condiviso, gestito dall'altro progetto)
 - `chiamate`, `appuntamenti`, `blacklist`, `orari_standard`, `blocchi`, `slot_bloccati`, `impostazioni`
@@ -136,14 +137,19 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 7 funct
 
 1. `index.html` → login Supabase + check `profili.attivo`
 2. `dashboard.html` → tab Vendita → card "Upload Contratti"
-3. `moduli/upload-contratti-vendita.html` → wizard 3 step (Anagrafica → Contratto → Upload) con carrello multi-contratto
+3. `moduli/upload-contratti-vendita.html` → wizard **4 step** con carrello multi-contratto:
+   1. **Categoria + PDA**: dropdown categoria; se categoria ∈ `Mobile`/`Customer Base`/`Fisso` (costante `CATEGORIE_PDA`) → upload del PDA in staging via `POST /upload-vendita-documento` con `temp_session_id` UUID. Due bottoni: "Analizza con AI" (chiama `/ocr-pda` per pre-compilare anagrafica) e "Continua senza AI" (skip OCR). Per Energia/Allarmi/Assicurazioni nessun PDA viene caricato.
+   2. **Anagrafica**: cf_piva (auto-detect cluster CF→Consumer, P.IVA→Business), email, cellulare, ragione sociale, ecc. Pre-compilata se l'OCR ha estratto dati. **Skippato automaticamente dal 2° contratto in poi** (anagrafica gia' nota nella pratica).
+   3. **Dati contratto**: offerta/opzione/reload + campi specifici per categoria (Fisso/Energia/Allarmi/dispositivo).
+   4. **Documenti cliente**: documento_identita + eventuali copia_bolletta/copia_sim_mnp. **Niente upload contratto PDF qui** — il PDA e' gia' in staging dallo step 1.
 4. Submit "Invia pratica" → `POST /netlify/functions/crea-vendita-pratica-carrello`:
-   - Upsert `anagrafica` (cerca per `cf_piva`, aggiorna solo campi vuoti)
+   - Upsert `anagrafica` (cerca per `cf_piva`, aggiorna solo campi vuoti). Email + cellulare obbligatori (400 se mancanti).
    - INSERT `vendita_pratiche` con `stato_pratica='inviata'`
    - Calcolo `nome_cartella_storage` = `Contratto_<RAGSOC>_<DD_MM_YYYY>_<id6>`
    - INSERT N × `vendita_contratti` con snapshot categoria/offerta/opzione/reload + punteggi calcolati server-side
+   - **Promozione PDA**: per ogni contratto con `pda_temp_path`, sposta il file da `temp/<sess>/` a `<cartella>/contratto_<categoria>.pdf` e crea il record `vendita_documenti` (tipo `contratto`)
    - Rollback pratica se anche un solo contratto fallisce
-5. Upload PDF → `POST /netlify/functions/upload-vendita-documento` (multipart):
+5. Upload PDF restanti (identita/bolletta/SIM) → `POST /netlify/functions/upload-vendita-documento` (multipart):
    - Upload su bucket `contratti-vendita` in `<YYYY>/<MM>/<cartella_safe>/`
    - INSERT `vendita_documenti`
    - Rollback file su Storage se INSERT DB fallisce
@@ -157,6 +163,15 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 7 funct
 - P.IVA (11 cifre + Luhn IT) → `Business`
 - Nessuno dei due → errore "verifica il dato" (no fallback)
 - `Turista` → forza `categoria=Mobile`, `offerta="Untied - Call Your Country"`. Accettato solo da `crea-vendita-pratica-carrello.js`.
+
+### Email + cellulare obbligatori
+- Sia UI (`validateClienteData` in `upload-contratti-vendita.html`) sia backend (`crea-vendita-pratica-carrello.js`) **bloccano** la pratica se email o cellulare sono vuoti o malformati. L'email viene normalizzata in lowercase.
+
+### Categorie ammesse al flusso PDA
+- Costante `CATEGORIE_PDA = ['Mobile', 'Customer Base', 'Fisso']`.
+- Per queste 3 categorie il PDA (contratto PDF firmato) e' obbligatorio e viene caricato allo step 1 del wizard in staging (`temp/<temp_session_id>/`); poi promosso a `<cartella_pratica>/contratto_<categoria>.pdf` al submit.
+- Per `Energia`, `Allarmi`, `Assicurazioni`: NESSUN PDA, NESSUN documento "contratto" (resta solo `documento_identita` + eventuali bolletta/SIM).
+- L'OCR del PDA e' opzionale: il bottone "Continua senza AI" salta la chiamata a Claude API ma carica comunque il file in staging.
 
 ### Punteggi (anti-tampering)
 - Il **frontend NON deve mai mandare i punteggi**

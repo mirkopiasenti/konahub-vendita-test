@@ -434,23 +434,16 @@ exports.handler = async (event) => {
     return response(400, { success: false, error: 'Campo obbligatorio mancante: cliente.ragione_sociale' });
   }
 
-  // TODO (commit refactor frontend): attivare validazione strict di cellulare + email.
-  //   Per ora il backend resta retrocompatibile con il vecchio wizard. Quando il nuovo
-  //   wizard PDA-first sara' deployato, rimuovere il blocco "if (allowStrictContacts)"
-  //   e fare i 3 check sotto sempre.
-  const allowStrictContacts = false;
-  if (allowStrictContacts) {
-    if (!cellulare) {
-      return response(400, { success: false, error: 'Campo obbligatorio mancante: cliente.cellulare' });
-    }
-    if (!email) {
-      return response(400, { success: false, error: 'Campo obbligatorio mancante: cliente.email' });
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return response(400, { success: false, error: 'cliente.email non e\' un indirizzo valido' });
-    }
-  } else if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    // Se email passata, valida comunque il formato
+  // Strict contacts validation: il nuovo wizard PDA-first richiede sempre cellulare + email
+  // validi. L'UI lo applica gia' lato client (validateClienteData), ma il backend e' la
+  // source of truth.
+  if (!cellulare) {
+    return response(400, { success: false, error: 'Campo obbligatorio mancante: cliente.cellulare' });
+  }
+  if (!email) {
+    return response(400, { success: false, error: 'Campo obbligatorio mancante: cliente.email' });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return response(400, { success: false, error: 'cliente.email non e\' un indirizzo valido' });
   }
 
