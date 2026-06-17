@@ -120,6 +120,12 @@ function suggestedFileName(tipoDocumento, fields) {
       const categorySlug = resolveContractCategorySlug(fields);
       return `contratto_${categorySlug}.pdf`;
     }
+    case 'contratto_firmato': {
+      // PDA firmato dal cliente (firma cartacea). Affianca al contratto_<categoria>.pdf
+      // gia' salvato in modalita' staging dallo step 1 del wizard.
+      const categorySlug = resolveContractCategorySlug(fields);
+      return `contratto_firmato_${categorySlug}.pdf`;
+    }
     case 'copia_sim_mnp':
       return 'copia_sim_mnp.pdf';
     case 'copia_bolletta':

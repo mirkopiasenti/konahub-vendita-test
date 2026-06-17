@@ -179,9 +179,64 @@
 
  .stepper {
  display: grid;
- grid-template-columns: repeat(4, minmax(0, 1fr));
+ grid-template-columns: repeat(5, minmax(0, 1fr));
  gap: 10px;
  padding: 6px 2px 2px;
+ }
+
+ .step-item.disabled {
+ opacity: 0.5;
+ background: #f3f4f6;
+ }
+
+ .firma-cards {
+ display: grid;
+ grid-template-columns: repeat(2, minmax(0, 1fr));
+ gap: 14px;
+ margin-top: 10px;
+ }
+
+ .firma-card {
+ border: 2px solid var(--border);
+ border-radius: 12px;
+ padding: 18px;
+ cursor: pointer;
+ transition: var(--transition);
+ background: var(--card);
+ display: flex;
+ flex-direction: column;
+ gap: 8px;
+ }
+
+ .firma-card:hover {
+ border-color: var(--primary);
+ background: #fff9f3;
+ }
+
+ .firma-card.selected {
+ border-color: var(--primary);
+ background: var(--primary-bg);
+ box-shadow: 0 0 0 3px #ffe3cc;
+ }
+
+ .firma-card-title {
+ font-weight: 700;
+ font-size: 15px;
+ color: var(--text);
+ }
+
+ .firma-card-hint {
+ font-size: 13px;
+ color: var(--muted);
+ }
+
+ @media (max-width: 680px) {
+ .firma-cards {
+ grid-template-columns: 1fr;
+ }
+ .stepper {
+ grid-template-columns: 1fr;
+ }
  }
 
  .step-item {
@@ -415,6 +470,7 @@
 
  #actionsAnagrafica,
  #actionsContratto,
+ #actionsFirma,
  #actionsDocumenti {
  justify-content: space-between;
  }
@@ -907,6 +963,10 @@
 </div>
 <div id="stepItem4" class="step-item">
 <span class="step-index">4</span>
+<span class="step-label">Firma</span>
+</div>
+<div id="stepItem5" class="step-item">
+<span class="step-index">5</span>
 <span class="step-label">Documenti</span>
 </div>
 </div> <section id="stepCategoriaSection" class="card panel">
@@ -1090,13 +1150,29 @@ Reload Exchange
 </select>
 </div>
 </div>
+</section> <section id="stepFirmaSection" class="card panel hidden">
+<h2>Modalita' firma del contratto</h2>
+<p class="hint" style="margin:0 0 10px;">Seleziona come il cliente firmera' il PDA. Per la firma cartacea ti chiederemo allo step successivo di caricare la scansione del contratto firmato.</p>
+<div class="firma-cards">
+<div id="firmaCardElettronica" class="firma-card" data-firma="elettronica" role="button" tabindex="0">
+<span class="firma-card-title">Firma elettronica</span>
+<span class="firma-card-hint">Il cliente firma digitalmente. Nessun upload aggiuntivo richiesto.</span>
+</div>
+<div id="firmaCardCartacea" class="firma-card" data-firma="cartacea" role="button" tabindex="0">
+<span class="firma-card-title">Firma cartacea</span>
+<span class="firma-card-hint">Il cliente firma a mano. Allo step Documenti dovrai caricare la scansione del PDA firmato.</span>
+</div>
+</div>
 </section> <section id="stepDocumentiSection" class="card panel hidden">
 <h2>Upload Documenti Cliente</h2>
-<p class="hint" style="margin:0 0 10px;">Carica i documenti del cliente. Il contratto firmato (PDA) e' gia' stato caricato nello step 1.</p>
+<p class="hint" style="margin:0 0 10px;">Carica i documenti del cliente. Il contratto originale (PDA) e' gia' stato caricato nello step 1.</p>
 <div class="grid">
 <div id="fieldDocumentoIdentita" class="field half">
 <label for="file_documento_identita">Documento identita *</label>
 <input id="file_documento_identita" type="file" accept="application/pdf" multiple>
+</div> <div id="fieldContrattoFirmato" class="field half hidden">
+<label for="file_contratto_firmato">Contratto firmato *</label>
+<input id="file_contratto_firmato" type="file" accept="application/pdf">
 </div> <div id="fieldFileMnp" class="field half hidden">
 <label for="file_copia_sim_mnp">Copia SIM MNP</label>
 <input id="file_copia_sim_mnp" type="file" accept="application/pdf" multiple>
@@ -1116,6 +1192,9 @@ Reload Exchange
 </div> <div id="actionsContratto" class="wizard-actions hidden">
 <button id="btnContrattoBack" type="button" class="ghost">Indietro</button>
 <button id="btnContrattoNext" type="button">Avanti</button>
+</div> <div id="actionsFirma" class="wizard-actions hidden">
+<button id="btnFirmaBack" type="button" class="ghost">Indietro</button>
+<button id="btnFirmaNext" type="button">Avanti</button>
 </div> <div id="actionsDocumenti" class="wizard-actions hidden">
 <button id="btnDocumentiBack" type="button" class="ghost">Indietro</button>
 <div class="wizard-actions-right">
@@ -1184,9 +1263,10 @@ Reload Exchange
  // Categorie che richiedono il PDA (Pratica di Adesione PDF) come contratto firmato.
  // Per Energia, Allarmi, Assicurazioni nessun PDA e nessun PDF contratto.
  const CATEGORIE_PDA = ['Mobile', 'Customer Base', 'Fisso'];
+ const TIPI_FIRMA = ['elettronica', 'cartacea'];
  const uiState = {
  view: 'wizard',
- // 1 = Categoria+PDA, 2 = Anagrafica, 3 = Dati Contratto, 4 = Documenti
+ // 1 = Categoria+PDA, 2 = Anagrafica, 3 = Dati Contratto, 4 = Firma, 5 = Documenti
  step: 1
  };
  const runtimeState = {
@@ -1213,7 +1293,10 @@ Reload Exchange
  // UUID di sessione per gli upload PDA in staging (temp/<uuid>/...). Generato lazy.
  tempSessionId: null,
  // PDA correntemente in staging per il contratto in compilazione (path + nome file).
- pendingPda: null
+ pendingPda: null,
+ // Tipo di firma scelto per il contratto in compilazione: 'elettronica' | 'cartacea' | null.
+ // Resettato al cambio categoria e dopo addContrattoToCart.
+ pendingTipoFirma: null
  };
  const DOC_TYPES = {
  DOCUMENTO_IDENTITA: 'documento_identita',
@@ -1311,9 +1394,13 @@ Reload Exchange
  fileDocumentoIdentita: document.getElementById('file_documento_identita'),
  fileCopiaSimMnp: document.getElementById('file_copia_sim_mnp'),
  fileCopiaBolletta: document.getElementById('file_copia_bolletta'),
+ fileContrattoFirmato: document.getElementById('file_contratto_firmato'),
  fieldDocumentoIdentita: document.getElementById('fieldDocumentoIdentita'),
  fieldFileMnp: document.getElementById('fieldFileMnp'),
  fieldFileBolletta: document.getElementById('fieldFileBolletta'),
+ fieldContrattoFirmato: document.getElementById('fieldContrattoFirmato'),
+ firmaCardElettronica: document.getElementById('firmaCardElettronica'),
+ firmaCardCartacea: document.getElementById('firmaCardCartacea'),
 
  btnCercaCliente: document.getElementById('btnCercaCliente'),
  btnAddToCart: document.getElementById('btnAddToCart'),
@@ -1331,7 +1418,10 @@ Reload Exchange
  // Step 3 (dati contratto)
  btnContrattoBack: document.getElementById('btnContrattoBack'),
  btnContrattoNext: document.getElementById('btnContrattoNext'),
- // Step 4 (documenti)
+ // Step 4 (firma)
+ btnFirmaBack: document.getElementById('btnFirmaBack'),
+ btnFirmaNext: document.getElementById('btnFirmaNext'),
+ // Step 5 (documenti)
  btnDocumentiBack: document.getElementById('btnDocumentiBack'),
  btnSvuotaCarrello: document.getElementById('btnSvuotaCarrello'),
  btnInviaPratica: document.getElementById('btnInviaPratica'),
@@ -1340,16 +1430,19 @@ Reload Exchange
  sectionCategoria: document.getElementById('stepCategoriaSection'),
  sectionAnagrafica: document.getElementById('stepAnagraficaSection'),
  sectionContratto: document.getElementById('stepContrattoSection'),
+ sectionFirma: document.getElementById('stepFirmaSection'),
  sectionDocumenti: document.getElementById('stepDocumentiSection'),
  wizardActions: document.getElementById('wizardActions'),
  actionsCategoria: document.getElementById('actionsCategoria'),
  actionsAnagrafica: document.getElementById('actionsAnagrafica'),
  actionsContratto: document.getElementById('actionsContratto'),
+ actionsFirma: document.getElementById('actionsFirma'),
  actionsDocumenti: document.getElementById('actionsDocumenti'),
  stepItem1: document.getElementById('stepItem1'),
  stepItem2: document.getElementById('stepItem2'),
  stepItem3: document.getElementById('stepItem3'),
  stepItem4: document.getElementById('stepItem4'),
+ stepItem5: document.getElementById('stepItem5'),
  loadingOverlay: document.getElementById('loadingOverlay'),
  loadingSpinner: document.getElementById('loadingSpinner'),
  loadingIcon: document.getElementById('loadingIcon'),
@@ -1871,6 +1964,7 @@ Reload Exchange
  function initUploadBoxes() {
  const uploadConfig = [
  { input: refs.fileDocumentoIdentita, title: 'Documento identita', hint: 'Trascina i PDF qui o clicca per selezionare', icon: '', multiple: true },
+ { input: refs.fileContrattoFirmato, title: 'Contratto firmato *', hint: 'Trascina la scansione del PDA firmato (1 PDF)', icon: '', multiple: false },
  { input: refs.fileCopiaSimMnp, title: 'Fotocopia SIM', hint: 'Trascina i PDF qui o clicca per selezionare', icon: '', multiple: true },
  { input: refs.fileCopiaBolletta, title: 'Copia bolletta', hint: 'Trascina i PDF qui o clicca per selezionare', icon: '', multiple: true }
  ];
@@ -1957,7 +2051,14 @@ Reload Exchange
  const mustHideIdentity = !requirements.documento_identita || (hasIdentity || hasContracts);
 
  refs.fieldDocumentoIdentita.classList.toggle('hidden', !needsIdentityReselection && mustHideIdentity);
- // Il contratto PDF (PDA) non si carica piu' allo step 4: e' gestito in staging allo step 1.
+ // Il contratto PDA originale e' gestito in staging dallo step 1.
+ // Il campo "Contratto firmato" appare allo step Documenti solo se per questo contratto
+ // e' stata scelta la firma cartacea.
+ if (refs.fieldContrattoFirmato) {
+ const needsContrattoFirmato = runtimeState.pendingTipoFirma === 'cartacea' && isCurrentCategoriaPda();
+ refs.fieldContrattoFirmato.classList.toggle('hidden', !needsContrattoFirmato);
+ if (!needsContrattoFirmato) clearInputFile(refs.fileContrattoFirmato);
+ }
  }
 
  function updateStep3ActionsLabels() {
@@ -2042,8 +2143,9 @@ Reload Exchange
  }
 
  function renderStepIndicator() {
- const currentStep = uiState.view === 'wizard' ? uiState.step : 4;
- const items = [refs.stepItem1, refs.stepItem2, refs.stepItem3, refs.stepItem4];
+ const currentStep = uiState.view === 'wizard' ? uiState.step : 5;
+ const items = [refs.stepItem1, refs.stepItem2, refs.stepItem3, refs.stepItem4, refs.stepItem5];
+ const firmaApplica = isCurrentCategoriaPda();
 
  items.forEach((item, index) => {
  const stepNumber = index + 1;
@@ -2051,6 +2153,10 @@ Reload Exchange
  const isDone = uiState.view === 'cart' || stepNumber< currentStep;
  item.classList.toggle('active', isActive);
  item.classList.toggle('done', isDone);
+ // Step 4 (Firma) e' visivamente "disabled" per categorie senza PDA, dove viene saltato.
+ if (stepNumber === 4) {
+ item.classList.toggle('disabled', !firmaApplica);
+ }
  });
  }
 
@@ -2069,16 +2175,22 @@ Reload Exchange
 
  function renderWizardLayout() {
  const inWizard = uiState.view === 'wizard';
- // Step max 4. Per Turista lo step 3 (dati contratto) e' saltato: defaults applicati.
- let step = Math.max(1, Math.min(4, Number(uiState.step) || 1));
+ // Step max 5. Step 4 (Firma) attivo solo per categorie PDA.
+ // Per Turista lo step 3 (dati contratto) e' saltato: defaults applicati.
+ let step = Math.max(1, Math.min(5, Number(uiState.step) || 1));
  const turista = isTuristaCluster(refs.cluster.value);
+ const firmaApplica = isCurrentCategoriaPda();
  if (turista && step === 3) {
- step = 4;
+ step = firmaApplica ? 4 : 5;
+ }
+ // Categorie senza PDA: salta step 4 (Firma).
+ if (!firmaApplica && step === 4) {
+ step = 5;
  }
  // Multi-contratto: se l'anagrafica e' gia' completata in questa pratica, salta lo step 2.
  if (runtimeState.anagraficaCompleted && step === 2) {
  step = 3;
- if (turista) step = 4;
+ if (turista) step = firmaApplica ? 4 : 5;
  }
  uiState.step = step;
 
@@ -2087,13 +2199,15 @@ Reload Exchange
  refs.sectionCategoria.classList.toggle('hidden', !inWizard || step !== 1);
  refs.sectionAnagrafica.classList.toggle('hidden', !inWizard || step !== 2);
  refs.sectionContratto.classList.toggle('hidden', !inWizard || step !== 3 || turista);
- refs.sectionDocumenti.classList.toggle('hidden', !inWizard || step !== 4);
+ refs.sectionFirma.classList.toggle('hidden', !inWizard || step !== 4 || !firmaApplica);
+ refs.sectionDocumenti.classList.toggle('hidden', !inWizard || step !== 5);
 
  refs.wizardActions.classList.toggle('hidden', !inWizard);
  refs.actionsCategoria.classList.toggle('hidden', !inWizard || step !== 1);
  refs.actionsAnagrafica.classList.toggle('hidden', !inWizard || step !== 2);
  refs.actionsContratto.classList.toggle('hidden', !inWizard || step !== 3 || turista);
- refs.actionsDocumenti.classList.toggle('hidden', !inWizard || step !== 4);
+ refs.actionsFirma.classList.toggle('hidden', !inWizard || step !== 4 || !firmaApplica);
+ refs.actionsDocumenti.classList.toggle('hidden', !inWizard || step !== 5);
 
  if (!inWizard || step !== 3) {
  refs.deviceSection.classList.add('hidden');
@@ -2106,9 +2220,26 @@ Reload Exchange
  renderCategoriaActions();
  }
 
+ // Render selezione card firma quando si entra a step 4
+ if (inWizard && step === 4 && firmaApplica) {
+ renderFirmaSelection();
+ }
+
  applyClusterFieldVisibility();
  renderStepIndicator();
  updateUploadVisibility();
+ }
+
+ // Aggiorna lo stato visivo delle card "Firma elettronica" / "Firma cartacea"
+ // in base a runtimeState.pendingTipoFirma.
+ function renderFirmaSelection() {
+ const sel = runtimeState.pendingTipoFirma;
+ if (refs.firmaCardElettronica) {
+ refs.firmaCardElettronica.classList.toggle('selected', sel === 'elettronica');
+ }
+ if (refs.firmaCardCartacea) {
+ refs.firmaCardCartacea.classList.toggle('selected', sel === 'cartacea');
+ }
  }
 
  // Mostra/nasconde il drop-zone PDA e i 3 bottoni in base alla categoria selezionata.
@@ -2140,12 +2271,14 @@ Reload Exchange
 
  function goToStep(step) {
  uiState.view = 'wizard';
- let nextStep = Math.max(1, Math.min(4, Number(step) || 1));
+ let nextStep = Math.max(1, Math.min(5, Number(step) || 1));
  const turista = isTuristaCluster(refs.cluster.value);
- if (turista && nextStep === 3) nextStep = 4;
+ const firmaApplica = isCurrentCategoriaPda();
+ if (turista && nextStep === 3) nextStep = firmaApplica ? 4 : 5;
+ if (!firmaApplica && nextStep === 4) nextStep = 5;
  if (runtimeState.anagraficaCompleted && nextStep === 2) {
  nextStep = 3;
- if (turista) nextStep = 4;
+ if (turista) nextStep = firmaApplica ? 4 : 5;
  }
  uiState.step = nextStep;
  renderDynamicSections();
@@ -2425,6 +2558,7 @@ Reload Exchange
  if (refs.numeroContrattoEnergia) delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
  clearInputFile(refs.fileCopiaSimMnp);
  clearInputFile(refs.fileCopiaBolletta);
+ if (refs.fileContrattoFirmato) clearInputFile(refs.fileContrattoFirmato);
  refs.fieldFinanziaria.classList.add('hidden');
  updateUploadVisibility();
  }
@@ -2442,6 +2576,7 @@ Reload Exchange
  runtimeState.anagraficaCompleted = false;
  runtimeState.tempSessionId = null;
  runtimeState.pendingPda = null;
+ runtimeState.pendingTipoFirma = null;
 
  praticaFiles.documento_identita = null;
 
@@ -2563,8 +2698,8 @@ Reload Exchange
  if (uiState.view !== 'wizard' || uiState.step !== 3) {
  refs.deviceSection.classList.add('hidden');
  }
- // documenti aggiuntivi visibili solo allo step 4
- if (uiState.view !== 'wizard' || uiState.step !== 4) {
+ // documenti aggiuntivi visibili solo allo step 5
+ if (uiState.view !== 'wizard' || uiState.step !== 5) {
  refs.fieldFileMnp.classList.add('hidden');
  refs.fieldFileBolletta.classList.add('hidden');
  }
@@ -2802,6 +2937,8 @@ Reload Exchange
  // PDA gia' in staging (path temp/<session>/...) per categorie PDA. Promosso lato server al submit pratica.
  pda_temp_path: (runtimeState.pendingPda && runtimeState.pendingPda.storage_path) || null,
  pda_file_name: (runtimeState.pendingPda && runtimeState.pendingPda.file_name) || null,
+ // Step Firma (solo per categorie PDA): 'elettronica' | 'cartacea' | null
+ tipo_firma: isCurrentCategoriaPda() ? (runtimeState.pendingTipoFirma || null) : null,
  score: {
  punteggio_gara: Number(punteggioGara.toFixed(2)),
  punteggio_extra_gara: Number(punteggioExtra.toFixed(2))
@@ -2814,13 +2951,16 @@ Reload Exchange
  },
  files: {
  sim_mnp: mnpFiles,
- bolletta: bollettaFiles
+ bolletta: bollettaFiles,
+ // PDF del contratto firmato dal cliente (solo se tipo_firma='cartacea')
+ contratto_firmato: (selectedFiles.contratto_firmato instanceof File) ? selectedFiles.contratto_firmato : null
  },
  flags: {
  documento_identita_required: documentRequirements.documento_identita,
  contratto_required: isCurrentCategoriaPda(),
  sim_mnp_required: documentRequirements.copia_sim_mnp,
- bolletta_required: documentRequirements.copia_bolletta
+ bolletta_required: documentRequirements.copia_bolletta,
+ contratto_firmato_required: isCurrentCategoriaPda() && runtimeState.pendingTipoFirma === 'cartacea'
  }
  };
  }
@@ -2864,6 +3004,11 @@ Reload Exchange
  if (item.pda_file_name) {
  docs.push(`contratto (PDA): ${item.pda_file_name}`);
  }
+ if (item.files?.contratto_firmato instanceof File) {
+ docs.push(`contratto firmato: ${item.files.contratto_firmato.name}`);
+ } else if (item.file_meta?.contratto_firmato?.name) {
+ docs.push(`contratto firmato: ${item.file_meta.contratto_firmato.name} (da riselezionare)`);
+ }
  const simFiles = Array.isArray(item.files?.sim_mnp) ? item.files.sim_mnp : [];
  const bollettaFiles = Array.isArray(item.files?.bolletta) ? item.files.bolletta : [];
 
@@ -2880,6 +3025,8 @@ Reload Exchange
 
  const chips = [];
  if (item.dispositivo_associato) chips.push('<span class="chip warn">Dispositivo Si</span>');
+ if (item.tipo_firma === 'cartacea') chips.push('<span class="chip warn">Firma cartacea</span>');
+ else if (item.tipo_firma === 'elettronica') chips.push('<span class="chip doc">Firma elettronica</span>');
  if (item.flags.sim_mnp_required) chips.push('<span class="chip warn">Fotocopia SIM</span>');
  if (item.flags.bolletta_required) chips.push('<span class="chip warn">Bolletta</span>');
  if (docs.length> 0) chips.push('<span class="chip doc">Documenti caricati</span>');
@@ -3084,9 +3231,11 @@ Reload Exchange
  const cliente = getClienteFormData();
  validateClienteData(cliente);
 
+ const selectedContractFirmato = getInputFile(refs.fileContrattoFirmato);
  const selectedContractFiles = {
  sim_mnp: getInputFiles(refs.fileCopiaSimMnp),
- bolletta: getInputFiles(refs.fileCopiaBolletta)
+ bolletta: getInputFiles(refs.fileCopiaBolletta),
+ contratto_firmato: selectedContractFirmato
  };
 
  const selectedDocumentoIdentita = getInputFiles(refs.fileDocumentoIdentita);
@@ -3105,6 +3254,14 @@ Reload Exchange
  selectedContractFiles.bolletta.forEach((file, idx) => {
  assertValidFile(file, `Copia bolletta ${idx + 1}`);
  });
+ }
+
+ // Firma cartacea: il PDF del contratto firmato e' obbligatorio
+ if (isCurrentCategoriaPda() && runtimeState.pendingTipoFirma === 'cartacea') {
+ if (!selectedContractFirmato) {
+ throw new Error('Carica il PDF del contratto firmato dal cliente (firma cartacea)');
+ }
+ assertValidFile(selectedContractFirmato, 'Contratto firmato');
  }
 
  if (
@@ -3141,9 +3298,11 @@ Reload Exchange
  // (il prossimo contratto saltera' lo step 2).
  runtimeState.anagraficaCompleted = true;
  runtimeState.editingTempId = null;
- // Pulisci il PDA pending per il prossimo contratto
+ // Pulisci il PDA pending + scelta firma + upload contratto firmato per il prossimo contratto
  runtimeState.pendingPda = null;
+ runtimeState.pendingTipoFirma = null;
  if (refs.filePda) refs.filePda.value = '';
+ if (refs.fileContrattoFirmato) clearInputFile(refs.fileContrattoFirmato);
 
  updateCartClienteSnapshot();
  renderCarrello();
@@ -3203,6 +3362,11 @@ Reload Exchange
  } else {
  runtimeState.pendingPda = null;
  }
+ // Ripristina scelta firma + eventuale contratto firmato in memoria
+ runtimeState.pendingTipoFirma = TIPI_FIRMA.includes(item.tipo_firma) ? item.tipo_firma : null;
+ if (refs.fileContrattoFirmato) {
+ setInputFile(refs.fileContrattoFirmato, item.files?.contratto_firmato || null);
+ }
 
  setInputFiles(refs.fileCopiaSimMnp, item.files?.sim_mnp || []);
  setInputFiles(refs.fileCopiaBolletta, item.files?.bolletta || []);
@@ -3258,6 +3422,7 @@ Reload Exchange
  runtimeState.editingTempId = null;
  runtimeState.anagraficaCompleted = false;
  runtimeState.pendingPda = null;
+ runtimeState.pendingTipoFirma = null;
  praticaFiles.documento_identita = null;
  runtimeState.restoreNeedsFileReselection = false;
  clearInputFile(refs.fileDocumentoIdentita);
@@ -3302,6 +3467,9 @@ Reload Exchange
  if (item.flags?.contratto_required && !item.pda_temp_path) {
  throw new Error(`Contratto ${idx + 1}: PDA (contratto PDF) mancante. Carica il PDA allo step 1.`);
  }
+ if (item.flags?.contratto_firmato_required && !(item.files?.contratto_firmato instanceof File)) {
+ throw new Error(`Contratto ${idx + 1}: PDF del contratto firmato mancante (firma cartacea). Caricalo allo step Documenti.`);
+ }
  });
 
  const contratti = state.cart.contratti.map((item, idx) => {
@@ -3335,7 +3503,9 @@ Reload Exchange
  prezzo_fisso: (item.prezzo_fisso !== null && item.prezzo_fisso !== undefined) ? item.prezzo_fisso : null,
  reload_exchange: item.reload_exchange === true,
  // PDA in staging: il backend promuovera' temp/<sess>/<file> a <cartella_pratica>/contratto_<categoria>.pdf
- pda_temp_path: item.pda_temp_path || null
+ pda_temp_path: item.pda_temp_path || null,
+ // Tipo firma (per categorie PDA): 'elettronica' | 'cartacea' | null
+ tipo_firma: item.tipo_firma || null
  };
  });
 
@@ -3436,10 +3606,50 @@ Reload Exchange
  throw new Error(`Contratto ${idx + 1}: mapping temp_id non trovato in risposta server`);
  }
 
- // NB: il PDA (contratto firmato) e' gia' stato caricato in staging allo step 1.
+ // NB: il PDA ORIGINALE e' gia' stato caricato in staging allo step 1.
  // Il backend `crea-vendita-pratica-carrello` ha promosso il file da temp/<sess>/ alla
  // cartella definitiva della pratica e creato il record vendita_documenti.
- // Qui ci limitiamo a propagare eventuali warning di promozione (createResult.pda_warnings).
+
+ // Upload del contratto FIRMATO (solo se categoria PDA + firma cartacea)
+ const contrattoFirmatoFile = cartItem.files?.contratto_firmato instanceof File
+ ? cartItem.files.contratto_firmato
+ : null;
+ if (contrattoFirmatoFile) {
+ assertValidFile(contrattoFirmatoFile, `Contratto firmato ${idx + 1}`);
+ const firmatoFileName = `contratto_firmato_${normalizeForFileName(categoriaSnapshot) || 'generico'}.pdf`;
+ setMessage(`Upload contratto firmato ${idx + 1}/${state.cart.contratti.length}...`, 'info');
+ updateLoadingOverlay('Caricamento in corso', `Upload contratto firmato ${idx + 1}...`);
+ const firmatoDebug = {
+ tipo_documento: 'contratto_firmato',
+ contratto_id: created.contratto_id,
+ fileName: contrattoFirmatoFile.name,
+ fileSize: contrattoFirmatoFile.size,
+ fileType: contrattoFirmatoFile.type,
+ pratica_id: createResult.pratica_id,
+ anagrafica_id: createResult.anagrafica_id,
+ storage_base_path: createResult.storage_base_path,
+ categoria_snapshot: categoriaSnapshot,
+ file_name: firmatoFileName
+ };
+ uploadDebug.push(firmatoDebug);
+ const firmatoResult = await uploadDocumentoOrTechnicalError({
+ file: contrattoFirmatoFile,
+ pratica_id: createResult.pratica_id,
+ contratto_id: created.contratto_id,
+ anagrafica_id: createResult.anagrafica_id,
+ tipo_documento: 'contratto_firmato',
+ categoria_snapshot: categoriaSnapshot,
+ file_name: firmatoFileName,
+ storage_base_path: createResult.storage_base_path,
+ nome_cartella_storage: createResult.nome_cartella_storage
+ }, `Errore upload contratto firmato ${idx + 1}`);
+ uploadResults.push({
+ tipo_documento: 'contratto_firmato',
+ contratto_id: created.contratto_id,
+ file_name: firmatoFileName,
+ result: firmatoResult
+ });
+ }
 
  const simFiles = Array.isArray(cartItem.files.sim_mnp) ? cartItem.files.sim_mnp : [];
  for (let simIndex = 0; simIndex< simFiles.length; simIndex += 1) {
@@ -3590,14 +3800,18 @@ Reload Exchange
  refs.reload.value = '';
  refs.switchSim.value = '';
  // Cambio categoria allo step 1: l'eventuale PDA gia' caricato non e' piu' valido se
- // si cambia da categoria PDA -> non PDA (o viceversa).
+ // si cambia da categoria PDA -> non PDA (o viceversa). Anche la scelta firma viene resettata
+ // perche' non e' piu' applicabile, e l'eventuale upload contratto firmato pure.
  if (refs.filePda) refs.filePda.value = '';
  runtimeState.pendingPda = null;
+ runtimeState.pendingTipoFirma = null;
+ if (refs.fileContrattoFirmato) clearInputFile(refs.fileContrattoFirmato);
  renderOfferte();
  renderOpzioni();
  renderReload();
  renderDynamicSections();
  renderCategoriaActions();
+ renderFirmaSelection();
  });
 
  refs.offerta.addEventListener('change', () => {
@@ -3683,14 +3897,16 @@ Reload Exchange
  : (Array.isArray(item?.file_meta?.sim_mnp) ? item.file_meta.sim_mnp : []),
  bolletta: currentBollettaMeta.length> 0
  ? currentBollettaMeta
- : (Array.isArray(item?.file_meta?.bolletta) ? item.file_meta.bolletta : [])
+ : (Array.isArray(item?.file_meta?.bolletta) ? item.file_meta.bolletta : []),
+ contratto_firmato: getFileMeta(item?.files?.contratto_firmato) || item?.file_meta?.contratto_firmato || null
  };
 
  return {
  ...item,
  files: {
  sim_mnp: [],
- bolletta: []
+ bolletta: [],
+ contratto_firmato: null
  },
  file_meta: fileMeta
  };
@@ -3734,6 +3950,7 @@ Reload Exchange
  temp_session_id: runtimeState.tempSessionId || null
  },
  pending_pda: runtimeState.pendingPda ? { ...runtimeState.pendingPda } : null,
+ pending_tipo_firma: runtimeState.pendingTipoFirma || null,
  editing_temp_id: runtimeState.editingTempId || null,
  restore_needs_file_reselection: runtimeState.restoreNeedsFileReselection,
  cluster_locked: runtimeState.clusterLocked,
@@ -3849,6 +4066,9 @@ Reload Exchange
  runtimeState.anagraficaCompleted = Boolean(draft?.multi_contract?.anagrafica_completed);
  runtimeState.tempSessionId = draft?.multi_contract?.temp_session_id || null;
  runtimeState.pendingPda = draft?.pending_pda ? { ...draft.pending_pda } : null;
+ runtimeState.pendingTipoFirma = TIPI_FIRMA.includes(draft?.pending_tipo_firma)
+ ? draft.pending_tipo_firma
+ : null;
 
  const cliente = draft.cliente_form || {};
  refs.cfPiva.value = normalizeCfPiva(cliente.cf_piva || '');
@@ -3873,11 +4093,13 @@ Reload Exchange
  ...item,
  files: {
  sim_mnp: [],
- bolletta: []
+ bolletta: [],
+ contratto_firmato: null
  },
  file_meta: {
  sim_mnp: Array.isArray(item?.file_meta?.sim_mnp) ? item.file_meta.sim_mnp : [],
- bolletta: Array.isArray(item?.file_meta?.bolletta) ? item.file_meta.bolletta : []
+ bolletta: Array.isArray(item?.file_meta?.bolletta) ? item.file_meta.bolletta : [],
+ contratto_firmato: item?.file_meta?.contratto_firmato || null
  }
  }));
 
@@ -3897,7 +4119,7 @@ Reload Exchange
  const nextView = draft.ui?.view === 'cart' ? 'cart' : 'wizard';
  const nextStep = Number(draft.ui?.step || 1);
  uiState.view = nextView;
- uiState.step = Number.isFinite(nextStep) ? Math.max(1, Math.min(4, nextStep)) : 1;
+ uiState.step = Number.isFinite(nextStep) ? Math.max(1, Math.min(5, nextStep)) : 1;
 
  renderCarrello();
  updateStep3ActionsLabels();
@@ -3906,6 +4128,7 @@ Reload Exchange
  clearInputFile(refs.fileDocumentoIdentita);
  clearInputFile(refs.fileCopiaSimMnp);
  clearInputFile(refs.fileCopiaBolletta);
+ if (refs.fileContrattoFirmato) clearInputFile(refs.fileContrattoFirmato);
  return true;
  } finally {
  runtimeState.draftSuspended = false;
@@ -4291,16 +4514,52 @@ Reload Exchange
  } else {
  delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
  }
+ // step 3 -> 4 per PDA, -> 5 per non-PDA (goToStep gestisce lo skip)
  goToStep(4);
  } catch (error) {
  showUserError(error.message, 'Verifica contratto');
  }
  });
 
- // STEP 4: Documenti - back
+ // STEP 4: Firma - selezione carta + back/next
+ function selectFirma(tipo) {
+ if (!TIPI_FIRMA.includes(tipo)) return;
+ runtimeState.pendingTipoFirma = tipo;
+ renderFirmaSelection();
+ queueDraftSave();
+ }
+
+ if (refs.firmaCardElettronica) {
+ refs.firmaCardElettronica.addEventListener('click', () => selectFirma('elettronica'));
+ refs.firmaCardElettronica.addEventListener('keydown', (e) => {
+ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectFirma('elettronica'); }
+ });
+ }
+ if (refs.firmaCardCartacea) {
+ refs.firmaCardCartacea.addEventListener('click', () => selectFirma('cartacea'));
+ refs.firmaCardCartacea.addEventListener('keydown', (e) => {
+ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectFirma('cartacea'); }
+ });
+ }
+
+ refs.btnFirmaBack.addEventListener('click', () => {
+ goToStep(3);
+ });
+
+ refs.btnFirmaNext.addEventListener('click', () => {
+ if (!TIPI_FIRMA.includes(runtimeState.pendingTipoFirma)) {
+ showUserError('Seleziona la modalita\' di firma per procedere', 'Step Firma');
+ return;
+ }
+ goToStep(5);
+ });
+
+ // STEP 5: Documenti - back
  refs.btnDocumentiBack.addEventListener('click', () => {
  if (isTuristaCluster(refs.cluster.value)) {
  goToStep(runtimeState.anagraficaCompleted ? 1 : 2);
+ } else if (isCurrentCategoriaPda()) {
+ goToStep(4);
  } else {
  goToStep(3);
  }
@@ -4355,6 +4614,7 @@ Reload Exchange
  refs.finanziaria,
  refs.kolme,
  refs.fileDocumentoIdentita,
+ refs.fileContrattoFirmato,
  refs.fileCopiaSimMnp,
  refs.fileCopiaBolletta
  ].forEach((el) => {

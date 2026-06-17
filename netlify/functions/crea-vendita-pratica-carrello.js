@@ -196,8 +196,16 @@ function normalizeContractInput(contract, index) {
     reload_exchange: parseBoolean(contract?.reload_exchange, false) === true,
     // PDA caricata in modalita' staging (temp/<session_id>/<file>). null se non applicabile
     // o se contratto e' in categoria senza PDA (Energia/Allarmi/Assicurazioni).
-    pda_temp_path: cleanString(contract?.pda_temp_path) || null
+    pda_temp_path: cleanString(contract?.pda_temp_path) || null,
+    // Tipo firma: 'elettronica' o 'cartacea' (solo per categorie PDA). null altrimenti.
+    tipo_firma: cleanString(contract?.tipo_firma) || null
   };
+}
+
+const CATEGORIE_PDA = new Set(['mobile', 'customer base', 'fisso']);
+
+function isCategoriaPda(categoryName) {
+  return CATEGORIE_PDA.has(normalizeCategoryName(categoryName));
 }
 
 /**
@@ -702,6 +710,21 @@ exports.handler = async (event) => {
         index
       });
 
+      // Validazione tipo_firma:
+      //  - categorie PDA (Mobile/Customer Base/Fisso): valore obbligatorio in
+      //    ('elettronica','cartacea')
+      //  - categorie senza PDA: deve essere null (verra' resettato a null se inviato)
+      if (isCategoriaPda(categoria.nome)) {
+        if (!item.tipo_firma) {
+          throw new Error(`Campo obbligatorio mancante: contratti[${index}].tipo_firma`);
+        }
+        if (!['elettronica', 'cartacea'].includes(item.tipo_firma)) {
+          throw new Error(`contratti[${index}].tipo_firma non valido: usa "elettronica" o "cartacea"`);
+        }
+      } else {
+        item.tipo_firma = null;
+      }
+
       const punteggioGaraOfferta = parseRequiredScore(
         offerta.punteggio_gara,
         `punteggio_gara offerta (contratti[${index}])`
@@ -763,6 +786,9 @@ exports.handler = async (event) => {
         numero_contratto_energia: item.numero_contratto_energia,
         prezzo_fisso: item.prezzo_fisso,
         reload_exchange: item.reload_exchange,
+
+        // Tipo firma (vedi migration 016): solo per categorie PDA. null altrimenti.
+        tipo_firma: item.tipo_firma,
 
         stato_controllo: 'da_controllare'
       };

@@ -44,6 +44,10 @@ Prima di dichiarare un task concluso:
 - **Call Center** = progetto separato già in produzione (NON in questa codebase), condivide lo stesso database Supabase
 - **Step 2 futuro**: merge dei due progetti in un unico front-end con navigazione integrata
 
+### URL deploy
+- `test-upload-contratti-konahub.netlify.app` — deploy del repo `konahub-vendita-test` (focus di questa codebase, wizard vendita)
+- `mirox-crm.netlify.app` — sito Call Center (altro repo, condivide DB Supabase)
+
 ### Tabelle condivise — toccare con cautela
 
 Modifiche a schema / RLS / RPC / trigger su queste tabelle hanno rischio di **rompere il Call Center in produzione**:
@@ -137,11 +141,12 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 funct
 
 1. `index.html` → login Supabase + check `profili.attivo`
 2. `dashboard.html` → tab Vendita → card "Upload Contratti"
-3. `moduli/upload-contratti-vendita.html` → wizard **4 step** con carrello multi-contratto:
+3. `moduli/upload-contratti-vendita.html` → wizard **5 step** con carrello multi-contratto:
    1. **Categoria + PDA**: dropdown categoria; se categoria ∈ `Mobile`/`Customer Base`/`Fisso` (costante `CATEGORIE_PDA`) → upload del PDA in staging via `POST /upload-vendita-documento` con `temp_session_id` UUID. Due bottoni: "Analizza con AI" (chiama `/ocr-pda` per pre-compilare anagrafica) e "Continua senza AI" (skip OCR). Per Energia/Allarmi/Assicurazioni nessun PDA viene caricato.
    2. **Anagrafica**: cf_piva (auto-detect cluster CF→Consumer, P.IVA→Business), email, cellulare, ragione sociale, ecc. Pre-compilata se l'OCR ha estratto dati. **Skippato automaticamente dal 2° contratto in poi** (anagrafica gia' nota nella pratica).
    3. **Dati contratto**: offerta/opzione/reload + campi specifici per categoria (Fisso/Energia/Allarmi/dispositivo).
-   4. **Documenti cliente**: documento_identita + eventuali copia_bolletta/copia_sim_mnp. **Niente upload contratto PDF qui** — il PDA e' gia' in staging dallo step 1.
+   4. **Firma** (solo per categorie PDA): scelta tra `elettronica` o `cartacea`. Skippato per Energia/Allarmi/Assicurazioni. Il valore finisce in `vendita_contratti.tipo_firma`.
+   5. **Documenti cliente**: documento_identita + eventuali copia_bolletta/copia_sim_mnp. Se `tipo_firma='cartacea'` appare anche il campo upload **"Contratto firmato"** (PDF della scansione del PDA firmato a mano dal cliente). **Niente upload contratto PDF originale qui** — quello e' gia' in staging dallo step 1.
 4. Submit "Invia pratica" → `POST /netlify/functions/crea-vendita-pratica-carrello`:
    - Upsert `anagrafica` (cerca per `cf_piva`, aggiorna solo campi vuoti). Email + cellulare obbligatori (400 se mancanti).
    - INSERT `vendita_pratiche` con `stato_pratica='inviata'`
@@ -169,9 +174,15 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 funct
 
 ### Categorie ammesse al flusso PDA
 - Costante `CATEGORIE_PDA = ['Mobile', 'Customer Base', 'Fisso']`.
-- Per queste 3 categorie il PDA (contratto PDF firmato) e' obbligatorio e viene caricato allo step 1 del wizard in staging (`temp/<temp_session_id>/`); poi promosso a `<cartella_pratica>/contratto_<categoria>.pdf` al submit.
+- Per queste 3 categorie il PDA (contratto PDF) e' obbligatorio e viene caricato allo step 1 del wizard in staging (`temp/<temp_session_id>/pda_<rand>.pdf`); poi promosso a `<cartella_pratica>/contratto_<categoria>.pdf` al submit.
 - Per `Energia`, `Allarmi`, `Assicurazioni`: NESSUN PDA, NESSUN documento "contratto" (resta solo `documento_identita` + eventuali bolletta/SIM).
 - L'OCR del PDA e' opzionale: il bottone "Continua senza AI" salta la chiamata a Claude API ma carica comunque il file in staging.
+
+### Step Firma (solo categorie PDA)
+- Solo per Mobile / Customer Base / Fisso il wizard chiede tra step Contratto e step Documenti la modalita' di firma: `elettronica` o `cartacea`. Il valore finisce in `vendita_contratti.tipo_firma` (vincolato dal CHECK constraint).
+- `elettronica`: nessun upload aggiuntivo. Il PDA originale gia' in staging diventa l'unico `contratto.pdf` in cartella pratica.
+- `cartacea`: nello step Documenti compare un upload "Contratto firmato" obbligatorio. Il file viene caricato a parte tramite `/upload-vendita-documento` con `tipo_documento='contratto_firmato'` e salvato come `<cartella_pratica>/contratto_firmato_<categoria>.pdf` (affianca il PDA originale).
+- Per Energia/Allarmi/Assicurazioni lo step Firma e' saltato e `tipo_firma` resta NULL nel DB.
 
 ### Punteggi (anti-tampering)
 - Il **frontend NON deve mai mandare i punteggi**
@@ -198,9 +209,9 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 funct
 
 ### Documenti
 - Bucket: `contratti-vendita`
-- Tipi gestiti: `documento_identita`, `contratto`, `copia_bolletta`, `copia_sim_mnp`
+- Tipi gestiti: `documento_identita`, `contratto`, `contratto_firmato`, `copia_bolletta`, `copia_sim_mnp`
 - Regole con `campo_condizione='admin_config'` sono gestibili da UI admin
-- Nome standard: `documento_identita.pdf`, `contratto_<categoria_slug>.pdf`, `copia_sim_mnp.pdf`, `copia_bolletta.pdf`
+- Nome standard: `documento_identita.pdf`, `contratto_<categoria_slug>.pdf`, `contratto_firmato_<categoria_slug>.pdf` (solo per firma cartacea), `copia_sim_mnp.pdf`, `copia_bolletta.pdf`
 - Solo `application/pdf`, max 20 MB
 
 ---
