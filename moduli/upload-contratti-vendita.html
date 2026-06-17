@@ -4009,6 +4009,10 @@ Reload Exchange
 
  // Upload PDA in staging (bucket contratti-vendita, path temp/<session>/<filename>).
  // Ritorna { storage_path, file_name } al successo, throw in caso di errore.
+ //
+ // IMPORTANTE: il filename in staging deve essere univoco per ogni upload,
+ // altrimenti contratti diversi nella stessa pratica si sovrascriverebbero a vicenda
+ // (stesso temp_session_id condiviso). Usiamo un suffisso random per evitarlo.
  async function uploadPdaStaging(file) {
  assertValidFile(file, 'PDA');
  const tempSessionId = getOrCreateTempSessionId();
@@ -4016,8 +4020,10 @@ Reload Exchange
  formData.append('file', file);
  formData.append('temp_session_id', tempSessionId);
  formData.append('tipo_documento', 'contratto');
- // Forza il nome file (verra' rinominato in step di promozione)
- formData.append('file_name', 'pda.pdf');
+ // Nome file univoco per evitare collisioni fra PDA di contratti diversi
+ // nella stessa pratica (verra' rinominato in step di promozione).
+ const uniqueSuffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+ formData.append('file_name', 'pda_' + uniqueSuffix + '.pdf');
  const data = await fetchJsonOrTechnicalError(
  '/.netlify/functions/upload-vendita-documento',
  { method: 'POST', body: formData },
