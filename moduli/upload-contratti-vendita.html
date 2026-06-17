@@ -4074,6 +4074,12 @@ Reload Exchange
  setClusterValue(CLUSTERS.BUSINESS, { lock: false });
  }
  applyClusterFieldVisibility();
+ // setClusterValue setta refs.cluster.value senza scatenare 'change': bisogna
+ // ri-renderizzare offerte/opzioni/reload manualmente perche' dipendono dal cluster.
+ renderOfferte();
+ renderOpzioni();
+ renderReload();
+ renderDynamicSections();
  }
 
  if (refs.anagraficaOcrBanner) {
@@ -4102,12 +4108,22 @@ Reload Exchange
  // Auto-detect cluster sulla base del CF/PIVA quando l'utente digita manualmente.
  const v = normalizeCfPiva(refs.cfPiva.value);
  if (!v || refs.cluster.value) return;
+ let changed = false;
  if (isItalianFiscalCode(v)) {
  setClusterValue(CLUSTERS.CONSUMER, { lock: false });
- applyClusterFieldVisibility();
+ changed = true;
  } else if (isItalianVatNumber(v)) {
  setClusterValue(CLUSTERS.BUSINESS, { lock: false });
+ changed = true;
+ }
+ if (changed) {
  applyClusterFieldVisibility();
+ // setClusterValue non scatena 'change' su refs.cluster: aggiorniamo manualmente
+ // la cascade offerte/opzioni/reload che dipende dal cluster.
+ renderOfferte();
+ renderOpzioni();
+ renderReload();
+ renderDynamicSections();
  }
  });
 
