@@ -169,8 +169,21 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 funct
 - Nessuno dei due → errore "verifica il dato" (no fallback)
 - `Turista` → forza `categoria=Mobile`, `offerta="Untied - Call Your Country"`. Accettato solo da `crea-vendita-pratica-carrello.js`.
 
-### Email + cellulare obbligatori
-- Sia UI (`validateClienteData` in `upload-contratti-vendita.html`) sia backend (`crea-vendita-pratica-carrello.js`) **bloccano** la pratica se email o cellulare sono vuoti o malformati. L'email viene normalizzata in lowercase.
+### Campi anagrafici obbligatori
+Sia UI (`validateClienteData` in `upload-contratti-vendita.html`) sia backend (`crea-vendita-pratica-carrello.js`) **bloccano** la pratica se uno qualsiasi di questi campi e' vuoto o malformato:
+- `cf_piva`, `cluster`, `ragione_sociale` (sempre obbligatori)
+- `nome_referente`
+- `cellulare`
+- `email` (formato verificato con regex)
+- `provincia`, `comune`, `via`, `civico` (indirizzo completo obbligatorio)
+
+L'email viene normalizzata in lowercase. Nota: nel backend il flag `allowStrictContacts` controlla la severita' (oggi `false` per backwards compat con vecchi consumer della API).
+
+### OCR sovrascrive sempre i dati anagrafici esistenti
+Quando l'utente carica un PDA + sceglie "Analizza con AI", i dati estratti dall'OCR **sovrascrivono sempre** i valori dei campi del form, anche se l'anagrafica esiste gia' a DB con valori precedenti. Razionale: il PDA appena firmato e' la fonte di verita' piu' recente, l'anagrafica e' "always fresh".
+- Implementazione: `applyOcrToAnagrafica` overwrite incondizionato + salva `runtimeState.lastOcrData`.
+- Se l'utente clicca "Cerca cliente" dopo l'OCR, il risultato DB viene comunque sovrascritto da `lastOcrData` (re-applied in `cercaCliente`).
+- `lastOcrData` viene azzerato quando si reset il form contratto (nuovo contratto nello stesso carrello).
 
 ### Categorie ammesse al flusso PDA
 - Costante `CATEGORIE_PDA = ['Mobile', 'Customer Base', 'Fisso']`.

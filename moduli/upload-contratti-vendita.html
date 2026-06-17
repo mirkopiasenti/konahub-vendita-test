@@ -239,6 +239,107 @@
  }
  }
 
+ /* CATEGORIE COME CARD CLICCABILI (step 1) */
+ .categoria-cards {
+ display: grid;
+ grid-template-columns: repeat(3, minmax(0, 1fr));
+ gap: 12px;
+ margin-top: 6px;
+ }
+ .categoria-card {
+ border: 2px solid var(--border);
+ border-radius: 12px;
+ padding: 18px 14px;
+ cursor: pointer;
+ transition: var(--transition);
+ background: var(--card);
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ gap: 6px;
+ text-align: center;
+ min-height: 96px;
+ justify-content: center;
+ }
+ .categoria-card:hover {
+ border-color: var(--primary);
+ background: #fff9f3;
+ transform: translateY(-1px);
+ }
+ .categoria-card.selected {
+ border-color: var(--primary);
+ background: var(--primary-bg);
+ box-shadow: 0 0 0 3px #ffe3cc;
+ }
+ .categoria-card-icon { font-size: 26px; line-height: 1; }
+ .categoria-card-title { font-weight: 700; font-size: 14px; color: var(--text); }
+ .categoria-card-badge {
+ font-size: 10.5px; font-weight: 600; color: var(--muted);
+ text-transform: uppercase; letter-spacing: 0.04em;
+ }
+ .categoria-card-badge.pda { color: var(--primary-dark); }
+ @media (max-width: 880px) {
+ .categoria-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+ }
+ @media (max-width: 480px) {
+ .categoria-cards { grid-template-columns: 1fr; }
+ }
+
+ /* LOADING OVERLAY iniziale (mentre carica configurazione) */
+ .wizard-loading-overlay {
+ position: absolute; inset: 0;
+ background: rgba(255, 255, 255, 0.94);
+ backdrop-filter: blur(2px);
+ display: flex; flex-direction: column; align-items: center; justify-content: center;
+ gap: 12px;
+ z-index: 50;
+ border-radius: var(--radius);
+ }
+ .wizard-loading-overlay.hidden { display: none; }
+ .wizard-loading-spinner {
+ width: 44px; height: 44px;
+ border: 4px solid #ffe3cc;
+ border-top-color: var(--primary);
+ border-radius: 50%;
+ animation: wizSpin 0.85s linear infinite;
+ }
+ @keyframes wizSpin { to { transform: rotate(360deg); } }
+ .wizard-loading-label { font-weight: 700; font-size: 14px; color: var(--text); }
+ .wizard-loading-hint { font-size: 12.5px; color: var(--muted); text-align: center; max-width: 320px; }
+
+ /* PDA DROP ZONE moderna con drag-and-drop */
+ .pda-drop {
+ display: flex; flex-direction: column; align-items: center; justify-content: center;
+ gap: 8px;
+ border: 2px dashed #cbd5e1;
+ border-radius: 12px;
+ padding: 28px 20px;
+ background: #f8fafc;
+ cursor: pointer;
+ transition: all .18s ease;
+ text-align: center;
+ }
+ .pda-drop:hover, .pda-drop.dragover {
+ border-color: var(--primary);
+ background: #fff9f3;
+ }
+ .pda-drop.has-file {
+ border-style: solid;
+ border-color: #16a34a;
+ background: #f0fdf4;
+ }
+ .pda-drop-icon {
+ width: 48px; height: 48px;
+ border-radius: 50%;
+ background: var(--primary-bg);
+ color: var(--primary-dark);
+ display: flex; align-items: center; justify-content: center;
+ font-size: 22px;
+ }
+ .pda-drop.has-file .pda-drop-icon { background: #dcfce7; color: #15803d; }
+ .pda-drop-title { font-weight: 700; font-size: 14px; color: var(--text); }
+ .pda-drop-hint { font-size: 12px; color: var(--muted); }
+
  .step-item {
  border: 1px solid var(--border);
  border-radius: 10px;
@@ -969,19 +1070,25 @@
 <span class="step-index">5</span>
 <span class="step-label">Documenti</span>
 </div>
-</div> <section id="stepCategoriaSection" class="card panel">
+</div> <section id="stepCategoriaSection" class="card panel" style="position:relative;">
+<div id="wizardLoadingOverlay" class="wizard-loading-overlay">
+<div class="wizard-loading-spinner"></div>
+<div class="wizard-loading-label">Connessione al sistema...</div>
+<div class="wizard-loading-hint">Carico categorie, offerte e regole. Un momento.</div>
+</div>
 <h2>Categoria contratto e PDA</h2>
-<div class="grid">
-<div class="field half">
-<label for="categoria_id">Categoria *</label>
-<select id="categoria_id"></select>
-<p class="hint">Per Mobile, Customer Base e Fisso e' necessario caricare il PDA (Pratica di Adesione PDF).</p>
-</div>
-</div>
-<div id="pdaUploadZone" class="hidden" style="margin-top:14px;">
+<p class="hint" style="margin:4px 0 12px;">Seleziona la categoria del contratto. Per Mobile, Customer Base e Fisso ti chiederò poi di caricare il PDA (Pratica di Adesione PDF).</p>
+<div id="categoriaCards" class="categoria-cards"></div>
+<select id="categoria_id" style="display:none"></select>
+<div id="pdaUploadZone" class="hidden" style="margin-top:16px;">
 <h3 style="font-size:15px;margin:0 0 6px;color:#0f172a;">PDA — Pratica di Adesione *</h3>
 <p class="hint" style="margin:0 0 10px;">Carica il PDF del contratto firmato. Puoi farlo analizzare dall'AI per pre-compilare automaticamente i dati anagrafici, oppure procedere manualmente.</p>
-<input id="file_pda" type="file" accept="application/pdf">
+<label for="file_pda" id="pdaDropZone" class="pda-drop">
+<div class="pda-drop-icon" id="pdaDropIcon">📄</div>
+<div class="pda-drop-title" id="pdaDropTitle">Trascina qui il PDA o clicca per selezionare</div>
+<div class="pda-drop-hint" id="pdaDropHint">Solo PDF, max 20 MB</div>
+</label>
+<input id="file_pda" type="file" accept="application/pdf" style="display:none">
 <p id="pdaSelectedInfo" style="margin:8px 0 0;font-size:13px;color:#6b7280;">Nessun file selezionato</p>
 <p id="pdaOcrStatus" class="hint" style="margin:6px 0 0;display:none;"></p>
 </div>
@@ -1010,7 +1117,7 @@ Dati pre-compilati dall'AI sulla base del PDA caricato. Verifica e correggi prim
 <label for="ragione_sociale">Ragione Sociale *</label>
 <input id="ragione_sociale" autocomplete="off">
 </div> <div class="field">
-<label for="nome_referente">Nome Referente</label>
+<label for="nome_referente">Nome Referente *</label>
 <input id="nome_referente" autocomplete="off">
 </div> <div class="field">
 <label for="cellulare">Cellulare *</label>
@@ -1019,18 +1126,18 @@ Dati pre-compilati dall'AI sulla base del PDA caricato. Verifica e correggi prim
 <label for="email">Email *</label>
 <input id="email" type="email" autocomplete="off" placeholder="es. cliente@example.com">
 </div> <div id="fieldProvincia" class="field">
-<label for="provincia">Provincia</label>
+<label for="provincia">Provincia *</label>
 <input id="provincia" autocomplete="off" list="dl_province" placeholder="Sigla o nome (es. VR, Verona)">
 <datalist id="dl_province"></datalist>
 </div> <div id="fieldComune" class="field">
-<label for="comune">Comune</label>
+<label for="comune">Comune *</label>
 <input id="comune" autocomplete="off" list="dl_comuni" placeholder="Inizia a digitare...">
 <datalist id="dl_comuni"></datalist>
 </div> <div id="fieldVia" class="field">
-<label for="via">Via</label>
+<label for="via">Via *</label>
 <input id="via" autocomplete="off">
 </div> <div id="fieldCivico" class="field">
-<label for="civico">Civico</label>
+<label for="civico">Civico *</label>
 <input id="civico" autocomplete="off">
 </div> <div class="field">
 <label for="origine_pratica">Origine Pratica</label>
@@ -1475,6 +1582,13 @@ Reload Exchange
 
  function markTechnicalConnected(label = 'Connesso') {
  setConnectionStatus('connected', label);
+ const overlay = document.getElementById('wizardLoadingOverlay');
+ if (overlay) overlay.classList.add('hidden');
+ }
+
+ function hideWizardLoadingOverlay() {
+ const overlay = document.getElementById('wizardLoadingOverlay');
+ if (overlay) overlay.classList.add('hidden');
  }
 
  function markTechnicalError(label = 'Errore') {
@@ -2415,6 +2529,7 @@ Reload Exchange
  if (state.categorie.length === 0) {
  refs.categoria.innerHTML = optionHtml('', 'Nessuna categoria disponibile');
  refs.categoria.value = '';
+ renderCategorieCards();
  return;
  }
 
@@ -2424,6 +2539,68 @@ Reload Exchange
 
  const hasCurrent = state.categorie.some((item) => item.id === currentValue);
  refs.categoria.value = hasCurrent ? currentValue : '';
+ renderCategorieCards();
+ }
+
+ const CATEGORIA_ICONS = {
+ 'mobile': '📱',
+ 'customer base': '🔄',
+ 'fisso': '🏠',
+ 'energia': '⚡',
+ 'allarmi': '🛡️',
+ 'assicurazioni': '☂️'
+ };
+ function getCategoriaIcon(nome) {
+ const k = String(nome || '').trim().toLowerCase();
+ return CATEGORIA_ICONS[k] || '📁';
+ }
+ function isCategoriaPda(nome) {
+ const k = String(nome || '').trim().toLowerCase();
+ return ['mobile', 'customer base', 'fisso'].includes(k);
+ }
+
+ function renderCategorieCards() {
+ const container = document.getElementById('categoriaCards');
+ if (!container) return;
+ if (!state.categorie || state.categorie.length === 0) {
+ container.innerHTML = '<div class="hint">Nessuna categoria disponibile</div>';
+ return;
+ }
+ const currentValue = refs.categoria.value;
+ container.innerHTML = state.categorie.map((cat) => {
+ const isPda = isCategoriaPda(cat.nome);
+ const isSelected = cat.id === currentValue;
+ const icon = getCategoriaIcon(cat.nome);
+ const badge = isPda
+ ? '<div class="categoria-card-badge pda">Richiede PDA</div>'
+ : '<div class="categoria-card-badge">Compilazione manuale</div>';
+ return '<div class="categoria-card ' + (isSelected ? 'selected' : '') + '" data-categoria-id="' + escapeHtml(cat.id) + '" role="button" tabindex="0">' +
+ '<div class="categoria-card-icon">' + icon + '</div>' +
+ '<div class="categoria-card-title">' + escapeHtml(cat.nome) + '</div>' +
+ badge +
+ '</div>';
+ }).join('');
+ container.querySelectorAll('.categoria-card').forEach((card) => {
+ card.addEventListener('click', () => onCategoriaCardClick(card.dataset.categoriaId));
+ card.addEventListener('keydown', (e) => {
+ if (e.key === 'Enter' || e.key === ' ') {
+ e.preventDefault();
+ onCategoriaCardClick(card.dataset.categoriaId);
+ }
+ });
+ });
+ }
+
+ function onCategoriaCardClick(categoriaId) {
+ if (!categoriaId) return;
+ refs.categoria.value = categoriaId;
+ refs.categoria.dispatchEvent(new Event('change', { bubbles: true }));
+ renderCategorieCards();
+ const cat = state.categorie.find((c) => c.id === categoriaId);
+ if (cat && !isCategoriaPda(cat.nome)) {
+ // Categoria senza PDA: avanza automaticamente
+ if (refs.btnCategoriaNoPdaNext) refs.btnCategoriaNoPdaNext.click();
+ }
  }
 
  function renderOfferte(options = {}) {
@@ -2558,6 +2735,8 @@ Reload Exchange
  // POD/PDR (Energia) e prezzo_fisso (Fisso) non devono persistere fra un contratto e l'altro nello stesso carrello
  if (refs.podPdr) refs.podPdr.value = '';
  if (refs.numeroContrattoEnergia) delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
+ // I dati OCR del contratto precedente non valgono per il nuovo
+ if (typeof runtimeState !== 'undefined') runtimeState.lastOcrData = null;
  clearInputFile(refs.fileCopiaSimMnp);
  clearInputFile(refs.fileCopiaBolletta);
  if (refs.fileContrattoFirmato) clearInputFile(refs.fileContrattoFirmato);
@@ -2745,6 +2924,10 @@ Reload Exchange
  throw new Error('Cluster cliente non valido');
  }
 
+ if (!cliente.nome_referente) {
+ throw new Error('Compila il campo Nome Referente');
+ }
+
  // Email e cellulare obbligatori (allineato al backend allowStrictContacts)
  if (!cliente.cellulare) {
  throw new Error('Compila il campo Cellulare');
@@ -2754,6 +2937,20 @@ Reload Exchange
  }
  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.email)) {
  throw new Error('Email non valida (es. cliente@example.com)');
+ }
+
+ // Indirizzo obbligatorio (provincia, comune, via, civico)
+ if (!cliente.provincia) {
+ throw new Error('Compila il campo Provincia');
+ }
+ if (!cliente.comune) {
+ throw new Error('Compila il campo Comune');
+ }
+ if (!cliente.via) {
+ throw new Error('Compila il campo Via');
+ }
+ if (!cliente.civico) {
+ throw new Error('Compila il campo Civico');
  }
  }
 
@@ -3296,6 +3493,12 @@ Reload Exchange
  refs.via.value = found.via || refs.via.value;
  refs.civico.value = found.civico || refs.civico.value;
  applyClusterFieldVisibility();
+
+ // Se l'OCR ha estratto dati per questo cliente, riapplicalo per sovrascrivere
+ // i valori DB con quelli piu' aggiornati estratti dal PDA appena caricato.
+ if (runtimeState.lastOcrData) {
+ applyOcrToAnagrafica(runtimeState.lastOcrData);
+ }
 
  renderOfferte();
  renderOpzioni();
@@ -4359,8 +4562,12 @@ Reload Exchange
  }
 
  // Pre-compila i campi anagrafica con risultati OCR. Mostra il banner "Dati AI".
+ // I dati OCR SOVRASCRIVONO sempre il contenuto dei campi: il PDA caricato e' la
+ // fonte di verita' piu' aggiornata (anche rispetto al record DB pre-esistente).
  function applyOcrToAnagrafica(ocrData) {
  if (!ocrData || typeof ocrData !== 'object') return;
+ // Salva i dati OCR in runtime per re-applicarli dopo eventuale Cerca cliente
+ runtimeState.lastOcrData = ocrData;
  const mapping = {
  cf_piva: refs.cfPiva,
  ragione_sociale: refs.ragioneSociale,
@@ -4378,8 +4585,7 @@ Reload Exchange
  const v = ocrData[key];
  if (!el) return;
  if (v === null || v === undefined || v === '') return;
- // Non sovrascrivere se l'utente ha gia' compilato il campo manualmente
- if (el.value && String(el.value).trim() !== '') return;
+ // OCR ha priorita': sovrascrive sempre, anche valori gia' compilati
  el.value = key === 'cf_piva' ? normalizeCfPiva(v) : (key === 'email' ? String(v).toLowerCase() : String(v));
  appliedAny = true;
  });
@@ -4489,7 +4695,54 @@ Reload Exchange
  if (refs.filePda) {
  refs.filePda.addEventListener('change', () => {
  renderCategoriaActions();
+ updatePdaDropZoneVisual();
  });
+ // Drag-and-drop sulla zona PDA
+ const pdaDropZone = document.getElementById('pdaDropZone');
+ if (pdaDropZone) {
+ pdaDropZone.addEventListener('dragover', (e) => {
+ e.preventDefault();
+ pdaDropZone.classList.add('dragover');
+ });
+ pdaDropZone.addEventListener('dragleave', () => {
+ pdaDropZone.classList.remove('dragover');
+ });
+ pdaDropZone.addEventListener('drop', (e) => {
+ e.preventDefault();
+ pdaDropZone.classList.remove('dragover');
+ const files = e.dataTransfer && e.dataTransfer.files;
+ if (!files || !files.length) return;
+ const file = files[0];
+ if (file.type !== 'application/pdf') {
+ showUserError('Sono accettati solo file PDF per il PDA', 'Upload PDA');
+ return;
+ }
+ const dt = new DataTransfer();
+ dt.items.add(file);
+ refs.filePda.files = dt.files;
+ refs.filePda.dispatchEvent(new Event('change', { bubbles: true }));
+ });
+ }
+ }
+
+ function updatePdaDropZoneVisual() {
+ const zone = document.getElementById('pdaDropZone');
+ const titleEl = document.getElementById('pdaDropTitle');
+ const hintEl = document.getElementById('pdaDropHint');
+ const iconEl = document.getElementById('pdaDropIcon');
+ if (!zone) return;
+ const file = refs.filePda && refs.filePda.files ? refs.filePda.files[0] : null;
+ if (file) {
+ zone.classList.add('has-file');
+ if (titleEl) titleEl.textContent = '✓ ' + file.name;
+ if (hintEl) hintEl.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB — clicca per cambiare';
+ if (iconEl) iconEl.textContent = '✓';
+ } else {
+ zone.classList.remove('has-file');
+ if (titleEl) titleEl.textContent = 'Trascina qui il PDA o clicca per selezionare';
+ if (hintEl) hintEl.textContent = 'Solo PDF, max 20 MB';
+ if (iconEl) iconEl.textContent = '📄';
+ }
  }
 
  // Step 1 (categoria SENZA PDA): bottone "Avanti"
@@ -4644,6 +4897,9 @@ Reload Exchange
  runtimeState.pendingTipoFirma = tipo;
  renderFirmaSelection();
  queueDraftSave();
+ // Avanzamento automatico allo step Documenti dopo la scelta della firma.
+ // L'utente puo' sempre tornare indietro col bottone "Indietro" se ha sbagliato.
+ goToStep(5);
  }
 
  if (refs.firmaCardElettronica) {
