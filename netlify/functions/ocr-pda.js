@@ -90,16 +90,17 @@ const SYSTEM_PROMPT = `Estrai dati del CLIENTE (non operatore) da contratto IT. 
 Null se mancante o non sicuro, NON inventare.
 cf_piva: CF(16) o PIVA(11), solo valore
 ragione_sociale: nome+cognome (privato) o ragione azienda
-nome_referente: solo per aziende, null altrimenti
+nome: SOLO il nome di battesimo del titolare/cliente (es. "Mario" da "Mario Rossi"). Per aziende: nome di battesimo del referente. Null se non si capisce.
+nome_referente: nome+cognome del referente. Solo per aziende, null per persone fisiche.
 cellulare: 10 cifre, prefisso 3xx, solo numero
 email: lowercase
 provincia: sigla 2 lettere maiuscole (VR,MI,RM)
 comune: nome
 via: senza civico
 civico: solo numero (es 12, 12/A)
-Ex: {"cf_piva":"RSSMRA85M01H501Z","ragione_sociale":"Mario Rossi","nome_referente":null,"cellulare":"3331234567","email":"m@b.it","provincia":"RM","comune":"Roma","via":"Via Roma","civico":"12"}`;
+Ex: {"cf_piva":"RSSMRA85M01H501Z","ragione_sociale":"Mario Rossi","nome":"Mario","nome_referente":null,"cellulare":"3331234567","email":"m@b.it","provincia":"RM","comune":"Roma","via":"Via Roma","civico":"12"}`;
 
-const EXPECTED_KEYS = ['cf_piva', 'ragione_sociale', 'nome_referente', 'cellulare', 'email', 'provincia', 'comune', 'via', 'civico'];
+const EXPECTED_KEYS = ['cf_piva', 'ragione_sociale', 'nome', 'nome_referente', 'cellulare', 'email', 'provincia', 'comune', 'via', 'civico'];
 
 function emptyResult() {
   const out = {};

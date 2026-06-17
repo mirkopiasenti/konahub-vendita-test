@@ -1534,6 +1534,10 @@ Reload Exchange
  return String(value || '').trim().toLowerCase() === CLUSTERS.TURISTA.toLowerCase();
  }
 
+ function isConsumerCluster(value) {
+ return String(value || '').trim().toLowerCase() === CLUSTERS.CONSUMER.toLowerCase();
+ }
+
  function normalizeClusterValue(value) {
  const raw = String(value || '').trim().toLowerCase();
  if (raw === CLUSTERS.CONSUMER.toLowerCase()) return CLUSTERS.CONSUMER;
@@ -4309,6 +4313,17 @@ Reload Exchange
  renderOpzioni();
  renderReload();
  renderDynamicSections();
+ }
+
+ // Per cluster Consumer (persona fisica), il "Nome Referente" prende il solo
+ // nome di battesimo estratto dall'OCR (campo `nome`). Per Business il nome_referente
+ // e' gia' stato popolato sopra col valore intero del referente aziendale.
+ if (isConsumerCluster(refs.cluster.value) && refs.nomeReferente && !refs.nomeReferente.value.trim()) {
+ const firstName = ocrData.nome ? String(ocrData.nome).trim() : '';
+ if (firstName) {
+ refs.nomeReferente.value = firstName;
+ appliedAny = true;
+ }
  }
 
  if (refs.anagraficaOcrBanner) {
