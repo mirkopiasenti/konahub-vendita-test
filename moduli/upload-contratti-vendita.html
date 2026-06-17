@@ -1020,10 +1020,12 @@ Dati pre-compilati dall'AI sulla base del PDA caricato. Verifica e correggi prim
 <input id="email" type="email" autocomplete="off" placeholder="es. cliente@example.com">
 </div> <div id="fieldProvincia" class="field">
 <label for="provincia">Provincia</label>
-<input id="provincia" autocomplete="off">
+<input id="provincia" autocomplete="off" list="dl_province" placeholder="Sigla o nome (es. VR, Verona)">
+<datalist id="dl_province"></datalist>
 </div> <div id="fieldComune" class="field">
 <label for="comune">Comune</label>
-<input id="comune" autocomplete="off">
+<input id="comune" autocomplete="off" list="dl_comuni" placeholder="Inizia a digitare...">
+<datalist id="dl_comuni"></datalist>
 </div> <div id="fieldVia" class="field">
 <label for="via">Via</label>
 <input id="via" autocomplete="off">
@@ -3134,8 +3136,96 @@ Reload Exchange
  renderReload();
  renderDynamicSections();
  renderWizardLayout();
+ // Carica dataset province/comuni in background (non blocca il wizard se fallisce)
+ loadProvinceComuni().catch((e) => console.warn('province-comuni non caricato:', e));
  setMessage('Configurazione caricata', 'ok');
  markTechnicalConnected('Connesso');
+ }
+
+ // ===== AUTOCOMPLETE PROVINCE / COMUNI =====
+ // Dataset { "VR": { "nome": "Verona", "comuni": ["Verona", "Albaredo d'Adige", ...] }, ... }
+ const provinceComuniState = {
+ loaded: false,
+ data: null,
+ // Indici di lookup (lazy, costruiti dopo il fetch)
+ sigleByName: null,    // Map nome->sigla (lowercased)
+ nameBySigla: null     // Map sigla->nome (lowercased keys)
+ };
+
+ async function loadProvinceComuni() {
+ if (provinceComuniState.loaded) return;
+ const resp = await fetch('../js/data/province-comuni.json', { cache: 'force-cache' });
+ if (!resp.ok) throw new Error('province-comuni.json non trovato');
+ const data = await resp.json();
+ provinceComuniState.data = data;
+ // Costruisci indici
+ const sigleByName = new Map();
+ const nameBySigla = new Map();
+ Object.keys(data).forEach((sigla) => {
+ sigleByName.set(String(data[sigla].nome).toLowerCase(), sigla);
+ nameBySigla.set(sigla.toLowerCase(), data[sigla].nome);
+ });
+ provinceComuniState.sigleByName = sigleByName;
+ provinceComuniState.nameBySigla = nameBySigla;
+ provinceComuniState.loaded = true;
+ // Popola datalist province (mostrato come sigla + nome)
+ const dlProv = document.getElementById('dl_province');
+ if (dlProv) {
+ dlProv.innerHTML = Object.keys(data)
+ .sort()
+ .map((s) => `<option value="${s}" label="${escapeHtml(data[s].nome)}"></option>`)
+ .join('');
+ }
+ // Se gia' c'e' una provincia selezionata (es. da OCR), popola anche i comuni
+ if (refs.provincia && refs.provincia.value) {
+ normalizeProvinciaInput(refs.provincia.value);
+ populateComuniDatalist();
+ }
+ }
+
+ // Risolve un valore digitato in una sigla provincia. Accetta sigla (VR) o nome (Verona).
+ // Ritorna la sigla in maiuscolo o null.
+ function resolveSiglaProvincia(value) {
+ if (!provinceComuniState.loaded) return null;
+ const raw = String(value || '').trim();
+ if (!raw) return null;
+ const upper = raw.toUpperCase();
+ if (provinceComuniState.data[upper]) return upper;
+ const sigla = provinceComuniState.sigleByName.get(raw.toLowerCase());
+ return sigla || null;
+ }
+
+ // Normalizza l'input provincia in sigla canonica (al blur). Se non risolto lascia com'e'.
+ function normalizeProvinciaInput(rawValue) {
+ const sigla = resolveSiglaProvincia(rawValue);
+ if (sigla && refs.provincia) {
+ refs.provincia.value = sigla;
+ }
+ return sigla;
+ }
+
+ // Aggiorna il datalist dei comuni in base alla provincia attualmente selezionata
+ function populateComuniDatalist() {
+ const dl = document.getElementById('dl_comuni');
+ if (!dl || !provinceComuniState.loaded) return;
+ const sigla = resolveSiglaProvincia(refs.provincia?.value);
+ const comuni = sigla ? provinceComuniState.data[sigla].comuni : [];
+ dl.innerHTML = comuni.map((c) => `<option value="${escapeHtml(c)}"></option>`).join('');
+ }
+
+ // Normalizza l'input comune al case canonico se trova match case-insensitive
+ function normalizeComuneInput() {
+ if (!provinceComuniState.loaded || !refs.comune) return;
+ const sigla = resolveSiglaProvincia(refs.provincia?.value);
+ if (!sigla) return;
+ const raw = String(refs.comune.value || '').trim();
+ if (!raw) return;
+ const found = provinceComuniState.data[sigla].comuni.find(
+ (c) => c.toLowerCase() === raw.toLowerCase()
+ );
+ if (found && found !== refs.comune.value) {
+ refs.comune.value = found;
+ }
  }
 
  async function cercaCliente(options = {}) {
@@ -4311,6 +4401,13 @@ Reload Exchange
  renderDynamicSections();
  }
 
+ // Normalizza provincia (sigla canonica) + datalist comuni + normalize comune
+ if (provinceComuniState.loaded) {
+ normalizeProvinciaInput(refs.provincia?.value);
+ populateComuniDatalist();
+ normalizeComuneInput();
+ }
+
  if (refs.anagraficaOcrBanner) {
  refs.anagraficaOcrBanner.classList.toggle('hidden', !appliedAny);
  }
@@ -4355,6 +4452,26 @@ Reload Exchange
  renderDynamicSections();
  }
  });
+
+ // Autocomplete provincia/comune
+ if (refs.provincia) {
+ refs.provincia.addEventListener('blur', () => {
+ normalizeProvinciaInput(refs.provincia.value);
+ populateComuniDatalist();
+ normalizeComuneInput();
+ });
+ refs.provincia.addEventListener('input', () => {
+ // Aggiorna i comuni se la provincia digitata risolve a una sigla
+ if (resolveSiglaProvincia(refs.provincia.value)) {
+ populateComuniDatalist();
+ }
+ });
+ }
+ if (refs.comune) {
+ refs.comune.addEventListener('blur', () => {
+ normalizeComuneInput();
+ });
+ }
 
  refs.cfPiva.addEventListener('keydown', async (event) => {
  if (event.key !== 'Enter') return;
