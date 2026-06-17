@@ -721,6 +721,7 @@ function apriPopupDettaglio(c, opts) {
          <div class="left"></div>
          <div class="right">
            <button type="button" class="mx-btn mx-btn-secondary" data-mx-close-popup>Annulla</button>
+           <button type="button" class="mx-btn mx-btn-secondary" onclick="salvaModifiche('${escapeHtml(c.id)}')">💾 Salva modifica</button>
            <button type="button" class="mx-btn mx-btn-primary" onclick="confermaVerifica('${escapeHtml(c.id)}')">✓ Conferma verifica</button>
          </div>
        </div>`;
@@ -1073,6 +1074,54 @@ async function confermaVerifica(id) {
   }
 }
 window.confermaVerifica = confermaVerifica;
+
+// ============================================================
+// SALVA MODIFICA (senza approvare la verifica)
+// ============================================================
+// Permette di correggere dati di una pratica appena caricata mantenendola
+// in "Da Verificare". Lo stato_controllo NON viene toccato, percio' la
+// dashboard giornaliera continua a contare il contratto correttamente.
+// Approvazione formale avverra' il giorno successivo via "Conferma verifica".
+async function salvaModifiche(id) {
+  const { ana, contratto } = leggiPayloadDalPopup();
+  // NOTA: nessuna validazione di numero_contratto_energia qui — quel campo e'
+  // obbligatorio solo per "Conferma verifica", non per salvare modifiche intermedie.
+  const ok = await window.MiroxUI.confirm(
+    'Salvare le modifiche al contratto <strong>senza approvare</strong> la verifica?<br><br>Il contratto resterà in <strong>"Da Verificare"</strong> per l\'approvazione successiva.',
+    { title: 'Salva modifica', okText: 'Sì, salva', cancelText: 'Annulla', html: true }
+  );
+  if (!ok) return;
+  const loader = window.MiroxUI.loading.show('Salvataggio in corso', 'Aggiorno i dati senza cambiare lo stato di verifica...');
+  try {
+    const c = window.__currentVerificaContratto;
+    // Update anagrafica
+    if (c && c.anagrafica_id) {
+      const { error: anaErr } = await sb.from('anagrafica').update(ana).eq('id', c.anagrafica_id);
+      if (anaErr) console.warn('Update anagrafica fallito:', anaErr.message);
+    }
+    // Update contratto SENZA toccare stato_controllo / controllato_da / controllato_at
+    const patch = {
+      ...contratto,
+      categoria_snapshot: document.querySelector('#vc_categoria_id option:checked')?.textContent || c.categoria_snapshot,
+      nome_offerta_snapshot: document.querySelector('#vc_offerta_id option:checked')?.textContent || c.nome_offerta_snapshot,
+      nome_opzione_snapshot: document.querySelector('#vc_opzione_id option:checked')?.textContent || c.nome_opzione_snapshot,
+      nome_reload_snapshot: document.querySelector('#vc_reload_id option:checked')?.textContent || c.nome_reload_snapshot
+    };
+    const { error } = await sb.from('vendita_contratti').update(patch).eq('id', id);
+    if (error) throw error;
+    loader.success('Modifiche salvate');
+    setTimeout(async () => {
+      if (window.__currentVerificaModal) window.__currentVerificaModal.close();
+      // Ricarico solo la lista "da_controllare": il contratto resta li, non passa ai verificati.
+      await caricaContratti('da_controllare');
+    }, 900);
+  } catch (e) {
+    loader.error('Errore di salvataggio');
+    console.error('Errore salva modifica:', e);
+    setTimeout(() => window.MiroxUI.alert('Errore: ' + e.message, { type: 'error' }), 200);
+  }
+}
+window.salvaModifiche = salvaModifiche;
 
 // ============================================================
 // RIMETTI IN VERIFICA (dalla tab Verificati)
