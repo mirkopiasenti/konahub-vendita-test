@@ -597,6 +597,15 @@ function openDettaglio(id) {
     large: true,
     onClose: () => { CFState.editingId = null; }
   });
+  // FIX scroll: il MiroxUI overlay non scrolla se il modal supera l'altezza viewport.
+  // Lo rendiamo scrollabile e ancorato in alto come fa segnalazioni.html.
+  m.overlay.style.alignItems = 'flex-start';
+  m.overlay.style.overflowY = 'auto';
+  m.overlay.style.paddingTop = '24px';
+  m.overlay.style.paddingBottom = '24px';
+  m.modal.style.marginTop = '0';
+  m.modal.style.marginBottom = '24px';
+  m.modal.style.maxHeight = 'none';
   // Bind chiudi
   m.foot.querySelectorAll('[data-mx-close]').forEach(b => b.addEventListener('click', m.close));
   // Salvo riferimento al modal per chiudere dopo salvataggio
@@ -607,7 +616,7 @@ function renderChatArea(chatRaw) {
   let chat = [];
   try { chat = Array.isArray(chatRaw) ? chatRaw : (chatRaw ? JSON.parse(chatRaw) : []); } catch(e) {}
   if (!chat.length) {
-    return `<div class="chat-area" id="cfChatArea"><div style="text-align:center;color:var(--text-light);padding:16px;font-size:13px;">Nessuna nota</div></div>`;
+    return `<div class="chat-area" id="cfChatArea"><div id="cfChatEmpty" style="text-align:center;color:var(--text-light);padding:16px;font-size:13px;">Nessuna nota</div></div>`;
   }
   const msgs = chat.map(m => `
     <div class="chat-msg">
@@ -829,7 +838,8 @@ async function aggiungiNota() {
     const area = document.getElementById('cfChatArea');
     if (area) {
       // Rimuovo placeholder se presente
-      if (area.querySelector('div[style*="Nessuna nota"]')) area.innerHTML = '';
+      const empty = document.getElementById('cfChatEmpty');
+      if (empty) empty.remove();
       area.insertAdjacentHTML('beforeend', `
         <div class="chat-msg">
           <div class="chat-msg-time">${escapeHtml(newMsg.timestamp)}<span class="chat-msg-author">— ${escapeHtml(newMsg.autore)}</span></div>
