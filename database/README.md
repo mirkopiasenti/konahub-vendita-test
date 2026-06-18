@@ -1,6 +1,6 @@
 # /database/ — Migrazioni SQL storiche
 
-I 18 file `.sql` in questa cartella sono **migrazioni storiche parziali** applicate manualmente nel SQL Editor di Supabase (o via `.bin/supabase db query --linked --file ...`) durante lo sviluppo.
+I 19 file `.sql` in questa cartella sono **migrazioni storiche parziali** applicate manualmente nel SQL Editor di Supabase (o via `.bin/supabase db query --linked --file ...`) durante lo sviluppo.
 
 ## ⚠️ NON sono lo stato attuale del DB
 
@@ -33,6 +33,7 @@ Lo schema reale di Supabase contiene anche modifiche fatte:
 | `016_vendita_contratti_tipo_firma.sql` | Aggiunge `vendita_contratti.tipo_firma` ('elettronica'/'cartacea'/NULL) per il nuovo step Firma del wizard |
 | `017_vendita_contratti_convergenza.sql` | Aggiunge `vendita_contratti.convergenza` (text + CHECK su 7 valori) per i contratti Fisso |
 | `018_post_vendita_controllo_fissi.sql` | Crea `post_vendita_controllo_fissi` (follow-up contratti Fisso) + RLS + trigger `touch_updated_at` + trigger `trg_vendita_contratti_to_controllo_fissi` (popolamento automatico al cambio `stato_controllo` su contratti Fisso) + backfill di quelli gia' `controllato` |
+| `019_post_vendita_controllo_lg.sql` | Aggiunge `vendita_contratti.ex_fornitore` (obbligatorio per Energia in fase di verifica). Crea `post_vendita_controllo_lg` (follow-up contratti Energia) + RLS + trigger `touch_updated_at` + trigger `trg_vendita_contratti_to_controllo_lg` (popolamento automatico al cambio `stato_controllo` su contratti Energia) + backfill |
 
 ## Linee guida
 

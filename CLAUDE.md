@@ -121,6 +121,7 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 funct
 - `post_vendita_dispositivi_comodato` — codice generato da RPC `genera_codice_comodato()`
 - `post_vendita_gestione_rimborsi` — codice da RPC `genera_codice_rimborso()`
 - `post_vendita_controllo_fissi` — follow-up dei contratti Fisso dopo conferma in Verifica Contratti. Stati: `Da completare` → `In Attivazione` → (`Attivo` | `KO`). Popolata in automatico dal trigger `trg_vendita_contratti_to_controllo_fissi` su UPDATE `vendita_contratti.stato_controllo` quando un contratto Fisso passa a `controllato`. Campi manuali: `codice_cliente`, `tecnologia`, `cod_contratto`, `cod_pos`, `numero_fisso`, `attivazione_prevista`, `data_attivazione`, `motivo_ko`. Chat in `storico_chat` jsonb (`[{timestamp, message, autore}]`). CHECK constraint su `stato`, `tecnologia` (FTTC/FWA OUT/FWA IN/FWA VOCE/FTTH_OF/FTTH_FWCOP), `cod_pos` (9001415852/900822241).
+- `post_vendita_controllo_lg` — follow-up dei contratti Energia (L&G = Luce & Gas, nome user-facing del modulo) dopo conferma in Verifica Contratti. Popolata in automatico dal trigger `trg_vendita_contratti_to_controllo_lg` su UPDATE `vendita_contratti.stato_controllo` quando un contratto Energia passa a `controllato`. Nessun campo manuale: tutti i dati sono letti dal join con `vendita_contratti` (`numero_contratto_energia`, `pod_pdr`, `ex_fornitore`, `operatore_id`) e `anagrafica` (`ragione_sociale`, `cf_piva`, `cellulare`). Solo colonna mutabile: `stato` (text, no CHECK, predisposta per regole future).
 
 ### Trasversali
 - `segnalazioni` (+ `segnalazioni_backup`)
@@ -159,8 +160,9 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 funct
    - Upload su bucket `contratti-vendita` in `<YYYY>/<MM>/<cartella_safe>/`
    - INSERT `vendita_documenti`
    - Rollback file su Storage se INSERT DB fallisce
-6. Verifica contratto in `moduli/verifica_contratti.html` → `confermaVerifica()` UPDATE `vendita_contratti SET stato_controllo='controllato'`. Il popup di conferma per i contratti Fisso evidenzia il passaggio al modulo Controllo Fissi.
+6. Verifica contratto in `moduli/verifica_contratti.html` → `confermaVerifica()` UPDATE `vendita_contratti SET stato_controllo='controllato'`. Il popup di conferma per i contratti Fisso/Energia evidenzia il passaggio rispettivamente al modulo Controllo Fissi / Controllo L&G. Per categoria Energia, sono obbligatori in fase di verifica `numero_contratto_energia` E `ex_fornitore` (entrambi compilati nella sezione "Campi specifici categoria" del popup verifica).
 7. Post-vendita Fisso: il trigger `trg_vendita_contratti_to_controllo_fissi` crea automaticamente una riga in `post_vendita_controllo_fissi` con stato `Da completare`. L'operatore compila i 4 campi obbligatori (Cod. Cliente, Tecnologia, Cod. Contratto, Cod. POS) in `moduli/controllo_fissi.html` → click "Compilazione Completata" → stato `In Attivazione`. Poi via dropdown stato → `Attivo` (con data attivazione effettiva obbligatoria) oppure `KO` (azzera `attivazione_prevista`).
+8. Post-vendita Energia (L&G): il trigger `trg_vendita_contratti_to_controllo_lg` crea automaticamente una riga in `post_vendita_controllo_lg`. La pagina `moduli/controllo_lg.html` mostra tutti i dati incolonnati in tabella (nessun popup dettagli, nessuno step di completamento): Data Inserimento, Ragione Sociale, CF/PIVA, Numero Contratto, POD/PDR, Ex Fornitore, Contatto (cellulare), Operatore, Stato.
 
 ---
 
@@ -213,7 +215,7 @@ Quando l'utente carica un PDA + sceglie "Analizza con AI", i dati estratti dall'
   - `fascia_prezzo` obbligatoria
   - `tipo_acquisto` IN ('VAR','Finanziamento'); se Finanziamento → `finanziaria` IN ('Findomestic','Compass')
   - `kolme` boolean obbligatorio
-- **Energia**: campo `pod_pdr` (UI mostrata solo per Energia)
+- **Energia**: campo `pod_pdr` raccolto nel wizard. `numero_contratto_energia` e `ex_fornitore` (text libero) sono predisposti vuoti dal wizard e diventano **obbligatori in fase di verifica** (`moduli/verifica_contratti.html` → `confermaVerifica` valida entrambi prima del passaggio a `stato_controllo='controllato'`).
 - **Mobile / Customer Base**: checkbox `reload_exchange`
 
 ### Origine pratica (CHECK constraint su `vendita_pratiche`)
@@ -228,6 +230,13 @@ Quando l'utente carica un PDA + sceglie "Analizza con AI", i dati estratti dall'
 - **Cod. POS** (CHECK `pvcf_cod_pos_chk`): `9001415852`, `900822241`.
 - **Chat note**: array JSONB `storico_chat = [{timestamp, message, autore}]` — stesso pattern di `segnalazioni.storico_chat`.
 - **UI a 2 tab**: `Da Completare` (pratiche aperte) + `Elenco Contratti` (vista unificata In Attivazione / Attivo / KO). La tab Elenco ha 3 filtri dropdown (Cluster, Tecnologia, Stato) e una search; la search è mutuamente esclusiva coi filtri (digitando si svuotano i dropdown, cambiando un filtro si svuota la search). Default all'apertura della tab Elenco: filtro Stato = `In Attivazione`. Tre stat-card live sopra la tabella: `In Attivazione` (totale aperti), `Attivati nel mese` (`stato=Attivo` AND `data_attivazione` nel mese corrente), `KO nel mese` (`stato=KO` AND `stato_cambiato_at` nel mese corrente).
+
+### Controllo L&G (post-vendita Energia)
+- Tabella: `post_vendita_controllo_lg` (vedi Mappa Supabase → Post-Vendita).
+- **Trigger automatico** `trg_vendita_contratti_to_controllo_lg`: alla conferma verifica di un contratto Energia (UPDATE `vendita_contratti.stato_controllo` da `da_controllare` a `controllato`) viene creata una riga in `post_vendita_controllo_lg`. Idempotente grazie a UNIQUE su `contratto_id`.
+- **Campi colonna** (UI `moduli/controllo_lg.html`, tabella diretta senza popup dettagli): Data Inserimento (`vendita_contratti.data_contratto`), Ragione Sociale, CF/PIVA, Numero Contratto (`vendita_contratti.numero_contratto_energia`, compilato in verifica), POD/PDR (`vendita_contratti.pod_pdr`), Ex Fornitore (`vendita_contratti.ex_fornitore`, compilato in verifica), Contatto (`anagrafica.cellulare`), Operatore (`profili.nome` via `vendita_contratti.operatore_id`), Stato (`post_vendita_controllo_lg.stato`).
+- **`stato`**: text NULLABLE senza CHECK constraint, predisposto per regole future. UI mostra "—" se NULL.
+- **Nessun dato manuale** in `post_vendita_controllo_lg`: tutti i dati vengono dal join con `vendita_contratti` / `anagrafica`. La compilazione dei dati obbligatori avviene in `moduli/verifica_contratti.html`.
 
 ### Storage folder naming
 - Contratti vendita: `Contratto_<RAGSOC_SAFE>_<DD_MM_YYYY>_<praticaIdShort6>` sotto `<YYYY>/<MM>/` (lowercase)

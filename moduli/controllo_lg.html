@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="../assets/favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controllo L&amp;G — Mirox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/mirox-modules.css">
+<style>
+:root {
+  --primary: #FF6600;
+  --primary-dark: #E55A00;
+  --primary-bg: #FFF3E0;
+  --text: #0f172a;
+  --text-secondary: #64748b;
+  --text-light: #94a3b8;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --bg: #f8fafc;
+  --bg-card: #ffffff;
+  --success: #16a34a;
+  --success-bg: #DCFCE7;
+  --warning: #d97706;
+  --warning-bg: #FEF3C7;
+  --danger: #b91c1c;
+  --danger-bg: #FEE2E2;
+  --info: #2563eb;
+  --info-bg: #DBEAFE;
+  --radius: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+}
+
+.filters-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  gap: 12px;
+  align-items: end;
+}
+@media (max-width: 800px) { .filters-card { grid-template-columns: 1fr; } }
+.filters-card label { font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;display:block; }
+.filters-card input, .filters-card select {
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:10px;font-size:13.5px;font-family:inherit;background:#fff;
+}
+.filters-card input:focus, .filters-card select:focus { outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,102,0,.12); }
+
+.contracts-table-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: auto;
+}
+.contracts-table { width:100%;border-collapse:separate;border-spacing:0; }
+.contracts-table thead th {
+  background: var(--border-light);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+  position: sticky; top: 0;
+}
+.contracts-table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 13.5px;
+  color: var(--text);
+  vertical-align: middle;
+}
+.contracts-table tbody tr:hover { background: var(--bg); }
+.contracts-table tbody tr:last-child td { border-bottom: none; }
+.contracts-table .cell-cliente { font-weight: 700; }
+.contracts-table .cell-mono { font-family: 'SF Mono', ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
+
+.stato-pill {
+  display: inline-flex; align-items:center; padding:4px 10px; border-radius:999px;
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  white-space: nowrap;
+  background: var(--border-light); color: var(--text-secondary);
+}
+
+.btn-mini {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; font-size: 12px; font-weight: 600; font-family: inherit;
+  background: #fff; color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; cursor: pointer; transition: all .15s ease;
+  text-decoration: none;
+}
+.btn-mini:hover { background: var(--primary-bg); color: var(--primary-dark); border-color: var(--primary); }
+
+.empty-state { padding: 50px 20px; text-align: center; color: var(--text-secondary); }
+.empty-state .empty-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.45; }
+.empty-state h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.empty-state p { font-size: 13px; }
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/mirox-ui.js"></script>
+<script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
+
+<!-- Header uniforme Mirox -->
+<div class="header">
+<div class="header-content">
+<div>
+<h1>Controllo L&amp;G</h1>
+</div>
+<a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
+</div>
+</div>
+
+<div class="container">
+
+<div class="filters-card">
+  <div>
+    <label>Cerca</label>
+    <input type="text" id="searchLG" placeholder="Ragione sociale, CF/PIVA, numero contratto, POD/PDR, ex fornitore, operatore...">
+  </div>
+  <div>
+    <label>&nbsp;</label>
+    <button type="button" class="btn-mini" onclick="loadAll()">🔄 Aggiorna</button>
+  </div>
+</div>
+
+<div class="contracts-table-wrap">
+  <div id="listaLG">
+    <div class="empty-state"><div class="empty-icon">⏳</div><h3>Caricamento...</h3></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const sb = db;
+
+const LGState = {
+  righe: [],
+  search: '',
+  profiliMap: new Map()
+};
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+}
+function fmtDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso); if (isNaN(d)) return iso;
+  return d.toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+
+async function loadAll() {
+  const wrap = document.getElementById('listaLG');
+  wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><h3>Caricamento...</h3></div>';
+  try {
+    // Stessa strategia di controllo_fissi: leggo operatore_id, pod_pdr, numero_contratto_energia,
+    // ex_fornitore direttamente dal contratto (RLS-safe rispetto a vendita_pratiche).
+    const { data, error } = await sb
+      .from('post_vendita_controllo_lg')
+      .select(`
+        id, contratto_id, pratica_id, anagrafica_id, stato, created_at, updated_at,
+        anagrafica:anagrafica_id ( id, cf_piva, ragione_sociale, cluster, cellulare, email ),
+        contratto:contratto_id (
+          id, categoria_id, operatore_id, data_contratto, created_at,
+          pod_pdr, numero_contratto_energia, ex_fornitore,
+          categoria_snapshot, nome_offerta_snapshot
+        )
+      `)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    const righe = data || [];
+
+    // Lookup nomi operatori (FK assente verso profili nello schema, faccio query separata)
+    const profIds = new Set();
+    righe.forEach(r => { if (r.contratto && r.contratto.operatore_id) profIds.add(r.contratto.operatore_id); });
+    if (profIds.size > 0) {
+      const { data: profili, error: profErr } = await sb
+        .from('profili')
+        .select('id, nome')
+        .in('id', Array.from(profIds));
+      if (!profErr && profili) {
+        LGState.profiliMap = new Map(profili.map(p => [p.id, p]));
+      }
+    }
+    LGState.righe = righe;
+    render();
+  } catch (e) {
+    console.error('Errore caricamento Controllo L&G:', e);
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Errore caricamento</h3><p>${escapeHtml(e.message)}</p></div>`;
+  }
+}
+
+function operatoreNome(r) {
+  const opId = r.contratto && r.contratto.operatore_id;
+  if (!opId) return '-';
+  const p = LGState.profiliMap.get(opId);
+  return p && p.nome ? p.nome : '-';
+}
+
+function dataInserimento(r) {
+  if (r.contratto && r.contratto.data_contratto) return r.contratto.data_contratto;
+  if (r.contratto && r.contratto.created_at) return r.contratto.created_at;
+  return r.created_at;
+}
+
+function matchSearch(r, q) {
+  if (!q) return true;
+  const ana = r.anagrafica || {};
+  const c = r.contratto || {};
+  const haystack = [
+    ana.ragione_sociale, ana.cf_piva, ana.cluster, ana.cellulare, ana.email,
+    c.numero_contratto_energia, c.pod_pdr, c.ex_fornitore,
+    r.stato, operatoreNome(r)
+  ].filter(Boolean).join(' ').toLowerCase();
+  return haystack.includes(q);
+}
+
+function render() {
+  const wrap = document.getElementById('listaLG');
+  const q = (LGState.search || '').toLowerCase().trim();
+  const lista = LGState.righe.filter(r => matchSearch(r, q));
+
+  if (lista.length === 0) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚡</div><h3>Nessun contratto</h3><p>${q ? 'Nessun risultato per la ricerca.' : 'Nessun contratto Energia verificato.'}</p></div>`;
+    return;
+  }
+
+  const headers = `
+    <th>Data Inserimento</th>
+    <th>Ragione Sociale</th>
+    <th>CF / P.IVA</th>
+    <th>Numero Contratto</th>
+    <th>POD / PDR</th>
+    <th>Ex Fornitore</th>
+    <th>Contatto</th>
+    <th>Operatore</th>
+    <th>Stato</th>`;
+
+  const rows = lista.map(r => {
+    const ana = r.anagrafica || {};
+    const c = r.contratto || {};
+    return `<tr>
+      <td>${fmtDate(dataInserimento(r))}</td>
+      <td class="cell-cliente">${escapeHtml(ana.ragione_sociale || '-')}</td>
+      <td class="cell-mono">${escapeHtml(ana.cf_piva || '-')}</td>
+      <td class="cell-mono">${escapeHtml(c.numero_contratto_energia || '—')}</td>
+      <td class="cell-mono">${escapeHtml(c.pod_pdr || '—')}</td>
+      <td>${escapeHtml(c.ex_fornitore || '—')}</td>
+      <td class="cell-mono">${escapeHtml(ana.cellulare || '—')}</td>
+      <td>${escapeHtml(operatoreNome(r))}</td>
+      <td>${r.stato ? `<span class="stato-pill">${escapeHtml(r.stato)}</span>` : '<span style="color:var(--text-light);">—</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<table class="contracts-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+document.getElementById('searchLG').addEventListener('input', e => {
+  LGState.search = e.target.value;
+  render();
+});
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', () => { loadAll(); });
+</script>
+</body>
+</html>

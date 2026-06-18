@@ -339,7 +339,7 @@ async function caricaContratti(statoControllo) {
         categoria_snapshot, nome_offerta_snapshot, nome_opzione_snapshot, nome_reload_snapshot,
         tipo_attivazione, apri_chiudi, intestatario, switch_sim, modalita_pagamento,
         dispositivo_associato, imei, fascia_prezzo, tipo_acquisto, finanziaria, kolme,
-        pod_pdr, numero_contratto_energia, prezzo_fisso, reload_exchange,
+        pod_pdr, numero_contratto_energia, ex_fornitore, prezzo_fisso, reload_exchange,
         punteggio_offerta, punteggio_opzione, punteggio_extra, punteggio_totale,
         stato_controllo, controllato_da, controllato_at, note_controllo,
         data_contratto, created_at, updated_at,
@@ -661,6 +661,10 @@ function apriPopupDettaglio(c, opts) {
           <label>Numero Contratto Energia <span class="required">*</span> <small style="font-weight:500;text-transform:none;letter-spacing:0;color:#94a3b8;">(obbligatorio per verificare)</small></label>
           <input type="text" id="vc_numero_contratto_energia" value="${escapeHtml(c.numero_contratto_energia || '')}" ${ro} placeholder="Inserisci il numero contratto">
         </div>
+        <div class="det-field" id="vc_field_ex_fornitore">
+          <label>Ex Fornitore <span class="required">*</span> <small style="font-weight:500;text-transform:none;letter-spacing:0;color:#94a3b8;">(obbligatorio per verificare)</small></label>
+          <input type="text" id="vc_ex_fornitore" value="${escapeHtml(c.ex_fornitore || '')}" ${ro} placeholder="Es. Enel Energia, Eni Plenitude...">
+        </div>
         <div class="det-field" id="vc_field_prezzo_fisso">
           <label>Prezzo di vendita Fisso (€)</label>
           <input type="number" id="vc_prezzo_fisso" min="0" step="0.01" value="${c.prezzo_fisso !== null && c.prezzo_fisso !== undefined ? c.prezzo_fisso : ''}" ${ro}>
@@ -834,6 +838,7 @@ function applyVisibilityRules() {
   // ---- Sezione Extra (campi specifici categoria) ----
   _show('vc_field_pod', isEnergia);
   _show('vc_field_num_contratto_energia', isEnergia);
+  _show('vc_field_ex_fornitore', isEnergia);
   _show('vc_field_prezzo_fisso', isFisso);
   _show('vc_field_reload_exchange', isMobile || isCustomerBase);
   // Mostra/nascondi tutta la sezione extra se non c'è nulla da mostrare
@@ -1011,6 +1016,7 @@ function leggiPayloadDalPopup() {
     kolme: v('vc_kolme') === 'true' ? true : (v('vc_kolme') === 'false' ? false : null),
     pod_pdr: isEnergia ? (v('vc_pod_pdr').trim() || null) : null,
     numero_contratto_energia: isEnergia ? (v('vc_numero_contratto_energia').trim() || null) : null,
+    ex_fornitore: isEnergia ? (v('vc_ex_fornitore').trim() || null) : null,
     prezzo_fisso: isFisso ? (() => {
       const s = v('vc_prezzo_fisso');
       if (!s) return null;
@@ -1027,19 +1033,28 @@ function leggiPayloadDalPopup() {
 // ============================================================
 async function confermaVerifica(id) {
   const { ana, contratto, isEnergia } = leggiPayloadDalPopup();
-  // Validazione: numero contratto energia obbligatorio quando categoria Energia
+  // Validazione: numero contratto energia + ex_fornitore obbligatori per Energia
   if (isEnergia && !contratto.numero_contratto_energia) {
     await window.MiroxUI.alert('Per i contratti Energia è obbligatorio inserire il <strong>Numero Contratto Energia</strong> prima di poter confermare la verifica.', { type: 'warning', title: 'Campo obbligatorio', html: true });
     const inp = document.getElementById('vc_numero_contratto_energia');
     if (inp) inp.focus();
     return;
   }
+  if (isEnergia && !contratto.ex_fornitore) {
+    await window.MiroxUI.alert('Per i contratti Energia è obbligatorio inserire l\'<strong>Ex Fornitore</strong> prima di poter confermare la verifica.', { type: 'warning', title: 'Campo obbligatorio', html: true });
+    const inp = document.getElementById('vc_ex_fornitore');
+    if (inp) inp.focus();
+    return;
+  }
   const cContrCurrent = window.__currentVerificaContratto;
   const catName = (cContrCurrent && cContrCurrent.categoria_snapshot) || '';
   const isFissoCat = catName.toLowerCase().includes('fisso');
+  const isEnergiaCat = catName.toLowerCase().includes('energia');
   let confermaMsg = 'Confermi di voler salvare le modifiche e marcare questo contratto come <strong>VERIFICATO</strong>?<br><br>Il contratto passerà nella tab "Verificati" e non sarà più visibile qui.';
   if (isFissoCat) {
     confermaMsg += '<br><br>⚠️ Trattandosi di un contratto <strong>Fisso</strong>, comparirà anche nel modulo <strong>Controllo Fissi</strong> con stato "Da completare". L\'azione è irreversibile.';
+  } else if (isEnergiaCat) {
+    confermaMsg += '<br><br>⚠️ Trattandosi di un contratto <strong>Energia</strong>, comparirà anche nel modulo <strong>Controllo L&amp;G</strong>. L\'azione è irreversibile.';
   }
   const ok = await window.MiroxUI.confirm(
     confermaMsg,

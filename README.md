@@ -17,7 +17,7 @@ Modulo CRM per la gestione di vendite, post-vendita e supporto operativo della r
 | `index.html` | Login Supabase Auth |
 | `dashboard.html` | Home con tabs Vendita / Post-Vendita + badge ticket aperti |
 | `admin-vendita-config.html` | CRUD cataloghi (categorie, offerte, opzioni, reload, regole documenti) |
-| `moduli/` | 13 pagine funzionali (`apri_chiudi`, `switch_sim`, `ordini_smartphone`, `dispositivi_comodato`, `gestione_rimborsi`, `segnalazioni`, `simulatore_protecta`, `storico_cliente`, `ticket`, `verifica_contratti`, `controllo_fissi`, `dashboard_pezzi`, `upload-contratti-vendita`) |
+| `moduli/` | 14 pagine funzionali (`apri_chiudi`, `switch_sim`, `ordini_smartphone`, `dispositivi_comodato`, `gestione_rimborsi`, `segnalazioni`, `simulatore_protecta`, `storico_cliente`, `ticket`, `verifica_contratti`, `controllo_fissi`, `controllo_lg`, `dashboard_pezzi`, `upload-contratti-vendita`) |
 | `js/` | Librerie condivise: `config`, `auth`, `mirox-ui`, `mirox-upload`, `mirox-folder`, `mirox-mailer`, `anagrafica-helper`, `vendita-storage-helper` |
 | `css/` | `style.css`, `mirox-modules.css` |
 | `assets/` | Logo, favicon |
