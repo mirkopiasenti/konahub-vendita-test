@@ -285,6 +285,8 @@ async function loadAll() {
   const wrap = document.getElementById('listaContratti');
   wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><h3>Caricamento...</h3></div>';
   try {
+    // Leggiamo operatore_id direttamente da vendita_contratti (non da vendita_pratiche:
+    // l'RLS di vendita_pratiche puo' bloccare la lettura ad alcuni utenti).
     const { data, error } = await sb
       .from('post_vendita_controllo_fissi')
       .select(`
@@ -294,9 +296,8 @@ async function loadAll() {
         compilazione_completata_at, compilazione_completata_da,
         stato_cambiato_at, stato_cambiato_da, created_at, updated_at,
         anagrafica:anagrafica_id ( id, cf_piva, ragione_sociale, cluster, cellulare, email ),
-        pratica:pratica_id ( id, data_pratica, operatore_id, created_at ),
         contratto:contratto_id (
-          id, categoria_id, offerta_id, opzione_id,
+          id, categoria_id, offerta_id, opzione_id, operatore_id,
           categoria_snapshot, nome_offerta_snapshot, nome_opzione_snapshot,
           apri_chiudi, intestatario, convergenza, prezzo_fisso, tipo_attivazione,
           data_contratto, created_at
@@ -308,7 +309,7 @@ async function loadAll() {
 
     const profIds = new Set();
     righe.forEach(r => {
-      if (r.pratica && r.pratica.operatore_id) profIds.add(r.pratica.operatore_id);
+      if (r.contratto && r.contratto.operatore_id) profIds.add(r.contratto.operatore_id);
       if (r.compilazione_completata_da) profIds.add(r.compilazione_completata_da);
       if (r.stato_cambiato_da) profIds.add(r.stato_cambiato_da);
     });
@@ -340,15 +341,16 @@ function aggiornaContatori() {
 }
 
 function operatoreNome(r) {
-  const opId = r.pratica && r.pratica.operatore_id;
+  const opId = r.contratto && r.contratto.operatore_id;
   if (!opId) return '-';
   const p = CFState.profiliMap.get(opId);
   return p && p.nome ? p.nome : '-';
 }
 
 function dataInserimento(r) {
-  if (r.pratica && r.pratica.data_pratica) return r.pratica.data_pratica;
-  if (r.pratica && r.pratica.created_at) return r.pratica.created_at;
+  // Data inserimento = data del contratto (le vendita_pratiche possono essere bloccate da RLS).
+  if (r.contratto && r.contratto.data_contratto) return r.contratto.data_contratto;
+  if (r.contratto && r.contratto.created_at) return r.contratto.created_at;
   return r.created_at;
 }
 
