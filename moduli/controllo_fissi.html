@@ -51,12 +51,35 @@ body {
   gap: 12px;
   align-items: end;
 }
-@media (max-width: 800px) { .filters-card { grid-template-columns: 1fr; } }
+.filters-card.elenco {
+  grid-template-columns: 1.4fr 180px 180px 180px 110px;
+}
+@media (max-width: 1100px) { .filters-card.elenco { grid-template-columns: 1fr 1fr 1fr; } }
+@media (max-width: 800px) { .filters-card, .filters-card.elenco { grid-template-columns: 1fr; } }
 .filters-card label { font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;display:block; }
 .filters-card input, .filters-card select {
   width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:10px;font-size:13.5px;font-family:inherit;background:#fff;
 }
 .filters-card input:focus, .filters-card select:focus { outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,102,0,.12); }
+.filters-card.disabled-by-search select { opacity:.55; background:#f8fafc; }
+
+/* Stat-card row (pattern segnalazioni) */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px; }
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 22px;
+  display: flex; flex-direction: column; gap: 4px;
+  transition: box-shadow .15s ease;
+}
+.stat-card:hover { box-shadow: 0 4px 12px rgba(15,23,42,.06); }
+.stat-card .stat-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .stat-value { font-size: 30px; font-weight: 700; color: var(--text); line-height: 1.1; }
+.stat-card .stat-sub { font-size: 11.5px; color: var(--text-light); margin-top: 2px; }
+.stat-card.attivi .stat-value { color: var(--info); }
+.stat-card.success .stat-value { color: var(--success); }
+.stat-card.danger .stat-value { color: var(--danger); }
 
 .contracts-table-wrap {
   background: var(--bg-card);
@@ -203,17 +226,77 @@ body {
 <!-- Tab bar -->
 <div class="nav-tabs">
 <button type="button" class="nav-tab active" data-tab="da-completare" onclick="switchTabCF('da-completare', this)">Da Completare <span id="cntDaCompletare" class="tab-counter zero" style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:0 7px;margin-left:6px;">0</span></button>
-<button type="button" class="nav-tab" data-tab="in-attivazione" onclick="switchTabCF('in-attivazione', this)">In Attivazione <span id="cntInAttivazione" class="tab-counter zero" style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:0 7px;margin-left:6px;">0</span></button>
-<button type="button" class="nav-tab" data-tab="attivo" onclick="switchTabCF('attivo', this)">Attivo <span id="cntAttivo" class="tab-counter zero" style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:0 7px;margin-left:6px;">0</span></button>
-<button type="button" class="nav-tab" data-tab="ko" onclick="switchTabCF('ko', this)">KO <span id="cntKo" class="tab-counter zero" style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:0 7px;margin-left:6px;">0</span></button>
+<button type="button" class="nav-tab" data-tab="elenco" onclick="switchTabCF('elenco', this)">Elenco Contratti</button>
 </div>
 
 <div class="container">
 
-<div class="filters-card">
+<!-- Statistiche live (solo tab Elenco) -->
+<div id="statsRow" class="stats-row" style="display:none;">
+  <div class="stat-card attivi">
+    <div class="stat-label">In Attivazione</div>
+    <div class="stat-value" id="statInAttivazione">0</div>
+    <div class="stat-sub">Totale aperti</div>
+  </div>
+  <div class="stat-card success">
+    <div class="stat-label">Attivati nel mese</div>
+    <div class="stat-value" id="statAttivatiMese">0</div>
+    <div class="stat-sub" id="statMeseLabel">—</div>
+  </div>
+  <div class="stat-card danger">
+    <div class="stat-label">KO nel mese</div>
+    <div class="stat-value" id="statKoMese">0</div>
+    <div class="stat-sub" id="statMeseLabel2">—</div>
+  </div>
+</div>
+
+<!-- Filtri tab Da Completare -->
+<div id="filtersRowDa" class="filters-card">
   <div>
     <label>Cerca</label>
     <input type="text" id="searchCF" placeholder="Ragione sociale, CF/PIVA, operatore, cod. cliente...">
+  </div>
+  <div>
+    <label>&nbsp;</label>
+    <button type="button" class="btn-mini" onclick="loadAll()">🔄 Aggiorna</button>
+  </div>
+</div>
+
+<!-- Filtri tab Elenco -->
+<div id="filtersRowElenco" class="filters-card elenco" style="display:none;">
+  <div>
+    <label>Cerca <span style="font-weight:500;color:var(--text-light);text-transform:none;letter-spacing:0;">(ignora i filtri)</span></label>
+    <input type="text" id="searchElenco" placeholder="Ragione sociale, CF/PIVA, operatore...">
+  </div>
+  <div>
+    <label>Cluster</label>
+    <select id="filtroCluster">
+      <option value="">Tutti</option>
+      <option value="Consumer">Consumer</option>
+      <option value="Business">Business</option>
+      <option value="Turista">Turista</option>
+    </select>
+  </div>
+  <div>
+    <label>Tecnologia</label>
+    <select id="filtroTecnologia">
+      <option value="">Tutte</option>
+      <option value="FTTC">FTTC</option>
+      <option value="FWA OUT">FWA OUT</option>
+      <option value="FWA IN">FWA IN</option>
+      <option value="FWA VOCE">FWA VOCE</option>
+      <option value="FTTH_OF">FTTH_OF</option>
+      <option value="FTTH_FWCOP">FTTH_FWCOP</option>
+    </select>
+  </div>
+  <div>
+    <label>Stato</label>
+    <select id="filtroStato">
+      <option value="">Tutti</option>
+      <option value="In Attivazione" selected>In Attivazione</option>
+      <option value="Attivo">Attivo</option>
+      <option value="KO">KO</option>
+    </select>
   </div>
   <div>
     <label>&nbsp;</label>
@@ -232,14 +315,19 @@ body {
 <script>
 const sb = db;
 const STATI = ['Da completare','In Attivazione','Attivo','KO'];
-const STATI_TAB = { 'da-completare':'Da completare', 'in-attivazione':'In Attivazione', 'attivo':'Attivo', 'ko':'KO' };
+const STATI_ELENCO = ['In Attivazione','Attivo','KO'];
 const TECNOLOGIE = ['FTTC','FWA OUT','FWA IN','FWA VOCE','FTTH_OF','FTTH_FWCOP'];
 const COD_POS = ['9001415852','900822241'];
+const MESI_IT = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
 
 const CFState = {
   righe: [],
-  search: '',
-  tabAttiva: 'da-completare',
+  tabAttiva: 'da-completare', // 'da-completare' | 'elenco'
+  searchDa: '',     // ricerca tab Da Completare
+  searchElenco: '', // ricerca tab Elenco (quando valorizzata, disattiva i filtri)
+  filtroCluster: '',
+  filtroTecnologia: '',
+  filtroStato: 'In Attivazione', // default
   editingId: null,
   profiliMap: new Map()
 };
@@ -278,6 +366,22 @@ function switchTabCF(tabKey, btn) {
   CFState.tabAttiva = tabKey;
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  const isElenco = tabKey === 'elenco';
+  document.getElementById('statsRow').style.display = isElenco ? 'grid' : 'none';
+  document.getElementById('filtersRowElenco').style.display = isElenco ? 'grid' : 'none';
+  document.getElementById('filtersRowDa').style.display = isElenco ? 'none' : 'grid';
+  if (isElenco) {
+    // Default: filtro stato "In Attivazione" ogni volta che si apre la tab
+    CFState.filtroCluster = '';
+    CFState.filtroTecnologia = '';
+    CFState.filtroStato = 'In Attivazione';
+    CFState.searchElenco = '';
+    document.getElementById('filtroCluster').value = '';
+    document.getElementById('filtroTecnologia').value = '';
+    document.getElementById('filtroStato').value = 'In Attivazione';
+    document.getElementById('searchElenco').value = '';
+    document.getElementById('filtersRowElenco').classList.remove('disabled-by-search');
+  }
   render();
 }
 
@@ -333,11 +437,30 @@ async function loadAll() {
 
 function aggiornaContatori() {
   const counts = { 'Da completare':0, 'In Attivazione':0, 'Attivo':0, 'KO':0 };
-  CFState.righe.forEach(r => { if (counts[r.stato] !== undefined) counts[r.stato]++; });
+  const now = new Date();
+  const annoCorr = now.getFullYear();
+  const meseCorr = now.getMonth(); // 0-11
+  let attivatiMese = 0;
+  let koMese = 0;
+  CFState.righe.forEach(r => {
+    if (counts[r.stato] !== undefined) counts[r.stato]++;
+    if (r.stato === 'Attivo' && r.data_attivazione) {
+      const d = new Date(r.data_attivazione);
+      if (!isNaN(d) && d.getFullYear() === annoCorr && d.getMonth() === meseCorr) attivatiMese++;
+    }
+    if (r.stato === 'KO' && r.stato_cambiato_at) {
+      const d = new Date(r.stato_cambiato_at);
+      if (!isNaN(d) && d.getFullYear() === annoCorr && d.getMonth() === meseCorr) koMese++;
+    }
+  });
   setCount('cntDaCompletare', counts['Da completare']);
-  setCount('cntInAttivazione', counts['In Attivazione']);
-  setCount('cntAttivo', counts['Attivo']);
-  setCount('cntKo', counts['KO']);
+  // Stat-card live (tab Elenco)
+  document.getElementById('statInAttivazione').textContent = counts['In Attivazione'];
+  document.getElementById('statAttivatiMese').textContent = attivatiMese;
+  document.getElementById('statKoMese').textContent = koMese;
+  const meseLabel = MESI_IT[meseCorr] + ' ' + annoCorr;
+  document.getElementById('statMeseLabel').textContent = meseLabel;
+  document.getElementById('statMeseLabel2').textContent = meseLabel;
 }
 
 function operatoreNome(r) {
@@ -354,54 +477,59 @@ function dataInserimento(r) {
   return r.created_at;
 }
 
+function matchSearch(r, q) {
+  if (!q) return true;
+  const ana = r.anagrafica || {};
+  const haystack = [
+    ana.ragione_sociale, ana.cf_piva, ana.cluster, ana.cellulare, ana.email,
+    r.codice_cliente, r.cod_contratto, r.numero_fisso, r.tecnologia,
+    operatoreNome(r)
+  ].filter(Boolean).join(' ').toLowerCase();
+  return haystack.includes(q);
+}
+
+function attivazioneLabelHtml(r) {
+  if (r.stato === 'In Attivazione') {
+    return r.attivazione_prevista
+      ? `<span style="color:var(--text-secondary);font-size:11px;">Prevista</span><br>${fmtDate(r.attivazione_prevista)}`
+      : '<span style="color:var(--text-light);">—</span>';
+  }
+  if (r.stato === 'Attivo') {
+    return r.data_attivazione
+      ? `<span style="color:var(--success);font-size:11px;font-weight:700;">Attivata</span><br>${fmtDate(r.data_attivazione)}`
+      : '<span style="color:var(--text-light);">—</span>';
+  }
+  return '<span style="color:var(--text-light);">—</span>';
+}
+
 function render() {
   const wrap = document.getElementById('listaContratti');
-  const statoSel = STATI_TAB[CFState.tabAttiva];
-  const q = (CFState.search || '').toLowerCase().trim();
-  const lista = CFState.righe.filter(r => {
-    if (r.stato !== statoSel) return false;
-    if (!q) return true;
-    const ana = r.anagrafica || {};
-    const haystack = [
-      ana.ragione_sociale, ana.cf_piva, ana.cellulare,
-      r.codice_cliente, r.cod_contratto, r.numero_fisso, r.tecnologia,
-      operatoreNome(r)
-    ].filter(Boolean).join(' ').toLowerCase();
-    return haystack.includes(q);
-  });
+  if (CFState.tabAttiva === 'da-completare') {
+    renderDaCompletare(wrap);
+  } else {
+    renderElenco(wrap);
+  }
+}
 
-  // Colonna dinamica (2a colonna)
-  let dynHeader = '';
-  let needsDynCol = false;
-  if (statoSel === 'In Attivazione') { dynHeader = 'Attivazione Prevista'; needsDynCol = true; }
-  else if (statoSel === 'Attivo')    { dynHeader = 'Data Attivazione';     needsDynCol = true; }
-
+function renderDaCompletare(wrap) {
+  const q = (CFState.searchDa || '').toLowerCase().trim();
+  const lista = CFState.righe.filter(r => r.stato === 'Da completare' && matchSearch(r, q));
   if (lista.length === 0) {
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nessuna pratica</h3><p>Non ci sono pratiche con stato "${escapeHtml(statoSel)}".</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nessuna pratica</h3><p>Non ci sono pratiche con stato "Da completare".</p></div>`;
     return;
   }
-
-  const headers = [
-    '<th>Data Inserimento</th>',
-    needsDynCol ? `<th>${escapeHtml(dynHeader)}</th>` : '',
-    '<th>Ragione Sociale</th>',
-    '<th>CF / P.IVA</th>',
-    '<th>Operatore</th>',
-    '<th>Stato</th>',
-    '<th>Tecnologia</th>',
-    '<th style="text-align:right;">Azioni</th>'
-  ].filter(Boolean).join('');
-
+  const headers = `
+    <th>Data Inserimento</th>
+    <th>Ragione Sociale</th>
+    <th>CF / P.IVA</th>
+    <th>Operatore</th>
+    <th>Stato</th>
+    <th>Tecnologia</th>
+    <th style="text-align:right;">Azioni</th>`;
   const rows = lista.map(r => {
     const ana = r.anagrafica || {};
-    let dynCell = '';
-    if (needsDynCol) {
-      const val = statoSel === 'In Attivazione' ? r.attivazione_prevista : r.data_attivazione;
-      dynCell = `<td>${val ? fmtDate(val) : '—'}</td>`;
-    }
     return `<tr>
       <td>${fmtDate(dataInserimento(r))}</td>
-      ${dynCell}
       <td class="cell-cliente">${escapeHtml(ana.ragione_sociale || '-')}</td>
       <td>${escapeHtml(ana.cf_piva || '-')}</td>
       <td>${escapeHtml(operatoreNome(r))}</td>
@@ -410,7 +538,48 @@ function render() {
       <td style="text-align:right;"><button type="button" class="btn-mini btn-primary" onclick="openDettaglio('${r.id}')">Dettagli</button></td>
     </tr>`;
   }).join('');
+  wrap.innerHTML = `<table class="contracts-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
+}
 
+function renderElenco(wrap) {
+  const q = (CFState.searchElenco || '').toLowerCase().trim();
+  let lista = CFState.righe.filter(r => STATI_ELENCO.includes(r.stato));
+  if (q) {
+    // Ricerca attiva: ignora i filtri
+    lista = lista.filter(r => matchSearch(r, q));
+  } else {
+    if (CFState.filtroCluster)     lista = lista.filter(r => (r.anagrafica && r.anagrafica.cluster) === CFState.filtroCluster);
+    if (CFState.filtroTecnologia)  lista = lista.filter(r => r.tecnologia === CFState.filtroTecnologia);
+    if (CFState.filtroStato)       lista = lista.filter(r => r.stato === CFState.filtroStato);
+  }
+  if (lista.length === 0) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nessun contratto</h3><p>Nessun risultato con i filtri attuali.</p></div>`;
+    return;
+  }
+  const headers = `
+    <th>Data Inserimento</th>
+    <th>Attivazione</th>
+    <th>Ragione Sociale</th>
+    <th>Cluster</th>
+    <th>CF / P.IVA</th>
+    <th>Operatore</th>
+    <th>Stato</th>
+    <th>Tecnologia</th>
+    <th style="text-align:right;">Azioni</th>`;
+  const rows = lista.map(r => {
+    const ana = r.anagrafica || {};
+    return `<tr>
+      <td>${fmtDate(dataInserimento(r))}</td>
+      <td>${attivazioneLabelHtml(r)}</td>
+      <td class="cell-cliente">${escapeHtml(ana.ragione_sociale || '-')}</td>
+      <td>${escapeHtml(ana.cluster || '—')}</td>
+      <td>${escapeHtml(ana.cf_piva || '-')}</td>
+      <td>${escapeHtml(operatoreNome(r))}</td>
+      <td><span class="stato-pill ${statoSlug(r.stato)}">${escapeHtml(r.stato)}</span></td>
+      <td>${escapeHtml(r.tecnologia || '—')}</td>
+      <td style="text-align:right;"><button type="button" class="btn-mini btn-primary" onclick="openDettaglio('${r.id}')">Dettagli</button></td>
+    </tr>`;
+  }).join('');
   wrap.innerHTML = `<table class="contracts-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
 }
 
@@ -857,12 +1026,48 @@ async function aggiungiNota() {
 }
 
 // ============================================================
-// SEARCH
+// SEARCH + FILTRI
 // ============================================================
+// Tab Da Completare: search semplice
 document.getElementById('searchCF').addEventListener('input', e => {
-  CFState.search = e.target.value;
+  CFState.searchDa = e.target.value;
   render();
 });
+
+// Tab Elenco: search che DISATTIVA i filtri (reset visivo + logico)
+document.getElementById('searchElenco').addEventListener('input', e => {
+  const txt = e.target.value;
+  CFState.searchElenco = txt;
+  if (txt.trim()) {
+    // Reset filtri visivi + logici
+    CFState.filtroCluster = '';
+    CFState.filtroTecnologia = '';
+    CFState.filtroStato = '';
+    document.getElementById('filtroCluster').value = '';
+    document.getElementById('filtroTecnologia').value = '';
+    document.getElementById('filtroStato').value = '';
+    document.getElementById('filtersRowElenco').classList.add('disabled-by-search');
+  } else {
+    document.getElementById('filtersRowElenco').classList.remove('disabled-by-search');
+  }
+  render();
+});
+
+// Tab Elenco: cambio filtro -> svuota search (sono mutuamente esclusivi)
+function bindFiltro(id, key) {
+  document.getElementById(id).addEventListener('change', e => {
+    CFState[key] = e.target.value;
+    if (CFState.searchElenco) {
+      CFState.searchElenco = '';
+      document.getElementById('searchElenco').value = '';
+      document.getElementById('filtersRowElenco').classList.remove('disabled-by-search');
+    }
+    render();
+  });
+}
+bindFiltro('filtroCluster', 'filtroCluster');
+bindFiltro('filtroTecnologia', 'filtroTecnologia');
+bindFiltro('filtroStato', 'filtroStato');
 
 // ============================================================
 // INIT
