@@ -568,7 +568,7 @@ function openDettaglio(id) {
           <button type="button" class="btn-action btn-action-secondary" data-mx-close>Chiudi</button>
         </div>
         <div class="right">
-          <button type="button" class="btn-action btn-action-secondary" onclick="salvaCampi(false)">Salva modifiche</button>
+          <button type="button" class="btn-action btn-action-secondary" onclick="salvaCampi()">Salva modifiche</button>
           <button type="button" class="btn-action btn-action-success" onclick="confermaCompilazione()">✓ Compilazione Completata</button>
         </div>
       </div>`;
@@ -579,7 +579,7 @@ function openDettaglio(id) {
           <button type="button" class="btn-action btn-action-secondary" data-mx-close>Chiudi</button>
         </div>
         <div class="right">
-          <button type="button" class="btn-action btn-action-primary" onclick="salvaCampi(true)">Salva modifiche</button>
+          <button type="button" class="btn-action btn-action-primary" onclick="salvaCampi()">Salva modifiche</button>
         </div>
       </div>`;
   } else {
@@ -643,21 +643,21 @@ function getValori() {
   };
 }
 
-async function salvaCampi(silent) {
+async function salvaCampi() {
   const id = CFState.editingId;
   if (!id) return;
   const v = getValori();
+  const loader = MiroxUI.loading.show('Salvataggio in corso', 'Aggiorno i dati della pratica...');
   try {
     const { error } = await sb.from('post_vendita_controllo_fissi').update(v).eq('id', id);
     if (error) throw error;
     const r = CFState.righe.find(x => x.id === id);
     if (r) Object.assign(r, v);
-    if (!silent) {
-      MiroxUI.toast('Modifiche salvate', 'success');
-    }
+    loader.success('Modifiche salvate!');
     render();
   } catch (e) {
-    MiroxUI.toast('Errore salvataggio: ' + e.message, 'error');
+    loader.error('Errore salvataggio');
+    setTimeout(() => MiroxUI.toast('Errore: ' + e.message, 'error'), 200);
   }
 }
 
