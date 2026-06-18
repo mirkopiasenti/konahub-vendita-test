@@ -2732,9 +2732,12 @@ Reload Exchange
  refs.tipoAcquisto.value = '';
  refs.finanziaria.value = '';
  refs.kolme.value = '';
- // POD/PDR (Energia) e prezzo_fisso (Fisso) non devono persistere fra un contratto e l'altro nello stesso carrello
+ // POD/PDR (Energia), prezzo_fisso e convergenza (Fisso) non devono persistere fra un contratto e l'altro nello stesso carrello
  if (refs.podPdr) refs.podPdr.value = '';
- if (refs.numeroContrattoEnergia) delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
+ if (refs.numeroContrattoEnergia) {
+ delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
+ delete refs.numeroContrattoEnergia.dataset.convergenza;
+ }
  // I dati OCR del contratto precedente non valgono per il nuovo
  if (typeof runtimeState !== 'undefined') runtimeState.lastOcrData = null;
  clearInputFile(refs.fileCopiaSimMnp);
@@ -3126,6 +3129,9 @@ Reload Exchange
  pod_pdr: isCategory(categoriaNome, 'Energia') ? (refs.podPdr.value.trim() || null) : null,
  numero_contratto_energia: isCategory(categoriaNome, 'Energia')
    ? (refs.numeroContrattoEnergia.value.trim() || null)
+   : null,
+ convergenza: isCategory(categoriaNome, 'Fisso')
+   ? (refs.numeroContrattoEnergia.dataset.convergenza || null)
    : null,
  prezzo_fisso: isCategory(categoriaNome, 'Fisso')
    ? (Number.isFinite(parseFloat(refs.numeroContrattoEnergia.dataset.prezzoFisso)) ? parseFloat(refs.numeroContrattoEnergia.dataset.prezzoFisso) : null)
@@ -3794,6 +3800,7 @@ Reload Exchange
  pod_pdr: item.pod_pdr || null,
  numero_contratto_energia: item.numero_contratto_energia || null,
  prezzo_fisso: (item.prezzo_fisso !== null && item.prezzo_fisso !== undefined) ? item.prezzo_fisso : null,
+ convergenza: item.convergenza || null,
  reload_exchange: item.reload_exchange === true,
  // PDA in staging: il backend promuovera' temp/<sess>/<file> a <cartella_pratica>/contratto_<categoria>.pdf
  pda_temp_path: item.pda_temp_path || null,
@@ -4226,6 +4233,7 @@ Reload Exchange
  pod_pdr: refs.podPdr ? (refs.podPdr.value || '') : '',
  numero_contratto_energia: refs.numeroContrattoEnergia ? (refs.numeroContrattoEnergia.value || '') : '',
  prezzo_fisso: (refs.numeroContrattoEnergia && refs.numeroContrattoEnergia.dataset.prezzoFisso) || '',
+ convergenza: (refs.numeroContrattoEnergia && refs.numeroContrattoEnergia.dataset.convergenza) || '',
  reload_exchange: !!(refs.reloadExchange && refs.reloadExchange.checked)
  };
  }
@@ -4346,6 +4354,8 @@ Reload Exchange
    refs.numeroContrattoEnergia.value = contractForm.numero_contratto_energia || '';
    if (contractForm.prezzo_fisso) refs.numeroContrattoEnergia.dataset.prezzoFisso = String(contractForm.prezzo_fisso);
    else delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
+   if (contractForm.convergenza) refs.numeroContrattoEnergia.dataset.convergenza = String(contractForm.convergenza);
+   else delete refs.numeroContrattoEnergia.dataset.convergenza;
  }
  if (refs.reloadExchange) refs.reloadExchange.checked = !!contractForm.reload_exchange;
  renderDynamicSections();
@@ -4866,23 +4876,24 @@ Reload Exchange
  showUserError('Modulo UI Mirox non caricato. Ricarica la pagina.', 'Errore');
  return;
  }
- const prev = refs.numeroContrattoEnergia.dataset.prezzoFisso || '';
- const input = await window.MiroxUI.prompt({
- title: 'Prezzo di vendita',
- label: 'Inserisci il prezzo a cui e\' stato venduto questo contratto Fisso (€)',
- placeholder: 'Es. 29.90',
- value: prev,
- okText: 'Conferma prezzo'
- });
- if (input === null) return;
- const num = parseFloat(String(input).replace(',', '.').trim());
+ const prevPrezzo = refs.numeroContrattoEnergia.dataset.prezzoFisso || '';
+ const prevConv = refs.numeroContrattoEnergia.dataset.convergenza || '';
+ const result = await chiediPrezzoConvergenzaFisso(prevPrezzo, prevConv);
+ if (result === null) return;
+ const num = parseFloat(String(result.prezzo).replace(',', '.').trim());
  if (!Number.isFinite(num) || num < 0) {
  await window.MiroxUI.alert('Inserisci un prezzo valido (numero >= 0).', { type: 'warning', title: 'Prezzo non valido' });
  return;
  }
+ if (!result.convergenza) {
+ await window.MiroxUI.alert('Seleziona la convergenza prima di proseguire.', { type: 'warning', title: 'Convergenza obbligatoria' });
+ return;
+ }
  refs.numeroContrattoEnergia.dataset.prezzoFisso = String(num);
+ refs.numeroContrattoEnergia.dataset.convergenza = result.convergenza;
  } else {
  delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
+ delete refs.numeroContrattoEnergia.dataset.convergenza;
  }
  // step 3 -> 4 per PDA, -> 5 per non-PDA (goToStep gestisce lo skip)
  goToStep(4);
@@ -4890,6 +4901,58 @@ Reload Exchange
  showUserError(error.message, 'Verifica contratto');
  }
  });
+
+ // Popup custom per contratti Fisso: prezzo di vendita + convergenza (dropdown).
+ // Ritorna { prezzo, convergenza } su conferma, null su annulla.
+ function chiediPrezzoConvergenzaFisso(prevPrezzo = '', prevConv = '') {
+ return new Promise((resolve) => {
+ const valori = ['Mobile', 'L&G', 'Allarme', 'Assicurazione', 'Sim Interna', 'NO Convergenza', 'Coupon'];
+ const optionsHtml = ['<option value="">Seleziona...</option>'].concat(
+ valori.map((v) => '<option value="' + escapeHtml(v) + '"' + (v === prevConv ? ' selected' : '') + '>' + escapeHtml(v) + '</option>')
+ ).join('');
+ const bodyHtml =
+ '<div style="display:flex;flex-direction:column;gap:14px;">' +
+ '<div>' +
+ '<label style="display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:6px;">Prezzo di vendita (€) *</label>' +
+ '<input id="vc_prezzo_fisso_input" class="mx-input" type="text" placeholder="Es. 29.90" value="' + escapeHtml(prevPrezzo) + '" autocomplete="off">' +
+ '</div>' +
+ '<div>' +
+ '<label style="display:block;font-weight:600;font-size:13px;color:#374151;margin-bottom:6px;">Convergenza *</label>' +
+ '<select id="vc_convergenza_input" class="mx-input" style="padding:10px 12px;">' + optionsHtml + '</select>' +
+ '</div>' +
+ '</div>';
+ const footerHtml =
+ '<button type="button" class="mx-btn mx-btn-secondary" data-mx-cancel>Annulla</button>' +
+ '<button type="button" class="mx-btn mx-btn-primary" data-mx-ok>Conferma</button>';
+ let decided = false;
+ const m = window.MiroxUI._build({
+ title: 'Prezzo Fisso e Convergenza',
+ bodyHtml,
+ footerHtml,
+ onClose: () => { if (!decided) resolve(null); }
+ });
+ const inputEl = m.body.querySelector('#vc_prezzo_fisso_input');
+ const selectEl = m.body.querySelector('#vc_convergenza_input');
+ setTimeout(() => { if (inputEl) inputEl.focus(); }, 30);
+ m.foot.querySelector('[data-mx-ok]').addEventListener('click', () => {
+ decided = true;
+ const prezzo = inputEl ? inputEl.value : '';
+ const convergenza = selectEl ? selectEl.value : '';
+ m.close();
+ resolve({ prezzo, convergenza });
+ });
+ m.foot.querySelector('[data-mx-cancel]').addEventListener('click', () => {
+ decided = true;
+ m.close();
+ resolve(null);
+ });
+ if (inputEl) {
+ inputEl.addEventListener('keydown', (e) => {
+ if (e.key === 'Enter' && selectEl) { e.preventDefault(); selectEl.focus(); }
+ });
+ }
+ });
+ }
 
  // STEP 4: Firma - selezione carta + back/next
  function selectFirma(tipo) {

@@ -194,6 +194,17 @@ function normalizeContractInput(contract, index) {
       return Number.isFinite(n) ? n : null;
     })(),
     reload_exchange: parseBoolean(contract?.reload_exchange, false) === true,
+    // Convergenza (solo Fisso): uno dei 7 valori ammessi. null per altre categorie o se non fornita.
+    // Vedi migration 017_vendita_contratti_convergenza.sql + CHECK constraint a DB.
+    convergenza: (() => {
+      const v = cleanString(contract?.convergenza);
+      if (!v) return null;
+      const allowed = ['Mobile', 'L&G', 'Allarme', 'Assicurazione', 'Sim Interna', 'NO Convergenza', 'Coupon'];
+      if (!allowed.includes(v)) {
+        throw new Error(`Convergenza non valida per contratti[${index}]: deve essere uno fra ${allowed.join(', ')}`);
+      }
+      return v;
+    })(),
     // PDA caricata in modalita' staging (temp/<session_id>/<file>). null se non applicabile
     // o se contratto e' in categoria senza PDA (Energia/Allarmi/Assicurazioni).
     pda_temp_path: cleanString(contract?.pda_temp_path) || null,
@@ -789,6 +800,9 @@ exports.handler = async (event) => {
 
         // Tipo firma (vedi migration 016): solo per categorie PDA. null altrimenti.
         tipo_firma: item.tipo_firma,
+
+        // Convergenza (vedi migration 017): solo Fisso. null altrimenti.
+        convergenza: item.convergenza,
 
         stato_controllo: 'da_controllare'
       };
