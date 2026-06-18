@@ -120,6 +120,7 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 funct
 ### Post-Vendita
 - `post_vendita_dispositivi_comodato` — codice generato da RPC `genera_codice_comodato()`
 - `post_vendita_gestione_rimborsi` — codice da RPC `genera_codice_rimborso()`
+- `post_vendita_controllo_fissi` — follow-up dei contratti Fisso dopo conferma in Verifica Contratti. Stati: `Da completare` → `In Attivazione` → (`Attivo` | `KO`). Popolata in automatico dal trigger `trg_vendita_contratti_to_controllo_fissi` su UPDATE `vendita_contratti.stato_controllo` quando un contratto Fisso passa a `controllato`. Campi manuali: `codice_cliente`, `tecnologia`, `cod_contratto`, `cod_pos`, `numero_fisso`, `attivazione_prevista`, `data_attivazione`, `motivo_ko`. Chat in `storico_chat` jsonb (`[{timestamp, message, autore}]`). CHECK constraint su `stato`, `tecnologia` (FTTC/FWA OUT/FWA IN/FWA VOCE/FTTH_OF/FTTH_FWCOP), `cod_pos` (9001415852/900822241).
 
 ### Trasversali
 - `segnalazioni` (+ `segnalazioni_backup`)
@@ -158,6 +159,8 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 funct
    - Upload su bucket `contratti-vendita` in `<YYYY>/<MM>/<cartella_safe>/`
    - INSERT `vendita_documenti`
    - Rollback file su Storage se INSERT DB fallisce
+6. Verifica contratto in `moduli/verifica_contratti.html` → `confermaVerifica()` UPDATE `vendita_contratti SET stato_controllo='controllato'`. Il popup di conferma per i contratti Fisso evidenzia il passaggio al modulo Controllo Fissi.
+7. Post-vendita Fisso: il trigger `trg_vendita_contratti_to_controllo_fissi` crea automaticamente una riga in `post_vendita_controllo_fissi` con stato `Da completare`. L'operatore compila i 4 campi obbligatori (Cod. Cliente, Tecnologia, Cod. Contratto, Cod. POS) in `moduli/controllo_fissi.html` → click "Compilazione Completata" → stato `In Attivazione`. Poi via dropdown stato → `Attivo` (con data attivazione effettiva obbligatoria) oppure `KO` (azzera `attivazione_prevista`).
 
 ---
 
@@ -215,6 +218,15 @@ Quando l'utente carica un PDA + sceglie "Analizza con AI", i dati estratti dall'
 
 ### Origine pratica (CHECK constraint su `vendita_pratiche`)
 `appuntamento_callcenter`, `contatto_callcenter_entro_10_giorni`, `spontaneo`
+
+### Controllo Fissi (post-vendita)
+- Tabella: `post_vendita_controllo_fissi` (vedi Mappa Supabase → Post-Vendita).
+- **Trigger automatico** `trg_vendita_contratti_to_controllo_fissi`: alla conferma verifica di un contratto Fisso (UPDATE `vendita_contratti.stato_controllo` da `da_controllare` a `controllato`) viene creata una riga in `post_vendita_controllo_fissi` con stato `Da completare`. Idempotente grazie a UNIQUE su `contratto_id`.
+- **Stati ammessi** (CHECK `pvcf_stato_chk`): `Da completare`, `In Attivazione`, `Attivo`, `KO`. Transizioni: `Da completare` → `In Attivazione` (via bottone "Compilazione Completata") → `Attivo` (richiede `data_attivazione` effettiva) | `KO` (azzera `attivazione_prevista`, opzionale `motivo_ko`). `KO` ammesso solo da `In Attivazione`. Stati `Attivo`/`KO` sono terminali (non modificabili da UI).
+- **Campi obbligatori** per "Compilazione Completata" (validati lato UI in `moduli/controllo_fissi.html`): `codice_cliente`, `tecnologia`, `cod_contratto`, `cod_pos`. `numero_fisso` e `attivazione_prevista` opzionali.
+- **Tecnologia** (CHECK `pvcf_tecnologia_chk`): `FTTC`, `FWA OUT`, `FWA IN`, `FWA VOCE`, `FTTH_OF`, `FTTH_FWCOP`.
+- **Cod. POS** (CHECK `pvcf_cod_pos_chk`): `9001415852`, `900822241`.
+- **Chat note**: array JSONB `storico_chat = [{timestamp, message, autore}]` — stesso pattern di `segnalazioni.storico_chat`.
 
 ### Storage folder naming
 - Contratti vendita: `Contratto_<RAGSOC_SAFE>_<DD_MM_YYYY>_<praticaIdShort6>` sotto `<YYYY>/<MM>/` (lowercase)

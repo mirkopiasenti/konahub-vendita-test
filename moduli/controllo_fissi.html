@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="../assets/favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controllo Fissi — Mirox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/mirox-modules.css">
+<style>
+:root {
+  --primary: #FF6600;
+  --primary-dark: #E55A00;
+  --primary-bg: #FFF3E0;
+  --text: #0f172a;
+  --text-secondary: #64748b;
+  --text-light: #94a3b8;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --bg: #f8fafc;
+  --bg-card: #ffffff;
+  --success: #16a34a;
+  --success-bg: #DCFCE7;
+  --warning: #d97706;
+  --warning-bg: #FEF3C7;
+  --danger: #b91c1c;
+  --danger-bg: #FEE2E2;
+  --info: #2563eb;
+  --info-bg: #DBEAFE;
+  --radius: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+}
+
+.filters-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  gap: 12px;
+  align-items: end;
+}
+@media (max-width: 800px) { .filters-card { grid-template-columns: 1fr; } }
+.filters-card label { font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;display:block; }
+.filters-card input, .filters-card select {
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:10px;font-size:13.5px;font-family:inherit;background:#fff;
+}
+.filters-card input:focus, .filters-card select:focus { outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,102,0,.12); }
+
+.contracts-table-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.contracts-table { width:100%;border-collapse:separate;border-spacing:0; }
+.contracts-table thead th {
+  background: var(--border-light);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.contracts-table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 13.5px;
+  color: var(--text);
+  vertical-align: middle;
+}
+.contracts-table tbody tr:hover { background: var(--bg); }
+.contracts-table tbody tr:last-child td { border-bottom: none; }
+.contracts-table .cell-cliente { font-weight: 700; }
+
+.stato-pill {
+  display: inline-flex; align-items:center; padding:4px 10px; border-radius:999px;
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.stato-pill.da-completare { background: var(--warning-bg); color: var(--warning); }
+.stato-pill.in-attivazione { background: var(--info-bg); color: var(--info); }
+.stato-pill.attivo { background: var(--success-bg); color: var(--success); }
+.stato-pill.ko { background: var(--danger-bg); color: var(--danger); }
+
+.btn-mini {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; font-size: 12px; font-weight: 600; font-family: inherit;
+  background: #fff; color: var(--text); border: 1px solid var(--border);
+  border-radius: 8px; cursor: pointer; transition: all .15s ease;
+  text-decoration: none;
+}
+.btn-mini:hover { background: var(--primary-bg); color: var(--primary-dark); border-color: var(--primary); }
+.btn-mini.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-mini.btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+
+.empty-state { padding: 50px 20px; text-align: center; color: var(--text-secondary); }
+.empty-state .empty-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.45; }
+.empty-state h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.empty-state p { font-size: 13px; }
+
+/* Popup dettagli */
+.det-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 720px) { .det-grid { grid-template-columns: 1fr; } }
+.det-section {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-light);
+}
+.det-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.det-section h4 {
+  font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--primary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-light);
+}
+.det-field { display: flex; flex-direction: column; gap: 4px; }
+.det-field label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+.det-field input, .det-field select, .det-field textarea {
+  padding: 9px 11px; font-size: 13.5px; font-family: inherit;
+  border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--text);
+}
+.det-field input:focus, .det-field select:focus, .det-field textarea:focus {
+  outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255,102,0,.12);
+}
+.det-field input[readonly], .det-field input[disabled] {
+  background: var(--bg); color: var(--text-secondary); cursor: not-allowed;
+}
+.det-field .field-readonly-value {
+  padding: 9px 0; font-size: 13.5px; color: var(--text); font-weight: 600;
+}
+.det-field .required { color: var(--primary); margin-left: 2px; }
+
+/* Chat (riprende pattern segnalazioni) */
+.chat-area { background:var(--bg);border-radius:var(--radius);padding:16px;max-height:280px;overflow-y:auto;margin-bottom:12px;border:1px solid var(--border-light);}
+.chat-msg { background:var(--bg-card);padding:10px 14px;border-radius:var(--radius);margin-bottom:8px;border-left:3px solid var(--primary);}
+.chat-msg-time { font-size:11px;color:var(--text-light);margin-bottom:3px;}
+.chat-msg-author { font-size:11px;color:var(--primary);font-weight:700;margin-left:8px; }
+.chat-msg-text { font-size:13px;color:var(--text);line-height:1.5;white-space:pre-wrap;}
+.chat-input-row { display:flex;gap:8px;align-items:stretch;}
+.chat-input-row textarea { flex:1;padding:9px 11px;font-size:13.5px;border:1px solid var(--border);border-radius:8px;font-family:inherit;resize:vertical;min-height:60px;}
+.chat-input-row textarea:focus { outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,102,0,.12);}
+
+.foot-actions {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; flex-wrap: wrap;
+}
+.foot-actions .left { display: flex; gap: 8px; }
+.foot-actions .right { display: flex; gap: 8px; }
+
+.btn-action {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 16px; font-size: 13px; font-weight: 600; font-family: inherit;
+  border-radius: 10px; cursor: pointer; border: 1px solid transparent;
+  transition: all .15s ease;
+}
+.btn-action-primary { background: var(--primary); color: #fff; }
+.btn-action-primary:hover { background: var(--primary-dark); }
+.btn-action-secondary { background: var(--bg); color: var(--text); border-color: var(--border); }
+.btn-action-secondary:hover { background: var(--border-light); }
+.btn-action-success { background: var(--success); color: #fff; }
+.btn-action-success:hover { background: #15803d; }
+.btn-action:disabled { opacity:.55; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/mirox-ui.js"></script>
+<script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
+
+<!-- Header uniforme Mirox -->
+<div class="header">
+<div class="header-content">
+<div>
+<h1>Controllo Fissi</h1>
+</div>
+<a href="../dashboard.html" class="btn-back">← Torna alla dashboard</a>
+</div>
+</div>
+
+<!-- Tab bar -->
+<div class="nav-tabs">
+<button type="button" class="nav-tab active" data-tab="da-completare" onclick="switchTabCF('da-completare', this)">Da Completare <span id="cntDaCompletare" class="tab-counter zero" style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:0 7px;margin-left:6px;">0</span></button>
+<button type="button" class="nav-tab" data-tab="in-attivazione" onclick="switchTabCF('in-attivazione', this)">In Attivazione <span id="cntInAttivazione" class="tab-counter zero" style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:0 7px;margin-left:6px;">0</span></button>
+<button type="button" class="nav-tab" data-tab="attivo" onclick="switchTabCF('attivo', this)">Attivo <span id="cntAttivo" class="tab-counter zero" style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:0 7px;margin-left:6px;">0</span></button>
+<button type="button" class="nav-tab" data-tab="ko" onclick="switchTabCF('ko', this)">KO <span id="cntKo" class="tab-counter zero" style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:11px;background:#f1f5f9;color:#64748b;font-size:11px;font-weight:700;padding:0 7px;margin-left:6px;">0</span></button>
+</div>
+
+<div class="container">
+
+<div class="filters-card">
+  <div>
+    <label>Cerca</label>
+    <input type="text" id="searchCF" placeholder="Ragione sociale, CF/PIVA, operatore, cod. cliente...">
+  </div>
+  <div>
+    <label>&nbsp;</label>
+    <button type="button" class="btn-mini" onclick="loadAll()">🔄 Aggiorna</button>
+  </div>
+</div>
+
+<div class="contracts-table-wrap">
+  <div id="listaContratti">
+    <div class="empty-state"><div class="empty-icon">⏳</div><h3>Caricamento...</h3></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const sb = db;
+const STATI = ['Da completare','In Attivazione','Attivo','KO'];
+const STATI_TAB = { 'da-completare':'Da completare', 'in-attivazione':'In Attivazione', 'attivo':'Attivo', 'ko':'KO' };
+const TECNOLOGIE = ['FTTC','FWA OUT','FWA IN','FWA VOCE','FTTH_OF','FTTH_FWCOP'];
+const COD_POS = ['9001415852','900822241'];
+
+const CFState = {
+  righe: [],
+  search: '',
+  tabAttiva: 'da-completare',
+  editingId: null,
+  profiliMap: new Map()
+};
+
+function escapeHtml(s) {
+  if (s === null || s === undefined) return '';
+  const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML;
+}
+function fmtDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso); if (isNaN(d)) return iso;
+  return d.toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+function fmtDateTime(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso); if (isNaN(d)) return iso;
+  return d.toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Rome' });
+}
+function statoSlug(s) {
+  return String(s||'').toLowerCase().replace(/\s+/g,'-');
+}
+function setCount(id, n) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = n;
+  if (n > 0) {
+    el.style.background = 'var(--primary-bg)';
+    el.style.color = 'var(--primary)';
+  } else {
+    el.style.background = '#f1f5f9';
+    el.style.color = '#64748b';
+  }
+}
+
+function switchTabCF(tabKey, btn) {
+  CFState.tabAttiva = tabKey;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  render();
+}
+
+async function loadAll() {
+  const wrap = document.getElementById('listaContratti');
+  wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><h3>Caricamento...</h3></div>';
+  try {
+    const { data, error } = await sb
+      .from('post_vendita_controllo_fissi')
+      .select(`
+        id, contratto_id, pratica_id, anagrafica_id,
+        stato, codice_cliente, tecnologia, cod_contratto, cod_pos, numero_fisso,
+        attivazione_prevista, data_attivazione, motivo_ko, storico_chat,
+        compilazione_completata_at, compilazione_completata_da,
+        stato_cambiato_at, stato_cambiato_da, created_at, updated_at,
+        anagrafica:anagrafica_id ( id, cf_piva, ragione_sociale, cluster, cellulare, email ),
+        pratica:pratica_id ( id, data_pratica, operatore_id, created_at ),
+        contratto:contratto_id (
+          id, categoria_id, offerta_id, opzione_id,
+          categoria_snapshot, nome_offerta_snapshot, nome_opzione_snapshot,
+          apri_chiudi, intestatario, convergenza, prezzo_fisso, tipo_attivazione,
+          data_contratto, created_at
+        )
+      `)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    const righe = data || [];
+
+    const profIds = new Set();
+    righe.forEach(r => {
+      if (r.pratica && r.pratica.operatore_id) profIds.add(r.pratica.operatore_id);
+      if (r.compilazione_completata_da) profIds.add(r.compilazione_completata_da);
+      if (r.stato_cambiato_da) profIds.add(r.stato_cambiato_da);
+    });
+    if (profIds.size > 0) {
+      const { data: profili, error: profErr } = await sb
+        .from('profili')
+        .select('id, nome')
+        .in('id', Array.from(profIds));
+      if (!profErr && profili) {
+        CFState.profiliMap = new Map(profili.map(p => [p.id, p]));
+      }
+    }
+    CFState.righe = righe;
+    aggiornaContatori();
+    render();
+  } catch (e) {
+    console.error('Errore caricamento controllo fissi:', e);
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Errore caricamento</h3><p>${escapeHtml(e.message)}</p></div>`;
+  }
+}
+
+function aggiornaContatori() {
+  const counts = { 'Da completare':0, 'In Attivazione':0, 'Attivo':0, 'KO':0 };
+  CFState.righe.forEach(r => { if (counts[r.stato] !== undefined) counts[r.stato]++; });
+  setCount('cntDaCompletare', counts['Da completare']);
+  setCount('cntInAttivazione', counts['In Attivazione']);
+  setCount('cntAttivo', counts['Attivo']);
+  setCount('cntKo', counts['KO']);
+}
+
+function operatoreNome(r) {
+  const opId = r.pratica && r.pratica.operatore_id;
+  if (!opId) return '-';
+  const p = CFState.profiliMap.get(opId);
+  return p && p.nome ? p.nome : '-';
+}
+
+function dataInserimento(r) {
+  if (r.pratica && r.pratica.data_pratica) return r.pratica.data_pratica;
+  if (r.pratica && r.pratica.created_at) return r.pratica.created_at;
+  return r.created_at;
+}
+
+function render() {
+  const wrap = document.getElementById('listaContratti');
+  const statoSel = STATI_TAB[CFState.tabAttiva];
+  const q = (CFState.search || '').toLowerCase().trim();
+  const lista = CFState.righe.filter(r => {
+    if (r.stato !== statoSel) return false;
+    if (!q) return true;
+    const ana = r.anagrafica || {};
+    const haystack = [
+      ana.ragione_sociale, ana.cf_piva, ana.cellulare,
+      r.codice_cliente, r.cod_contratto, r.numero_fisso, r.tecnologia,
+      operatoreNome(r)
+    ].filter(Boolean).join(' ').toLowerCase();
+    return haystack.includes(q);
+  });
+
+  // Colonna dinamica (2a colonna)
+  let dynHeader = '';
+  let needsDynCol = false;
+  if (statoSel === 'In Attivazione') { dynHeader = 'Attivazione Prevista'; needsDynCol = true; }
+  else if (statoSel === 'Attivo')    { dynHeader = 'Data Attivazione';     needsDynCol = true; }
+
+  if (lista.length === 0) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nessuna pratica</h3><p>Non ci sono pratiche con stato "${escapeHtml(statoSel)}".</p></div>`;
+    return;
+  }
+
+  const headers = [
+    '<th>Data Inserimento</th>',
+    needsDynCol ? `<th>${escapeHtml(dynHeader)}</th>` : '',
+    '<th>Ragione Sociale</th>',
+    '<th>CF / P.IVA</th>',
+    '<th>Operatore</th>',
+    '<th>Stato</th>',
+    '<th>Tecnologia</th>',
+    '<th style="text-align:right;">Azioni</th>'
+  ].filter(Boolean).join('');
+
+  const rows = lista.map(r => {
+    const ana = r.anagrafica || {};
+    let dynCell = '';
+    if (needsDynCol) {
+      const val = statoSel === 'In Attivazione' ? r.attivazione_prevista : r.data_attivazione;
+      dynCell = `<td>${val ? fmtDate(val) : '—'}</td>`;
+    }
+    return `<tr>
+      <td>${fmtDate(dataInserimento(r))}</td>
+      ${dynCell}
+      <td class="cell-cliente">${escapeHtml(ana.ragione_sociale || '-')}</td>
+      <td>${escapeHtml(ana.cf_piva || '-')}</td>
+      <td>${escapeHtml(operatoreNome(r))}</td>
+      <td><span class="stato-pill ${statoSlug(r.stato)}">${escapeHtml(r.stato)}</span></td>
+      <td>${escapeHtml(r.tecnologia || '—')}</td>
+      <td style="text-align:right;"><button type="button" class="btn-mini btn-primary" onclick="openDettaglio('${r.id}')">Dettagli</button></td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<table class="contracts-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ============================================================
+// POPUP DETTAGLIO
+// ============================================================
+function openDettaglio(id) {
+  const r = CFState.righe.find(x => x.id === id);
+  if (!r) { MiroxUI.toast('Pratica non trovata', 'error'); return; }
+  CFState.editingId = id;
+  const ana = r.anagrafica || {};
+  const c = r.contratto || {};
+  const stato = r.stato;
+  const recapito = ana.cellulare || ana.email || '-';
+
+  // Dropdown stato: opzioni in base allo stato corrente
+  let statoOptions = '';
+  if (stato === 'Da completare') {
+    statoOptions = `<option value="Da completare" selected>Da completare</option>`;
+  } else if (stato === 'In Attivazione') {
+    statoOptions = `<option value="In Attivazione" selected>In Attivazione</option>
+                    <option value="Attivo">Attivo</option>
+                    <option value="KO">KO</option>`;
+  } else { // Attivo o KO -> sola lettura
+    statoOptions = `<option value="${stato}" selected>${stato}</option>`;
+  }
+
+  // Costruisco il body del modale rispettando l'ordine richiesto
+  const body = `
+    <div class="det-section">
+      <h4>Stato pratica</h4>
+      <div class="det-grid">
+        <div class="det-field">
+          <label>Stato</label>
+          <select id="cfStato" ${stato === 'Da completare' || stato === 'Attivo' || stato === 'KO' ? 'disabled' : ''} onchange="onStatoChange(this.value)">
+            ${statoOptions}
+          </select>
+        </div>
+        <div class="det-field">
+          <label>Ragione Sociale</label>
+          <div class="field-readonly-value">${escapeHtml(ana.ragione_sociale || '-')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="det-section">
+      <h4>Cliente</h4>
+      <div class="det-grid">
+        <div class="det-field">
+          <label>Cluster</label>
+          <div class="field-readonly-value">${escapeHtml(ana.cluster || '-')}</div>
+        </div>
+        <div class="det-field">
+          <label>CF / P.IVA</label>
+          <div class="field-readonly-value">${escapeHtml(ana.cf_piva || '-')}</div>
+        </div>
+        <div class="det-field">
+          <label>Cod. Cliente ${stato === 'Da completare' ? '<span class="required">*</span>' : ''}</label>
+          <input type="text" id="cfCodiceCliente" value="${escapeHtml(r.codice_cliente || '')}" placeholder="Codice cliente">
+        </div>
+        <div class="det-field">
+          <label>Recapito</label>
+          <div class="field-readonly-value">${escapeHtml(recapito)}</div>
+        </div>
+        <div class="det-field">
+          <label>Operatore</label>
+          <div class="field-readonly-value">${escapeHtml(operatoreNome(r))}</div>
+        </div>
+        <div class="det-field">
+          <label>Data Inserimento</label>
+          <div class="field-readonly-value">${fmtDate(dataInserimento(r))}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="det-section">
+      <h4>Attivazione</h4>
+      <div class="det-grid">
+        <div class="det-field">
+          <label>Attivazione Prevista</label>
+          <input type="date" id="cfAttivazionePrevista" value="${r.attivazione_prevista || ''}">
+        </div>
+        <div class="det-field">
+          <label>Data Attivazione</label>
+          <input type="date" id="cfDataAttivazione" value="${r.data_attivazione || ''}" ${stato !== 'Attivo' ? 'readonly' : ''}>
+        </div>
+        <div class="det-field">
+          <label>Cod. Contratto ${stato === 'Da completare' ? '<span class="required">*</span>' : ''}</label>
+          <input type="text" id="cfCodContratto" value="${escapeHtml(r.cod_contratto || '')}" placeholder="Codice contratto">
+        </div>
+        <div class="det-field">
+          <label>Cod. POS ${stato === 'Da completare' ? '<span class="required">*</span>' : ''}</label>
+          <select id="cfCodPos">
+            <option value="">Seleziona...</option>
+            ${COD_POS.map(v => `<option value="${v}" ${r.cod_pos === v ? 'selected' : ''}>${v}</option>`).join('')}
+          </select>
+        </div>
+        <div class="det-field">
+          <label>Tecnologia ${stato === 'Da completare' ? '<span class="required">*</span>' : ''}</label>
+          <select id="cfTecnologia">
+            <option value="">Seleziona...</option>
+            ${TECNOLOGIE.map(v => `<option value="${v}" ${r.tecnologia === v ? 'selected' : ''}>${v}</option>`).join('')}
+          </select>
+        </div>
+        <div class="det-field">
+          <label>Offerta</label>
+          <div class="field-readonly-value">${escapeHtml(c.nome_offerta_snapshot || '-')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="det-section">
+      <h4>Dati contratto</h4>
+      <div class="det-grid">
+        <div class="det-field">
+          <label>Opzioni</label>
+          <div class="field-readonly-value">${escapeHtml(c.nome_opzione_snapshot || '-')}</div>
+        </div>
+        <div class="det-field">
+          <label>Apri / Chiudi</label>
+          <div class="field-readonly-value">${escapeHtml(c.apri_chiudi || '-')}${c.intestatario ? ' — ' + escapeHtml(c.intestatario) : ''}</div>
+        </div>
+        <div class="det-field">
+          <label>Convergenza</label>
+          <div class="field-readonly-value">${escapeHtml(c.convergenza || '-')}</div>
+        </div>
+        <div class="det-field">
+          <label>Numero Fisso</label>
+          <input type="text" id="cfNumeroFisso" value="${escapeHtml(r.numero_fisso || '')}" placeholder="Numero di telefono fisso">
+        </div>
+      </div>
+      ${stato === 'KO' && r.motivo_ko ? `
+        <div style="margin-top:14px;padding:12px 16px;background:var(--danger-bg);border-radius:8px;border-left:3px solid var(--danger);">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--danger);margin-bottom:4px;">Motivo KO</div>
+          <div style="font-size:13px;color:var(--text);">${escapeHtml(r.motivo_ko)}</div>
+        </div>` : ''}
+    </div>
+
+    <div class="det-section">
+      <h4>Chat / Note</h4>
+      ${renderChatArea(r.storico_chat)}
+      <div class="chat-input-row">
+        <textarea id="cfNuovaNota" placeholder="Scrivi un aggiornamento..." rows="2"></textarea>
+        <button type="button" class="btn-action btn-action-secondary" onclick="aggiungiNota()">Aggiungi</button>
+      </div>
+    </div>
+  `;
+
+  // Footer dinamico in base allo stato
+  let footer = '';
+  if (stato === 'Da completare') {
+    footer = `
+      <div class="foot-actions" style="width:100%;">
+        <div class="left">
+          <button type="button" class="btn-action btn-action-secondary" data-mx-close>Chiudi</button>
+        </div>
+        <div class="right">
+          <button type="button" class="btn-action btn-action-secondary" onclick="salvaCampi(false)">Salva modifiche</button>
+          <button type="button" class="btn-action btn-action-success" onclick="confermaCompilazione()">✓ Compilazione Completata</button>
+        </div>
+      </div>`;
+  } else if (stato === 'In Attivazione') {
+    footer = `
+      <div class="foot-actions" style="width:100%;">
+        <div class="left">
+          <button type="button" class="btn-action btn-action-secondary" data-mx-close>Chiudi</button>
+        </div>
+        <div class="right">
+          <button type="button" class="btn-action btn-action-primary" onclick="salvaCampi(true)">Salva modifiche</button>
+        </div>
+      </div>`;
+  } else {
+    footer = `
+      <div class="foot-actions" style="width:100%;">
+        <div class="left">
+          <button type="button" class="btn-action btn-action-secondary" data-mx-close>Chiudi</button>
+        </div>
+        <div class="right"></div>
+      </div>`;
+  }
+
+  const m = MiroxUI._build({
+    title: `Pratica Fisso — ${ana.ragione_sociale || ana.cf_piva || ''}`,
+    bodyHtml: body,
+    footerHtml: footer,
+    large: true,
+    onClose: () => { CFState.editingId = null; }
+  });
+  // Bind chiudi
+  m.foot.querySelectorAll('[data-mx-close]').forEach(b => b.addEventListener('click', m.close));
+  // Salvo riferimento al modal per chiudere dopo salvataggio
+  CFState._modalClose = m.close;
+}
+
+function renderChatArea(chatRaw) {
+  let chat = [];
+  try { chat = Array.isArray(chatRaw) ? chatRaw : (chatRaw ? JSON.parse(chatRaw) : []); } catch(e) {}
+  if (!chat.length) {
+    return `<div class="chat-area" id="cfChatArea"><div style="text-align:center;color:var(--text-light);padding:16px;font-size:13px;">Nessuna nota</div></div>`;
+  }
+  const msgs = chat.map(m => `
+    <div class="chat-msg">
+      <div class="chat-msg-time">${escapeHtml(m.timestamp || '')}${m.autore ? `<span class="chat-msg-author">— ${escapeHtml(m.autore)}</span>` : ''}</div>
+      <div class="chat-msg-text">${escapeHtml(m.message || '')}</div>
+    </div>`).join('');
+  return `<div class="chat-area" id="cfChatArea">${msgs}</div>`;
+}
+
+// ============================================================
+// AZIONI
+// ============================================================
+function getValori() {
+  return {
+    codice_cliente: document.getElementById('cfCodiceCliente').value.trim() || null,
+    tecnologia: document.getElementById('cfTecnologia').value || null,
+    cod_contratto: document.getElementById('cfCodContratto').value.trim() || null,
+    cod_pos: document.getElementById('cfCodPos').value || null,
+    numero_fisso: document.getElementById('cfNumeroFisso').value.trim() || null,
+    attivazione_prevista: document.getElementById('cfAttivazionePrevista').value || null,
+    data_attivazione: document.getElementById('cfDataAttivazione').value || null
+  };
+}
+
+async function salvaCampi(silent) {
+  const id = CFState.editingId;
+  if (!id) return;
+  const v = getValori();
+  try {
+    const { error } = await sb.from('post_vendita_controllo_fissi').update(v).eq('id', id);
+    if (error) throw error;
+    const r = CFState.righe.find(x => x.id === id);
+    if (r) Object.assign(r, v);
+    if (!silent) {
+      MiroxUI.toast('Modifiche salvate', 'success');
+    }
+    render();
+  } catch (e) {
+    MiroxUI.toast('Errore salvataggio: ' + e.message, 'error');
+  }
+}
+
+async function confermaCompilazione() {
+  const v = getValori();
+  // Validazione: campi obbligatori = Cod. Cliente, Tecnologia, Cod. Contratto, Cod. POS
+  const mancanti = [];
+  if (!v.codice_cliente) mancanti.push('Cod. Cliente');
+  if (!v.tecnologia) mancanti.push('Tecnologia');
+  if (!v.cod_contratto) mancanti.push('Cod. Contratto');
+  if (!v.cod_pos) mancanti.push('Cod. POS');
+  if (mancanti.length) {
+    await MiroxUI.alert(`Compila i campi obbligatori prima di procedere:<br><br><strong>${mancanti.join(', ')}</strong>`, { type: 'warning', html: true });
+    return;
+  }
+  const ok = await MiroxUI.confirm(
+    'Confermi che hai completato la compilazione?<br>La pratica passerà allo stato <strong>"In Attivazione"</strong>.',
+    { okText: 'Sì, conferma', cancelText: 'Annulla', html: true, title: 'Compilazione Completata' }
+  );
+  if (!ok) return;
+
+  const profId = (window.__profilo && window.__profilo.id) || null;
+  try {
+    const { error } = await sb.from('post_vendita_controllo_fissi').update({
+      ...v,
+      stato: 'In Attivazione',
+      compilazione_completata_at: new Date().toISOString(),
+      compilazione_completata_da: profId,
+      stato_cambiato_at: new Date().toISOString(),
+      stato_cambiato_da: profId
+    }).eq('id', CFState.editingId);
+    if (error) throw error;
+    MiroxUI.toast('Pratica passata a "In Attivazione"', 'success');
+    if (CFState._modalClose) CFState._modalClose();
+    await loadAll();
+  } catch (e) {
+    MiroxUI.toast('Errore: ' + e.message, 'error');
+  }
+}
+
+async function onStatoChange(nuovoStato) {
+  const r = CFState.righe.find(x => x.id === CFState.editingId);
+  if (!r) return;
+  if (nuovoStato === r.stato) return;
+  if (nuovoStato === 'Attivo') {
+    await transizioneAttivo();
+  } else if (nuovoStato === 'KO') {
+    await transizioneKO();
+  }
+  // Ripristina select sul valore corrente in caso di annullamento
+  const sel = document.getElementById('cfStato');
+  if (sel) {
+    const cur = CFState.righe.find(x => x.id === CFState.editingId);
+    if (cur) sel.value = cur.stato;
+  }
+}
+
+async function transizioneAttivo() {
+  // Popup custom con date input obbligatorio (no default)
+  const today = new Date().toISOString().slice(0,10);
+  const bodyHtml = `
+    <div class="mx-modal-msg" style="text-align:left;">
+      Conferma il passaggio a stato <strong>"Attivo"</strong>.<br>
+      Inserisci la <strong>data di attivazione effettiva</strong>:
+    </div>
+    <div style="margin-top:14px;">
+      <input type="date" id="cfPromptDataAttivazione" class="mx-input" max="${today}" required>
+    </div>
+  `;
+  const footer = `
+    <button type="button" class="mx-btn mx-btn-secondary" data-mx-cancel>Annulla</button>
+    <button type="button" class="mx-btn mx-btn-primary" data-mx-ok>Conferma "Attivo"</button>
+  `;
+  const result = await new Promise(resolve => {
+    let decided = false;
+    const m = MiroxUI._build({
+      title: 'Attivazione effettiva',
+      bodyHtml,
+      footerHtml: footer,
+      onClose: () => { if (!decided) resolve(null); }
+    });
+    m.foot.querySelector('[data-mx-cancel]').addEventListener('click', () => { decided = true; m.close(); resolve(null); });
+    m.foot.querySelector('[data-mx-ok]').addEventListener('click', () => {
+      const val = m.body.querySelector('#cfPromptDataAttivazione').value;
+      if (!val) {
+        MiroxUI.toast('Data attivazione obbligatoria', 'warning');
+        return;
+      }
+      decided = true; m.close(); resolve(val);
+    });
+  });
+  if (!result) return;
+
+  const profId = (window.__profilo && window.__profilo.id) || null;
+  try {
+    const { error } = await sb.from('post_vendita_controllo_fissi').update({
+      stato: 'Attivo',
+      data_attivazione: result,
+      stato_cambiato_at: new Date().toISOString(),
+      stato_cambiato_da: profId
+    }).eq('id', CFState.editingId);
+    if (error) throw error;
+    MiroxUI.toast('Stato aggiornato a "Attivo"', 'success');
+    if (CFState._modalClose) CFState._modalClose();
+    await loadAll();
+  } catch (e) {
+    MiroxUI.toast('Errore: ' + e.message, 'error');
+  }
+}
+
+async function transizioneKO() {
+  const bodyHtml = `
+    <div class="mx-modal-msg" style="text-align:left;">
+      Conferma il passaggio a stato <strong>"KO"</strong>.<br>
+      L'eventuale data di <strong>Attivazione Prevista verrà azzerata</strong>.
+    </div>
+    <div style="margin-top:14px;">
+      <label style="font-size:12px;font-weight:600;color:#0f172a;display:block;margin-bottom:6px;">Motivo KO (opzionale)</label>
+      <textarea id="cfPromptMotivoKO" class="mx-input" style="min-height:80px;resize:vertical;" placeholder="Descrivi il motivo dell'esito KO..."></textarea>
+    </div>
+  `;
+  const footer = `
+    <button type="button" class="mx-btn mx-btn-secondary" data-mx-cancel>Annulla</button>
+    <button type="button" class="mx-btn mx-btn-danger" data-mx-ok>Conferma "KO"</button>
+  `;
+  const result = await new Promise(resolve => {
+    let decided = false;
+    const m = MiroxUI._build({
+      title: 'Conferma stato KO',
+      bodyHtml,
+      footerHtml: footer,
+      onClose: () => { if (!decided) resolve(null); }
+    });
+    m.foot.querySelector('[data-mx-cancel]').addEventListener('click', () => { decided = true; m.close(); resolve(null); });
+    m.foot.querySelector('[data-mx-ok]').addEventListener('click', () => {
+      const val = m.body.querySelector('#cfPromptMotivoKO').value.trim() || null;
+      decided = true; m.close(); resolve({ motivo: val });
+    });
+  });
+  if (!result) return;
+
+  const profId = (window.__profilo && window.__profilo.id) || null;
+  try {
+    const { error } = await sb.from('post_vendita_controllo_fissi').update({
+      stato: 'KO',
+      attivazione_prevista: null,
+      motivo_ko: result.motivo,
+      stato_cambiato_at: new Date().toISOString(),
+      stato_cambiato_da: profId
+    }).eq('id', CFState.editingId);
+    if (error) throw error;
+    MiroxUI.toast('Stato aggiornato a "KO"', 'success');
+    if (CFState._modalClose) CFState._modalClose();
+    await loadAll();
+  } catch (e) {
+    MiroxUI.toast('Errore: ' + e.message, 'error');
+  }
+}
+
+async function aggiungiNota() {
+  const ta = document.getElementById('cfNuovaNota');
+  const txt = ta.value.trim();
+  if (!txt) { MiroxUI.toast('Scrivi una nota prima di aggiungere', 'warning'); return; }
+  const r = CFState.righe.find(x => x.id === CFState.editingId);
+  if (!r) return;
+  const profilo = window.__profilo || {};
+  const autore = profilo.nome || profilo.email || 'Operatore';
+  const newMsg = {
+    timestamp: new Date().toLocaleString('it-IT'),
+    message: txt,
+    autore
+  };
+  const chatOld = Array.isArray(r.storico_chat) ? r.storico_chat : (r.storico_chat ? JSON.parse(r.storico_chat) : []);
+  const chatNew = [...chatOld, newMsg];
+  try {
+    const { error } = await sb.from('post_vendita_controllo_fissi').update({ storico_chat: chatNew }).eq('id', CFState.editingId);
+    if (error) throw error;
+    r.storico_chat = chatNew;
+    // Render della chat aggiornata inline
+    const area = document.getElementById('cfChatArea');
+    if (area) {
+      // Rimuovo placeholder se presente
+      if (area.querySelector('div[style*="Nessuna nota"]')) area.innerHTML = '';
+      area.insertAdjacentHTML('beforeend', `
+        <div class="chat-msg">
+          <div class="chat-msg-time">${escapeHtml(newMsg.timestamp)}<span class="chat-msg-author">— ${escapeHtml(newMsg.autore)}</span></div>
+          <div class="chat-msg-text">${escapeHtml(newMsg.message)}</div>
+        </div>`);
+      area.scrollTop = area.scrollHeight;
+    }
+    ta.value = '';
+    MiroxUI.toast('Nota aggiunta', 'success');
+  } catch (e) {
+    MiroxUI.toast('Errore salvataggio nota: ' + e.message, 'error');
+  }
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+document.getElementById('searchCF').addEventListener('input', e => {
+  CFState.search = e.target.value;
+  render();
+});
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', () => { loadAll(); });
+</script>
+</body>
+</html>

@@ -1034,8 +1034,15 @@ async function confermaVerifica(id) {
     if (inp) inp.focus();
     return;
   }
+  const cContrCurrent = window.__currentVerificaContratto;
+  const catName = (cContrCurrent && cContrCurrent.categoria_snapshot) || '';
+  const isFissoCat = catName.toLowerCase().includes('fisso');
+  let confermaMsg = 'Confermi di voler salvare le modifiche e marcare questo contratto come <strong>VERIFICATO</strong>?<br><br>Il contratto passerà nella tab "Verificati" e non sarà più visibile qui.';
+  if (isFissoCat) {
+    confermaMsg += '<br><br>⚠️ Trattandosi di un contratto <strong>Fisso</strong>, comparirà anche nel modulo <strong>Controllo Fissi</strong> con stato "Da completare". L\'azione è irreversibile.';
+  }
   const ok = await window.MiroxUI.confirm(
-    'Confermi di voler salvare le modifiche e marcare questo contratto come <strong>VERIFICATO</strong>?<br><br>Il contratto passerà nella tab "Verificati" e non sarà più visibile qui.',
+    confermaMsg,
     { title: 'Conferma verifica contratto', okText: 'Sì, verifica', cancelText: 'Annulla', html: true }
   );
   if (!ok) return;
