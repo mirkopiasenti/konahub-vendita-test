@@ -437,23 +437,34 @@ function normPiva(raw) {
   if (raw === null || raw === undefined) return '';
   const trimmed = String(raw).trim().replace(/[^\d]/g, '');
   if (!trimmed) return '';
-  // Pad zeri a sinistra fino a 11 cifre
+  if (trimmed.length > 11) return trimmed; // probabile errore — non taglio, lascio passare per doublecheck KO
   return trimmed.padStart(11, '0');
 }
 
 function normCfPiva(raw) {
   if (raw === null || raw === undefined) return '';
-  return String(raw).trim().toUpperCase();
+  // Strip BOM + spazi + uppercase (CF), PIVA sara' tutta numerica
+  return String(raw).replace(/^﻿/, '').trim().toUpperCase();
+}
+
+function normNumContratto(raw) {
+  if (raw === null || raw === undefined) return '';
+  return String(raw).replace(/^﻿/, '').replace(/[​-‍﻿]/g, '').trim().toUpperCase();
 }
 
 function isPivaLike(s) {
   return /^\d{11}$/.test(String(s || '').trim());
 }
 
-function isCluster(ana, target) {
-  if (!ana) return false;
-  return String(ana.cluster || '').trim().toLowerCase() === target.toLowerCase();
+// chunk(array, size) → split in batch
+function chunk(arr, size) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
 }
+
+const MAX_FILE_SIZE_MB = 20;
+const UPDATE_BATCH_SIZE = 50;
 
 document.getElementById('btnImportCsv').addEventListener('click', () => {
   document.getElementById('csvFileInput').click();
@@ -463,18 +474,37 @@ document.getElementById('csvFileInput').addEventListener('change', async (e) => 
   const file = e.target.files && e.target.files[0];
   e.target.value = ''; // reset cosi' lo stesso file puo' essere ricaricato
   if (!file) return;
+  // Check PapaParse caricato (CDN fail-safe)
+  if (typeof Papa === 'undefined') {
+    await MiroxUI.alert(
+      'Libreria CSV (PapaParse) non caricata. Verifica la connessione internet e ricarica la pagina.',
+      { type: 'error' }
+    );
+    return;
+  }
+  // Check dimensione file
+  const fileSizeMb = file.size / (1024 * 1024);
+  if (fileSizeMb > MAX_FILE_SIZE_MB) {
+    await MiroxUI.alert(
+      `Il file e' troppo grande (${fileSizeMb.toFixed(1)} MB). Il limite e' ${MAX_FILE_SIZE_MB} MB.`,
+      { type: 'error' }
+    );
+    return;
+  }
   await processaCsv(file);
 });
 
 async function processaCsv(file) {
   const loader = MiroxUI.loading.show('Parsing CSV in corso...', file.name);
   try {
-    // Parse CSV con PapaParse - separatore ';', con header
+    // Parse CSV con PapaParse - separatore ';', con header.
+    // transformHeader strip BOM UTF-8 e spazi (export Excel/Windows aggiungono ﻿ al primo header).
     const parsed = await new Promise((resolve, reject) => {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
         delimiter: ';',
+        transformHeader: h => String(h || '').replace(/^﻿/, '').trim(),
         complete: results => resolve(results),
         error: err => reject(err)
       });
@@ -494,23 +524,24 @@ async function processaCsv(file) {
     if (headerMancanti.length > 0) {
       loader.error('Header non valido');
       await MiroxUI.alert(
-        `Il CSV non contiene le colonne attese:<br><br><strong>${headerMancanti.join(', ')}</strong><br><br>Verifica che il file sia un'estrazione dal portale WindTre.`,
+        `Il CSV non contiene le colonne attese:<br><br><strong>${headerMancanti.join(', ')}</strong><br><br>Header trovati nel file: <code style="font-size:11px;">${headersTrovati.slice(0, 8).join(', ')}${headersTrovati.length > 8 ? '...' : ''}</code><br><br>Verifica che il file sia un'estrazione dal portale WindTre con separatore ";".`,
         { type: 'error', html: true }
       );
       return;
     }
 
-    // Aggrega per Proposta di Contratto, scegliendo lo stato a priorita' maggiore
-    const aggregato = new Map(); // numContratto -> { stato, causale, messaggio, causa, cfCsv, pivaCsv }
+    // Aggrega per Proposta di Contratto (case-insensitive), scegliendo lo stato a priorita' maggiore
+    const aggregato = new Map(); // numContrattoNorm -> { numContrattoOriginal, stato, ... }
     for (const row of righe) {
-      const numContratto = String(row[CSV_HEADERS.propostaContratto] || '').trim();
+      const numContrattoNorm = normNumContratto(row[CSV_HEADERS.propostaContratto]);
       const stato = String(row[CSV_HEADERS.stato] || '').trim();
-      if (!numContratto || !stato) continue;
-      const cur = aggregato.get(numContratto);
+      if (!numContrattoNorm || !stato) continue;
+      const cur = aggregato.get(numContrattoNorm);
       const newPri = STATO_PRIORITY[stato] || 0;
       const curPri = cur ? (STATO_PRIORITY[cur.stato] || 0) : -1;
       if (!cur || newPri > curPri) {
-        aggregato.set(numContratto, {
+        aggregato.set(numContrattoNorm, {
+          numContrattoOriginal: String(row[CSV_HEADERS.propostaContratto] || '').trim(),
           stato,
           causale: String(row[CSV_HEADERS.causaleStato] || '').trim() || null,
           messaggio: String(row[CSV_HEADERS.messaggioEsito] || '').trim() || null,
@@ -524,53 +555,76 @@ async function processaCsv(file) {
 
     loader.setText('Confronto con database...');
 
-    // Carico tutte le righe del modulo (gia' in LGState.righe potenzialmente, ma faccio fresh per sicurezza)
+    // Refresh dati DB (fa anche il lookup profili)
     await loadAll();
 
+    // Indice DB: numero_contratto_energia (case-insensitive) -> riga
+    // Skippo le righe DB con numero_contratto_energia vuoto/null (non possono matchare).
+    const indiceDb = new Map();
+    for (const r of LGState.righe) {
+      const num = r.contratto && r.contratto.numero_contratto_energia;
+      if (!num) continue;
+      const key = normNumContratto(num);
+      if (!key) continue;
+      if (!indiceDb.has(key)) indiceDb.set(key, r);
+    }
+
     // Calcolo le incongruenze
-    const aggiornati = [];     // {numContratto, oldStato, newStato, ragSoc}
-    const stateInvariati = []; // numContratto matchato ma stato gia' uguale
-    const noMatchDb = [];      // numContratto del CSV ma non presente nel DB
-    const doubleCheckKo = [];  // numContratto matchato ma CF/PIVA non corrispondente
+    const aggiornati = [];      // {numContratto, oldStato, newStato, ragSoc}
+    const stateInvariati = [];  // numContratto matchato ma stato gia' uguale
+    const noMatchDb = [];       // numContratto del CSV ma non presente nel DB
+    const doubleCheckKo = [];   // numContratto matchato ma CF/PIVA non corrispondente
+    const updateBuilders = [];  // {id, payload} per batch UPDATE
 
     const profilo = window.__profilo || {};
-    const updatePromises = [];
     const nowIso = new Date().toISOString();
 
-    for (const [numContratto, csvData] of aggregato.entries()) {
-      // Cerca nel DB
-      const rigaDb = LGState.righe.find(r =>
-        r.contratto && String(r.contratto.numero_contratto_energia || '').trim() === numContratto
-      );
+    for (const [numContrattoNorm, csvData] of aggregato.entries()) {
+      const numContrattoDisplay = csvData.numContrattoOriginal;
+      const rigaDb = indiceDb.get(numContrattoNorm);
       if (!rigaDb) {
-        noMatchDb.push({ numContratto, stato: csvData.stato });
+        noMatchDb.push({ numContratto: numContrattoDisplay, stato: csvData.stato });
         continue;
       }
 
       // Double check CF/PIVA
       const ana = rigaDb.anagrafica || {};
       const cfDbNorm = normCfPiva(ana.cf_piva);
+
+      // Edge case: anagrafica senza cf_piva — segnalo separatamente
+      if (!cfDbNorm) {
+        doubleCheckKo.push({
+          numContratto: numContrattoDisplay,
+          ragSoc: ana.ragione_sociale || '-',
+          campo: 'Anagrafica',
+          dbValue: '(CF/PIVA mancante nel DB)',
+          csvValue: csvData.cfCsv || csvData.pivaCsvRaw || '(vuoto)',
+          statoCsv: csvData.stato
+        });
+        continue;
+      }
+
       let checkOk = false;
       let expectedField = '';
       let csvValueDisplay = '';
 
       if (isPivaLike(cfDbNorm)) {
         // Business -> match con PIVA CSV normalizzata
-        checkOk = cfDbNorm === csvData.pivaCsvNorm;
+        checkOk = !!csvData.pivaCsvNorm && cfDbNorm === csvData.pivaCsvNorm;
         expectedField = 'P.IVA';
         csvValueDisplay = csvData.pivaCsvRaw + (csvData.pivaCsvNorm && csvData.pivaCsvRaw !== csvData.pivaCsvNorm
           ? ` (normalizzata: ${csvData.pivaCsvNorm})`
           : '');
       } else {
         // Consumer -> match con CF
-        checkOk = cfDbNorm === csvData.cfCsv;
+        checkOk = !!csvData.cfCsv && cfDbNorm === csvData.cfCsv;
         expectedField = 'CF';
         csvValueDisplay = csvData.cfCsv;
       }
 
       if (!checkOk) {
         doubleCheckKo.push({
-          numContratto,
+          numContratto: numContrattoDisplay,
           ragSoc: ana.ragione_sociale || '-',
           campo: expectedField,
           dbValue: ana.cf_piva || '-',
@@ -583,32 +637,39 @@ async function processaCsv(file) {
       const oldStato = rigaDb.stato || null;
       const newStato = csvData.stato;
 
-      // Sovrascrive sempre (anche se gia' uguale, aggiorno timestamp dell'upload)
-      // ma se stato e' identico non lo conto come "aggiornato"
       if (oldStato === newStato) {
-        stateInvariati.push({ numContratto, ragSoc: ana.ragione_sociale || '-', stato: newStato });
+        stateInvariati.push({ numContratto: numContrattoDisplay, ragSoc: ana.ragione_sociale || '-', stato: newStato });
       } else {
-        aggiornati.push({ numContratto, oldStato: oldStato || '(vuoto)', newStato, ragSoc: ana.ragione_sociale || '-' });
+        aggiornati.push({ numContratto: numContrattoDisplay, oldStato: oldStato || '(vuoto)', newStato, ragSoc: ana.ragione_sociale || '-' });
       }
 
-      // Costruisco payload UPDATE
       const isRifiutato = newStato === 'Rifiutato';
-      const payload = {
-        stato: newStato,
-        causale_stato_pratica: isRifiutato ? csvData.causale : null,
-        messaggio_esito_sap: isRifiutato ? csvData.messaggio : null,
-        causa_annullamento: isRifiutato ? csvData.causa : null,
-        ultimo_csv_upload_at: nowIso,
-        ultimo_csv_upload_da: profilo.id || null
-      };
-      updatePromises.push(
-        sb.from('post_vendita_controllo_lg').update(payload).eq('id', rigaDb.id)
-      );
+      updateBuilders.push({
+        id: rigaDb.id,
+        payload: {
+          stato: newStato,
+          causale_stato_pratica: isRifiutato ? csvData.causale : null,
+          messaggio_esito_sap: isRifiutato ? csvData.messaggio : null,
+          causa_annullamento: isRifiutato ? csvData.causa : null,
+          ultimo_csv_upload_at: nowIso,
+          ultimo_csv_upload_da: profilo.id || null
+        }
+      });
     }
 
-    loader.setText(`Aggiornamento ${updatePromises.length} righe...`);
-    const updateResults = await Promise.all(updatePromises);
-    const updateErrors = updateResults.filter(r => r.error);
+    // Batch UPDATE: chunk per evitare di saturare Supabase con N promesse in parallelo.
+    let updateErrorsCount = 0;
+    const totalUpdates = updateBuilders.length;
+    const batches = chunk(updateBuilders, UPDATE_BATCH_SIZE);
+    for (let i = 0; i < batches.length; i++) {
+      loader.setText(`Aggiornamento DB ${Math.min((i+1) * UPDATE_BATCH_SIZE, totalUpdates)}/${totalUpdates}...`);
+      const batch = batches[i];
+      const results = await Promise.all(batch.map(b =>
+        sb.from('post_vendita_controllo_lg').update(b.payload).eq('id', b.id)
+      ));
+      updateErrorsCount += results.filter(r => r.error).length;
+      results.filter(r => r.error).forEach(r => console.error('UPDATE error:', r.error));
+    }
     loader.success(`Import completato`);
 
     setTimeout(() => {
@@ -619,7 +680,7 @@ async function processaCsv(file) {
         stateInvariati,
         noMatchDb,
         doubleCheckKo,
-        updateErrors: updateErrors.length
+        updateErrors: updateErrorsCount
       });
       // Refresh dati per mostrare nuovi stati
       loadAll();
