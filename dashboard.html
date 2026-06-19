@@ -460,19 +460,34 @@
 
     const tabBtns = document.querySelectorAll('.tab-btn');
     const panels = document.querySelectorAll('.tab-panel');
+
+    function activateTab(target) {
+      tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === target));
+      panels.forEach(p => {
+        p.classList.remove('active');
+        if (p.id === 'panel-' + target) {
+          void p.offsetWidth; // force reflow for the animation to replay
+          p.classList.add('active');
+        }
+      });
+    }
+
+    // Ripristina l'ultima tab visitata in questa sessione (sessionStorage).
+    // Cosi' quando l'utente esce da un modulo Post-Vendita torna su Post-Vendita,
+    // non sul default Vendita.
+    try {
+      const saved = sessionStorage.getItem('mirox.dashboardTab');
+      if (saved && (saved === 'vendita' || saved === 'post-vendita')) {
+        activateTab(saved);
+      }
+    } catch (e) { /* sessionStorage potrebbe non essere disponibile in alcuni contesti */ }
+
     tabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const target = btn.dataset.tab;
         if (btn.classList.contains('active')) return;
-        tabBtns.forEach(b => b.classList.toggle('active', b === btn));
-        panels.forEach(p => {
-          p.classList.remove('active');
-          if (p.id === 'panel-' + target) {
-            // force reflow for the animation to replay
-            void p.offsetWidth;
-            p.classList.add('active');
-          }
-        });
+        activateTab(target);
+        try { sessionStorage.setItem('mirox.dashboardTab', target); } catch (e) {}
       });
     }); </script>
 </body>

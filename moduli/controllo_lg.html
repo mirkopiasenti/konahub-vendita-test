@@ -51,12 +51,34 @@ body {
   gap: 12px;
   align-items: end;
 }
-@media (max-width: 800px) { .filters-card { grid-template-columns: 1fr; } }
+.filters-card.lg-filters {
+  grid-template-columns: 1.4fr 170px 170px auto auto;
+}
+@media (max-width: 1100px) { .filters-card.lg-filters { grid-template-columns: 1fr 1fr 1fr; } }
+@media (max-width: 800px)  { .filters-card, .filters-card.lg-filters { grid-template-columns: 1fr; } }
 .filters-card label { font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;display:block; }
 .filters-card input, .filters-card select {
   width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:10px;font-size:13.5px;font-family:inherit;background:#fff;
 }
 .filters-card input:focus, .filters-card select:focus { outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,102,0,.12); }
+.filters-card.disabled-by-search select { opacity:.55; background:#f8fafc; }
+
+/* Stat-card row (pattern Controllo Fissi) */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px; }
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 22px;
+  display: flex; flex-direction: column; gap: 4px;
+  transition: box-shadow .15s ease;
+}
+.stat-card:hover { box-shadow: 0 4px 12px rgba(15,23,42,.06); }
+.stat-card .stat-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .stat-value { font-size: 30px; font-weight: 700; color: var(--text); line-height: 1.1; }
+.stat-card .stat-sub { font-size: 11.5px; color: var(--text-light); margin-top: 2px; }
+.stat-card.success .stat-value { color: var(--success); }
+.stat-card.danger  .stat-value { color: var(--danger); }
 
 .contracts-table-wrap {
   background: var(--bg-card);
@@ -198,10 +220,47 @@ body {
 
 <div class="container">
 
-<div class="filters-card" style="grid-template-columns:1fr auto auto;">
+<!-- Statistiche live -->
+<div class="stats-row">
+  <div class="stat-card success">
+    <div class="stat-label">Inseriti nel mese</div>
+    <div class="stat-value" id="statInseritiMese">0</div>
+    <div class="stat-sub" id="statMeseLabel1">—</div>
+  </div>
+  <div class="stat-card danger">
+    <div class="stat-label">KO nel mese</div>
+    <div class="stat-value" id="statKoMese">0</div>
+    <div class="stat-sub" id="statMeseLabel2">—</div>
+  </div>
+</div>
+
+<!-- Filtri + search -->
+<div class="filters-card lg-filters" id="lgFiltersBox">
   <div>
-    <label>Cerca</label>
+    <label>Cerca <span style="font-weight:500;color:var(--text-light);text-transform:none;letter-spacing:0;">(ignora i filtri)</span></label>
     <input type="text" id="searchLG" placeholder="Ragione sociale, CF/PIVA, numero contratto, POD/PDR, ex fornitore, operatore...">
+  </div>
+  <div>
+    <label>Cluster</label>
+    <select id="filtroClusterLg">
+      <option value="">Tutti</option>
+      <option value="Consumer">Consumer</option>
+      <option value="Business">Business</option>
+      <option value="Turista">Turista</option>
+    </select>
+  </div>
+  <div>
+    <label>Stato</label>
+    <select id="filtroStatoLg">
+      <option value="">Tutti</option>
+      <option value="__null__">Senza stato</option>
+      <option value="Nuovo">Nuovo</option>
+      <option value="In lavorazione">In lavorazione</option>
+      <option value="In attivazione">In attivazione</option>
+      <option value="Attivato">Attivato</option>
+      <option value="Annullato">Annullato</option>
+      <option value="Rifiutato">Rifiutato</option>
+    </select>
   </div>
   <div>
     <label>&nbsp;</label>
@@ -227,9 +286,13 @@ body {
 <script>
 const sb = db;
 
+const MESI_IT = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+
 const LGState = {
   righe: [],
   search: '',
+  filtroCluster: '',
+  filtroStato: '',
   profiliMap: new Map()
 };
 
@@ -280,6 +343,7 @@ async function loadAll() {
       }
     }
     LGState.righe = righe;
+    aggiornaContatori();
     render();
   } catch (e) {
     console.error('Errore caricamento Controllo L&G:', e);
@@ -300,6 +364,36 @@ function dataInserimento(r) {
   return r.created_at;
 }
 
+function aggiornaContatori() {
+  const now = new Date();
+  const annoCorr = now.getFullYear();
+  const meseCorr = now.getMonth(); // 0-11
+  let inseritiMese = 0;
+  let koMese = 0;
+  for (const r of LGState.righe) {
+    // Inseriti nel mese: data_contratto del mese corrente (data della vendita).
+    const dIns = dataInserimento(r);
+    if (dIns) {
+      const d = new Date(dIns);
+      if (!isNaN(d) && d.getFullYear() === annoCorr && d.getMonth() === meseCorr) inseritiMese++;
+    }
+    // KO nel mese: stato='Rifiutato' AND ultimo_csv_upload_at del mese corrente
+    // (fallback su updated_at se l'aggiornamento e' avvenuto senza CSV).
+    if (r.stato === 'Rifiutato') {
+      const ref = r.ultimo_csv_upload_at || r.updated_at;
+      if (ref) {
+        const d = new Date(ref);
+        if (!isNaN(d) && d.getFullYear() === annoCorr && d.getMonth() === meseCorr) koMese++;
+      }
+    }
+  }
+  document.getElementById('statInseritiMese').textContent = inseritiMese;
+  document.getElementById('statKoMese').textContent = koMese;
+  const meseLabel = MESI_IT[meseCorr] + ' ' + annoCorr;
+  document.getElementById('statMeseLabel1').textContent = meseLabel;
+  document.getElementById('statMeseLabel2').textContent = meseLabel;
+}
+
 function matchSearch(r, q) {
   if (!q) return true;
   const ana = r.anagrafica || {};
@@ -315,10 +409,26 @@ function matchSearch(r, q) {
 function render() {
   const wrap = document.getElementById('listaLG');
   const q = (LGState.search || '').toLowerCase().trim();
-  const lista = LGState.righe.filter(r => matchSearch(r, q));
+  let lista;
+  if (q) {
+    // Ricerca attiva: ignora i filtri (come Controllo Fissi)
+    lista = LGState.righe.filter(r => matchSearch(r, q));
+  } else {
+    lista = LGState.righe;
+    if (LGState.filtroCluster) {
+      lista = lista.filter(r => (r.anagrafica && r.anagrafica.cluster) === LGState.filtroCluster);
+    }
+    if (LGState.filtroStato) {
+      if (LGState.filtroStato === '__null__') {
+        lista = lista.filter(r => !r.stato);
+      } else {
+        lista = lista.filter(r => r.stato === LGState.filtroStato);
+      }
+    }
+  }
 
   if (lista.length === 0) {
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚡</div><h3>Nessun contratto</h3><p>${q ? 'Nessun risultato per la ricerca.' : 'Nessun contratto Energia verificato.'}</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚡</div><h3>Nessun contratto</h3><p>${q || LGState.filtroCluster || LGState.filtroStato ? 'Nessun risultato con i filtri attuali.' : 'Nessun contratto Energia verificato.'}</p></div>`;
     return;
   }
 
@@ -789,12 +899,37 @@ function mostraReportImport(report) {
 }
 
 // ============================================================
-// SEARCH
+// SEARCH + FILTRI (search e filtri mutualmente esclusivi, pattern Controllo Fissi)
 // ============================================================
 document.getElementById('searchLG').addEventListener('input', e => {
-  LGState.search = e.target.value;
+  const txt = e.target.value;
+  LGState.search = txt;
+  if (txt.trim()) {
+    // Reset filtri visivi + logici
+    LGState.filtroCluster = '';
+    LGState.filtroStato = '';
+    document.getElementById('filtroClusterLg').value = '';
+    document.getElementById('filtroStatoLg').value = '';
+    document.getElementById('lgFiltersBox').classList.add('disabled-by-search');
+  } else {
+    document.getElementById('lgFiltersBox').classList.remove('disabled-by-search');
+  }
   render();
 });
+
+function bindLgFiltro(id, key) {
+  document.getElementById(id).addEventListener('change', e => {
+    LGState[key] = e.target.value;
+    if (LGState.search) {
+      LGState.search = '';
+      document.getElementById('searchLG').value = '';
+      document.getElementById('lgFiltersBox').classList.remove('disabled-by-search');
+    }
+    render();
+  });
+}
+bindLgFiltro('filtroClusterLg', 'filtroCluster');
+bindLgFiltro('filtroStatoLg', 'filtroStato');
 
 // ============================================================
 // INIT
