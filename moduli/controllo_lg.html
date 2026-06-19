@@ -96,6 +96,72 @@ body {
   white-space: nowrap;
   background: var(--border-light); color: var(--text-secondary);
 }
+.stato-pill.nuovo            { background: #E0E7FF; color: #3730A3; }
+.stato-pill.in-lavorazione   { background: var(--warning-bg); color: var(--warning); }
+.stato-pill.in-attivazione   { background: var(--info-bg); color: var(--info); }
+.stato-pill.attivato         { background: var(--success-bg); color: var(--success); }
+.stato-pill.annullato        { background: #FEF3C7; color: #92400E; }
+.stato-pill.rifiutato        { background: var(--danger-bg); color: var(--danger); }
+
+.eye-btn {
+  border: 1px solid var(--border); background: #fff; cursor: pointer;
+  padding: 5px 9px; border-radius: 8px; font-size: 14px; line-height: 1;
+  transition: all .15s ease;
+}
+.eye-btn:hover { background: var(--danger-bg); border-color: var(--danger); }
+
+.btn-csv {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 14px; font-size: 13px; font-weight: 600; font-family: inherit;
+  background: var(--primary); color: #fff; border: 1px solid var(--primary);
+  border-radius: 10px; cursor: pointer; transition: all .15s ease;
+  white-space: nowrap;
+}
+.btn-csv:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+.btn-csv:disabled { opacity: .6; cursor: not-allowed; }
+
+.report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.report-card {
+  border: 1px solid var(--border); border-radius: 10px; padding: 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.report-card .rc-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em; }
+.report-card .rc-value { font-size: 26px; font-weight: 700; }
+.report-card.ok      { background: var(--success-bg); border-color: var(--success); }
+.report-card.ok      .rc-value { color: var(--success); }
+.report-card.warn    { background: var(--warning-bg); border-color: var(--warning); }
+.report-card.warn    .rc-value { color: var(--warning); }
+.report-card.danger  { background: var(--danger-bg); border-color: var(--danger); }
+.report-card.danger  .rc-value { color: var(--danger); }
+.report-card.info    { background: #DBEAFE; border-color: var(--info); }
+.report-card.info    .rc-value { color: var(--info); }
+
+.report-section { margin-top: 16px; }
+.report-section h4 {
+  font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--text); margin-bottom: 8px;
+}
+.report-list {
+  max-height: 240px; overflow: auto;
+  border: 1px solid var(--border); border-radius: 10px;
+  font-size: 12.5px;
+}
+.report-list table { width: 100%; border-collapse: collapse; }
+.report-list th, .report-list td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border-light); }
+.report-list th { background: var(--bg); font-weight: 700; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); position: sticky; top: 0; }
+.report-list tr:last-child td { border-bottom: none; }
+
+.detail-rifiutato { display: flex; flex-direction: column; gap: 14px; }
+.detail-rifiutato .dr-field {
+  background: var(--bg); border-left: 3px solid var(--danger);
+  padding: 10px 14px; border-radius: 6px;
+}
+.detail-rifiutato .dr-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--danger); margin-bottom: 4px;
+}
+.detail-rifiutato .dr-value { font-size: 13.5px; color: var(--text); line-height: 1.5; word-wrap: break-word; }
+.detail-rifiutato .dr-value.empty { color: var(--text-light); font-style: italic; }
 
 .btn-mini {
   display: inline-flex; align-items: center; gap: 5px;
@@ -114,6 +180,7 @@ body {
 </head>
 <body>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/mirox-ui.js"></script>
@@ -131,10 +198,17 @@ body {
 
 <div class="container">
 
-<div class="filters-card">
+<div class="filters-card" style="grid-template-columns:1fr auto auto;">
   <div>
     <label>Cerca</label>
     <input type="text" id="searchLG" placeholder="Ragione sociale, CF/PIVA, numero contratto, POD/PDR, ex fornitore, operatore...">
+  </div>
+  <div>
+    <label>&nbsp;</label>
+    <button type="button" class="btn-csv" id="btnImportCsv" title="Carica file CSV WindTre per aggiornare gli stati">
+      📥 Carica CSV WindTre
+    </button>
+    <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none;">
   </div>
   <div>
     <label>&nbsp;</label>
@@ -178,7 +252,10 @@ async function loadAll() {
     const { data, error } = await sb
       .from('post_vendita_controllo_lg')
       .select(`
-        id, contratto_id, pratica_id, anagrafica_id, stato, created_at, updated_at,
+        id, contratto_id, pratica_id, anagrafica_id, stato,
+        causale_stato_pratica, messaggio_esito_sap, causa_annullamento,
+        ultimo_csv_upload_at, ultimo_csv_upload_da,
+        created_at, updated_at,
         anagrafica:anagrafica_id ( id, cf_piva, ragione_sociale, cluster, cellulare, email ),
         contratto:contratto_id (
           id, categoria_id, operatore_id, data_contratto, created_at,
@@ -254,11 +331,13 @@ function render() {
     <th>Ex Fornitore</th>
     <th>Contatto</th>
     <th>Operatore</th>
-    <th>Stato</th>`;
+    <th>Stato</th>
+    <th style="text-align:right;">Azioni</th>`;
 
   const rows = lista.map(r => {
     const ana = r.anagrafica || {};
     const c = r.contratto || {};
+    const isRifiutato = r.stato === 'Rifiutato';
     return `<tr>
       <td>${fmtDate(dataInserimento(r))}</td>
       <td class="cell-cliente">${escapeHtml(ana.ragione_sociale || '-')}</td>
@@ -268,11 +347,384 @@ function render() {
       <td>${escapeHtml(c.ex_fornitore || '—')}</td>
       <td class="cell-mono">${escapeHtml(ana.cellulare || '—')}</td>
       <td>${escapeHtml(operatoreNome(r))}</td>
-      <td>${r.stato ? `<span class="stato-pill">${escapeHtml(r.stato)}</span>` : '<span style="color:var(--text-light);">—</span>'}</td>
+      <td>${r.stato ? `<span class="stato-pill ${statoSlug(r.stato)}">${escapeHtml(r.stato)}</span>` : '<span style="color:var(--text-light);">—</span>'}</td>
+      <td style="text-align:right;">${isRifiutato ? `<button type="button" class="eye-btn" title="Vedi dettagli rifiuto" onclick="apriDettaglioRifiutato('${r.id}')">👁️</button>` : ''}</td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML = `<table class="contracts-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function statoSlug(s) {
+  return String(s||'').toLowerCase().replace(/\s+/g,'-');
+}
+
+// ============================================================
+// POPUP DETTAGLIO RIFIUTATO (colonne N, O, P del CSV)
+// ============================================================
+function apriDettaglioRifiutato(rigaId) {
+  const r = LGState.righe.find(x => x.id === rigaId);
+  if (!r) { MiroxUI.toast('Riga non trovata', 'error'); return; }
+  const ana = r.anagrafica || {};
+  const c = r.contratto || {};
+
+  const body = `
+    <div style="margin-bottom:16px;padding:12px 14px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">Pratica</div>
+      <div style="font-size:14px;font-weight:700;">${escapeHtml(ana.ragione_sociale || '-')}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">
+        CF/PIVA: <span class="cell-mono">${escapeHtml(ana.cf_piva || '-')}</span>
+        &nbsp;·&nbsp; Num. Contratto: <span class="cell-mono">${escapeHtml(c.numero_contratto_energia || '-')}</span>
+      </div>
+    </div>
+    <div class="detail-rifiutato">
+      <div class="dr-field">
+        <div class="dr-label">Causale stato pratica</div>
+        <div class="dr-value ${r.causale_stato_pratica ? '' : 'empty'}">${r.causale_stato_pratica ? escapeHtml(r.causale_stato_pratica) : 'Non specificata'}</div>
+      </div>
+      <div class="dr-field">
+        <div class="dr-label">Messaggio esito da SAP</div>
+        <div class="dr-value ${r.messaggio_esito_sap ? '' : 'empty'}">${r.messaggio_esito_sap ? escapeHtml(r.messaggio_esito_sap) : 'Non specificato'}</div>
+      </div>
+      <div class="dr-field">
+        <div class="dr-label">Causa annullamento</div>
+        <div class="dr-value ${r.causa_annullamento ? '' : 'empty'}">${r.causa_annullamento ? escapeHtml(r.causa_annullamento) : 'Non specificata'}</div>
+      </div>
+    </div>
+  `;
+  const footer = `<button type="button" class="mx-btn mx-btn-secondary" data-mx-close>Chiudi</button>`;
+  const m = MiroxUI._build({
+    title: '👁️ Dettagli stato Rifiutato',
+    bodyHtml: body, footerHtml: footer
+  });
+  m.foot.querySelector('[data-mx-close]').addEventListener('click', m.close);
+}
+
+// ============================================================
+// CSV IMPORT — WindTre portal export
+// ============================================================
+// Colonne del CSV (header riga 1):
+//   E = "Codice Fiscale"      (per cluster Consumer)
+//   F = "Partita Iva"         (per cluster Business, da normalizzare con padding 0)
+//   H = "Proposta di Contratto" (chiave di match: vendita_contratti.numero_contratto_energia)
+//   N = "Causale stato pratica" (solo se W='Rifiutato')
+//   O = "Messaggio esito da SAP" (solo se W='Rifiutato')
+//   P = "Causa Annullamento"    (solo se W='Rifiutato')
+//   W = "Stato"                 (nuovo valore per post_vendita_controllo_lg.stato)
+
+const CSV_HEADERS = {
+  codiceFiscale:    'Codice Fiscale',
+  partitaIva:       'Partita Iva',
+  propostaContratto:'Proposta di Contratto',
+  causaleStato:     'Causale stato pratica',
+  messaggioEsito:   'Messaggio esito da SAP',
+  causaAnnullamento:'Causa Annullamento',
+  stato:            'Stato'
+};
+
+// Gerarchia stati: se il CSV ha più righe per lo stesso numero_contratto (es. LUCE + GAS),
+// vince lo stato "più critico" - così l'operatore vede subito eventuali problemi.
+const STATO_PRIORITY = {
+  'Rifiutato': 6,
+  'Annullato': 5,
+  'In lavorazione': 4,
+  'In attivazione': 3,
+  'Nuovo': 2,
+  'Attivato': 1
+};
+
+function normPiva(raw) {
+  if (raw === null || raw === undefined) return '';
+  const trimmed = String(raw).trim().replace(/[^\d]/g, '');
+  if (!trimmed) return '';
+  // Pad zeri a sinistra fino a 11 cifre
+  return trimmed.padStart(11, '0');
+}
+
+function normCfPiva(raw) {
+  if (raw === null || raw === undefined) return '';
+  return String(raw).trim().toUpperCase();
+}
+
+function isPivaLike(s) {
+  return /^\d{11}$/.test(String(s || '').trim());
+}
+
+function isCluster(ana, target) {
+  if (!ana) return false;
+  return String(ana.cluster || '').trim().toLowerCase() === target.toLowerCase();
+}
+
+document.getElementById('btnImportCsv').addEventListener('click', () => {
+  document.getElementById('csvFileInput').click();
+});
+
+document.getElementById('csvFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = ''; // reset cosi' lo stesso file puo' essere ricaricato
+  if (!file) return;
+  await processaCsv(file);
+});
+
+async function processaCsv(file) {
+  const loader = MiroxUI.loading.show('Parsing CSV in corso...', file.name);
+  try {
+    // Parse CSV con PapaParse - separatore ';', con header
+    const parsed = await new Promise((resolve, reject) => {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        delimiter: ';',
+        complete: results => resolve(results),
+        error: err => reject(err)
+      });
+    });
+    if (parsed.errors && parsed.errors.length > 0) {
+      console.warn('CSV parse errors:', parsed.errors);
+    }
+    const righe = parsed.data || [];
+    if (righe.length === 0) {
+      loader.error('CSV vuoto');
+      await MiroxUI.alert('Il file CSV non contiene righe.', { type: 'warning' });
+      return;
+    }
+    // Verifica che le colonne attese esistano nel header
+    const headersTrovati = Object.keys(righe[0] || {});
+    const headerMancanti = Object.values(CSV_HEADERS).filter(h => !headersTrovati.includes(h));
+    if (headerMancanti.length > 0) {
+      loader.error('Header non valido');
+      await MiroxUI.alert(
+        `Il CSV non contiene le colonne attese:<br><br><strong>${headerMancanti.join(', ')}</strong><br><br>Verifica che il file sia un'estrazione dal portale WindTre.`,
+        { type: 'error', html: true }
+      );
+      return;
+    }
+
+    // Aggrega per Proposta di Contratto, scegliendo lo stato a priorita' maggiore
+    const aggregato = new Map(); // numContratto -> { stato, causale, messaggio, causa, cfCsv, pivaCsv }
+    for (const row of righe) {
+      const numContratto = String(row[CSV_HEADERS.propostaContratto] || '').trim();
+      const stato = String(row[CSV_HEADERS.stato] || '').trim();
+      if (!numContratto || !stato) continue;
+      const cur = aggregato.get(numContratto);
+      const newPri = STATO_PRIORITY[stato] || 0;
+      const curPri = cur ? (STATO_PRIORITY[cur.stato] || 0) : -1;
+      if (!cur || newPri > curPri) {
+        aggregato.set(numContratto, {
+          stato,
+          causale: String(row[CSV_HEADERS.causaleStato] || '').trim() || null,
+          messaggio: String(row[CSV_HEADERS.messaggioEsito] || '').trim() || null,
+          causa: String(row[CSV_HEADERS.causaAnnullamento] || '').trim() || null,
+          cfCsv: normCfPiva(row[CSV_HEADERS.codiceFiscale]),
+          pivaCsvRaw: String(row[CSV_HEADERS.partitaIva] || '').trim(),
+          pivaCsvNorm: normPiva(row[CSV_HEADERS.partitaIva])
+        });
+      }
+    }
+
+    loader.setText('Confronto con database...');
+
+    // Carico tutte le righe del modulo (gia' in LGState.righe potenzialmente, ma faccio fresh per sicurezza)
+    await loadAll();
+
+    // Calcolo le incongruenze
+    const aggiornati = [];     // {numContratto, oldStato, newStato, ragSoc}
+    const stateInvariati = []; // numContratto matchato ma stato gia' uguale
+    const noMatchDb = [];      // numContratto del CSV ma non presente nel DB
+    const doubleCheckKo = [];  // numContratto matchato ma CF/PIVA non corrispondente
+
+    const profilo = window.__profilo || {};
+    const updatePromises = [];
+    const nowIso = new Date().toISOString();
+
+    for (const [numContratto, csvData] of aggregato.entries()) {
+      // Cerca nel DB
+      const rigaDb = LGState.righe.find(r =>
+        r.contratto && String(r.contratto.numero_contratto_energia || '').trim() === numContratto
+      );
+      if (!rigaDb) {
+        noMatchDb.push({ numContratto, stato: csvData.stato });
+        continue;
+      }
+
+      // Double check CF/PIVA
+      const ana = rigaDb.anagrafica || {};
+      const cfDbNorm = normCfPiva(ana.cf_piva);
+      let checkOk = false;
+      let expectedField = '';
+      let csvValueDisplay = '';
+
+      if (isPivaLike(cfDbNorm)) {
+        // Business -> match con PIVA CSV normalizzata
+        checkOk = cfDbNorm === csvData.pivaCsvNorm;
+        expectedField = 'P.IVA';
+        csvValueDisplay = csvData.pivaCsvRaw + (csvData.pivaCsvNorm && csvData.pivaCsvRaw !== csvData.pivaCsvNorm
+          ? ` (normalizzata: ${csvData.pivaCsvNorm})`
+          : '');
+      } else {
+        // Consumer -> match con CF
+        checkOk = cfDbNorm === csvData.cfCsv;
+        expectedField = 'CF';
+        csvValueDisplay = csvData.cfCsv;
+      }
+
+      if (!checkOk) {
+        doubleCheckKo.push({
+          numContratto,
+          ragSoc: ana.ragione_sociale || '-',
+          campo: expectedField,
+          dbValue: ana.cf_piva || '-',
+          csvValue: csvValueDisplay || '(vuoto)',
+          statoCsv: csvData.stato
+        });
+        continue;
+      }
+
+      const oldStato = rigaDb.stato || null;
+      const newStato = csvData.stato;
+
+      // Sovrascrive sempre (anche se gia' uguale, aggiorno timestamp dell'upload)
+      // ma se stato e' identico non lo conto come "aggiornato"
+      if (oldStato === newStato) {
+        stateInvariati.push({ numContratto, ragSoc: ana.ragione_sociale || '-', stato: newStato });
+      } else {
+        aggiornati.push({ numContratto, oldStato: oldStato || '(vuoto)', newStato, ragSoc: ana.ragione_sociale || '-' });
+      }
+
+      // Costruisco payload UPDATE
+      const isRifiutato = newStato === 'Rifiutato';
+      const payload = {
+        stato: newStato,
+        causale_stato_pratica: isRifiutato ? csvData.causale : null,
+        messaggio_esito_sap: isRifiutato ? csvData.messaggio : null,
+        causa_annullamento: isRifiutato ? csvData.causa : null,
+        ultimo_csv_upload_at: nowIso,
+        ultimo_csv_upload_da: profilo.id || null
+      };
+      updatePromises.push(
+        sb.from('post_vendita_controllo_lg').update(payload).eq('id', rigaDb.id)
+      );
+    }
+
+    loader.setText(`Aggiornamento ${updatePromises.length} righe...`);
+    const updateResults = await Promise.all(updatePromises);
+    const updateErrors = updateResults.filter(r => r.error);
+    loader.success(`Import completato`);
+
+    setTimeout(() => {
+      mostraReportImport({
+        totaleRigheCsv: righe.length,
+        pratichePcUniche: aggregato.size,
+        aggiornati,
+        stateInvariati,
+        noMatchDb,
+        doubleCheckKo,
+        updateErrors: updateErrors.length
+      });
+      // Refresh dati per mostrare nuovi stati
+      loadAll();
+    }, 1100);
+
+  } catch (e) {
+    console.error('Errore upload CSV:', e);
+    loader.error('Errore: ' + e.message);
+  }
+}
+
+function mostraReportImport(report) {
+  const {
+    totaleRigheCsv, pratichePcUniche,
+    aggiornati, stateInvariati, noMatchDb, doubleCheckKo, updateErrors
+  } = report;
+
+  const renderTable = (rows, cols) => {
+    if (rows.length === 0) return '<div style="padding:14px;text-align:center;color:var(--text-light);font-size:12.5px;">Nessuna voce</div>';
+    const head = cols.map(c => `<th>${escapeHtml(c.label)}</th>`).join('');
+    const body = rows.map(r => `<tr>${cols.map(c => `<td>${escapeHtml(c.get(r) ?? '')}</td>`).join('')}</tr>`).join('');
+    return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  };
+
+  const sectionsHtml = [
+    aggiornati.length > 0 ? `
+      <div class="report-section">
+        <h4>✅ Stati aggiornati (${aggiornati.length})</h4>
+        <div class="report-list">${renderTable(aggiornati, [
+          { label: 'Num. Contratto', get: r => r.numContratto },
+          { label: 'Ragione Sociale', get: r => r.ragSoc },
+          { label: 'Stato precedente', get: r => r.oldStato },
+          { label: 'Nuovo stato', get: r => r.newStato }
+        ])}</div>
+      </div>` : '',
+    doubleCheckKo.length > 0 ? `
+      <div class="report-section">
+        <h4>⚠️ Doppio check CF/PIVA fallito (${doubleCheckKo.length})</h4>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Numero contratto trovato, ma il codice fiscale / partita IVA del CSV non corrisponde a quello in anagrafica. <strong>Non aggiornati.</strong></p>
+        <div class="report-list">${renderTable(doubleCheckKo, [
+          { label: 'Num. Contratto', get: r => r.numContratto },
+          { label: 'Ragione Sociale', get: r => r.ragSoc },
+          { label: 'Campo', get: r => r.campo },
+          { label: 'Valore DB', get: r => r.dbValue },
+          { label: 'Valore CSV', get: r => r.csvValue },
+          { label: 'Stato CSV', get: r => r.statoCsv }
+        ])}</div>
+      </div>` : '',
+    noMatchDb.length > 0 ? `
+      <div class="report-section">
+        <h4>📋 Non trovati nel DB (${noMatchDb.length})</h4>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Numero contratto presente nel CSV ma non corrisponde a nessuna riga del modulo Controllo L&G (es. pratica non ancora caricata in Mirox).</p>
+        <div class="report-list">${renderTable(noMatchDb, [
+          { label: 'Num. Contratto', get: r => r.numContratto },
+          { label: 'Stato CSV', get: r => r.stato }
+        ])}</div>
+      </div>` : '',
+    stateInvariati.length > 0 ? `
+      <div class="report-section">
+        <h4>📊 Stato gi&agrave; aggiornato (${stateInvariati.length})</h4>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Lo stato del DB era gi&agrave; uguale a quello del CSV. Nessun cambiamento.</p>
+        <div class="report-list">${renderTable(stateInvariati.slice(0, 50), [
+          { label: 'Num. Contratto', get: r => r.numContratto },
+          { label: 'Ragione Sociale', get: r => r.ragSoc },
+          { label: 'Stato', get: r => r.stato }
+        ])}${stateInvariati.length > 50 ? `<div style="padding:8px;text-align:center;font-size:11.5px;color:var(--text-light);">... e altre ${stateInvariati.length - 50} righe</div>` : ''}</div>
+      </div>` : '',
+    updateErrors > 0 ? `<div class="report-section"><h4 style="color:var(--danger);">❌ Errori salvataggio (${updateErrors})</h4><p style="font-size:12px;color:var(--text-secondary);">Alcuni UPDATE sono falliti. Controlla la console browser per i dettagli.</p></div>` : ''
+  ].join('');
+
+  const body = `
+    <div class="report-grid">
+      <div class="report-card info">
+        <div class="rc-label">Righe CSV</div>
+        <div class="rc-value">${totaleRigheCsv}</div>
+      </div>
+      <div class="report-card info">
+        <div class="rc-label">Pratiche uniche</div>
+        <div class="rc-value">${pratichePcUniche}</div>
+      </div>
+      <div class="report-card ok">
+        <div class="rc-label">Aggiornati</div>
+        <div class="rc-value">${aggiornati.length}</div>
+      </div>
+      <div class="report-card warn">
+        <div class="rc-label">Double check KO</div>
+        <div class="rc-value">${doubleCheckKo.length}</div>
+      </div>
+      <div class="report-card danger">
+        <div class="rc-label">Non trovati DB</div>
+        <div class="rc-value">${noMatchDb.length}</div>
+      </div>
+    </div>
+    ${sectionsHtml}
+  `;
+  const footer = `<button type="button" class="mx-btn mx-btn-primary" data-mx-close>Chiudi</button>`;
+  const m = MiroxUI._build({
+    title: '📥 Report import CSV WindTre',
+    bodyHtml: body, footerHtml: footer, large: true
+  });
+  // Espando il modal per ospitare il report
+  m.modal.style.maxWidth = '900px';
+  m.body.style.maxHeight = '70vh';
+  m.body.style.overflowY = 'auto';
+  m.foot.querySelector('[data-mx-close]').addEventListener('click', m.close);
 }
 
 // ============================================================

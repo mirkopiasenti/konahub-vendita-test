@@ -1,6 +1,6 @@
 # /database/ — Migrazioni SQL storiche
 
-I 19 file `.sql` in questa cartella sono **migrazioni storiche parziali** applicate manualmente nel SQL Editor di Supabase (o via `.bin/supabase db query --linked --file ...`) durante lo sviluppo.
+I 20 file `.sql` in questa cartella sono **migrazioni storiche parziali** applicate manualmente nel SQL Editor di Supabase (o via `.bin/supabase db query --linked --file ...`) durante lo sviluppo.
 
 ## ⚠️ NON sono lo stato attuale del DB
 
@@ -34,6 +34,7 @@ Lo schema reale di Supabase contiene anche modifiche fatte:
 | `017_vendita_contratti_convergenza.sql` | Aggiunge `vendita_contratti.convergenza` (text + CHECK su 7 valori) per i contratti Fisso |
 | `018_post_vendita_controllo_fissi.sql` | Crea `post_vendita_controllo_fissi` (follow-up contratti Fisso) + RLS + trigger `touch_updated_at` + trigger `trg_vendita_contratti_to_controllo_fissi` (popolamento automatico al cambio `stato_controllo` su contratti Fisso) + backfill di quelli gia' `controllato` |
 | `019_post_vendita_controllo_lg.sql` | Aggiunge `vendita_contratti.ex_fornitore` (obbligatorio per Energia in fase di verifica). Crea `post_vendita_controllo_lg` (follow-up contratti Energia) + RLS + trigger `touch_updated_at` + trigger `trg_vendita_contratti_to_controllo_lg` (popolamento automatico al cambio `stato_controllo` su contratti Energia) + backfill |
+| `020_lg_csv_import_fields.sql` | Aggiunge a `post_vendita_controllo_lg` le colonne popolate dall'upload CSV WindTre: `causale_stato_pratica`, `messaggio_esito_sap`, `causa_annullamento` (solo per stato='Rifiutato'), `ultimo_csv_upload_at`, `ultimo_csv_upload_da` (audit). Niente CHECK constraint sullo stato (flessibilita' verso nuovi stati del portale). |
 
 ## Linee guida
 

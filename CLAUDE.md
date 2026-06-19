@@ -121,7 +121,7 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 funct
 - `post_vendita_dispositivi_comodato` — codice generato da RPC `genera_codice_comodato()`
 - `post_vendita_gestione_rimborsi` — codice da RPC `genera_codice_rimborso()`
 - `post_vendita_controllo_fissi` — follow-up dei contratti Fisso dopo conferma in Verifica Contratti. Stati: `Da completare` → `In Attivazione` → (`Attivo` | `KO`). Popolata in automatico dal trigger `trg_vendita_contratti_to_controllo_fissi` su UPDATE `vendita_contratti.stato_controllo` quando un contratto Fisso passa a `controllato`. Campi manuali: `codice_cliente`, `tecnologia`, `cod_contratto`, `cod_pos`, `numero_fisso`, `attivazione_prevista`, `data_attivazione`, `motivo_ko`. Chat in `storico_chat` jsonb (`[{timestamp, message, autore}]`). CHECK constraint su `stato`, `tecnologia` (FTTC/FWA OUT/FWA IN/FWA VOCE/FTTH_OF/FTTH_FWCOP), `cod_pos` (9001415852/900822241).
-- `post_vendita_controllo_lg` — follow-up dei contratti Energia (L&G = Luce & Gas, nome user-facing del modulo) dopo conferma in Verifica Contratti. Popolata in automatico dal trigger `trg_vendita_contratti_to_controllo_lg` su UPDATE `vendita_contratti.stato_controllo` quando un contratto Energia passa a `controllato`. Nessun campo manuale: tutti i dati sono letti dal join con `vendita_contratti` (`numero_contratto_energia`, `pod_pdr`, `ex_fornitore`, `operatore_id`) e `anagrafica` (`ragione_sociale`, `cf_piva`, `cellulare`). Solo colonna mutabile: `stato` (text, no CHECK, predisposta per regole future).
+- `post_vendita_controllo_lg` — follow-up dei contratti Energia (L&G = Luce & Gas, nome user-facing del modulo) dopo conferma in Verifica Contratti. Popolata in automatico dal trigger `trg_vendita_contratti_to_controllo_lg` su UPDATE `vendita_contratti.stato_controllo` quando un contratto Energia passa a `controllato`. Nessun campo manuale: tutti i dati sono letti dal join con `vendita_contratti` (`numero_contratto_energia`, `pod_pdr`, `ex_fornitore`, `operatore_id`) e `anagrafica` (`ragione_sociale`, `cf_piva`, `cellulare`). Colonne aggiornate dall'**upload CSV WindTre** (modulo Controllo L&G): `stato` (text, no CHECK), `causale_stato_pratica`, `messaggio_esito_sap`, `causa_annullamento` (questi 3 valorizzati solo per stato='Rifiutato'), `ultimo_csv_upload_at`, `ultimo_csv_upload_da`.
 
 ### Trasversali
 - `segnalazioni` (+ `segnalazioni_backup`)
@@ -235,8 +235,16 @@ Quando l'utente carica un PDA + sceglie "Analizza con AI", i dati estratti dall'
 - Tabella: `post_vendita_controllo_lg` (vedi Mappa Supabase → Post-Vendita).
 - **Trigger automatico** `trg_vendita_contratti_to_controllo_lg`: alla conferma verifica di un contratto Energia (UPDATE `vendita_contratti.stato_controllo` da `da_controllare` a `controllato`) viene creata una riga in `post_vendita_controllo_lg`. Idempotente grazie a UNIQUE su `contratto_id`.
 - **Campi colonna** (UI `moduli/controllo_lg.html`, tabella diretta senza popup dettagli): Data Inserimento (`vendita_contratti.data_contratto`), Ragione Sociale, CF/PIVA, Numero Contratto (`vendita_contratti.numero_contratto_energia`, compilato in verifica), POD/PDR (`vendita_contratti.pod_pdr`), Ex Fornitore (`vendita_contratti.ex_fornitore`, compilato in verifica), Contatto (`anagrafica.cellulare`), Operatore (`profili.nome` via `vendita_contratti.operatore_id`), Stato (`post_vendita_controllo_lg.stato`).
-- **`stato`**: text NULLABLE senza CHECK constraint, predisposto per regole future. UI mostra "—" se NULL.
-- **Nessun dato manuale** in `post_vendita_controllo_lg`: tutti i dati vengono dal join con `vendita_contratti` / `anagrafica`. La compilazione dei dati obbligatori avviene in `moduli/verifica_contratti.html`.
+- **`stato`**: text NULLABLE senza CHECK constraint (l'utente vuole flessibilita' nel caso il portale WindTre aggiunga stati nuovi). UI mostra "—" se NULL. Pillola colorata in base al valore (Attivato verde, Rifiutato rosso, ecc.).
+- **Upload CSV WindTre** (bottone "📥 Carica CSV WindTre" nella tab Elenco):
+  - Parser via PapaParse (CDN), separatore `;`, header riga 1.
+  - **Match primario**: colonna `Proposta di Contratto` (CSV) ↔ `vendita_contratti.numero_contratto_energia` (exact match, trim).
+  - **Double check**: per cluster `Consumer` confronta `Codice Fiscale` (col E) con `anagrafica.cf_piva`. Per `Business` confronta `Partita Iva` (col F) **normalizzata con padding zeri a sinistra fino a 11 cifre** (il portale rimuove gli zeri iniziali).
+  - **Sovrascrittura sempre**: se il match passa, lo `stato` viene aggiornato anche se gia' valorizzato (es. da `Nuovo` a `Rifiutato` dopo qualche giorno).
+  - **Aggregazione duplicati LUCE/GAS**: stesso `Proposta di Contratto` con 2 righe (1 LUCE + 1 GAS) → vince lo stato a priorita' maggiore (Rifiutato > Annullato > In lavorazione > In attivazione > Nuovo > Attivato), cosi' l'operatore vede sempre l'eventuale problema.
+  - **Colonne dettaglio rifiuto** (`causale_stato_pratica`, `messaggio_esito_sap`, `causa_annullamento`) valorizzate **solo** se stato='Rifiutato' (azzerate altrimenti).
+  - **Report finale**: popup con 5 stat-card (Righe CSV, Pratiche uniche, Aggiornati, Double check KO, Non trovati DB) + tabelle dettagliate delle incongruenze.
+- **Icona occhio 👁️** in fondo alle righe con stato='Rifiutato': apre popup con i 3 campi dettaglio (causale/messaggio/causa). Per gli altri stati nessuna icona.
 
 ### Storage folder naming
 - Contratti vendita: `Contratto_<RAGSOC_SAFE>_<DD_MM_YYYY>_<praticaIdShort6>` sotto `<YYYY>/<MM>/` (lowercase)
