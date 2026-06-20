@@ -123,11 +123,15 @@ Il CC prod su `mirox-crm.netlify.app` legge le stesse tabelle. Per non romperlo:
 2. **RLS nuove devono includere anche i path vecchi** (es. `crm_can_access_page('registra_chiamata') OR crm_can_access_page('cc_registra_chiamata')`) — usare le chiavi esistenti senza prefisso (deciso così nella sessione di Fase 1)
 3. Tutte le modifiche allo schema vanno discusse con l'utente prima di applicarle
 
-### Fasi successive previste (non in questa Fase 1)
+### Fasi 2 e 3 — applicate nella stessa sessione
 
-- **Fase 2**: estendere vista `storico_cliente` con UNION di `chiamate`, `appuntamenti`, `call_center_lead_outbound_chiamate`, `blacklist` (oggi sono assenti)
-- **Fase 3**: backfill `chiamate.anagrafica_id` per le ~872 chiamate vecchie senza FK + trigger auto-populate via JOIN su `cf_piva`
+- **Fase 2** (eseguita): vista `storico_cliente` estesa con 4 UNION nuove (`chiamata_cc`, `chiamata_cc_outbound`, `appuntamento_cc`, `blacklist`). Migration: `database/024_storico_cliente_extend_call_center.sql`. Il modulo `storico_cliente.html` ora mostra anche chiamate, appuntamenti e blacklist (totali aggiunti: 2.351 chiamate, 249 appuntamenti, 91 blacklist)
+- **Fase 3** (eseguita): backfill `chiamate.anagrafica_id` su 872 record orfani (ora 100% popolato) + backfill `appuntamenti.anagrafica_id` (99.2%) + trigger `BEFORE INSERT` su entrambe le tabelle per auto-popolare il FK quando manca. Migration: `database/025_chiamate_appuntamenti_anagrafica_autolink.sql`. Il CC prod continua a funzionare invariato (passa NULL sull'INSERT, il trigger lo riempie)
+
+### Fasi successive previste
+
 - **Fase 4**: convergenza Upload Contratti — quando si arriva via CC, pre-compilare `origine_pratica` + creare colonna `chiamata_origine_id` su `vendita_pratiche`
+- **Fase 5** (debito tecnico): refactor profondo pagine CC a `MiroxUI.*` / `AnagraficaHelper.cercaOcrea` (rimuovere `Utils.toast`, `alert/confirm` nativi, `db.from('anagrafica').insert(...)` diretto)
 
 ## Schedulazioni
 
