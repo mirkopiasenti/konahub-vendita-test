@@ -1,6 +1,6 @@
 # /database/ — Migrazioni SQL storiche
 
-I 20 file `.sql` in questa cartella sono **migrazioni storiche parziali** applicate manualmente nel SQL Editor di Supabase (o via `.bin/supabase db query --linked --file ...`) durante lo sviluppo.
+I 23 file `.sql` in questa cartella sono **migrazioni storiche parziali** applicate manualmente nel SQL Editor di Supabase (o via `.bin/supabase db query --linked --file ...`) durante lo sviluppo.
 
 ## ⚠️ NON sono lo stato attuale del DB
 
@@ -35,6 +35,9 @@ Lo schema reale di Supabase contiene anche modifiche fatte:
 | `018_post_vendita_controllo_fissi.sql` | Crea `post_vendita_controllo_fissi` (follow-up contratti Fisso) + RLS + trigger `touch_updated_at` + trigger `trg_vendita_contratti_to_controllo_fissi` (popolamento automatico al cambio `stato_controllo` su contratti Fisso) + backfill di quelli gia' `controllato` |
 | `019_post_vendita_controllo_lg.sql` | Aggiunge `vendita_contratti.ex_fornitore` (obbligatorio per Energia in fase di verifica). Crea `post_vendita_controllo_lg` (follow-up contratti Energia) + RLS + trigger `touch_updated_at` + trigger `trg_vendita_contratti_to_controllo_lg` (popolamento automatico al cambio `stato_controllo` su contratti Energia) + backfill |
 | `020_lg_csv_import_fields.sql` | Aggiunge a `post_vendita_controllo_lg` le colonne popolate dall'upload CSV WindTre: `causale_stato_pratica`, `messaggio_esito_sap`, `causa_annullamento` (solo per stato='Rifiutato'), `ultimo_csv_upload_at`, `ultimo_csv_upload_da` (audit). Niente CHECK constraint sullo stato (flessibilita' verso nuovi stati del portale). |
+| `021_vendita_contratti_assicurazione_fields.sql` | Aggiunge `vendita_contratti.modalita_pagamento_assicurazione` (CHECK: RID/Carta di Credito/Carta di Debito) e `ricorrenza_assicurazione` (CHECK: Mensile/Annuale). Obbligatori solo per la categoria Assicurazioni nel wizard. |
+| `022_post_vendita_controllo_assicurazioni.sql` | Crea `post_vendita_controllo_assicurazioni` (follow-up contratti Assicurazioni) + RLS + trigger `touch_updated_at` + trigger `trg_vendita_contratti_to_controllo_assicurazioni` (popolamento automatico al cambio `stato_controllo` su contratti Assicurazioni) + backfill. Tabella minimal (nessuno stato). |
+| `023_post_vendita_controllo_allarmi.sql` | Crea `post_vendita_controllo_allarmi` (follow-up contratti Allarmi) + RLS + trigger `touch_updated_at` + trigger `trg_vendita_contratti_to_controllo_allarmi` (popolamento automatico al cambio `stato_controllo` su contratti Allarmi) + backfill. Tabella minimal. |
 | `021_vendita_contratti_assicurazione_fields.sql` | Aggiunge a `vendita_contratti` i campi `modalita_pagamento_assicurazione` (RID/Carta di Credito/Carta di Debito) e `ricorrenza_assicurazione` (Mensile/Annuale), obbligatori solo per categoria Assicurazioni. |
 
 ## Linee guida
