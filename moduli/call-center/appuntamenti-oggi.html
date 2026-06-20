@@ -137,6 +137,7 @@ function filtroOggi() {
                 ${!a.presentato ? `<button class="btn btn-success" onclick="segnaPresente('${a.id}')">✓ Presentato</button>` : ''}
                 ${a.presentato==='si' ? '<span class="badge badge-success">Presentato</span>' : ''}
                 ${a.presentato==='no' ? '<span class="badge badge-danger">Non presentato</span>' : ''}
+                ${a.presentato==='si' && a.codice_fiscale ? `<button class="btn btn-primary" onclick="iniziaVendita('${a.id}', '${(a.codice_fiscale||'').toUpperCase()}', '${a.anagrafica_id||''}')" style="margin-left:8px">💼 Inizia vendita</button>` : ''}
             </div>
         </div>`;
     }
@@ -149,6 +150,22 @@ async function segnaPresente(id) {
     Utils.hideLoading();
     Utils.toast('Segnato come presentato','success');
     await carica();
+}
+
+// Apre il wizard Upload Contratti con CF/PIVA pre-compilato e ricerca anagrafica
+// auto-avviata. La RPC vendita_deriva_origine pre-compilera' origine_pratica
+// = appuntamento_callcenter (l'appuntamento di oggi e' gia' presentato).
+function iniziaVendita(appuntamentoId, cfPiva, anagraficaId) {
+    if (!cfPiva) {
+        Utils.toast('CF/PIVA mancante su questo appuntamento', 'warning');
+        return;
+    }
+    sessionStorage.setItem('mirox_vendita_da_cc', JSON.stringify({
+        cf_piva: cfPiva,
+        appuntamento_id: appuntamentoId || null,
+        anagrafica_id: anagraficaId || null
+    }));
+    window.location.href = '../upload-contratti-vendita.html';
 }
 </script>
 </body>

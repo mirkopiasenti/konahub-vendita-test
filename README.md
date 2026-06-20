@@ -128,10 +128,17 @@ Il CC prod su `mirox-crm.netlify.app` legge le stesse tabelle. Per non romperlo:
 - **Fase 2** (eseguita): vista `storico_cliente` estesa con 4 UNION nuove (`chiamata_cc`, `chiamata_cc_outbound`, `appuntamento_cc`, `blacklist`). Migration: `database/024_storico_cliente_extend_call_center.sql`. Il modulo `storico_cliente.html` ora mostra anche chiamate, appuntamenti e blacklist (totali aggiunti: 2.351 chiamate, 249 appuntamenti, 91 blacklist)
 - **Fase 3** (eseguita): backfill `chiamate.anagrafica_id` su 872 record orfani (ora 100% popolato) + backfill `appuntamenti.anagrafica_id` (99.2%) + trigger `BEFORE INSERT` su entrambe le tabelle per auto-popolare il FK quando manca. Migration: `database/025_chiamate_appuntamenti_anagrafica_autolink.sql`. Il CC prod continua a funzionare invariato (passa NULL sull'INSERT, il trigger lo riempie)
 
+### Fase 4 — applicata
+
+- **Fase 4** (eseguita): convergenza Upload Contratti con il Call Center
+  - Nuova RPC `vendita_deriva_origine(p_anagrafica_id uuid)` ritorna jsonb `{origine_pratica, evento_tipo, evento_id, descrizione}` — priorità: appuntamento di oggi confermato → `appuntamento_callcenter`; chiamata `passa_in_negozio`/`passa_a_cerea` con `passaggio_stato='passato'` entro 10 giorni → `contatto_callcenter_entro_10_giorni`; altrimenti `spontaneo`. Migration: `database/026_vendita_deriva_origine_rpc.sql`
+  - Wizard `upload-contratti-vendita.html`: dopo lookup anagrafica, chiama la RPC, pre-compila il dropdown `origine_pratica` e mostra un banner azzurro con la descrizione del match ("Appuntamento di oggi ore 15:30 — Telefono CB"). L'operatore può overridare il valore: popup di conferma per evitare scollegamenti accidentali. Dropdown ora ha label umane (Spontaneo / Appuntamento Call Center / Contatto Call Center entro 10 giorni)
+  - Bottone "💼 Inizia vendita" in `appuntamenti-oggi.html` accanto al badge "Presentato": click → sessionStorage `mirox_vendita_da_cc` + redirect al wizard, che auto-popola cf_piva e lancia ricerca
+
 ### Fasi successive previste
 
-- **Fase 4**: convergenza Upload Contratti — quando si arriva via CC, pre-compilare `origine_pratica` + creare colonna `chiamata_origine_id` su `vendita_pratiche`
 - **Fase 5** (debito tecnico): refactor profondo pagine CC a `MiroxUI.*` / `AnagraficaHelper.cercaOcrea` (rimuovere `Utils.toast`, `alert/confirm` nativi, `db.from('anagrafica').insert(...)` diretto)
+- **Estensioni Fase 4**: bottoni "Inizia vendita" anche in `registra-chiamata.html` (dopo passa-in-negozio), `esiti-appuntamenti.html` (prima di esitare), `rilavorazione.html` (tab Passa Negozio/Cerea) — da fare on-demand quando si ha bisogno
 
 ## Schedulazioni
 

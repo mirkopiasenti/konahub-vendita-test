@@ -141,6 +141,9 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 funct
 - `view_vendita_dashboard_giornaliera` / `_mensile` — aggregati `vendita_contratti`
 - `storico_cliente` — **dal 2026-06-20 estesa con 4 UNION CC** (totale 12): tipi `ordine_smartphone`, `dispositivo_comodato`, `rimborso`, `apri_chiudi_vecchio`/`_nuovo`, `switch_sim_attuale`/`_rientro`, `contratto_vendita`, + nuovi `chiamata_cc`, `chiamata_cc_outbound`, `appuntamento_cc`, `blacklist`. Schema invariato (`anagrafica_id`, `tipo`, `record_id`, `riferimento`, `data_op`, `stato`, `descrizione`, `operatore_nome`). Definizione in `database/024_storico_cliente_extend_call_center.sql`
 
+### RPC derivazione origine pratica (dal 2026-06-20)
+- `vendita_deriva_origine(p_anagrafica_id uuid) RETURNS jsonb` — usata dal wizard Upload Contratti per pre-compilare `origine_pratica` in base all'attività CC del cliente. Output: `{origine_pratica, evento_tipo, evento_id, descrizione}`. Priorità: 1) appuntamento confermato per oggi → `appuntamento_callcenter`; 2) chiamata `passa_in_negozio`/`passa_a_cerea` con `passaggio_stato='passato'` entro 10 giorni → `contatto_callcenter_entro_10_giorni`; 3) `spontaneo`. Migration: `database/026_vendita_deriva_origine_rpc.sql`
+
 ### Trigger auto-link anagrafica (dal 2026-06-20)
 - `trg_chiamate_auto_link_anagrafica` — `BEFORE INSERT OR UPDATE OF cf_piva ON chiamate`: se `anagrafica_id` NULL e `cf_piva` non vuoto, fa lookup su `anagrafica` (UPPER+TRIM match) e popola `anagrafica_id`. Non sovrascrive mai un valore esplicito
 - `trg_appuntamenti_auto_link_anagrafica` — stessa logica su `appuntamenti.codice_fiscale`

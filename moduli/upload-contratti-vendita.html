@@ -1142,10 +1142,14 @@ Dati pre-compilati dall'AI sulla base del PDA caricato. Verifica e correggi prim
 </div> <div class="field">
 <label for="origine_pratica">Origine Pratica</label>
 <select id="origine_pratica">
-<option value="spontaneo">spontaneo</option>
-<option value="appuntamento_callcenter">appuntamento_callcenter</option>
-<option value="contatto_callcenter_entro_10_giorni">contatto_callcenter_entro_10_giorni</option>
+<option value="spontaneo">Spontaneo</option>
+<option value="appuntamento_callcenter">Appuntamento Call Center</option>
+<option value="contatto_callcenter_entro_10_giorni">Contatto Call Center (entro 10 giorni)</option>
 </select>
+<div id="origineAutoRilevataBanner" class="hidden" style="margin-top:8px;padding:10px 12px;background:#E8F4FD;border-left:3px solid #2196F3;border-radius:6px;font-size:13px;color:#0D47A1;display:flex;align-items:flex-start;gap:8px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+<span><strong>Origine rilevata automaticamente:</strong> <span id="origineAutoRilevataTesto"></span></span>
+</div>
 </div> <div class="field" style="display:none" aria-hidden="true">
 <label for="operatore_id">Operatore ID</label>
 <input id="operatore_id" type="hidden" autocomplete="off">
@@ -1422,6 +1426,10 @@ Reload Exchange
  tempSessionId: null,
  // PDA correntemente in staging per il contratto in compilazione (path + nome file).
  pendingPda: null,
+ // Fase 4: ultima origine pratica auto-rilevata dalla RPC vendita_deriva_origine.
+ // Quando l'operatore cambia origine_pratica e questo valore e' diverso da null,
+ // mostriamo un popup di conferma per evitare scollegamenti accidentali.
+ origineAutoRilevata: null, // {origine_pratica, descrizione, anagrafica_id, evento_tipo, evento_id}
  // Tipo di firma scelto per il contratto in compilazione: 'elettronica' | 'cartacea' | null.
  // Resettato al cambio categoria e dopo addContrattoToCart.
  pendingTipoFirma: null
@@ -1467,6 +1475,8 @@ Reload Exchange
  via: document.getElementById('via'),
  civico: document.getElementById('civico'),
  originePratica: document.getElementById('origine_pratica'),
+ origineAutoBanner: document.getElementById('origineAutoRilevataBanner'),
+ origineAutoTesto: document.getElementById('origineAutoRilevataTesto'),
  operatoreId: document.getElementById('operatore_id'),
  anagraficaOcrBanner: document.getElementById('anagraficaOcrBanner'),
  pdaUploadZone: document.getElementById('pdaUploadZone'),
@@ -2801,6 +2811,7 @@ Reload Exchange
  refs.via.value = '';
  refs.civico.value = '';
  refs.originePratica.value = 'spontaneo';
+ resetOrigineAutoRilevata();
  refs.operatoreId.value = window.__operatoreProfilo?.id || '';
 
  refs.categoria.value = '';
@@ -3485,6 +3496,75 @@ Reload Exchange
  }
  }
 
+ // === Fase 4: derivazione automatica origine_pratica da attivita' CC ===
+ // Chiama la RPC vendita_deriva_origine(anagrafica_id) e, se trova un match,
+ // pre-compila il dropdown origine_pratica e mostra un banner azzurro descrittivo.
+ // L'operatore puo' comunque cambiare il dropdown (popup di conferma).
+ async function verificaOrigineCallCenter(anagraficaId) {
+ if (!anagraficaId) {
+ resetOrigineAutoRilevata();
+ return;
+ }
+ try {
+ const { data, error } = await window.db.rpc('vendita_deriva_origine', {
+ p_anagrafica_id: anagraficaId
+ });
+ if (error) {
+ console.warn('vendita_deriva_origine RPC errore:', error.message);
+ resetOrigineAutoRilevata();
+ return;
+ }
+ const origine = data?.origine_pratica;
+ const descrizione = data?.descrizione;
+ if (origine && origine !== 'spontaneo' && descrizione) {
+ runtimeState.origineAutoRilevata = {
+ origine_pratica: origine,
+ descrizione: descrizione,
+ anagrafica_id: anagraficaId,
+ evento_tipo: data?.evento_tipo || null,
+ evento_id: data?.evento_id || null
+ };
+ if (refs.originePratica) refs.originePratica.value = origine;
+ if (refs.origineAutoTesto) refs.origineAutoTesto.textContent = descrizione;
+ if (refs.origineAutoBanner) refs.origineAutoBanner.classList.remove('hidden');
+ } else {
+ resetOrigineAutoRilevata();
+ }
+ } catch (e) {
+ console.warn('verificaOrigineCallCenter eccezione:', e);
+ resetOrigineAutoRilevata();
+ }
+ }
+
+ function resetOrigineAutoRilevata() {
+ runtimeState.origineAutoRilevata = null;
+ if (refs.origineAutoBanner) refs.origineAutoBanner.classList.add('hidden');
+ if (refs.origineAutoTesto) refs.origineAutoTesto.textContent = '';
+ }
+
+ // Listener change sul dropdown: se l'operatore cambia un valore auto-rilevato
+ // verso qualcos'altro, chiediamo conferma esplicita (evita scollegamenti accidentali).
+ if (refs.originePratica) {
+ refs.originePratica.addEventListener('change', (e) => {
+ const auto = runtimeState.origineAutoRilevata;
+ if (!auto) return; // niente da confermare se non c'era un auto-rilevato attivo
+ const nuovoValore = e.target.value;
+ if (nuovoValore === auto.origine_pratica) return; // utente l'ha riportato al valore auto
+ const ok = window.confirm(
+ 'Stai cambiando l\'origine pratica da quella rilevata automaticamente:\n\n' +
+ auto.descrizione + '\n\n' +
+ 'La pratica non risultera\' piu\' collegata a questo evento. Continuare?'
+ );
+ if (!ok) {
+ // Rollback al valore auto-rilevato
+ e.target.value = auto.origine_pratica;
+ } else {
+ // L'operatore ha confermato l'override: nascondi banner e svuota stato
+ resetOrigineAutoRilevata();
+ }
+ });
+ }
+
  async function cercaCliente(options = {}) {
  const requestedCfPiva = normalizeCfPiva(options.cfPiva || refs.cfPiva.value);
  refs.cfPiva.value = requestedCfPiva;
@@ -3558,6 +3638,12 @@ Reload Exchange
  // i valori DB con quelli piu' aggiornati estratti dal PDA appena caricato.
  if (runtimeState.lastOcrData) {
  applyOcrToAnagrafica(runtimeState.lastOcrData);
+ }
+
+ // Fase 4: verifica origine pratica derivata da attivita' Call Center.
+ // Skippa se siamo arrivati gia' con un'origine esplicita dal CC (sessionStorage).
+ if (found.id) {
+ verificaOrigineCallCenter(found.id);
  }
 
  renderOfferte();
@@ -5138,6 +5224,25 @@ Reload Exchange
  try {
  await loadConfig();
  await promptRestoreDraftIfNeeded();
+
+ // Fase 4: arrivo da Call Center (es. appuntamenti-oggi "Inizia vendita").
+ // Se sessionStorage contiene un payload mirox_vendita_da_cc, pre-popoliamo
+ // CF/PIVA e lanciamo la ricerca anagrafica automaticamente. La RPC
+ // vendita_deriva_origine viene poi chiamata dentro cercaCliente, quindi
+ // l'origine_pratica + banner si valorizzano da soli.
+ try {
+ const raw = sessionStorage.getItem('mirox_vendita_da_cc');
+ if (raw) {
+ sessionStorage.removeItem('mirox_vendita_da_cc');
+ const payload = JSON.parse(raw);
+ if (payload && payload.cf_piva && refs.cfPiva) {
+ refs.cfPiva.value = String(payload.cf_piva).trim().toUpperCase();
+ await cercaCliente({ force: true });
+ }
+ }
+ } catch (e) {
+ console.warn('mirox_vendita_da_cc init eccezione:', e);
+ }
  } catch (error) {
  setMessage(error.message, 'err');
  if (isTechnicalError(error)) {
