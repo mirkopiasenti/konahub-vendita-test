@@ -209,7 +209,10 @@ function normalizeContractInput(contract, index) {
     // o se contratto e' in categoria senza PDA (Energia/Allarmi/Assicurazioni).
     pda_temp_path: cleanString(contract?.pda_temp_path) || null,
     // Tipo firma: 'elettronica' o 'cartacea' (solo per categorie PDA). null altrimenti.
-    tipo_firma: cleanString(contract?.tipo_firma) || null
+    tipo_firma: cleanString(contract?.tipo_firma) || null,
+    // Campi specifici Assicurazioni (vedi migration 017)
+    modalita_pagamento_assicurazione: cleanString(contract?.modalita_pagamento_assicurazione) || null,
+    ricorrenza_assicurazione: cleanString(contract?.ricorrenza_assicurazione) || null
   };
 }
 
@@ -317,6 +320,29 @@ function validateCategorySpecificRules({ contract, category, offer, index }) {
       ['Finanziamento', 'Anticipo'],
       `contratti[${index}].modalita_pagamento`
     );
+  }
+
+  if (categoryName === 'assicurazioni') {
+    contract.modalita_pagamento_assicurazione = normalizeTextArrayValue(
+      contract.modalita_pagamento_assicurazione,
+      ['RID', 'Carta di Credito', 'Carta di Debito'],
+      `contratti[${index}].modalita_pagamento_assicurazione`
+    );
+    if (!contract.modalita_pagamento_assicurazione) {
+      throw new Error(`Campo obbligatorio mancante: contratti[${index}].modalita_pagamento_assicurazione`);
+    }
+    contract.ricorrenza_assicurazione = normalizeTextArrayValue(
+      contract.ricorrenza_assicurazione,
+      ['Mensile', 'Annuale'],
+      `contratti[${index}].ricorrenza_assicurazione`
+    );
+    if (!contract.ricorrenza_assicurazione) {
+      throw new Error(`Campo obbligatorio mancante: contratti[${index}].ricorrenza_assicurazione`);
+    }
+  } else {
+    // Per altre categorie, ignora valori eventualmente arrivati dal client
+    contract.modalita_pagamento_assicurazione = null;
+    contract.ricorrenza_assicurazione = null;
   }
 
   const deviceEnabledForOffer = parseBoolean(offer?.abilita_dispositivo, false) === true;
@@ -803,6 +829,10 @@ exports.handler = async (event) => {
 
         // Convergenza (vedi migration 017): solo Fisso. null altrimenti.
         convergenza: item.convergenza,
+
+        // Campi specifici Assicurazioni (vedi migration 021): null per altre categorie.
+        modalita_pagamento_assicurazione: item.modalita_pagamento_assicurazione,
+        ricorrenza_assicurazione: item.ricorrenza_assicurazione,
 
         stato_controllo: 'da_controllare'
       };

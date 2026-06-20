@@ -1204,6 +1204,25 @@ Dati pre-compilati dall'AI sulla base del PDA caricato. Verifica e correggi prim
 <label for="pod_pdr">POD / PDR contatore *</label>
 <input id="pod_pdr" type="text" autocomplete="off" placeholder="es. IT001E12345678" maxlength="32">
 </div>
+<!-- Modalita' pagamento Assicurazioni — visibile/obbligatorio solo per Assicurazioni -->
+<div id="fieldModalitaPagamentoAssicurazione" class="field hidden">
+<label for="modalita_pagamento_assicurazione">Modalita di pagamento *</label>
+<select id="modalita_pagamento_assicurazione">
+<option value="">Seleziona</option>
+<option value="RID">RID</option>
+<option value="Carta di Credito">Carta di Credito</option>
+<option value="Carta di Debito">Carta di Debito</option>
+</select>
+</div>
+<!-- Ricorrenza Assicurazioni — visibile/obbligatorio solo per Assicurazioni -->
+<div id="fieldRicorrenzaAssicurazione" class="field hidden">
+<label for="ricorrenza_assicurazione">Ricorrenza *</label>
+<select id="ricorrenza_assicurazione">
+<option value="">Seleziona</option>
+<option value="Mensile">Mensile</option>
+<option value="Annuale">Annuale</option>
+</select>
+</div>
 <!-- Reload Exchange — visibile solo per Mobile o Customer Base -->
 <div id="fieldReloadExchange" class="field hidden" style="display:flex;align-items:center;">
 <label for="reload_exchange" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:13.5px;color:#0f172a;">
@@ -1484,6 +1503,10 @@ Reload Exchange
  // Prezzo Fisso (chiesto via popup all'avanzamento da step 2 a step 3)
  podPdr: document.getElementById('pod_pdr'),
  fieldPodPdr: document.getElementById('fieldPodPdr'),
+ modalitaPagamentoAssicurazione: document.getElementById('modalita_pagamento_assicurazione'),
+ fieldModalitaPagamentoAssicurazione: document.getElementById('fieldModalitaPagamentoAssicurazione'),
+ ricorrenzaAssicurazione: document.getElementById('ricorrenza_assicurazione'),
+ fieldRicorrenzaAssicurazione: document.getElementById('fieldRicorrenzaAssicurazione'),
  reloadExchange: document.getElementById('reload_exchange'),
  fieldReloadExchange: document.getElementById('fieldReloadExchange'),
  numeroContrattoEnergia: document.getElementById('numero_contratto_energia'),
@@ -2738,6 +2761,9 @@ Reload Exchange
  delete refs.numeroContrattoEnergia.dataset.prezzoFisso;
  delete refs.numeroContrattoEnergia.dataset.convergenza;
  }
+ // Campi Assicurazioni
+ if (refs.modalitaPagamentoAssicurazione) refs.modalitaPagamentoAssicurazione.value = '';
+ if (refs.ricorrenzaAssicurazione) refs.ricorrenzaAssicurazione.value = '';
  // I dati OCR del contratto precedente non valgono per il nuovo
  if (typeof runtimeState !== 'undefined') runtimeState.lastOcrData = null;
  clearInputFile(refs.fileCopiaSimMnp);
@@ -2833,6 +2859,16 @@ Reload Exchange
  const showReloadExchange = isMobile || isCustomerBase;
  refs.fieldReloadExchange.classList.toggle('hidden', !showReloadExchange);
  if (!showReloadExchange && refs.reloadExchange) { refs.reloadExchange.checked = false; }
+ // Campi specifici Assicurazioni: modalita_pagamento_assicurazione + ricorrenza_assicurazione
+ const isAssicurazioni = isCategory(categoriaNome, 'Assicurazioni');
+ if (refs.fieldModalitaPagamentoAssicurazione) {
+ refs.fieldModalitaPagamentoAssicurazione.classList.toggle('hidden', !isAssicurazioni);
+ if (!isAssicurazioni && refs.modalitaPagamentoAssicurazione) refs.modalitaPagamentoAssicurazione.value = '';
+ }
+ if (refs.fieldRicorrenzaAssicurazione) {
+ refs.fieldRicorrenzaAssicurazione.classList.toggle('hidden', !isAssicurazioni);
+ if (!isAssicurazioni && refs.ricorrenzaAssicurazione) refs.ricorrenzaAssicurazione.value = '';
+ }
 
  if (!opzioneVisible) refs.opzione.value = '';
  if (!reloadVisible) refs.reload.value = '';
@@ -3044,6 +3080,16 @@ Reload Exchange
  throw new Error('Per i contratti Energia è obbligatorio inserire il POD/PDR del contatore');
  }
 
+ // Campi obbligatori per Assicurazioni
+ if (isCategory(categoriaNome, 'Assicurazioni')) {
+ if (!refs.modalitaPagamentoAssicurazione || !refs.modalitaPagamentoAssicurazione.value) {
+ throw new Error('Per i contratti Assicurazioni seleziona la Modalita di pagamento');
+ }
+ if (!refs.ricorrenzaAssicurazione || !refs.ricorrenzaAssicurazione.value) {
+ throw new Error('Per i contratti Assicurazioni seleziona la Ricorrenza');
+ }
+ }
+
  if (deviceVisible && refs.dispositivoAssociato.value === '') {
  throw new Error('Seleziona se è stato associato un dispositivo');
  }
@@ -3139,6 +3185,13 @@ Reload Exchange
  reload_exchange: (isCategory(categoriaNome, 'Mobile') || isCategory(categoriaNome, 'Customer Base'))
    ? !!(refs.reloadExchange && refs.reloadExchange.checked)
    : false,
+ // Campi Assicurazioni (vedi migration 021): null per altre categorie
+ modalita_pagamento_assicurazione: isCategory(categoriaNome, 'Assicurazioni')
+   ? (refs.modalitaPagamentoAssicurazione?.value || null)
+   : null,
+ ricorrenza_assicurazione: isCategory(categoriaNome, 'Assicurazioni')
+   ? (refs.ricorrenzaAssicurazione?.value || null)
+   : null,
  // PDA gia' in staging (path temp/<session>/...) per categorie PDA. Promosso lato server al submit pratica.
  pda_temp_path: (runtimeState.pendingPda && runtimeState.pendingPda.storage_path) || null,
  pda_file_name: (runtimeState.pendingPda && runtimeState.pendingPda.file_name) || null,
@@ -3253,7 +3306,8 @@ Reload Exchange
 <div><b>Tipo attivazione:</b> ${escapeHtml(item.tipo_attivazione || '-')}</div>
 <div><b>Apri/Chiudi:</b> ${escapeHtml(item.apri_chiudi || '-')}</div>
 <div><b>Intestatario:</b> ${escapeHtml(item.intestatario || '-')}</div>
-<div><b>Modalita pagamento:</b> ${escapeHtml(item.modalita_pagamento || '-')}</div>
+<div><b>Modalita pagamento:</b> ${escapeHtml(item.modalita_pagamento || item.modalita_pagamento_assicurazione || '-')}</div>
+<div><b>Ricorrenza:</b> ${escapeHtml(item.ricorrenza_assicurazione || '-')}</div>
 <div><b>IMEI:</b> ${escapeHtml(item.imei || '-')}</div>
 <div><b>Tipo acquisto:</b> ${escapeHtml(item.tipo_acquisto || '-')}</div>
 <div><b>Finanziaria:</b> ${escapeHtml(item.finanziaria || '-')}</div>
@@ -3650,6 +3704,9 @@ Reload Exchange
  refs.tipoAcquisto.value = item.tipo_acquisto || '';
  refs.finanziaria.value = item.finanziaria || '';
  refs.kolme.value = item.kolme === null ? '' : (item.kolme ? 'true' : 'false');
+ // Campi Assicurazioni (visibili solo se categoria = Assicurazioni)
+ if (refs.modalitaPagamentoAssicurazione) refs.modalitaPagamentoAssicurazione.value = item.modalita_pagamento_assicurazione || '';
+ if (refs.ricorrenzaAssicurazione) refs.ricorrenzaAssicurazione.value = item.ricorrenza_assicurazione || '';
  renderDynamicSections();
 
  // Carica anche il riferimento al PDA gia' in staging per il contratto in modifica
@@ -3805,7 +3862,10 @@ Reload Exchange
  // PDA in staging: il backend promuovera' temp/<sess>/<file> a <cartella_pratica>/contratto_<categoria>.pdf
  pda_temp_path: item.pda_temp_path || null,
  // Tipo firma (per categorie PDA): 'elettronica' | 'cartacea' | null
- tipo_firma: item.tipo_firma || null
+ tipo_firma: item.tipo_firma || null,
+ // Campi Assicurazioni
+ modalita_pagamento_assicurazione: item.modalita_pagamento_assicurazione || null,
+ ricorrenza_assicurazione: item.ricorrenza_assicurazione || null
  };
  });
 
@@ -4234,7 +4294,9 @@ Reload Exchange
  numero_contratto_energia: refs.numeroContrattoEnergia ? (refs.numeroContrattoEnergia.value || '') : '',
  prezzo_fisso: (refs.numeroContrattoEnergia && refs.numeroContrattoEnergia.dataset.prezzoFisso) || '',
  convergenza: (refs.numeroContrattoEnergia && refs.numeroContrattoEnergia.dataset.convergenza) || '',
- reload_exchange: !!(refs.reloadExchange && refs.reloadExchange.checked)
+ reload_exchange: !!(refs.reloadExchange && refs.reloadExchange.checked),
+ modalita_pagamento_assicurazione: refs.modalitaPagamentoAssicurazione ? (refs.modalitaPagamentoAssicurazione.value || '') : '',
+ ricorrenza_assicurazione: refs.ricorrenzaAssicurazione ? (refs.ricorrenzaAssicurazione.value || '') : ''
  };
  }
 
@@ -4358,6 +4420,8 @@ Reload Exchange
    else delete refs.numeroContrattoEnergia.dataset.convergenza;
  }
  if (refs.reloadExchange) refs.reloadExchange.checked = !!contractForm.reload_exchange;
+ if (refs.modalitaPagamentoAssicurazione) refs.modalitaPagamentoAssicurazione.value = contractForm.modalita_pagamento_assicurazione || '';
+ if (refs.ricorrenzaAssicurazione) refs.ricorrenzaAssicurazione.value = contractForm.ricorrenza_assicurazione || '';
  renderDynamicSections();
  }
 
@@ -5043,6 +5107,8 @@ Reload Exchange
  refs.intestatario,
  refs.switchSim,
  refs.modalitaPagamento,
+ refs.modalitaPagamentoAssicurazione,
+ refs.ricorrenzaAssicurazione,
  refs.dispositivoAssociato,
  refs.imei,
  refs.fasciaPrezzo,
