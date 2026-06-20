@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appuntamenti Oggi - Mirox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .oggi-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px 20px; margin-bottom:12px; display:flex; align-items:center; gap:20px; }
+        .oggi-ora { font-size:20px; font-weight:700; color:var(--primary); min-width:60px; }
+        .oggi-info { flex:1; }
+        .oggi-nome { font-weight:600; font-size:16px; }
+        .oggi-meta { font-size:13px; color:var(--text-secondary); margin-top:2px; }
+        .oggi-actions { display:flex; gap:8px; }
+        .presentato-si { border-left:4px solid var(--success); }
+        .presentato-no { border-left:4px solid var(--danger); opacity:0.6; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <aside id="sidebar"></aside>
+    <main class="main-content">
+        <div style="margin-bottom:12px;padding:8px 0">
+            <a href="../../dashboard.html" style="color:var(--text-secondary);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Torna alla dashboard Mirox
+            </a>
+        </div>
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Appuntamenti oggi</h1>
+                <p class="page-subtitle" id="oggiData"></p>
+            </div>
+            <div style="display:flex;gap:8px">
+                <a href="rilavorazione.html?tab=passa_negozio" class="btn btn-primary" style="text-decoration:none;background:#E65100">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+                    Passa in negozio
+                </a>
+                <button class="btn btn-secondary" onclick="carica()">↻ Aggiorna</button>
+            </div>
+        </div>
+
+        <div id="loading" style="text-align:center;padding:40px"><div class="spinner"></div></div>
+        <div id="content" class="hidden">
+            <div id="stats" style="display:flex;gap:16px;margin-bottom:20px">
+                <div class="card" style="flex:1;text-align:center;margin:0"><div style="font-size:28px;font-weight:700;color:var(--primary)" id="statTotale">0</div><div class="text-secondary text-sm">Totale</div></div>
+                <div class="card" style="flex:1;text-align:center;margin:0"><div style="font-size:28px;font-weight:700;color:var(--success)" id="statPresentati">0</div><div class="text-secondary text-sm">Presentati</div></div>
+                <div class="card" style="flex:1;text-align:center;margin:0"><div style="font-size:28px;font-weight:700;color:var(--text-light)" id="statAttesa">0</div><div class="text-secondary text-sm">In attesa</div></div>
+            </div>
+            <div class="form-group" style="margin-bottom:16px">
+                <input type="search" id="searchOggi" class="form-control" placeholder="Cerca per nome, motivo, telefono..." oninput="filtroOggi()">
+            </div>
+            <div id="lista"></div>
+            <div id="vuoto" class="hidden empty-state"><h3>Nessun appuntamento per oggi</h3></div>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script src="js/notifiche.js"></script>
+<script>
+(async () => {
+    const { data:{session} } = await db.auth.getSession();
+    if (!session) { window.location.href='../../index.html'; return; }
+    const { data:profilo } = await db.from('profili').select('*').eq('id',session.user.id).single();
+    if (!profilo) return;
+    Auth._profilo = profilo;
+    App.initSidebar('appuntamenti_oggi');
+    await Notifiche.init();
+    await Utils.caricaColoriOperatori();
+
+    const oggi = new Date();
+    document.getElementById('oggiData').textContent = oggi.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    await carica();
+})();
+
+let oggiItems = [];
+
+async function carica() {
+    document.getElementById('loading').classList.remove('hidden');
+    document.getElementById('content').classList.add('hidden');
+
+    const oggi = Utils.today();
+    const { data } = await db.from('appuntamenti').select('*')
+        .eq('stato','confermato')
+        .gte('data_ora', oggi+'T00:00:00')
+        .lte('data_ora', oggi+'T23:59:59')
+        .order('data_ora',{ascending:true});
+
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('content').classList.remove('hidden');
+
+    oggiItems = data || [];
+    const presentati = oggiItems.filter(a => a.presentato==='si').length;
+    const attesa = oggiItems.filter(a => !a.presentato).length;
+
+    document.getElementById('statTotale').textContent = oggiItems.length;
+    document.getElementById('statPresentati').textContent = presentati;
+    document.getElementById('statAttesa').textContent = attesa;
+
+    filtroOggi();
+}
+
+function filtroOggi() {
+    const q = (document.getElementById('searchOggi')?.value || '').toLowerCase();
+    const filtered = q ? oggiItems.filter(a =>
+        (a.nome||'').toLowerCase().includes(q) ||
+        (a.motivo||'').toLowerCase().includes(q) ||
+        (a.telefono||'').toLowerCase().includes(q) ||
+        (a.fissato_da_nome||'').toLowerCase().includes(q) ||
+        (a.codice_fiscale||'').toLowerCase().includes(q)
+    ) : oggiItems;
+
+    if (filtered.length===0) {
+        document.getElementById('vuoto').classList.remove('hidden');
+        document.getElementById('lista').innerHTML='';
+        return;
+    }
+    document.getElementById('vuoto').classList.add('hidden');
+
+    let html = '';
+    for (const a of filtered) {
+        const cls = a.presentato==='si'?'presentato-si':a.presentato==='no'?'presentato-no':'';
+        html += `<div class="oggi-card ${cls}">
+            <div class="oggi-ora">${Utils.formatTime(a.data_ora)}</div>
+            <div class="oggi-info">
+                <div class="oggi-nome">${Utils.escapeHtml(a.nome)}</div>
+                <div class="oggi-meta">${Utils.escapeHtml(a.motivo)} — CF: ${Utils.escapeHtml(a.codice_fiscale||'-')} — Tel: ${Utils.escapeHtml(a.telefono||'-')} — <span style="display:inline-flex;align-items:center;gap:4px">${Utils.avatarHtml(a.fissato_da_nome||'Online', a.fissato_da_operatore_id, 18)} ${Utils.escapeHtml(a.fissato_da_nome||'Online')}</span></div>
+            </div>
+            <div class="oggi-actions">
+                ${!a.presentato ? `<button class="btn btn-success" onclick="segnaPresente('${a.id}')">✓ Presentato</button>` : ''}
+                ${a.presentato==='si' ? '<span class="badge badge-success">Presentato</span>' : ''}
+                ${a.presentato==='no' ? '<span class="badge badge-danger">Non presentato</span>' : ''}
+            </div>
+        </div>`;
+    }
+    document.getElementById('lista').innerHTML = html;
+}
+
+async function segnaPresente(id) {
+    Utils.showLoading('Salvataggio...');
+    await db.from('appuntamenti').update({ presentato:'si', presentato_at: new Date().toISOString() }).eq('id',id);
+    Utils.hideLoading();
+    Utils.toast('Segnato come presentato','success');
+    await carica();
+}
+</script>
+</body>
+</html>

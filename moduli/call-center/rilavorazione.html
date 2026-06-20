@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rilavorazione - Mirox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .urgenza-scaduto { background: #FEF2F2; }
+        .urgenza-ora { background: #FFFBEB; }
+        .urgenza-futuro { background: var(--bg-card); }
+        .rilav-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px; margin-bottom:12px; }
+        .rilav-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .rilav-nome { font-weight:600; font-size:15px; }
+        .rilav-meta { font-size:12px; color:var(--text-secondary); display:flex; gap:16px; flex-wrap:wrap; }
+        .rilav-actions { display:flex; gap:8px; margin-top:12px; }
+        .giorni-attesa { font-weight:600; }
+        .giorni-scaduto { color:var(--danger); }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <aside id="sidebar"></aside>
+    <main class="main-content">
+        <div style="margin-bottom:12px;padding:8px 0">
+            <a href="../../dashboard.html" style="color:var(--text-secondary);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Torna alla dashboard Mirox
+            </a>
+        </div>
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Rilavorazione</h1>
+                <p class="page-subtitle">Contatti da rilavorare, non presentati e walk-in</p>
+            </div>
+        </div>
+
+        <div class="tabs" id="tabsContainer">
+            <button class="tab active" onclick="switchTab('ricontatti')">Ricontatti <span class="tab-badge badge-info" id="countRicontatti">0</span></button>
+            <button class="tab" onclick="switchTab('non_presentati')">Non presentati <span class="tab-badge badge-danger" id="countNonPresentati">0</span></button>
+            <button class="tab" onclick="switchTab('passa_negozio')">Passa in negozio <span class="tab-badge badge-warning" id="countPassaNegozio">0</span></button>
+            <button class="tab" onclick="switchTab('cerea')">Cerea <span class="tab-badge badge-warning" id="countCerea">0</span></button>
+        </div>
+
+        <div id="loading" style="text-align:center;padding:40px"><div class="spinner"></div></div>
+        <div id="content" class="hidden">
+            <div id="tabRicontatti"></div>
+            <div id="tabNonPresentati" class="hidden"></div>
+            <div id="tabPassaNegozio" class="hidden">
+                <div class="form-group" style="margin-bottom:16px">
+                    <input type="search" id="searchPassaNegozio" class="form-control" placeholder="Cerca per ragione sociale o CF/P.IVA..." oninput="filtroPassaNegozio()">
+                </div>
+                <div id="tabPassaNegozioLista"></div>
+            </div>
+            <div id="tabCerea" class="hidden">
+                <div class="form-group" style="margin-bottom:16px">
+                    <input type="search" id="searchCerea" class="form-control" placeholder="Cerca per ragione sociale o CF/P.IVA..." oninput="filtroCerea()">
+                </div>
+                <div id="tabCereaLista"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Note Rilavorazione -->
+<div class="modal-overlay" id="modalNoteRilav">
+    <div class="modal" style="max-width:460px">
+        <div class="modal-header">
+            <h3 class="modal-title" style="display:flex;align-items:center;gap:8px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Note chiamata
+            </h3>
+            <button class="modal-close" onclick="Utils.closeModal('modalNoteRilav')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="modalNoteRilavCliente" style="font-weight:600;margin-bottom:16px;font-size:15px"></p>
+            <div id="modalNoteRilavContent" style="background:var(--bg);border-radius:var(--radius);padding:16px;font-size:14px;line-height:1.6;white-space:pre-wrap;max-height:300px;overflow-y:auto"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Utils.closeModal('modalNoteRilav')">Chiudi</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Conferma Presenza -->
+<div class="modal-overlay" id="modalConfermaPresenza">
+    <div class="modal" style="max-width:420px">
+        <div class="modal-header">
+            <h3 class="modal-title">Conferma presenza</h3>
+            <button class="modal-close" onclick="Utils.closeModal('modalConfermaPresenza')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="confermaModalId">
+            <p style="font-size:15px">Confermi di voler segnare come <strong>presentato</strong> il cliente:</p>
+            <p style="font-size:17px;font-weight:700;margin:16px 0" id="confermaModalNome"></p>
+            <p style="font-size:13px;color:var(--text-secondary)">Il cliente verrà spostato negli Esiti Appuntamenti per essere lavorato come Vinta/Persa.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Utils.closeModal('modalConfermaPresenza')">No, annulla</button>
+            <button class="btn btn-success" onclick="eseguiConfermaPresenza()">Sì, è presentato</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script src="js/notifiche.js"></script>
+<script>
+let currentTab = 'ricontatti';
+let passaNegozioItems = [];
+let ricontattiItems = [];
+
+(async () => {
+    const { data:{session} } = await db.auth.getSession();
+    if (!session) { window.location.href='../../index.html'; return; }
+    const { data:profilo } = await db.from('profili').select('*').eq('id',session.user.id).single();
+    if (!profilo) return;
+    Auth._profilo = profilo;
+    App.initSidebar('rilavorazione');
+    await Utils.caricaColoriOperatori();
+    await Notifiche.init();
+    
+    // Check URL param for tab
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam) switchTab(tabParam);
+    
+    await caricaTutto();
+})();
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach((t,i) => {
+        t.classList.toggle('active', ['ricontatti','non_presentati','passa_negozio','cerea'][i] === tab);
+    });
+    document.getElementById('tabRicontatti').classList.toggle('hidden', tab !== 'ricontatti');
+    document.getElementById('tabNonPresentati').classList.toggle('hidden', tab !== 'non_presentati');
+    document.getElementById('tabPassaNegozio').classList.toggle('hidden', tab !== 'passa_negozio');
+    document.getElementById('tabCerea').classList.toggle('hidden', tab !== 'cerea');
+}
+
+async function caricaTutto() {
+    document.getElementById('loading').classList.remove('hidden');
+    document.getElementById('content').classList.add('hidden');
+    await Promise.all([caricaRicontatti(), caricaNonPresentati(), caricaPassaNegozio(), caricaCerea()]);
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('content').classList.remove('hidden');
+}
+
+// Arrotonda al quarto d'ora più vicino (per walk-in)
+function oraArrotondata() {
+    const now = new Date();
+    now.setMinutes(Math.round(now.getMinutes() / 15) * 15, 0, 0);
+    return now.toISOString();
+}
+
+async function mostraNoteRilav(id, tipo) {
+    let nome = '', note = '';
+    
+    if (tipo === 'ricontatto') {
+        const ric = ricontattiItems.find(x => String(x.origine_id) === String(id));
+        if (ric) {
+            nome = ric.ragione_sociale_view || ric.nome_cliente || '';
+            note = ric.note || '';
+        }
+    } else if (tipo === 'passa_negozio' || tipo === 'cerea') {
+        // Query diretta al database
+        const { data } = await db.from('chiamate').select('nome_cliente, note').eq('id', id).single();
+        if (data) { nome = data.nome_cliente || ''; note = data.note || ''; }
+    } else if (tipo === 'non_presentato') {
+        // Appuntamento → prendi note dalla chiamata collegata
+        const { data: app } = await db.from('appuntamenti').select('nome, chiamata_id').eq('id', id).single();
+        if (app) {
+            nome = app.nome || '';
+            if (app.chiamata_id) {
+                const { data: chiam } = await db.from('chiamate').select('note').eq('id', app.chiamata_id).single();
+                if (chiam) note = chiam.note || '';
+            }
+        }
+    }
+    
+    document.getElementById('modalNoteRilavCliente').textContent = nome || '-';
+    document.getElementById('modalNoteRilavContent').textContent = note || 'Nessuna nota registrata';
+    Utils.openModal('modalNoteRilav');
+}
+
+// ========== TAB 1: RICONTATTI ==========
+let mostraFuturi = false;
+
+async function caricaRicontatti() {
+    let query = db.from('vw_rilavorazione_ricontatti_unificata').select('*')
+        .order('data_ricontatto',{ascending:true});
+
+    if (!Auth.isAdmin()) query = query.eq('operatore_id', Auth.getId());
+
+    const { data } = await query;
+    const items = data || [];
+    ricontattiItems = items;
+    renderRicontatti();
+}
+
+function toggleFuturi() {
+    mostraFuturi = !mostraFuturi;
+    renderRicontatti();
+}
+
+function renderRicontatti() {
+    const items = ricontattiItems;
+    const oggi = Utils.today();
+    
+    // Separa scaduti+oggi da futuri
+    const urgenti = items.filter(c => {
+        const d = c.data_ricontatto || '';
+        return d <= oggi;
+    });
+    const futuri = items.filter(c => {
+        const d = c.data_ricontatto || '';
+        return d > oggi;
+    });
+    
+    document.getElementById('countRicontatti').textContent = urgenti.length;
+
+    if (urgenti.length === 0 && !mostraFuturi) {
+        document.getElementById('tabRicontatti').innerHTML = '<div class="empty-state"><h3>Nessun ricontatto da fare oggi</h3>' +
+            (futuri.length > 0 ? '<p>' + futuri.length + ' ricontatti programmati per i prossimi giorni</p><button class="btn btn-secondary" onclick="toggleFuturi()" style="margin-top:12px">Mostra futuri</button>' : '') +
+            '</div>';
+        return;
+    }
+
+    const visibili = mostraFuturi ? items : urgenti;
+    
+    let html = '';
+    
+    if (futuri.length > 0) {
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <span style="font-size:13px;color:var(--text-secondary)">${urgenti.length} da lavorare oggi · ${futuri.length} programmati</span>
+            <button class="btn btn-sm ${mostraFuturi?'btn-primary':'btn-secondary'}" onclick="toggleFuturi()">${mostraFuturi?'Nascondi futuri':'Mostra futuri ('+futuri.length+')'}</button>
+        </div>`;
+    }
+    
+    for (const c of visibili) {
+        const dataRic = c.data_ricontatto || '';
+        let urgenza = 'futuro';
+        if (dataRic < oggi) urgenza = 'scaduto';
+        else if (dataRic === oggi) urgenza = 'ora';
+
+        const opColore = Utils.getColoreOperatore(c.operatore_id);
+        const esitoLabel = c.esito === 'non_risposto' ? 'Non risposto' : 'Ricontattare';
+        const esitoBadge = c.esito === 'non_risposto' ? 'badge-danger' : 'badge-info';
+        const bgStyle = urgenza === 'scaduto' ? 'background:#FEE2E2;' : urgenza === 'ora' ? 'background:#FFFBEB;' : '';
+        const isOutbound = c.origine_tipo === 'outbound_business';
+        const origineBadge = isOutbound ? '<span class="badge badge-info" style="font-size:11px">Outbound business</span>' : '';
+        const nomeCliente = c.ragione_sociale_view || c.nome_cliente || '-';
+        
+        html += `<div class="rilav-card" style="border-left:4px solid ${opColore};${bgStyle}">
+            <div class="rilav-header">
+                <div class="rilav-nome">${Utils.escapeHtml(nomeCliente)}</div>
+                <span class="badge ${urgenza==='scaduto'?'badge-danger':urgenza==='ora'?'badge-warning':'badge-neutral'}">${urgenza==='scaduto'?'Scaduto':urgenza==='ora'?'Oggi':'Futuro'}</span>
+            </div>
+            <div style="display:inline-flex;align-items:center;gap:8px;margin:8px 0;padding:6px 12px;background:${urgenza==='scaduto'?'#DC2626':urgenza==='ora'?'#D97706':'var(--text-secondary)'};color:white;border-radius:6px;font-size:13px;font-weight:600">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Ricontatto: ${Utils.formatDate(dataRic)} ${c.fascia_ricontatto||''}
+            </div>
+            <div class="rilav-meta">
+                <span>Chiamata orig: ${Utils.formatDateTime(c.data_ora)}</span>
+                <span>CF: ${Utils.escapeHtml(c.cf_piva||'-')}</span>
+                <span>Tel: ${Utils.escapeHtml(c.telefono||'-')}</span>
+                <span style="display:inline-flex;align-items:center;gap:4px">${Utils.avatarHtml(c.operatore_nome, c.operatore_id, 18)} ${Utils.escapeHtml(c.operatore_nome)}</span>
+                <span class="badge ${esitoBadge}" style="font-size:11px">${esitoLabel}</span>
+                ${origineBadge}
+            </div>
+            ${c.note?`<div style="margin-top:8px"><span style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--primary);opacity:0.7;transition:opacity 0.2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7" onclick="event.stopPropagation();mostraNoteRilav('${c.origine_id}','ricontatto')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Leggi note</span></div>`:''}
+            <div class="rilav-actions">
+                <button class="btn btn-sm btn-primary" onclick="lavoraRicontatto('${c.origine_id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 5.18 2 2 0 0 1 5.11 3h3"/><polyline points="16 3 22 3 22 9"/><line x1="22" y1="3" x2="14" y2="11"/></svg>
+                    Lavora
+                </button>
+            </div>
+        </div>`;
+    }
+    document.getElementById('tabRicontatti').innerHTML = html;
+}
+
+async function lavoraRicontatto(id) {
+    const c = ricontattiItems.find(x => String(x.origine_id) === String(id));
+    if (!c) return;
+
+    if (c.origine_tipo === 'outbound_business') {
+        if (!c.lead_id) {
+            Utils.toast('Lead outbound non disponibile per questa riga', 'warning');
+            return;
+        }
+
+        sessionStorage.setItem('mirox_ricontatta_outbound', JSON.stringify({
+            lead_id: c.lead_id,
+            chiamata_origine_id: c.chiamata_origine_id,
+            tipo_origine: 'ricontatto_outbound',
+            origine_tipo: 'outbound_business'
+        }));
+
+        window.location.href = 'registra-chiamata-outbound.html?lead_id=' + encodeURIComponent(c.lead_id);
+        return;
+    }
+
+    // Flusso standard invariato
+    sessionStorage.setItem('mirox_ricontatta', JSON.stringify({
+        cf_piva: c.cf_piva,
+        copertura: c.copertura || '',
+        motivo_chiamata: c.motivo_chiamata || '',
+        chiamata_origine_id: c.chiamata_origine_id || c.origine_id,
+        tipo_origine: 'ricontatto'
+    }));
+
+    window.location.href = 'registra-chiamata.html';
+}
+
+// ========== TAB 2: NON PRESENTATI ==========
+let nonPresentatiItems = [];
+
+async function caricaNonPresentati() {
+    let query = db.from('appuntamenti').select('*, chiamata:chiamata_id(note, copertura)')
+        .eq('presentato','no')
+        .eq('non_presentato_stato','da_lavorare')
+        .eq('stato','confermato')
+        .order('data_ora',{ascending:false});
+
+    if (!Auth.isAdmin()) query = query.eq('fissato_da_operatore_id', Auth.getId());
+
+    const { data } = await query;
+    nonPresentatiItems = data || [];
+    document.getElementById('countNonPresentati').textContent = nonPresentatiItems.length;
+
+    if (nonPresentatiItems.length === 0) {
+        document.getElementById('tabNonPresentati').innerHTML = '<div class="empty-state"><h3>Nessun non presentato da lavorare</h3></div>';
+        return;
+    }
+
+    let html = '';
+    for (const a of nonPresentatiItems) {
+        const opColore = Utils.getColoreOperatore(a.fissato_da_operatore_id);
+        html += `<div class="rilav-card urgenza-scaduto" style="border-left:4px solid ${opColore}">
+            <div class="rilav-header">
+                <div class="rilav-nome">${Utils.escapeHtml(a.nome)}</div>
+                <span class="badge badge-danger">Non presentato</span>
+            </div>
+            <div class="rilav-meta">
+                <span>Data app: ${Utils.formatDateTime(a.data_ora)}</span>
+                <span>CF: ${Utils.escapeHtml(a.codice_fiscale||'-')}</span>
+                <span>Tel: ${Utils.escapeHtml(a.telefono||'-')}</span>
+                <span>Motivo: ${Utils.escapeHtml(a.motivo)}</span>
+                <span style="display:inline-flex;align-items:center;gap:4px">${Utils.avatarHtml(a.fissato_da_nome||'Online', a.fissato_da_operatore_id, 18)} ${Utils.escapeHtml(a.fissato_da_nome||'-')}</span>
+            </div>
+            ${(a.chiamata && a.chiamata.note)?`<div style="margin-top:8px"><span style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--primary);opacity:0.7;transition:opacity 0.2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7" onclick="event.stopPropagation();mostraNoteRilav('${a.id}','non_presentato')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Leggi note</span></div>`:''}
+            <div class="rilav-actions">
+                <button class="btn btn-sm btn-success" onclick="confermaPresenza('${a.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Presentato (dimenticanza)
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="lavoraNonPresentato('${a.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 5.18 2 2 0 0 1 5.11 3h3"/><polyline points="16 3 22 3 22 9"/><line x1="22" y1="3" x2="14" y2="11"/></svg>
+                    Lavora
+                </button>
+            </div>
+        </div>`;
+    }
+    document.getElementById('tabNonPresentati').innerHTML = html;
+}
+
+function confermaPresenza(id) {
+    const a = nonPresentatiItems.find(x => x.id === id);
+    if (!a) return;
+    // Pop-up di conferma
+    document.getElementById('confermaModalNome').textContent = a.nome;
+    document.getElementById('confermaModalId').value = id;
+    Utils.openModal('modalConfermaPresenza');
+}
+
+async function eseguiConfermaPresenza() {
+    const id = document.getElementById('confermaModalId').value;
+    Utils.showLoading('Aggiornamento...');
+    await db.from('appuntamenti').update({presentato:'si', non_presentato_stato:'presentato', presentato_at: new Date().toISOString()}).eq('id',id);
+    Utils.hideLoading();
+    Utils.toast('Segnato come presentato — apparirà negli Esiti Appuntamenti','success');
+    Utils.closeModal('modalConfermaPresenza');
+    await caricaNonPresentati();
+    Notifiche.refresh();
+}
+
+async function lavoraNonPresentato(id) {
+    const a = nonPresentatiItems.find(x => x.id === id);
+    if (!a) return;
+    
+    // Recupera copertura dalla chiamata joinata
+    const copertura = (a.chiamata && a.chiamata.copertura) || '';
+    
+    // NON marca come completato — lo farà registra-chiamata dopo il salvataggio
+    sessionStorage.setItem('mirox_ricontatta', JSON.stringify({
+        cf_piva: a.codice_fiscale || '',
+        copertura: copertura,
+        motivo_chiamata: a.motivo || '',
+        chiamata_origine_id: a.id,
+        tipo_origine: 'non_presentato'
+    }));
+    
+    window.location.href = 'registra-chiamata.html';
+}
+
+// ========== TAB 3: PASSA IN NEGOZIO ==========
+async function caricaPassaNegozio() {
+    let query = db.from('chiamate').select('*, anagrafica(ragione_sociale)')
+        .eq('esito','passa_in_negozio')
+        .eq('passaggio_stato','in_attesa')
+        .order('data_ora',{ascending:true});
+
+    if (!Auth.isAdmin()) query = query.eq('operatore_id', Auth.getId());
+
+    const { data } = await query;
+    passaNegozioItems = data || [];
+    document.getElementById('countPassaNegozio').textContent = passaNegozioItems.length;
+    filtroPassaNegozio();
+}
+
+function filtroPassaNegozio() {
+    const q = (document.getElementById('searchPassaNegozio')?.value || '').toLowerCase();
+    const filtered = q ? passaNegozioItems.filter(c => {
+        const rag = (c.anagrafica && c.anagrafica.ragione_sociale) || c.nome_cliente || '';
+        return rag.toLowerCase().includes(q) || (c.cf_piva||'').toLowerCase().includes(q);
+    }) : passaNegozioItems;
+
+    if (filtered.length === 0) {
+        document.getElementById('tabPassaNegozioLista').innerHTML = '<div class="empty-state"><h3>Nessun "passa in negozio" trovato</h3></div>';
+        return;
+    }
+
+    let html = '';
+    for (const c of filtered) {
+        const giorni = Utils.giorniDa(c.data_ora);
+        const scaduto = c.passaggio_data_scadenza && c.passaggio_data_scadenza < Utils.today();
+        const ragSociale = (c.anagrafica && c.anagrafica.ragione_sociale) || c.nome_cliente;
+
+        const opColore = Utils.getColoreOperatore(c.operatore_id);
+        html += `<div class="rilav-card ${scaduto?'urgenza-scaduto':'urgenza-ora'}" style="border-left:4px solid ${opColore}">
+            <div class="rilav-header">
+                <div class="rilav-nome">${Utils.escapeHtml(ragSociale)}</div>
+                <span class="giorni-attesa ${scaduto?'giorni-scaduto':''}">${giorni} giorni fa</span>
+            </div>
+            <div class="rilav-meta">
+                <span>CF/PIVA: ${Utils.escapeHtml(c.cf_piva)}</span>
+                <span>Tel: ${Utils.escapeHtml(c.cellulare||'-')}</span>
+                <span>Motivo: ${Utils.escapeHtml(c.motivo_chiamata||'-')}</span>
+                <span style="display:inline-flex;align-items:center;gap:4px">${Utils.avatarHtml(c.operatore_nome, c.operatore_id, 18)} ${Utils.escapeHtml(c.operatore_nome)}</span>
+                <span>Chiamata: ${Utils.formatDateTime(c.data_ora)}</span>
+                ${scaduto?'<span class="badge badge-danger">Scaduto (>5 gg)</span>':''}
+            </div>
+            ${c.note?`<div style="margin-top:8px"><span style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--primary);opacity:0.7;transition:opacity 0.2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7" onclick="event.stopPropagation();mostraNoteRilav('${c.id}','passa_negozio')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Leggi note</span></div>`:''}
+            <div class="rilav-actions">
+                <button class="btn btn-sm btn-success" onclick="passaggioPresentato('${c.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Presentato
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="passaggioRicontatta('${c.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 5.18 2 2 0 0 1 5.11 3h3"/><polyline points="16 3 22 3 22 9"/><line x1="22" y1="3" x2="14" y2="11"/></svg>
+                    Ricontatta
+                </button>
+            </div>
+        </div>`;
+    }
+    document.getElementById('tabPassaNegozioLista').innerHTML = html;
+}
+
+async function passaggioPresentato(id) {
+    const c = passaNegozioItems.find(x => x.id === id);
+    if (!c) return;
+
+    Utils.showLoading('Registrazione...');
+
+    // Aggiorna solo la chiamata originale — nessun appuntamento finto
+    const { error } = await db.from('chiamate').update({
+        passaggio_stato: 'passato',
+        rilavorazione_stato: 'completato'
+    }).eq('id', id);
+
+    if (error) { Utils.hideLoading(); Utils.toast('Errore: '+error.message,'danger'); return; }
+
+    Utils.hideLoading();
+    Utils.toast('Segnato come presentato — apparirà negli Esiti','success');
+    await caricaPassaNegozio();
+    Notifiche.refresh();
+}
+
+async function passaggioRicontatta(id) {
+    const c = passaNegozioItems.find(x => x.id === id);
+    if (!c) return;
+
+    // NON marca come completato qui — lo farà registra-chiamata dopo il salvataggio
+    sessionStorage.setItem('mirox_ricontatta', JSON.stringify({
+        cf_piva: c.cf_piva,
+        copertura: c.copertura || '',
+        motivo_chiamata: c.motivo_chiamata || '',
+        chiamata_origine_id: c.id,
+        tipo_origine: 'passa_negozio'
+    }));
+
+    window.location.href = 'registra-chiamata.html';
+}
+
+// ========== TAB 4: CEREA ==========
+let cereaItems = [];
+
+async function caricaCerea() {
+    let query = db.from('chiamate').select('*, anagrafica(ragione_sociale)')
+        .eq('esito','passa_a_cerea')
+        .eq('passaggio_stato','in_attesa')
+        .order('data_ora',{ascending:true});
+
+    if (!Auth.isAdmin()) query = query.eq('operatore_id', Auth.getId());
+
+    const { data } = await query;
+    cereaItems = data || [];
+    document.getElementById('countCerea').textContent = cereaItems.length;
+    filtroCerea();
+}
+
+function filtroCerea() {
+    const q = (document.getElementById('searchCerea')?.value || '').toLowerCase();
+    const filtered = q ? cereaItems.filter(c => {
+        const rag = (c.anagrafica && c.anagrafica.ragione_sociale) || c.nome_cliente || '';
+        return rag.toLowerCase().includes(q) || (c.cf_piva||'').toLowerCase().includes(q);
+    }) : cereaItems;
+
+    if (filtered.length === 0) {
+        document.getElementById('tabCereaLista').innerHTML = '<div class="empty-state"><h3>Nessun "passa a Cerea" in attesa</h3></div>';
+        return;
+    }
+
+    let html = '';
+    for (const c of filtered) {
+        const giorni = Utils.giorniDa(c.data_ora);
+        const scaduto = c.passaggio_data_scadenza && c.passaggio_data_scadenza < Utils.today();
+        const ragSociale = (c.anagrafica && c.anagrafica.ragione_sociale) || c.nome_cliente;
+        const opColore = Utils.getColoreOperatore(c.operatore_id);
+
+        html += `<div class="rilav-card ${scaduto?'urgenza-scaduto':'urgenza-ora'}" style="border-left:4px solid ${opColore}">
+            <div class="rilav-header">
+                <div class="rilav-nome">${Utils.escapeHtml(ragSociale)}</div>
+                <span class="giorni-attesa ${scaduto?'giorni-scaduto':''}">${giorni} giorni fa</span>
+            </div>
+            <div class="rilav-meta">
+                <span>CF/PIVA: ${Utils.escapeHtml(c.cf_piva)}</span>
+                <span>Tel: ${Utils.escapeHtml(c.cellulare||'-')}</span>
+                <span>Motivo: ${Utils.escapeHtml(c.motivo_chiamata||'-')}</span>
+                <span style="display:inline-flex;align-items:center;gap:4px">${Utils.avatarHtml(c.operatore_nome, c.operatore_id, 18)} ${Utils.escapeHtml(c.operatore_nome)}</span>
+                <span>Chiamata: ${Utils.formatDateTime(c.data_ora)}</span>
+                ${scaduto?'<span class="badge badge-danger">Scaduto (>5 gg)</span>':''}
+            </div>
+            ${c.note?`<div style="margin-top:8px"><span style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--primary);opacity:0.7;transition:opacity 0.2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7" onclick="event.stopPropagation();mostraNoteRilav('${c.id}','cerea')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Leggi note</span></div>`:''}
+            <div class="rilav-actions">
+                <button class="btn btn-sm btn-success" onclick="cereaPresentato('${c.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Presentato
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="cereaRicontatta('${c.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 5.18 2 2 0 0 1 5.11 3h3"/><polyline points="16 3 22 3 22 9"/><line x1="22" y1="3" x2="14" y2="11"/></svg>
+                    Ricontatta
+                </button>
+            </div>
+        </div>`;
+    }
+    document.getElementById('tabCereaLista').innerHTML = html;
+}
+
+async function cereaPresentato(id) {
+    const c = cereaItems.find(x => x.id === id);
+    if (!c) return;
+
+    Utils.showLoading('Registrazione...');
+
+    // Aggiorna solo la chiamata originale — nessun appuntamento finto
+    const { error } = await db.from('chiamate').update({
+        passaggio_stato: 'passato',
+        rilavorazione_stato: 'completato'
+    }).eq('id', id);
+
+    if (error) { Utils.hideLoading(); Utils.toast('Errore: '+error.message,'danger'); return; }
+
+    Utils.hideLoading();
+    Utils.toast('Segnato come presentato — apparirà negli Esiti','success');
+    await caricaCerea();
+    Notifiche.refresh();
+}
+
+async function cereaRicontatta(id) {
+    const c = cereaItems.find(x => x.id === id);
+    if (!c) return;
+
+    sessionStorage.setItem('mirox_ricontatta', JSON.stringify({
+        cf_piva: c.cf_piva,
+        copertura: c.copertura || '',
+        motivo_chiamata: c.motivo_chiamata || '',
+        chiamata_origine_id: c.id,
+        tipo_origine: 'cerea'
+    }));
+
+    window.location.href = 'registra-chiamata.html';
+}
+</script>
+</body>
+</html>

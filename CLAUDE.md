@@ -40,29 +40,34 @@ Prima di dichiarare un task concluso:
 
 ## Roadmap & boundaries (LEGGERE PRIMA DI MODIFICARE)
 
-- **Vendita** = focus attuale, in lavorazione
-- **Call Center** = progetto separato già in produzione (NON in questa codebase), condivide lo stesso database Supabase
-- **Step 2 futuro**: merge dei due progetti in un unico front-end con navigazione integrata
+- **Vendita / Post-Vendita** = focus storico, completato in larga parte
+- **Call Center integrato** = a partire dal 2026-06-20 le pagine CC sono integrate in `moduli/call-center/` (Fase 1: mount UI). Il CC prod su `mirox-crm.netlify.app` continua a girare in parallelo invariato — entrambi puntano allo stesso project Supabase
+- **Fasi successive previste** (non ancora fatte): estensione `storico_cliente`, backfill `chiamate.anagrafica_id`, convergenza Upload Contratti con `origine_pratica` automatica
 
 ### URL deploy
-- `test-upload-contratti-konahub.netlify.app` — deploy del repo `konahub-vendita-test` (focus di questa codebase, wizard vendita)
-- `mirox-crm.netlify.app` — sito Call Center (altro repo, condivide DB Supabase)
+- `test-upload-contratti-konahub.netlify.app` — deploy del repo `konahub-vendita-test` (focus storico di questa codebase, wizard vendita)
+- `mirox-crm.netlify.app` — sito Call Center **PROD** (altro repo, NON in questa codebase, condivide DB Supabase). Continua a funzionare invariato dopo l'integrazione
 
-### Tabelle condivise — toccare con cautela
+### Tabelle condivise — toccare con cautela (regole NON negoziabili)
 
 Modifiche a schema / RLS / RPC / trigger su queste tabelle hanno rischio di **rompere il Call Center in produzione**:
 
 `profili`, `anagrafica`, `appuntamenti`, `chiamate`, `call_center_lead_outbound*`, `orari_standard`, `blocchi`, `slot_bloccati`, `impostazioni`, `blacklist`
 
-→ **chiedere conferma all'utente** prima di alterarle.
+3 regole di coordinamento col CC prod:
+1. **Solo modifiche DB additive** — mai DROP/RENAME colonne, mai CHECK più stretti
+2. **Mai modificare RPC esistenti** (solo aggiungerne di nuove con nuovi nomi, es. `cerca_o_crea_anagrafica_v2`)
+3. **Le RLS nuove devono includere anche le pagine vecchie** — chiavi `pagine_accessibili` riutilizzate identiche (no prefisso `cc_`)
+
+→ **chiedere conferma all'utente** prima di alterare qualsiasi tabella di questa lista.
 
 ---
 
 ## Architettura 3 layer
 
-### 1. Frontend (`/`, `/moduli/`, `/js/`, `/css/`)
+### 1. Frontend (`/`, `/moduli/`, `/moduli/call-center/`, `/js/`, `/css/`)
 
-Pagine HTML statiche, no bundler. JS condiviso esposto su `window`:
+Pagine HTML statiche, no bundler. `/moduli/call-center/` contiene il modulo CC integrato (Fase 1, vedi sezione dedicata). JS condiviso Mirox esposto su `window`:
 
 | File JS | Espone | Uso |
 |---|---|---|
@@ -264,10 +269,56 @@ Quando l'utente carica un PDA + sceglie "Analizza con AI", i dati estratti dall'
 
 ---
 
+## Modulo Call Center integrato (Fase 1, dal 2026-06-20)
+
+Le 12 pagine CC + asset stanno in `moduli/call-center/`. Sono **port pragmatico** dalle pagine prod del CC: logica interna invariata (è testata in produzione da mesi), modifiche minimali per integrarle in Mirox.
+
+### Cosa è stato modificato nel port
+
+1. **Redirect login**: `window.location.href='index.html'` → `'../../index.html'` (nei 9 HTML loggati + 4 JS: `js/auth.js`, `js/call-center-lead-outbound.js`, `js/prenota-interno-outbound.js`, `js/registra-chiamata-outbound.js`)
+2. **Breadcrumb dashboard**: aggiunto link "← Torna alla dashboard Mirox" in cima a ogni `<main>` (eccetto `prenota.html` pubblica)
+3. **Rimosso `index.html`** del CC (Mirox ha il proprio login alla root)
+4. **Sidebar laterale CC mantenuta**: era una scelta architetturale già rifinita lato prod; rimuoverla avrebbe richiesto refactor di tutti i 12 file. Il bottone "Esci" della sidebar fa logout via `Auth.logout()` → `../../index.html`
+
+### Cosa NON è stato modificato (debito tecnico esplicito, vedi task #18)
+
+Le pagine CC ancora usano:
+- `Utils.toast/openModal/closeModal/showLoading/...` (CC interno, in `js/app.js` CC) invece di `MiroxUI.*`
+- `alert()` / `confirm()` nativi in alcuni punti (`blacklist.html` rimuovi conferma, `configurazione.html` elimina blocco)
+- `db.from('anagrafica').insert(...)` diretto in `registra-chiamata.html` (riga ~651) invece di `AnagraficaHelper.cercaOcrea` — rischio basso di duplicati grazie al check precedente `cercaCliente()`, ma non rispetta lo standard Mirox
+
+→ refactor profondo da fare iterativamente in sessioni successive, una pagina per volta, dopo aver verificato che il mount Fase 1 funziona stabile
+
+### Accesso dalla dashboard Mirox
+
+- **Topbar**: bottone "Call Center" → ora attiva la tab `call-center` invece di essere `disabled`. Smooth scroll all'inizio della dashboard
+- **Tab "Call Center"** accanto a Vendita / Post-Vendita nella hero, con 10 card una per pagina (Registra Chiamata, Elenco Chiamate, Rilavorazione, Lead Outbound, Appuntamenti, Nuovo Appuntamento, Appuntamenti Oggi, Esiti Appuntamenti, Black List, Configurazione)
+- **Filtro permessi runtime**: ogni card ha `data-perm="<chiave>"`; al login si nasconde quella per cui `profilo.pagine_accessibili[chiave] !== true` (admin vede tutto, ha `ruolo='admin'`). `Configurazione` ha `data-admin-only="true"` (solo admin)
+- **Empty state**: se 0 card visibili → messaggio "Non hai accesso a nessun modulo Call Center" + topbar Call Center diventa `disabled`
+- **Persistenza tab**: la `sessionStorage.mirox.dashboardTab` ora accetta anche `'call-center'` (oltre a `'vendita'`/`'post-vendita'`)
+
+### Chiavi permessi (riusate identiche al CC prod)
+
+`registra_chiamata`, `elenco_chiamate`, `rilavorazione`, `call_center_lead_outbound`, `appuntamenti`, `prenota_interno`, `appuntamenti_oggi`, `esiti_appuntamenti`, `blacklist`, `configurazione` (admin-only).
+
+→ Zero migrazione utenti: chi ha permesso `'registra_chiamata'` su `mirox-crm.netlify.app` vede la stessa card anche qua.
+
+### Pagina pubblica `prenota.html`
+
+Form esterno per prenotazioni dal sito/social. **NON in dashboard** (non ha auth guard). Raggiungibile solo via URL diretto. Lasciata invariata: usa `alert()` nativo e insert diretto su `appuntamenti` con `fonte='pubblico'`.
+
+### Rischi e limiti noti
+
+- **Configurazione CC pesante**: la tab Utenti carica TUTTI i profili e mostra i permessi solo per le pagine CC (la mappa `PAGINE_LABELS` in `configurazione.html` lista solo CC). Da estendere a futuro per includere i moduli Vendita/Post-Vendita
+- **`vw_elenco_chiamate_unificate` / `vw_rilavorazione_ricontatti_unificata`**: usate dalle pagine CC, dipendono dalla colonna `chiamate.rilavorazione_stato` (esiste) e dalle viste già createSE — verificate online in Fase 1
+- **`get_slot_disponibili` RPC**: usata da `prenota.html`, `prenota-interno.html`, `appuntamenti.html` (per spostamento). Confermata esistente nel DB
+
+---
+
 ## Convenzioni (rispettare per coerenza)
 
-- **Path**: pagine in `/moduli/` → JS/CSS/link con `../` (es. `../js/config.js`, `../dashboard.html`)
-- **Auth guard**: ogni pagina chiama `Auth.richiediAuth()` (gestisce redirect a `../index.html` o `index.html` in base al pathname)
+- **Path**: pagine in `/moduli/` → JS/CSS/link con `../` (es. `../js/config.js`, `../dashboard.html`). Pagine in `/moduli/call-center/` → JS/CSS/link Mirox con `../../` (es. `../../index.html`). I JS interni del CC (`/moduli/call-center/js/`) sono path-relativi alla pagina e funzionano out-of-the-box
+- **Auth guard**: ogni pagina chiama `Auth.richiediAuth()` (gestisce redirect a `../index.html` o `index.html` in base al pathname). Le pagine CC continuano a usare il proprio `Auth` (in `moduli/call-center/js/auth.js`) — è un'entità separata da `js/auth.js` di Mirox, ma fa la stessa cosa
 - **Modali**: usare `window.MiroxUI.{alert,confirm,prompt,toast,loading,allegati}`. **MAI** `alert()` / `confirm()` nativo del browser
 - **Anagrafica**: SEMPRE via `AnagraficaHelper.cerca` / `cercaOcrea` (RPC `cerca_o_crea_anagrafica`) per evitare doppioni
 - **Upload PDF**: SEMPRE via Netlify function. MAI `db.storage.from(...).upload()` dal client — la service_role non deve mai uscire dal server

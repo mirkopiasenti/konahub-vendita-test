@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appuntamenti - Mirox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .app-item { display:flex; align-items:center; padding:16px 12px; border-bottom:1px solid var(--border-light); gap:20px; border-radius:var(--radius); margin:0 -12px; transition:background 0.15s; cursor:pointer; }
+        .app-item:hover { background:var(--border-light); }
+        .app-time { min-width:60px; font-weight:600; color:var(--primary); font-size:15px; }
+        .app-info { flex:1; }
+        .app-nome { font-weight:600; font-size:15px; }
+        .app-meta { font-size:12px; color:var(--text-secondary); margin-top:4px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .fissato-da { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:500; }
+        .date-header { font-size:13px; font-weight:600; padding:12px 0; border-bottom:1px solid var(--border); color:var(--text-secondary); text-transform:capitalize; }
+        .stato-annullato .app-nome { text-decoration:line-through; color:var(--danger); }
+        .stato-rischedulato .app-nome { text-decoration:line-through; color:var(--warning); }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <aside id="sidebar"></aside>
+    <main class="main-content">
+        <div style="margin-bottom:12px;padding:8px 0">
+            <a href="../../dashboard.html" style="color:var(--text-secondary);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Torna alla dashboard Mirox
+            </a>
+        </div>
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Appuntamenti</h1>
+                <p class="page-subtitle">Tutti gli appuntamenti fissati</p>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+                <div class="form-group" style="flex:1;min-width:180px;margin:0">
+                    <label class="form-label">Cerca</label>
+                    <input type="search" id="searchBox" class="form-control" placeholder="Nome, motivo..." oninput="filtro()">
+                </div>
+                <div class="form-group" style="min-width:140px;margin:0">
+                    <label class="form-label">Stato</label>
+                    <select id="filtroStato" class="form-control" onchange="caricaAppuntamenti()">
+                        <option value="tutti">Tutti</option>
+                        <option value="confermato" selected>Confermato</option>
+                        <option value="rischedulato">Rischedulato</option>
+                        <option value="annullato">Annullato</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="tabs" style="margin-bottom:16px">
+                <button class="tab active" onclick="switchTab('futuri')">Prossimi</button>
+                <button class="tab" onclick="switchTab('passati')">Passati</button>
+            </div>
+            <div id="loading" style="text-align:center;padding:40px"><div class="spinner"></div></div>
+            <div id="lista"></div>
+            <div id="vuoto" class="hidden empty-state"><h3>Nessun appuntamento trovato</h3></div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Dettagli -->
+<div class="modal-overlay" id="modalDettagli">
+    <div class="modal" style="max-width:550px">
+        <div class="modal-header"><h3 class="modal-title">Dettagli appuntamento</h3><button class="modal-close" onclick="Utils.closeModal('modalDettagli')">&times;</button></div>
+        <div class="modal-body" id="dettagliContent"></div>
+        <div class="modal-footer" id="dettagliFooter"></div>
+    </div>
+</div>
+
+<!-- Modal Sposta -->
+<div class="modal-overlay" id="modalSposta">
+    <div class="modal" style="max-width:450px">
+        <div class="modal-header"><h3 class="modal-title">Sposta appuntamento</h3><button class="modal-close" onclick="Utils.closeModal('modalSposta')">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label class="form-label">Nuova data</label><input type="date" id="spostaData" class="form-control" onchange="caricaSlotSposta()"></div>
+            <div class="form-group"><label class="form-label">Orario</label><div id="spostaSlots"><p class="text-secondary">Seleziona una data</p></div></div>
+            <div class="form-group"><label class="form-label">Motivo</label><input type="text" id="spostaMotivo" class="form-control" placeholder="Motivo spostamento..."></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Utils.closeModal('modalSposta')">Annulla</button>
+            <button class="btn btn-primary" onclick="confermaSpostamento()">Conferma</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Annulla -->
+<div class="modal-overlay" id="modalAnnulla">
+    <div class="modal" style="max-width:400px">
+        <div class="modal-header"><h3 class="modal-title">Annulla appuntamento</h3><button class="modal-close" onclick="Utils.closeModal('modalAnnulla')">&times;</button></div>
+        <div class="modal-body">
+            <p>Sei sicuro di voler annullare questo appuntamento?</p>
+            <div class="form-group"><label class="form-label">Motivo *</label><textarea id="annullaMotivo" class="form-control" rows="2"></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Utils.closeModal('modalAnnulla')">Indietro</button>
+            <button class="btn btn-danger" onclick="confermaAnnullamento()">Annulla appuntamento</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script src="js/notifiche.js"></script>
+<script>
+let appuntamenti = [], filtrati = [], selezionato = null, slotSelezionato = null, currentTab = 'futuri';
+
+(async () => {
+    const { data:{session} } = await db.auth.getSession();
+    if (!session) { window.location.href='../../index.html'; return; }
+    const { data:profilo } = await db.from('profili').select('*').eq('id',session.user.id).single();
+    if (!profilo) return;
+    Auth._profilo = profilo;
+    App.initSidebar('appuntamenti');
+    await Notifiche.init();
+    await Utils.caricaColoriOperatori();
+    await caricaAppuntamenti();
+})();
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['futuri','passati'][i]===tab));
+    caricaAppuntamenti();
+}
+
+async function caricaAppuntamenti() {
+    document.getElementById('loading').classList.remove('hidden');
+    document.getElementById('lista').innerHTML='';
+    document.getElementById('vuoto').classList.add('hidden');
+
+    const now = new Date().toISOString();
+    let query = db.from('appuntamenti').select('*, anagrafica:anagrafica_id(ragione_sociale), lead_outbound:lead_outbound_id(ragione_sociale)');
+
+    const stato = document.getElementById('filtroStato').value;
+    if (stato !== 'tutti') query = query.eq('stato', stato);
+
+    if (currentTab === 'futuri') query = query.gte('data_ora', now).order('data_ora',{ascending:true});
+    else query = query.lt('data_ora', now).order('data_ora',{ascending:false});
+
+    const { data } = await query.limit(500);
+    document.getElementById('loading').classList.add('hidden');
+    appuntamenti = data || [];
+    filtro();
+}
+
+function getRagioneSociale(a) {
+    return (a.lead_outbound && a.lead_outbound.ragione_sociale)
+        || (a.anagrafica && a.anagrafica.ragione_sociale)
+        || a.nome
+        || '-';
+}
+
+function filtro() {
+    const q = document.getElementById('searchBox').value.toLowerCase();
+    filtrati = q ? appuntamenti.filter(a => {
+        const rag = getRagioneSociale(a).toLowerCase();
+        return rag.includes(q)
+            || (a.nome||'').toLowerCase().includes(q)
+            || (a.motivo||'').toLowerCase().includes(q)
+            || (a.fissato_da_nome||'').toLowerCase().includes(q);
+    }) : [...appuntamenti];
+    render();
+}
+
+function render() {
+    if (filtrati.length===0) { document.getElementById('vuoto').classList.remove('hidden'); document.getElementById('lista').innerHTML=''; return; }
+    document.getElementById('vuoto').classList.add('hidden');
+
+    const grouped = {};
+    for (const a of filtrati) {
+        const d = new Date(a.data_ora);
+        const key = d.toISOString().split('T')[0];
+        if (!grouped[key]) grouped[key]=[];
+        grouped[key].push(a);
+    }
+
+    let html = '';
+    const keys = Object.keys(grouped).sort((a,b) => currentTab==='futuri' ? a.localeCompare(b) : b.localeCompare(a));
+    for (const key of keys) {
+        const dateObj = new Date(key+'T12:00:00');
+        html += `<div class="date-header">${dateObj.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'})}</div>`;
+        for (const a of grouped[key].sort((x,y) => new Date(x.data_ora)-new Date(y.data_ora))) {
+            const statoClass = a.stato==='annullato'?'stato-annullato':a.stato==='rischedulato'?'stato-rischedulato':'';
+            const fissatoDa = a.fissato_da_nome || 'Online';
+            const fissatoColor = a.fissato_da_operatore_id ? Utils.getColoreOperatore(a.fissato_da_operatore_id) : '#aaa';
+            html += `<div class="app-item ${statoClass}" onclick='dettagli(${JSON.stringify(a).replace(/'/g,"&#39;")})'>
+                <div class="app-time">${Utils.formatTime(a.data_ora)}</div>
+                <div class="app-info">
+                    <div class="app-nome">${Utils.escapeHtml(getRagioneSociale(a))}</div>
+                    <div class="app-meta">
+                        <span>${Utils.escapeHtml(a.motivo)}</span>
+                        <span class="fissato-da" style="border-left:3px solid ${fissatoColor};padding-left:8px">${Utils.avatarHtml(fissatoDa, a.fissato_da_operatore_id, 18)} ${Utils.escapeHtml(fissatoDa)}</span>
+                    </div>
+                </div>
+                <span class="badge ${a.stato==='confermato'?'badge-success':a.stato==='annullato'?'badge-danger':'badge-warning'}">${a.stato}</span>
+            </div>`;
+        }
+    }
+    document.getElementById('lista').innerHTML = html;
+}
+
+function dettagli(a) {
+    selezionato = a;
+    const ragSociale = getRagioneSociale(a);
+    const mostraReferente = a.nome && ragSociale !== a.nome && ragSociale !== '-';
+    document.getElementById('dettagliContent').innerHTML = `
+        <p><strong>Data:</strong> ${Utils.formatDateTime(a.data_ora)}</p>
+        <p><strong>Cliente:</strong> ${Utils.escapeHtml(ragSociale)}</p>
+        ${mostraReferente ? `<p><strong>Referente:</strong> ${Utils.escapeHtml(a.nome)}</p>` : ''}
+        <p><strong>CF:</strong> ${Utils.escapeHtml(a.codice_fiscale||'-')}</p>
+        <p><strong>Telefono:</strong> ${Utils.escapeHtml(a.telefono)}</p>
+        <p><strong>Motivo:</strong> ${Utils.escapeHtml(a.motivo)}</p>
+        <p><strong>Note:</strong> ${Utils.escapeHtml(a.note||'Nessuna')}</p>
+        <p><strong>Stato:</strong> <span class="badge ${a.stato==='confermato'?'badge-success':a.stato==='annullato'?'badge-danger':'badge-warning'}">${a.stato}</span></p>
+        <p><strong>Fonte:</strong> ${a.fonte==='pubblico'?'Sito/Social':'Interno'}</p>
+        <p><strong>Fissato da:</strong> ${Utils.escapeHtml(a.fissato_da_nome||'Prenotazione online')}</p>
+    `;
+    const isActive = a.stato === 'confermato';
+    document.getElementById('dettagliFooter').innerHTML = `
+        <button class="btn btn-secondary" onclick="Utils.closeModal('modalDettagli')">Chiudi</button>
+        ${isActive?'<button class="btn btn-primary" onclick="apriSposta()">Sposta</button>':''}
+        ${isActive?'<button class="btn btn-danger" onclick="apriAnnulla()">Annulla</button>':''}
+    `;
+    Utils.openModal('modalDettagli');
+}
+
+function apriSposta() {
+    Utils.closeModal('modalDettagli');
+    document.getElementById('spostaData').value='';
+    document.getElementById('spostaMotivo').value='';
+    document.getElementById('spostaSlots').innerHTML='<p class="text-secondary">Seleziona una data</p>';
+    slotSelezionato = null;
+    Utils.openModal('modalSposta');
+}
+
+async function caricaSlotSposta() {
+    const data = document.getElementById('spostaData').value;
+    if (!data) return;
+    document.getElementById('spostaSlots').innerHTML = '<div class="spinner" style="margin:12px auto"></div>';
+
+    const { data:slots, error } = await db.rpc('get_slot_disponibili', { p_data: data });
+    if (error || !slots || slots.length===0) {
+        document.getElementById('spostaSlots').innerHTML = '<p class="text-secondary">Nessuno slot disponibile</p>';
+        return;
+    }
+    document.getElementById('spostaSlots').innerHTML = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">' +
+        slots.map(s => {
+            const t = new Date(s);
+            const ora = t.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+            return `<button class="btn btn-sm btn-secondary" onclick="selezionaSlotSposta(this,'${s}')" style="justify-content:center">${ora}</button>`;
+        }).join('') + '</div>';
+}
+
+function selezionaSlotSposta(el, slot) {
+    document.querySelectorAll('#spostaSlots .btn').forEach(b => { b.style.background=''; b.style.color=''; });
+    el.style.background='var(--primary)'; el.style.color='white';
+    slotSelezionato = slot;
+}
+
+async function confermaSpostamento() {
+    if (!slotSelezionato) { Utils.toast('Seleziona un orario','warning'); return; }
+    Utils.showLoading('Spostamento...');
+
+    // Segna vecchio come rischedulato
+    const { data:nuovo, error:errNuovo } = await db.from('appuntamenti').insert({
+        nome: selezionato.nome, codice_fiscale: selezionato.codice_fiscale,
+        telefono: selezionato.telefono, motivo: selezionato.motivo, note: selezionato.note,
+        anagrafica_id: selezionato.anagrafica_id, fissato_da_operatore_id: selezionato.fissato_da_operatore_id,
+        fissato_da_nome: selezionato.fissato_da_nome, chiamata_id: selezionato.chiamata_id,
+        lead_outbound_id: selezionato.lead_outbound_id || null,
+        chiamata_outbound_id: selezionato.chiamata_outbound_id || null,
+        data_ora: slotSelezionato, fonte: selezionato.fonte, stato: 'confermato',
+        originato_da_id: selezionato.id,
+        storico: JSON.stringify([{azione:'creato da spostamento', data: new Date().toISOString()}])
+    }).select().single();
+
+    if (errNuovo) { Utils.hideLoading(); Utils.toast('Errore: '+errNuovo.message,'danger'); return; }
+
+    await db.from('appuntamenti').update({
+        stato:'rischedulato', rischedulato_in_id: nuovo.id,
+        motivo_modifica: document.getElementById('spostaMotivo').value || 'Spostato'
+    }).eq('id', selezionato.id);
+
+    Utils.hideLoading();
+    Utils.toast('Appuntamento spostato','success');
+    Utils.closeModal('modalSposta');
+    await caricaAppuntamenti();
+}
+
+function apriAnnulla() {
+    Utils.closeModal('modalDettagli');
+    document.getElementById('annullaMotivo').value='';
+    Utils.openModal('modalAnnulla');
+}
+
+async function confermaAnnullamento() {
+    const motivo = document.getElementById('annullaMotivo').value.trim();
+    if (!motivo) { Utils.toast('Inserisci il motivo','warning'); return; }
+    Utils.showLoading('Annullamento...');
+    await db.from('appuntamenti').update({ stato:'annullato', motivo_modifica: motivo }).eq('id', selezionato.id);
+    Utils.hideLoading();
+    Utils.toast('Appuntamento annullato','success');
+    Utils.closeModal('modalAnnulla');
+    await caricaAppuntamenti();
+}
+</script>
+</body>
+</html>

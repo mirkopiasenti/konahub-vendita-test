@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registra chiamata outbound - Mirox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .lead-outbound-mini-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .lead-outbound-mini-item {
+            background: var(--bg);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius);
+            padding: 10px;
+        }
+        .lead-outbound-mini-item .k {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+        .lead-outbound-mini-item .v {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        @media (max-width: 768px) {
+            .lead-outbound-mini-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <aside id="sidebar"></aside>
+
+    <main class="main-content">
+        <div style="margin-bottom:12px;padding:8px 0">
+            <a href="../../dashboard.html" style="color:var(--text-secondary);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Torna alla dashboard Mirox
+            </a>
+        </div>
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Registra chiamata outbound</h1>
+                <p class="page-subtitle">Lavorazione chiamata su lead business selezionato</p>
+            </div>
+            <button class="btn btn-secondary" id="btnBackLead">← Torna ai lead</button>
+        </div>
+
+        <div class="card">
+            <div class="card-header" style="margin-bottom:10px;">
+                <h3 class="card-title">Lead business</h3>
+            </div>
+            <div class="lead-outbound-mini-grid">
+                <div class="lead-outbound-mini-item"><div class="k">Ragione sociale</div><div class="v" id="leadRagione">-</div></div>
+                <div class="lead-outbound-mini-item"><div class="k">Telefono</div><div class="v" id="leadTelefono">-</div></div>
+                <div class="lead-outbound-mini-item"><div class="k">Email</div><div class="v" id="leadEmail">-</div></div>
+                <div class="lead-outbound-mini-item"><div class="k">Località</div><div class="v" id="leadLocalita">-</div></div>
+                <div class="lead-outbound-mini-item"><div class="k">Provincia</div><div class="v" id="leadProvincia">-</div></div>
+                <div class="lead-outbound-mini-item"><div class="k">Sito</div><div class="v" id="leadSito">-</div></div>
+                <div class="lead-outbound-mini-item" style="grid-column:1 / -1;"><div class="k">Categoria</div><div class="v" id="leadCategoria">-</div></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title mb-2">Esito chiamata outbound</h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Esito *</label>
+                    <select id="esito" class="form-control">
+                        <option value="">Seleziona...</option>
+                        <option value="non_risposto">Non risposto</option>
+                        <option value="non_interessato">Non interessato</option>
+                        <option value="ricontattare">Ricontattare</option>
+                        <option value="appuntamento">Appuntamento</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Operatore</label>
+                    <input type="text" id="operatoreNome" class="form-control" disabled>
+                </div>
+            </div>
+
+            <div id="boxRicontatto" class="hidden">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Data ricontatto *</label>
+                        <input type="date" id="dataRicontatto" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fascia ricontatto *</label>
+                        <select id="fasciaRicontatto" class="form-control">
+                            <option value="">Seleziona...</option>
+                            <option value="Mattina">Mattina</option>
+                            <option value="Pomeriggio">Pomeriggio</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Note</label>
+                <textarea id="note" class="form-control" rows="3" placeholder="Aggiungi dettagli utili sulla chiamata..."></textarea>
+            </div>
+
+            <button class="btn btn-primary btn-lg w-full" id="btnSalvaChiamata" style="justify-content:center;">
+                Salva chiamata outbound
+            </button>
+        </div>
+    </main>
+</div>
+
+<div class="modal-overlay" id="modalAppuntamentoTipo">
+    <div class="modal" style="max-width:520px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Tipo appuntamento</h3>
+            <button class="modal-close" id="btnCloseModalTipo">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom:12px;">Seleziona come vuoi gestire l'appuntamento per questo lead.</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <button class="btn btn-primary" id="btnTipoNegozio" style="justify-content:center; padding:14px;">Appuntamento Negozio</button>
+                <button class="btn btn-secondary" id="btnTipoEsterno" style="justify-content:center; padding:14px;">Appuntamento Esterno</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script src="js/notifiche.js"></script>
+<script src="js/registra-chiamata-outbound.js"></script>
+</body>
+</html>

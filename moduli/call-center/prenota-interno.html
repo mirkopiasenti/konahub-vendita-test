@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prenota Appuntamento - Mirox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .cal-wrapper { max-width:380px; margin:0 auto; }
+        .cal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+        .cal-title { font-size:15px; font-weight:600; text-transform:capitalize; }
+        .cal-nav { display:flex; gap:4px; }
+        .cal-nav button { background:none; border:1px solid var(--border); border-radius:6px; width:48px; height:48px; cursor:pointer; font-size:24px; font-weight:600; color:var(--text-secondary); transition:all 0.15s; display:flex; align-items:center; justify-content:center; }
+        .cal-nav button:hover { background:var(--bg); color:var(--text); }
+        .weekdays { display:grid; grid-template-columns:repeat(7,1fr); text-align:center; }
+        .weekdays div { font-size:11px; font-weight:600; color:var(--text-light); padding:6px 0; text-transform:uppercase; letter-spacing:0.03em; }
+        .days { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+        .day { width:100%; aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:8px; font-size:13px; cursor:pointer; font-weight:500; transition:all 0.15s; color:var(--text); }
+        .day:hover:not(.empty):not(.disabled) { background:var(--primary-bg); color:var(--primary); }
+        .day.empty { cursor:default; }
+        .day.today { border:1.5px solid var(--primary); }
+        .day.selected { background:var(--primary)!important; color:white!important; border-color:var(--primary)!important; box-shadow:0 2px 8px rgba(255,102,0,0.3); }
+        .day.disabled { color:var(--border); pointer-events:none; }
+        .day.sunday { color:#e57373; }
+        .day.sunday.disabled { color:#f5c6c6; }
+        .slots-section { margin-top:20px; padding-top:20px; border-top:1px solid var(--border-light); }
+        .slots-label { font-size:13px; font-weight:600; margin-bottom:10px; color:var(--text-secondary); }
+        .slots-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+        .slot { background:var(--bg); border:1.5px solid transparent; border-radius:6px; padding:8px 4px; text-align:center; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.15s; }
+        .slot:hover { border-color:var(--primary); background:var(--primary-bg); }
+        .slot.selected { background:var(--primary); color:white; border-color:var(--primary); }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <aside id="sidebar"></aside>
+    <main class="main-content">
+        <div style="margin-bottom:12px;padding:8px 0">
+            <a href="../../dashboard.html" style="color:var(--text-secondary);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Torna alla dashboard Mirox
+            </a>
+        </div>
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Prenota appuntamento</h1>
+                <p class="page-subtitle" id="pageSubtitle">Scegli data e orario</p>
+            </div>
+            <button class="btn btn-secondary" onclick="window.history.back()">← Torna indietro</button>
+        </div>
+
+        <!-- Riepilogo cliente precompilato -->
+        <div class="card" id="riepilogoCliente" style="margin-bottom:20px">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                <div style="width:40px;height:40px;background:var(--primary-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:700" id="clienteIniziale">?</div>
+                <div>
+                    <div style="font-weight:600;font-size:16px" id="clienteNome">-</div>
+                    <div style="font-size:12px;color:var(--text-secondary)" id="clienteDettagli">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendario -->
+        <div class="card" style="margin-bottom:20px">
+            <div class="cal-wrapper">
+                <div class="cal-header">
+                    <div class="cal-nav"><button onclick="changeMonth(-1)">‹</button></div>
+                    <h3 class="cal-title" id="monthDisplay"></h3>
+                    <div class="cal-nav"><button onclick="changeMonth(1)">›</button></div>
+                </div>
+                <div class="weekdays"><div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div></div>
+                <div id="calendarDays" class="days"></div>
+                
+                <!-- Slot orari (inline sotto il calendario) -->
+                <div id="slotsSection" class="slots-section" style="display:none">
+                    <div class="slots-label">Orari disponibili — <span id="selectedDateText" style="color:var(--text)"></span></div>
+                    <div id="slotsLoading" class="hidden" style="text-align:center;padding:16px"><div class="spinner"></div></div>
+                    <div id="slotsGrid" class="slots-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form dati (solo per walk-in senza dati precompilati) -->
+        <div class="card" id="formDati" style="display:none;margin-bottom:20px">
+            <h3 class="card-title mb-2">Dati cliente</h3>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">Ragione Sociale *</label><input type="text" id="fNome" class="form-control uppercase"></div>
+                <div class="form-group"><label class="form-label">C.F. / P.IVA *</label><input type="text" id="fCf" class="form-control uppercase" maxlength="16"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">Telefono *</label><input type="tel" id="fTelefono" class="form-control"></div>
+                <div class="form-group"><label class="form-label">Motivo *</label>
+                    <select id="fMotivo" class="form-control">
+                        <option value="">Seleziona...</option>
+                        <option value="Telefono CB">Telefono CB</option><option value="Fisso">Fisso</option>
+                        <option value="P.iva">P.iva</option><option value="Energy">Energy</option>
+                        <option value="Duferco">Duferco</option><option value="Altro">Altro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group"><label class="form-label">Note</label><textarea id="fNote" class="form-control" rows="2"></textarea></div>
+        </div>
+
+        <!-- Bottone conferma -->
+        <button class="btn btn-primary btn-lg w-full" id="btnConferma" style="justify-content:center;display:none" onclick="conferma()">
+            Conferma appuntamento
+        </button>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script src="js/notifiche.js"></script>
+<script>
+let state = { data: null, slot: null, currentMonth: new Date() };
+let prenotaDati = null; // Dati dal flusso chiamata
+
+(async () => {
+    const { data:{session} } = await db.auth.getSession();
+    if (!session) { window.location.href='../../index.html'; return; }
+    const { data:profilo } = await db.from('profili').select('*').eq('id',session.user.id).single();
+    if (!profilo) return;
+    Auth._profilo = profilo;
+    App.initSidebar('prenota_interno');
+    await Notifiche.init();
+
+    // Carica dati precompilati dal flusso chiamata
+    const raw = sessionStorage.getItem('mirox_prenota');
+    if (raw) {
+        prenotaDati = JSON.parse(raw);
+        document.getElementById('clienteNome').textContent = prenotaDati.nome;
+        document.getElementById('clienteDettagli').textContent = (prenotaDati.codice_fiscale||'') + ' — ' + (prenotaDati.telefono||'') + ' — ' + (prenotaDati.motivo||'');
+        document.getElementById('clienteIniziale').textContent = (prenotaDati.nome||'?').charAt(0).toUpperCase();
+        document.getElementById('pageSubtitle').textContent = 'Scegli data e orario per ' + prenotaDati.nome;
+    } else {
+        // Walk-in: mostra form dati
+        document.getElementById('riepilogoCliente').style.display = 'none';
+        document.getElementById('formDati').style.display = 'block';
+    }
+
+    renderCalendar();
+})();
+
+function changeMonth(d) { state.currentMonth.setMonth(state.currentMonth.getMonth()+d); renderCalendar(); }
+
+function renderCalendar() {
+    const y = state.currentMonth.getFullYear(), m = state.currentMonth.getMonth();
+    const first = new Date(y,m,1), last = new Date(y,m+1,0);
+    const startDay = (first.getDay()+6)%7;
+
+    document.getElementById('monthDisplay').textContent = first.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+    const container = document.getElementById('calendarDays');
+    container.innerHTML = '';
+
+    for (let i=0; i<startDay; i++) container.innerHTML += '<div class="day empty"></div>';
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const maxDate = new Date(); maxDate.setDate(today.getDate()+60);
+
+    for (let i=1; i<=last.getDate(); i++) {
+        const d = new Date(y,m,i);
+        const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+        let cls = ['day'];
+        let clickable = true;
+
+        if (d.getDay()===0) { cls.push('sunday','disabled'); clickable=false; }
+        else if (d<today) { cls.push('disabled'); clickable=false; }
+        else if (d>maxDate) { cls.push('disabled'); clickable=false; }
+        if (state.data===dateStr) cls.push('selected');
+        if (d.getTime()===today.getTime()) cls.push('today');
+
+        const div = document.createElement('div');
+        div.className = cls.join(' ');
+        div.textContent = i;
+        if (clickable) div.onclick = () => selectDate(dateStr, i);
+        container.appendChild(div);
+    }
+}
+
+function selectDate(dateStr, dayNum) {
+    state.data = dateStr;
+    state.slot = null;
+    renderCalendar();
+    const d = new Date(state.currentMonth.getFullYear(), state.currentMonth.getMonth(), dayNum);
+    document.getElementById('selectedDateText').textContent = d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+    document.getElementById('slotsSection').style.display = 'block';
+    document.getElementById('btnConferma').style.display = 'none';
+    loadSlots(dateStr);
+}
+
+async function loadSlots(data) {
+    document.getElementById('slotsLoading').classList.remove('hidden');
+    document.getElementById('slotsGrid').innerHTML = '';
+
+    const { data:slots, error } = await db.rpc('get_slot_disponibili', { p_data: data });
+    document.getElementById('slotsLoading').classList.add('hidden');
+
+    if (error || !slots || slots.length===0) {
+        document.getElementById('slotsGrid').innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-secondary)">Nessuno slot disponibile</p>';
+        return;
+    }
+
+    document.getElementById('slotsGrid').innerHTML = slots.map(s => {
+        const t = new Date(s);
+        const ora = t.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+        return `<div class="slot" onclick="selectSlot(this,'${s}')">${ora}</div>`;
+    }).join('');
+}
+
+function selectSlot(el, slot) {
+    document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+    state.slot = slot;
+    document.getElementById('btnConferma').style.display = 'flex';
+}
+
+async function conferma() {
+    if (!state.slot) { Utils.toast('Seleziona un orario','warning'); return; }
+
+    let nome, cf, telefono, motivo, note, anagraficaId, chiamataId;
+
+    if (prenotaDati) {
+        nome = prenotaDati.nome;
+        cf = prenotaDati.codice_fiscale;
+        telefono = prenotaDati.telefono;
+        motivo = prenotaDati.motivo;
+        note = '';
+        anagraficaId = prenotaDati.anagrafica_id;
+        chiamataId = prenotaDati.chiamata_id;
+    } else {
+        nome = document.getElementById('fNome').value.trim();
+        cf = document.getElementById('fCf').value.trim().toUpperCase();
+        telefono = document.getElementById('fTelefono').value.trim();
+        motivo = document.getElementById('fMotivo').value;
+        note = document.getElementById('fNote').value.trim();
+        if (!nome || !cf || !telefono || !motivo) { Utils.toast('Compila tutti i campi obbligatori (Ragione Sociale, C.F./P.IVA, Telefono, Motivo)','warning'); return; }
+    }
+
+    Utils.showLoading('Creazione appuntamento...');
+
+    const { data:app, error } = await db.from('appuntamenti').insert({
+        nome, codice_fiscale: cf||null, telefono, motivo, note: note||null,
+        anagrafica_id: anagraficaId||null,
+        fissato_da_operatore_id: Auth.getId(),
+        fissato_da_nome: Auth.getNome(),
+        chiamata_id: chiamataId||null,
+        data_ora: state.slot,
+        fonte: 'interno',
+        storico: JSON.stringify([{azione:'creato',data:new Date().toISOString(),operatore:Auth.getNome()}])
+    }).select().single();
+
+    if (error) { Utils.hideLoading(); Utils.toast('Errore: '+error.message,'danger'); return; }
+
+    // Aggiorna la chiamata con il link all'appuntamento
+    if (chiamataId) {
+        await db.from('chiamate').update({appuntamento_id: app.id}).eq('id', chiamataId);
+    }
+
+    Utils.hideLoading();
+    sessionStorage.removeItem('mirox_prenota');
+    Utils.toast('Appuntamento creato!','success');
+
+    // Redirect alla lista appuntamenti dopo 1s
+    setTimeout(() => { window.location.href = 'appuntamenti.html'; }, 1000);
+}
+</script>
+</body>
+</html>

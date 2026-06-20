@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurazione - Mirox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .perm-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+        .perm-item { display:flex; align-items:center; gap:8px; font-size:13px; padding:6px 0; }
+        .perm-item input[type=checkbox] { width:16px; height:16px; accent-color:var(--primary); }
+        .orario-row { display:grid; grid-template-columns:120px 1fr; gap:12px; align-items:start; padding:12px 0; border-bottom:1px solid var(--border-light); }
+        .orario-day-name { font-weight:600; padding-top:8px; }
+        .orario-fasce { display:flex; flex-direction:column; gap:8px; }
+        .fascia-row { display:flex; align-items:center; gap:12px; }
+        .fascia-label { font-size:12px; color:var(--text-secondary); min-width:80px; }
+        .fascia-inputs { display:flex; align-items:center; gap:8px; }
+        .fascia-inputs input[type=time] { width:120px; padding:8px 12px; font-size:14px; }
+        .fascia-inputs span { color:var(--text-light); font-size:13px; }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <aside id="sidebar"></aside>
+    <main class="main-content">
+        <div style="margin-bottom:12px;padding:8px 0">
+            <a href="../../dashboard.html" style="color:var(--text-secondary);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Torna alla dashboard Mirox
+            </a>
+        </div>
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Configurazione</h1>
+                <p class="page-subtitle">Gestisci utenti, orari e impostazioni</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('utenti')">Utenti</button>
+            <button class="tab" onclick="switchTab('orari')">Orari</button>
+            <button class="tab" onclick="switchTab('blocchi')">Blocchi</button>
+            <button class="tab" onclick="switchTab('parametri')">Parametri</button>
+        </div>
+
+        <!-- TAB UTENTI -->
+        <div id="tabUtenti">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Operatori</h3></div>
+                <div id="utentiLista"></div>
+                <p style="margin-top:16px;font-size:12px;color:var(--text-secondary)">Per aggiungere un nuovo operatore: vai su Supabase → Authentication → Add user, poi aggiungi il profilo dalla SQL Editor con i permessi desiderati.</p>
+            </div>
+        </div>
+
+        <!-- TAB ORARI -->
+        <div id="tabOrari" class="hidden">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Orari settimanali</h3><button class="btn btn-primary btn-sm" onclick="salvaOrari()">Salva orari</button></div>
+                <div id="orariContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB BLOCCHI -->
+        <div id="tabBlocchi" class="hidden">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Blocchi e chiusure</h3><button class="btn btn-primary btn-sm" onclick="Utils.openModal('modalBlocco')">+ Nuovo blocco</button></div>
+                <div id="blocchiLista"></div>
+            </div>
+        </div>
+
+        <!-- TAB PARAMETRI -->
+        <div id="tabParametri" class="hidden">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Parametri sistema</h3><button class="btn btn-primary btn-sm" onclick="salvaParametri()">Salva</button></div>
+                <div id="parametriForm"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Modifica Permessi -->
+<div class="modal-overlay" id="modalPermessi">
+    <div class="modal" style="max-width:500px">
+        <div class="modal-header"><h3 class="modal-title">Modifica permessi</h3><button class="modal-close" onclick="Utils.closeModal('modalPermessi')">&times;</button></div>
+        <div class="modal-body">
+            <p id="permNome" style="font-weight:600;margin-bottom:16px"></p>
+            <div class="perm-grid" id="permGrid"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Utils.closeModal('modalPermessi')">Annulla</button>
+            <button class="btn btn-primary" onclick="salvaPermessi()">Salva</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuovo Blocco -->
+<div class="modal-overlay" id="modalBlocco">
+    <div class="modal">
+        <div class="modal-header"><h3 class="modal-title">Nuovo blocco</h3><button class="modal-close" onclick="Utils.closeModal('modalBlocco')">&times;</button></div>
+        <div class="modal-body">
+            <div class="form-group"><label class="form-label">Tipo</label>
+                <select id="bloccoTipo" class="form-control" onchange="toggleBloccoFascia()">
+                    <option value="giornata">Giornata intera</option>
+                    <option value="fascia">Fascia oraria</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">Da</label><input type="date" id="bloccoDataInizio" class="form-control"></div>
+                <div class="form-group"><label class="form-label">A</label><input type="date" id="bloccoDataFine" class="form-control"></div>
+            </div>
+            <div id="bloccoFasciaFields" class="hidden form-row">
+                <div class="form-group"><label class="form-label">Ora inizio</label><input type="time" id="bloccoOraInizio" class="form-control"></div>
+                <div class="form-group"><label class="form-label">Ora fine</label><input type="time" id="bloccoOraFine" class="form-control"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Motivo</label><input type="text" id="bloccoMotivo" class="form-control"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Utils.closeModal('modalBlocco')">Annulla</button>
+            <button class="btn btn-primary" onclick="creaBlocco()">Crea blocco</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script src="js/notifiche.js"></script>
+<script>
+let utenti=[], orari=[], blocchi=[], permEditId=null;
+
+const PAGINE_LABELS = {
+    registra_chiamata:'Registra chiamata', elenco_chiamate:'Elenco chiamate',
+    rilavorazione:'Rilavorazione', appuntamenti:'Appuntamenti',
+    appuntamenti_oggi:'Appuntamenti oggi', esiti_appuntamenti:'Esiti appuntamenti',
+    blacklist:'Black List', configurazione:'Configurazione', prenota_interno:'Nuovo appuntamento',
+    call_center_lead_outbound:'Lead Outbound (business)'
+};
+
+(async () => {
+    const { data:{session} } = await db.auth.getSession();
+    if (!session) { window.location.href='../../index.html'; return; }
+    const { data:profilo } = await db.from('profili').select('*').eq('id',session.user.id).single();
+    if (!profilo || profilo.ruolo!=='admin') { window.location.href='../../index.html'; return; }
+    Auth._profilo = profilo;
+    App.initSidebar('configurazione');
+    await Notifiche.init();
+    await Promise.all([caricaUtenti(), caricaOrari(), caricaBlocchi(), caricaParametri()]);
+})();
+
+function switchTab(tab) {
+    ['utenti','orari','blocchi','parametri'].forEach(t => {
+        document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('hidden',t!==tab);
+    });
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active',['utenti','orari','blocchi','parametri'][i]===tab));
+}
+
+// ========== UTENTI ==========
+async function caricaUtenti() {
+    const { data } = await db.from('profili').select('*').order('created_at');
+    utenti = data||[];
+    let html = '<div class="table-container"><table><thead><tr><th>Nome</th><th>Username</th><th>Ruolo</th><th>Stato</th><th>Permessi</th><th></th></tr></thead><tbody>';
+    for (const u of utenti) {
+        const permCount = Object.values(u.pagine_accessibili||{}).filter(v=>v).length;
+        html += `<tr>
+            <td style="font-weight:600">${Utils.escapeHtml(u.nome)}</td>
+            <td>${Utils.escapeHtml(u.username)}</td>
+            <td><span class="badge ${u.ruolo==='admin'?'badge-info':'badge-neutral'}">${u.ruolo}</span></td>
+            <td><span class="badge ${u.attivo?'badge-success':'badge-danger'}">${u.attivo?'Attivo':'Disabilitato'}</span></td>
+            <td>${u.ruolo==='admin'?'Tutte':permCount+' pagine'}</td>
+            <td>
+                ${u.ruolo!=='admin'?`<button class="btn btn-sm btn-secondary" onclick="apriPermessi('${u.id}')">Permessi</button>`:''}
+                <button class="btn btn-sm ${u.attivo?'btn-danger':'btn-success'}" onclick="toggleAttivo('${u.id}',${!u.attivo})">${u.attivo?'Disabilita':'Abilita'}</button>
+            </td>
+        </tr>`;
+    }
+    html += '</tbody></table></div>';
+    document.getElementById('utentiLista').innerHTML = html;
+}
+
+function apriPermessi(id) {
+    const u = utenti.find(x=>x.id===id);
+    if (!u) return;
+    permEditId = id;
+    document.getElementById('permNome').textContent = u.nome;
+    const perms = u.pagine_accessibili||{};
+    let html = '';
+    for (const [key,label] of Object.entries(PAGINE_LABELS)) {
+        html += `<div class="perm-item"><input type="checkbox" id="perm_${key}" ${perms[key]?'checked':''}><label for="perm_${key}">${label}</label></div>`;
+    }
+    document.getElementById('permGrid').innerHTML = html;
+    Utils.openModal('modalPermessi');
+}
+
+async function salvaPermessi() {
+    const perms = {};
+    for (const key of Object.keys(PAGINE_LABELS)) {
+        perms[key] = document.getElementById('perm_'+key).checked;
+    }
+    Utils.showLoading('Salvataggio...');
+    await db.from('profili').update({pagine_accessibili:perms}).eq('id',permEditId);
+    Utils.hideLoading();
+    Utils.toast('Permessi aggiornati','success');
+    Utils.closeModal('modalPermessi');
+    await caricaUtenti();
+}
+
+async function toggleAttivo(id, attivo) {
+    await db.from('profili').update({attivo}).eq('id',id);
+    Utils.toast(attivo?'Utente abilitato':'Utente disabilitato','success');
+    await caricaUtenti();
+}
+
+// ========== ORARI ==========
+async function caricaOrari() {
+    const { data } = await db.from('orari_standard').select('*').order('giorno').order('ora_inizio');
+    orari = data||[];
+    const giorni = ['','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+    
+    // Raggruppa per giorno (ogni giorno ha 2 fasce: mattina e pomeriggio)
+    const perGiorno = {};
+    for (const o of orari) {
+        if (!perGiorno[o.giorno]) perGiorno[o.giorno] = [];
+        perGiorno[o.giorno].push(o);
+    }
+    
+    let html = '';
+    for (let g = 1; g <= 7; g++) {
+        const fasce = perGiorno[g] || [];
+        html += `<div class="orario-row">
+            <div class="orario-day-name">${giorni[g]}</div>
+            <div class="orario-fasce">`;
+        
+        fasce.forEach((o, idx) => {
+            const fasciaLabel = idx === 0 ? 'Mattina' : 'Pomeriggio';
+            html += `<div class="fascia-row">
+                <div class="fascia-label">${fasciaLabel}</div>
+                <div class="fascia-inputs">
+                    <input type="time" value="${o.ora_inizio}" class="form-control" data-id="${o.id}" data-field="ora_inizio">
+                    <span>—</span>
+                    <input type="time" value="${o.ora_fine}" class="form-control" data-id="${o.id}" data-field="ora_fine">
+                    <input type="checkbox" ${o.attivo?'checked':''} data-id="${o.id}" data-field="attivo" style="width:18px;height:18px;accent-color:var(--primary);margin-left:8px" title="Attivo">
+                </div>
+            </div>`;
+        });
+        
+        html += `</div></div>`;
+    }
+    document.getElementById('orariContainer').innerHTML = html;
+}
+
+async function salvaOrari() {
+    Utils.showLoading('Salvataggio orari...');
+    for (const o of orari) {
+        const inizio = document.querySelector(`input[data-id="${o.id}"][data-field="ora_inizio"]`).value;
+        const fine = document.querySelector(`input[data-id="${o.id}"][data-field="ora_fine"]`).value;
+        const attivo = document.querySelector(`input[data-id="${o.id}"][data-field="attivo"]`).checked;
+        await db.from('orari_standard').update({ora_inizio:inizio, ora_fine:fine, attivo}).eq('id',o.id);
+    }
+    Utils.hideLoading();
+    Utils.toast('Orari salvati','success');
+}
+
+// ========== BLOCCHI ==========
+async function caricaBlocchi() {
+    const { data } = await db.from('blocchi').select('*').order('data_inizio',{ascending:false});
+    blocchi = data||[];
+    if (blocchi.length===0) { document.getElementById('blocchiLista').innerHTML='<div class="empty-state"><h3>Nessun blocco</h3></div>'; return; }
+
+    let html = '<div class="table-container"><table><thead><tr><th>Tipo</th><th>Da</th><th>A</th><th>Orario</th><th>Motivo</th><th></th></tr></thead><tbody>';
+    for (const b of blocchi) {
+        html += `<tr>
+            <td><span class="badge ${b.tipo==='giornata'?'badge-danger':'badge-warning'}">${b.tipo}</span></td>
+            <td>${Utils.formatDate(b.data_inizio)}</td>
+            <td>${Utils.formatDate(b.data_fine)}</td>
+            <td>${b.tipo==='fascia'?(b.ora_inizio+' - '+b.ora_fine):'-'}</td>
+            <td>${Utils.escapeHtml(b.motivo||'-')}</td>
+            <td><button class="btn btn-sm btn-danger" onclick="eliminaBlocco('${b.id}')">Elimina</button></td>
+        </tr>`;
+    }
+    html += '</tbody></table></div>';
+    document.getElementById('blocchiLista').innerHTML = html;
+}
+
+function toggleBloccoFascia() {
+    document.getElementById('bloccoFasciaFields').classList.toggle('hidden', document.getElementById('bloccoTipo').value!=='fascia');
+}
+
+async function creaBlocco() {
+    const tipo = document.getElementById('bloccoTipo').value;
+    const ins = {
+        tipo, data_inizio: document.getElementById('bloccoDataInizio').value,
+        data_fine: document.getElementById('bloccoDataFine').value,
+        motivo: document.getElementById('bloccoMotivo').value||null,
+        creato_da: Auth.getId()
+    };
+    if (!ins.data_inizio || !ins.data_fine) { Utils.toast('Inserisci le date','warning'); return; }
+    if (tipo==='fascia') {
+        ins.ora_inizio = document.getElementById('bloccoOraInizio').value;
+        ins.ora_fine = document.getElementById('bloccoOraFine').value;
+        if (!ins.ora_inizio||!ins.ora_fine) { Utils.toast('Inserisci gli orari','warning'); return; }
+    }
+    await db.from('blocchi').insert(ins);
+    Utils.toast('Blocco creato','success');
+    Utils.closeModal('modalBlocco');
+    await caricaBlocchi();
+}
+
+async function eliminaBlocco(id) {
+    if (!confirm('Eliminare questo blocco?')) return;
+    await db.from('blocchi').delete().eq('id',id);
+    Utils.toast('Blocco eliminato','success');
+    await caricaBlocchi();
+}
+
+// ========== PARAMETRI ==========
+async function caricaParametri() {
+    const { data } = await db.from('impostazioni').select('*').order('chiave');
+    if (!data) return;
+    const labels = {
+        nome_negozio:'Nome negozio', indirizzo:'Indirizzo', telefono:'Telefono', email:'Email',
+        durata_slot:'Durata slot (min)', durata_appuntamento:'Durata appuntamento (min)',
+        buffer_appuntamenti:'Buffer tra appuntamenti (min)', anticipo_minimo:'Anticipo minimo (ore)',
+        anticipo_massimo:'Anticipo massimo (giorni)', orario_chiusura_giornata:'Ora chiusura giornata',
+        giorni_scadenza_passa_negozio:'Giorni scadenza "Passa in negozio"'
+    };
+    let html = '';
+    for (const p of data) {
+        const label = labels[p.chiave]||p.chiave;
+        html += `<div class="form-group"><label class="form-label">${label}</label><input type="text" class="form-control" value="${Utils.escapeHtml(p.valore)}" data-chiave="${p.chiave}"></div>`;
+    }
+    document.getElementById('parametriForm').innerHTML = html;
+}
+
+async function salvaParametri() {
+    Utils.showLoading('Salvataggio...');
+    const inputs = document.querySelectorAll('#parametriForm input[data-chiave]');
+    for (const inp of inputs) {
+        await db.from('impostazioni').update({valore:inp.value}).eq('chiave',inp.dataset.chiave);
+    }
+    Utils.hideLoading();
+    Utils.toast('Parametri salvati','success');
+}
+</script>
+</body>
+</html>

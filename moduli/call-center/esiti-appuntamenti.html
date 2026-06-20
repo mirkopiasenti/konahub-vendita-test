@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esiti Appuntamenti - Mirox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-layout">
+    <aside id="sidebar"></aside>
+    <main class="main-content">
+        <div style="margin-bottom:12px;padding:8px 0">
+            <a href="../../dashboard.html" style="color:var(--text-secondary);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Torna alla dashboard Mirox
+            </a>
+        </div>
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Esiti appuntamenti</h1>
+                <p class="page-subtitle">Esita gli appuntamenti dei clienti presentati</p>
+            </div>
+        </div>
+
+        <div class="tabs" style="margin-bottom:20px">
+            <button class="tab active" onclick="switchTab('da_esitare')">Da esitare <span class="tab-badge badge-warning" id="countDaEsitare">0</span></button>
+            <button class="tab" onclick="switchTab('esitati')">Già esitati</button>
+        </div>
+
+        <div id="loading" style="text-align:center;padding:40px"><div class="spinner"></div></div>
+        <div id="tabDaEsitare" class="hidden"></div>
+        <div id="tabEsitati" class="hidden"></div>
+    </main>
+</div>
+
+<!-- Modal Esito -->
+<div class="modal-overlay" id="modalEsito">
+    <div class="modal" style="max-width:400px">
+        <div class="modal-header"><h3 class="modal-title">Esita appuntamento</h3><button class="modal-close" onclick="Utils.closeModal('modalEsito')">&times;</button></div>
+        <div class="modal-body">
+            <p id="modalNome" style="font-weight:600;margin-bottom:16px"></p>
+            <div class="form-group">
+                <label class="form-label">Esito *</label>
+                <div style="display:flex;gap:12px">
+                    <button class="btn btn-success" style="flex:1;justify-content:center;padding:14px" onclick="selezionaEsito('vinta')">Vinta</button>
+                    <button class="btn btn-danger" style="flex:1;justify-content:center;padding:14px" onclick="selezionaEsito('persa')">Persa</button>
+                </div>
+            </div>
+            <div class="form-group"><label class="form-label">Dettagli (opzionale)</label><textarea id="modalDettagli" class="form-control" rows="2" placeholder="Note sull'esito..."></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Utils.closeModal('modalEsito')">Annulla</button>
+            <button class="btn btn-primary" id="btnSalvaEsito" onclick="salvaEsito()" disabled>Salva esito</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script src="js/notifiche.js"></script>
+<script>
+let currentTab = 'da_esitare';
+let selezionatoId = null;
+let selezionatoTipo = null; // 'appuntamento' o 'chiamata'
+let esitoScelto = null;
+
+(async () => {
+    const { data:{session} } = await db.auth.getSession();
+    if (!session) { window.location.href='../../index.html'; return; }
+    const { data:profilo } = await db.from('profili').select('*').eq('id',session.user.id).single();
+    if (!profilo) return;
+    Auth._profilo = profilo;
+    App.initSidebar('esiti_appuntamenti');
+    await Notifiche.init();
+    await caricaTutto();
+})();
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['da_esitare','esitati'][i]===tab));
+    document.getElementById('tabDaEsitare').classList.toggle('hidden', tab!=='da_esitare');
+    document.getElementById('tabEsitati').classList.toggle('hidden', tab!=='esitati');
+}
+
+async function caricaTutto() {
+    document.getElementById('loading').classList.remove('hidden');
+    await Promise.all([caricaDaEsitare(), caricaEsitati()]);
+    document.getElementById('loading').classList.add('hidden');
+}
+
+async function caricaDaEsitare() {
+    // 1. Appuntamenti presentati senza esito
+    const { data: appData } = await db.from('appuntamenti').select('*')
+        .eq('presentato','si')
+        .is('esito_finale', null)
+        .eq('stato','confermato')
+        .order('data_ora',{ascending:false});
+
+    // 2. Chiamate "passa in negozio" e "passa a cerea" presentati senza esito
+    const { data: chiData } = await db.from('chiamate').select('*')
+        .in('esito', ['passa_in_negozio','passa_a_cerea'])
+        .eq('passaggio_stato','passato')
+        .is('esito_finale', null)
+        .order('data_ora',{ascending:false});
+
+    // Unifica in un formato comune
+    const items = [];
+    for (const a of (appData||[])) {
+        items.push({
+            id: a.id, tipo: 'appuntamento', data_ora: a.data_ora,
+            nome: a.nome, cf_piva: a.codice_fiscale || '',
+            motivo: a.motivo,
+            fissato_da: a.fissato_da_nome || 'Online',
+            provenienza: 'Appuntamento'
+        });
+    }
+    for (const c of (chiData||[])) {
+        const prov = c.esito === 'passa_a_cerea' ? 'Cerea' : 'Negozio';
+        items.push({
+            id: c.id, tipo: 'chiamata', data_ora: c.data_ora,
+            nome: c.nome_cliente, cf_piva: c.cf_piva || '',
+            motivo: c.motivo_chiamata,
+            fissato_da: c.operatore_nome,
+            provenienza: prov
+        });
+    }
+
+    document.getElementById('countDaEsitare').textContent = items.length;
+    document.getElementById('tabDaEsitare').classList.remove('hidden');
+
+    if (items.length===0) {
+        document.getElementById('tabDaEsitare').innerHTML = '<div class="empty-state"><h3>Nessun cliente da esitare</h3><p>I clienti presentati appariranno qui</p></div>';
+        return;
+    }
+
+    let html = '<div class="table-container"><table><thead><tr><th>Data</th><th>Cliente</th><th>CF/PIVA</th><th>Motivo</th><th>Provenienza</th><th>Operatore</th><th></th></tr></thead><tbody>';
+    for (const a of items) {
+        const provBadge = a.provenienza === 'Cerea' 
+            ? '<span class="badge" style="background:#E8F5E9;color:#2E7D32;font-size:11px">Cerea</span>' 
+            : a.provenienza === 'Negozio' 
+            ? '<span class="badge" style="background:#FFF3E0;color:#E65100;font-size:11px">Negozio</span>' 
+            : '<span class="badge badge-info" style="font-size:11px">Appuntamento</span>';
+        html += `<tr>
+            <td>${Utils.formatDateTime(a.data_ora)}</td>
+            <td style="font-weight:600">${Utils.escapeHtml(a.nome)}</td>
+            <td style="font-size:12px">${Utils.escapeHtml(a.cf_piva)}</td>
+            <td>${Utils.escapeHtml(a.motivo||'')}</td>
+            <td>${provBadge}</td>
+            <td>${Utils.escapeHtml(a.fissato_da)}</td>
+            <td><button class="btn btn-sm btn-primary" onclick="apriEsito('${a.id}','${Utils.escapeHtml(a.nome).replace(/'/g,"\\'")}','${a.tipo}')">Esita</button></td>
+        </tr>`;
+    }
+    html += '</tbody></table></div>';
+    document.getElementById('tabDaEsitare').innerHTML = html;
+    if (currentTab!=='da_esitare') document.getElementById('tabDaEsitare').classList.add('hidden');
+}
+
+async function caricaEsitati() {
+    // 1. Appuntamenti esitati
+    const { data: appData } = await db.from('appuntamenti').select('*')
+        .eq('presentato','si')
+        .not('esito_finale','is',null)
+        .order('esitato_at',{ascending:false})
+        .limit(100);
+
+    // 2. Chiamate esitate
+    const { data: chiData } = await db.from('chiamate').select('*')
+        .in('esito', ['passa_in_negozio','passa_a_cerea'])
+        .eq('passaggio_stato','passato')
+        .not('esito_finale','is',null)
+        .order('esitato_at',{ascending:false})
+        .limit(100);
+
+    const items = [];
+    for (const a of (appData||[])) {
+        items.push({
+            data_ora: a.data_ora, nome: a.nome, cf_piva: a.codice_fiscale || '',
+            motivo: a.motivo,
+            fissato_da: a.fissato_da_nome || 'Online', provenienza: 'Appuntamento',
+            esito_finale: a.esito_finale, dettagli_esito: a.dettagli_esito, esitato_at: a.esitato_at
+        });
+    }
+    for (const c of (chiData||[])) {
+        const prov = c.esito === 'passa_a_cerea' ? 'Cerea' : 'Negozio';
+        items.push({
+            data_ora: c.data_ora, nome: c.nome_cliente, cf_piva: c.cf_piva || '',
+            motivo: c.motivo_chiamata,
+            fissato_da: c.operatore_nome, provenienza: prov,
+            esito_finale: c.esito_finale, dettagli_esito: c.dettagli_esito, esitato_at: c.esitato_at
+        });
+    }
+
+    // Ordina per data esitazione
+    items.sort((a,b) => new Date(b.esitato_at) - new Date(a.esitato_at));
+
+    document.getElementById('tabEsitati').classList.remove('hidden');
+
+    if (items.length===0) {
+        document.getElementById('tabEsitati').innerHTML = '<div class="empty-state"><h3>Nessun esito registrato</h3></div>';
+        if (currentTab!=='esitati') document.getElementById('tabEsitati').classList.add('hidden');
+        return;
+    }
+
+    let html = '<div class="table-container"><table><thead><tr><th>Data</th><th>Cliente</th><th>CF/PIVA</th><th>Motivo</th><th>Provenienza</th><th>Operatore</th><th>Esito</th><th>Dettagli</th></tr></thead><tbody>';
+    for (const a of items) {
+        const provBadge = a.provenienza === 'Cerea' 
+            ? '<span class="badge" style="background:#E8F5E9;color:#2E7D32;font-size:11px">Cerea</span>' 
+            : a.provenienza === 'Negozio' 
+            ? '<span class="badge" style="background:#FFF3E0;color:#E65100;font-size:11px">Negozio</span>' 
+            : '<span class="badge badge-info" style="font-size:11px">Appuntamento</span>';
+        html += `<tr>
+            <td>${Utils.formatDateTime(a.data_ora)}</td>
+            <td style="font-weight:600">${Utils.escapeHtml(a.nome)}</td>
+            <td style="font-size:12px">${Utils.escapeHtml(a.cf_piva)}</td>
+            <td>${Utils.escapeHtml(a.motivo||'')}</td>
+            <td>${provBadge}</td>
+            <td>${Utils.escapeHtml(a.fissato_da)}</td>
+            <td><span class="badge ${a.esito_finale==='vinta'?'badge-success':'badge-danger'}">${a.esito_finale==='vinta'?'Vinta':'Persa'}</span></td>
+            <td style="font-size:12px">${Utils.escapeHtml(a.dettagli_esito||'-')}</td>
+        </tr>`;
+    }
+    html += '</tbody></table></div>';
+    document.getElementById('tabEsitati').innerHTML = html;
+    if (currentTab!=='esitati') document.getElementById('tabEsitati').classList.add('hidden');
+}
+
+function apriEsito(id, nome, tipo) {
+    selezionatoId = id;
+    selezionatoTipo = tipo;
+    esitoScelto = null;
+    document.getElementById('modalNome').textContent = nome;
+    document.getElementById('modalDettagli').value = '';
+    document.getElementById('btnSalvaEsito').disabled = true;
+    document.querySelectorAll('#modalEsito .btn-success, #modalEsito .btn-danger').forEach(b => b.style.opacity='1');
+    Utils.openModal('modalEsito');
+}
+
+function selezionaEsito(esito) {
+    esitoScelto = esito;
+    document.getElementById('btnSalvaEsito').disabled = false;
+    const btns = document.querySelectorAll('#modalEsito .modal-body .btn-success, #modalEsito .modal-body .btn-danger');
+    btns.forEach(b => b.style.opacity='0.4');
+    if (esito==='vinta') btns[0].style.opacity='1';
+    else btns[1].style.opacity='1';
+}
+
+async function salvaEsito() {
+    if (!esitoScelto) return;
+    Utils.showLoading('Salvataggio...');
+
+    const updateData = {
+        esito_finale: esitoScelto,
+        dettagli_esito: document.getElementById('modalDettagli').value.trim()||null,
+        esitato_at: new Date().toISOString()
+    };
+
+    // Salva nella tabella corretta
+    const tabella = selezionatoTipo === 'chiamata' ? 'chiamate' : 'appuntamenti';
+    const { error } = await db.from(tabella).update(updateData).eq('id', selezionatoId);
+
+    Utils.hideLoading();
+    if (error) { Utils.toast('Errore: '+error.message,'danger'); return; }
+    Utils.toast('Esito salvato','success');
+    Utils.closeModal('modalEsito');
+    await caricaTutto();
+}
+</script>
+</body>
+</html>

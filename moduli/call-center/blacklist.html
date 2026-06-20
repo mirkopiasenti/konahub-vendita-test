@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black List - Mirox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-layout">
+    <aside id="sidebar"></aside>
+    <main class="main-content">
+        <div style="margin-bottom:12px;padding:8px 0">
+            <a href="../../dashboard.html" style="color:var(--text-secondary);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Torna alla dashboard Mirox
+            </a>
+        </div>
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Black List</h1>
+                <p class="page-subtitle">Clienti da non contattare</p>
+            </div>
+            <button class="btn btn-primary" onclick="Utils.openModal('modalAggiungi')">+ Aggiungi</button>
+        </div>
+        <div class="card">
+            <div class="form-group" style="margin-bottom:16px">
+                <input type="search" id="searchBox" class="form-control" placeholder="Cerca per nome o CF..." oninput="filtro()">
+            </div>
+            <div id="loading" style="text-align:center;padding:40px"><div class="spinner"></div></div>
+            <div id="lista" class="hidden"></div>
+            <div id="vuoto" class="hidden empty-state"><h3>Black List vuota</h3></div>
+        </div>
+    </main>
+</div>
+
+<div class="modal-overlay" id="modalAggiungi">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Aggiungi a Black List</h3>
+            <button class="modal-close" onclick="Utils.closeModal('modalAggiungi')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group"><label class="form-label">Ragione Sociale *</label><input type="text" id="blNome" placeholder="Ragione sociale o nome cliente" class="form-control"></div>
+            <div class="form-row">
+                <div class="form-group"><label class="form-label">CF / P.IVA *</label><input type="text" id="blCf" class="form-control uppercase" maxlength="16"></div>
+                <div class="form-group"><label class="form-label">Cellulare</label><input type="tel" id="blCell" class="form-control"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Motivo</label><input type="text" id="blMotivo" class="form-control"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Utils.closeModal('modalAggiungi')">Annulla</button>
+            <button class="btn btn-danger" onclick="aggiungi()">Aggiungi a Black List</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script src="js/notifiche.js"></script>
+<script>
+let items = [];
+
+(async () => {
+    const { data:{session} } = await db.auth.getSession();
+    if (!session) { window.location.href='../../index.html'; return; }
+    const { data:profilo } = await db.from('profili').select('*').eq('id',session.user.id).single();
+    if (!profilo) return;
+    Auth._profilo = profilo;
+    App.initSidebar('blacklist');
+    await Notifiche.init();
+    await carica();
+})();
+
+async function carica() {
+    document.getElementById('loading').classList.remove('hidden');
+    const { data } = await db.from('blacklist').select('*').order('created_at',{ascending:false});
+    document.getElementById('loading').classList.add('hidden');
+    items = data || [];
+    filtro();
+}
+
+function filtro() {
+    const q = document.getElementById('searchBox').value.toLowerCase();
+    const f = q ? items.filter(i => (i.nome_cognome||'').toLowerCase().includes(q) || (i.cf_piva||'').toLowerCase().includes(q)) : items;
+
+    if (f.length === 0) {
+        document.getElementById('vuoto').classList.remove('hidden');
+        document.getElementById('lista').classList.add('hidden');
+        return;
+    }
+    document.getElementById('vuoto').classList.add('hidden');
+    document.getElementById('lista').classList.remove('hidden');
+
+    let html = '<div class="table-container"><table><thead><tr><th>Nome</th><th>CF/PIVA</th><th>Cellulare</th><th>Motivo</th><th>Data</th><th></th></tr></thead><tbody>';
+    for (const i of f) {
+        html += `<tr>
+            <td style="font-weight:600">${Utils.escapeHtml(i.nome_cognome||'')}</td>
+            <td>${Utils.escapeHtml(i.cf_piva||'')}</td>
+            <td>${Utils.escapeHtml(i.cellulare||'-')}</td>
+            <td>${Utils.escapeHtml(i.motivo||'-')}</td>
+            <td>${Utils.formatDate(i.created_at)}</td>
+            <td>${Auth.isAdmin()?'<button class="btn btn-sm btn-danger" onclick="rimuovi(\''+i.id+'\')">Rimuovi</button>':''}</td>
+        </tr>`;
+    }
+    html += '</tbody></table></div>';
+    document.getElementById('lista').innerHTML = html;
+}
+
+async function aggiungi() {
+    const nome = document.getElementById('blNome').value.trim();
+    const cf = document.getElementById('blCf').value.trim().toUpperCase();
+    if (!nome || !cf) { Utils.toast('Nome e CF obbligatori','warning'); return; }
+
+    Utils.showLoading('Salvataggio...');
+    const { error } = await db.from('blacklist').insert({
+        nome_cognome: nome, cf_piva: cf,
+        cellulare: document.getElementById('blCell').value.trim() || null,
+        motivo: document.getElementById('blMotivo').value.trim() || null,
+        inserito_da: Auth.getId()
+    });
+    Utils.hideLoading();
+    if (error) { Utils.toast('Errore: '+error.message,'danger'); return; }
+    Utils.toast('Aggiunto alla Black List','success');
+    Utils.closeModal('modalAggiungi');
+    document.getElementById('blNome').value=''; document.getElementById('blCf').value='';
+    document.getElementById('blCell').value=''; document.getElementById('blMotivo').value='';
+    await carica();
+}
+
+async function rimuovi(id) {
+    if (!confirm('Sei sicuro di voler rimuovere questo record dalla Black List?')) return;
+    await db.from('blacklist').delete().eq('id',id);
+    Utils.toast('Rimosso','success');
+    await carica();
+}
+</script>
+</body>
+</html>

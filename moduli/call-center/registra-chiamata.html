@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registra Chiamata - Mirox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+
+        <main class="main-content">
+        <div style="margin-bottom:12px;padding:8px 0">
+            <a href="../../dashboard.html" style="color:var(--text-secondary);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Torna alla dashboard Mirox
+            </a>
+        </div>
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Registra chiamata</h1>
+                    <p class="page-subtitle">Cerca cliente e registra l'esito della chiamata</p>
+                </div>
+            </div>
+
+            <!-- STEP 1: Ricerca CF/PIVA -->
+            <div class="card" id="stepRicerca">
+                <div style="display: flex; gap: 12px; align-items: flex-end;">
+                    <div class="form-group" style="flex: 1; margin: 0;">
+                        <label class="form-label">Codice Fiscale / Partita IVA</label>
+                        <input type="text" id="cfpiva" class="form-control uppercase" 
+                               placeholder="Inserisci CF o P.IVA e premi Cerca" 
+                               maxlength="16"
+                               onkeydown="if(event.key==='Enter') cercaCliente()">
+                    </div>
+                    <button class="btn btn-primary" onclick="cercaCliente()" id="btnCerca">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        Cerca
+                    </button>
+                </div>
+            </div>
+
+            <!-- BLACKLIST WARNING (nascosto) -->
+            <div id="blacklistWarning" class="hidden">
+                <div class="alert alert-danger">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <strong>ATTENZIONE:</strong> Questo cliente è in Black List. Non contattare.
+                </div>
+            </div>
+
+            <!-- STEP 2: Info Cliente (nascosto) -->
+            <div id="stepCliente" class="hidden">
+                
+                <!-- Ultima chiamata (nascosto finché non trovata) -->
+                <div id="boxUltimaChiamata" class="hidden" style="margin-bottom: 16px;">
+                    <div style="background: linear-gradient(135deg, #5b8bd4 0%, #7ba3e0 100%); color: white; border-radius: var(--radius-lg); padding: 20px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                            <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px;">📞</div>
+                            <strong style="font-size: 15px;">Ultima chiamata</strong>
+                        </div>
+                        <div id="ultimaChiamataContent" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+                    </div>
+                </div>
+
+                <!-- Dati cliente TROVATO -->
+                <div id="clienteTrovato" class="card hidden">
+                    <div class="card-header">
+                        <h3 class="card-title">Dati cliente</h3>
+                        <div style="display:flex;gap:8px;align-items:center">
+                            <span class="badge badge-success">In anagrafica</span>
+                            <button class="btn btn-sm btn-secondary" onclick="abilitaModificaCliente()" id="btnModificaCliente">Modifica dati</button>
+                        </div>
+                    </div>
+                    <!-- Vista lettura -->
+                    <div id="clienteView" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                        <div><span class="text-sm text-secondary">Cluster</span><div class="font-semibold" id="viewCluster">-</div></div>
+                        <div><span class="text-sm text-secondary">Ragione Sociale</span><div class="font-semibold" id="viewRagioneSociale">-</div></div>
+                        <div><span class="text-sm text-secondary">Referente</span><div class="font-semibold" id="viewNomeReferente">-</div></div>
+                        <div><span class="text-sm text-secondary">Cellulare</span><div class="font-semibold" id="viewCellulare">-</div></div>
+                        <div><span class="text-sm text-secondary">Comune</span><div class="font-semibold" id="viewComune">-</div></div>
+                        <div><span class="text-sm text-secondary">Via</span><div class="font-semibold" id="viewVia">-</div></div>
+                    </div>
+                    <!-- Vista modifica (nascosta) -->
+                    <div id="clienteEdit" class="hidden">
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">Cluster *</label>
+                                <select id="editCluster" class="form-control"><option value="">Seleziona...</option><option value="Consumer">Consumer</option><option value="Business">Business</option></select>
+                            </div>
+                            <div class="form-group"><label class="form-label">Ragione Sociale *</label><input type="text" id="editRagioneSociale" class="form-control uppercase"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">Nome Referente *</label><input type="text" id="editNomeReferente" class="form-control uppercase"></div>
+                            <div class="form-group"><label class="form-label">Cellulare *</label><input type="tel" id="editCellulare" class="form-control"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">Provincia *</label><input type="text" id="editProvincia" class="form-control uppercase" maxlength="2"></div>
+                            <div class="form-group"><label class="form-label">Comune *</label><input type="text" id="editComune" class="form-control uppercase"></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="form-label">Via *</label><input type="text" id="editVia" class="form-control uppercase"></div>
+                            <div class="form-group"><label class="form-label">Civico *</label><input type="text" id="editCivico" class="form-control uppercase"></div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:8px">
+                            <button class="btn btn-primary btn-sm" onclick="salvaModificaCliente()">Salva modifiche</button>
+                            <button class="btn btn-secondary btn-sm" onclick="annullaModificaCliente()">Annulla</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form NUOVO cliente -->
+                <div id="clienteNuovo" class="card hidden">
+                    <div class="card-header">
+                        <h3 class="card-title">Nuovo cliente</h3>
+                        <span class="badge badge-warning">Non in anagrafica</span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Cluster *</label>
+                            <select id="nuovoCluster" class="form-control" required>
+                                <option value="">Seleziona...</option>
+                                <option value="Consumer">Consumer</option>
+                                <option value="Business">Business</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ragione Sociale *</label>
+                            <input type="text" id="nuovoRagioneSociale" class="form-control uppercase" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Nome Referente *</label>
+                            <input type="text" id="nuovoNomeReferente" class="form-control uppercase">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Cellulare *</label>
+                            <input type="tel" id="nuovoCellulare" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Provincia *</label>
+                            <input type="text" id="nuovoProvincia" class="form-control uppercase" maxlength="2">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Comune *</label>
+                            <input type="text" id="nuovoComune" class="form-control uppercase">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Via *</label>
+                            <input type="text" id="nuovoVia" class="form-control uppercase">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Civico *</label>
+                            <input type="text" id="nuovoCivico" class="form-control uppercase">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Registrazione chiamata -->
+                <div class="card">
+                    <h3 class="card-title mb-2">Registra chiamata</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Copertura *</label>
+                            <select id="copertura" class="form-control">
+                                <option value="">Seleziona...</option>
+                                <option value="FTTH">FTTH</option>
+                                <option value="FWA">FWA</option>
+                                <option value="FTTC">FTTC</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Motivo chiamata *</label>
+                            <select id="motivoChiamata" class="form-control">
+                                <option value="">Seleziona...</option>
+                                <option value="Telefono CB">Telefono CB</option>
+                                <option value="Fisso">Fisso</option>
+                                <option value="P.iva">P.iva</option>
+                                <option value="Energy">Energy</option>
+                                <option value="Duferco">Duferco</option>
+                                <option value="Altro">Altro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- ESITO LIVELLO 1 -->
+                    <div class="form-group">
+                        <label class="form-label">Esito *</label>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-success btn-lg" style="flex: 1; justify-content: center;" onclick="selezionaEsito1('risposto')" id="btnRisposto">
+                                ✓ Risposto
+                            </button>
+                            <button class="btn btn-danger btn-lg" style="flex: 1; justify-content: center;" onclick="selezionaEsito1('non_risposto')" id="btnNonRisposto">
+                                ✗ Non risposto
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ESITO LIVELLO 2 (nascosto, appare dopo "Risposto") -->
+                    <div id="esitoLivello2" class="hidden">
+                        <div class="form-group">
+                            <label class="form-label">Dettaglio esito</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button class="btn btn-secondary" onclick="selezionaEsito2('non_interessato')" id="btn_non_interessato" style="justify-content: center; padding: 14px;">
+                                    Non interessato
+                                </button>
+                                <button class="btn btn-secondary" onclick="selezionaEsito2('passa_in_negozio')" id="btn_passa_in_negozio" style="justify-content: center; padding: 14px;">
+                                    Passa in negozio
+                                </button>
+                                <button class="btn btn-secondary" onclick="selezionaEsito2('ricontattare')" id="btn_ricontattare" style="justify-content: center; padding: 14px;">
+                                    Ricontattare
+                                </button>
+                                <button class="btn btn-secondary" onclick="selezionaEsito2('passa_a_cerea')" id="btn_passa_a_cerea" style="justify-content: center; padding: 14px;">
+                                    Passa a Cerea
+                                </button>
+                                <button class="btn btn-secondary" onclick="selezionaEsito2('appuntamento')" id="btn_appuntamento" style="justify-content: center; padding: 14px; background: var(--primary-bg); border-color: var(--primary); color: var(--primary); grid-column: 1 / -1;">
+                                    📅 Appuntamento
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Campi per "Ricontattare" -->
+                        <div id="campiRicontatto" class="hidden">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Data ricontatto *</label>
+                                    <input type="date" id="dataRicontatto" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Fascia *</label>
+                                    <select id="fasciaRicontatto" class="form-control">
+                                        <option value="">Seleziona...</option>
+                                        <option value="Mattina">Mattina</option>
+                                        <option value="Pomeriggio">Pomeriggio</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Note -->
+                    <div class="form-group">
+                        <label class="form-label">Note</label>
+                        <textarea id="note" class="form-control" rows="2" placeholder="Eventuali note..."></textarea>
+                    </div>
+
+                    <!-- Pulsante salva -->
+                    <button class="btn btn-primary btn-lg w-full" style="justify-content: center;" 
+                            onclick="salvaChiamata()" id="btnSalva" disabled>
+                        Salva chiamata
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+<script src="js/notifiche.js"></script>
+    <script>
+        // ==================== STATE ====================
+        let clienteEsistente = null;
+        let anagraficaId = null;
+        let esitoSelezionato = null;
+
+        // ==================== INIT ====================
+        let origineRilavorazione = null; // Dati dalla rilavorazione da chiudere dopo il salvataggio
+
+        (async () => {
+            const { data:{session} } = await db.auth.getSession();
+            if (!session) { window.location.href='../../index.html'; return; }
+            const { data:profilo } = await db.from('profili').select('*').eq('id',session.user.id).single();
+            if (!profilo) return;
+            Auth._profilo = profilo;
+            App.initSidebar('registra_chiamata');
+    await Notifiche.init();
+            document.getElementById('dataRicontatto').min = Utils.today();
+
+            // Check se arriviamo da "Ricontatta" (rilavorazione)
+            const ricontattaRaw = sessionStorage.getItem('mirox_ricontatta');
+            if (ricontattaRaw) {
+                const ricontattaDati = JSON.parse(ricontattaRaw);
+                sessionStorage.removeItem('mirox_ricontatta');
+                
+                // Salva i dati origine per chiuderli dopo il salvataggio
+                if (ricontattaDati.chiamata_origine_id) {
+                    origineRilavorazione = {
+                        id: ricontattaDati.chiamata_origine_id,
+                        tipo: ricontattaDati.tipo_origine
+                    };
+                }
+                
+                // Pre-compila CF e avvia ricerca
+                document.getElementById('cfpiva').value = ricontattaDati.cf_piva || '';
+                await cercaCliente();
+                
+                // Pre-seleziona copertura e motivo
+                if (ricontattaDati.copertura) document.getElementById('copertura').value = ricontattaDati.copertura;
+                if (ricontattaDati.motivo_chiamata) document.getElementById('motivoChiamata').value = ricontattaDati.motivo_chiamata;
+            } else {
+                document.getElementById('cfpiva').focus();
+            }
+        })();
+
+        // ==================== RICERCA CLIENTE ====================
+        function validaCfPiva(val) {
+            // P.IVA: esattamente 11 cifre
+            if (/^\d{11}$/.test(val)) return { valido: true, tipo: 'P.IVA' };
+            // Codice Fiscale: 16 caratteri, formato LLLLLLNNLNNLNNNL
+            if (val.length === 16 && /^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/.test(val)) return { valido: true, tipo: 'CF' };
+            // Non valido
+            if (val.length === 11) return { valido: false, errore: 'P.IVA non valida: deve contenere solo 11 cifre numeriche' };
+            if (val.length === 16) return { valido: false, errore: 'Codice Fiscale non valido: formato non corretto (es: RSSMRA80A01H501Z)' };
+            return { valido: false, errore: 'Inserisci un Codice Fiscale (16 caratteri) o una Partita IVA (11 cifre)' };
+        }
+
+        async function cercaCliente() {
+            const cfpiva = document.getElementById('cfpiva').value.trim().toUpperCase();
+            if (!cfpiva) {
+                Utils.toast('Inserisci il Codice Fiscale o la Partita IVA', 'warning');
+                return;
+            }
+
+            // Validazione formato
+            const check = validaCfPiva(cfpiva);
+            if (!check.valido) {
+                Utils.toast(check.errore, 'warning');
+                return;
+            }
+
+            // Reset dati ricerca precedente
+            clienteEsistente = null;
+            anagraficaId = null;
+            esitoSelezionato = null;
+            document.getElementById('clienteTrovato').classList.add('hidden');
+            document.getElementById('clienteNuovo').classList.add('hidden');
+            document.getElementById('boxUltimaChiamata').classList.add('hidden');
+            document.getElementById('blacklistWarning').classList.add('hidden');
+            document.getElementById('stepCliente').classList.add('hidden');
+            document.getElementById('esitoLivello2').classList.add('hidden');
+            document.getElementById('campiRicontatto').classList.add('hidden');
+            document.getElementById('copertura').value = '';
+            document.getElementById('motivoChiamata').value = '';
+            document.getElementById('note').value = '';
+            document.getElementById('btnRisposto').style.opacity = '';
+            document.getElementById('btnNonRisposto').style.opacity = '';
+            document.getElementById('btnSalva').disabled = true;
+            document.getElementById('btnSalva').textContent = 'Salva chiamata';
+            document.getElementById('clienteView').classList.remove('hidden');
+            document.getElementById('clienteEdit').classList.add('hidden');
+            document.getElementById('btnModificaCliente').classList.remove('hidden');
+            // Reset campi nuovo cliente
+            document.getElementById('nuovoCluster').value = '';
+            document.getElementById('nuovoRagioneSociale').value = '';
+            document.getElementById('nuovoNomeReferente').value = '';
+            document.getElementById('nuovoCellulare').value = '';
+            document.getElementById('nuovoProvincia').value = '';
+            document.getElementById('nuovoComune').value = '';
+            document.getElementById('nuovoVia').value = '';
+            document.getElementById('nuovoCivico').value = '';
+            resetEsito2();
+
+            Utils.showLoading('Ricerca cliente...');
+
+            try {
+                // 1. Check BlackList
+                const { data: bl } = await db
+                    .from('blacklist')
+                    .select('*')
+                    .ilike('cf_piva', cfpiva)
+                    .limit(1);
+
+                if (bl && bl.length > 0) {
+                    Utils.hideLoading();
+                    document.getElementById('blacklistWarning').classList.remove('hidden');
+                    document.getElementById('stepCliente').classList.add('hidden');
+                    return;
+                }
+                document.getElementById('blacklistWarning').classList.add('hidden');
+
+                // 2. Cerca in Anagrafica
+                const { data: anagrafica } = await db
+                    .from('anagrafica')
+                    .select('*')
+                    .ilike('cf_piva', cfpiva)
+                    .limit(1);
+
+                if (anagrafica && anagrafica.length > 0) {
+                    clienteEsistente = anagrafica[0];
+                    anagraficaId = anagrafica[0].id;
+                    mostraClienteTrovato(anagrafica[0]);
+                } else {
+                    clienteEsistente = null;
+                    anagraficaId = null;
+                    mostraNuovoCliente();
+                }
+
+                // 3. Cerca ultima chiamata
+                await caricaUltimaChiamata(cfpiva);
+
+                document.getElementById('stepCliente').classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+                Utils.toast('Errore nella ricerca', 'danger');
+            } finally {
+                Utils.hideLoading();
+            }
+        }
+
+        function mostraClienteTrovato(cliente) {
+            document.getElementById('clienteTrovato').classList.remove('hidden');
+            document.getElementById('clienteNuovo').classList.add('hidden');
+
+            document.getElementById('viewCluster').textContent = cliente.cluster || '-';
+            document.getElementById('viewRagioneSociale').textContent = cliente.ragione_sociale || '-';
+            document.getElementById('viewNomeReferente').textContent = cliente.nome_referente || '-';
+            document.getElementById('viewCellulare').textContent = cliente.cellulare || '-';
+            document.getElementById('viewComune').textContent = cliente.comune || '-';
+            document.getElementById('viewVia').textContent = (cliente.via || '') + ' ' + (cliente.civico || '');
+        }
+
+        function mostraNuovoCliente() {
+            document.getElementById('clienteTrovato').classList.add('hidden');
+            document.getElementById('clienteNuovo').classList.remove('hidden');
+        }
+
+        // Fix 6: Modifica dati cliente esistente
+        function abilitaModificaCliente() {
+            document.getElementById('clienteView').classList.add('hidden');
+            document.getElementById('clienteEdit').classList.remove('hidden');
+            document.getElementById('btnModificaCliente').classList.add('hidden');
+            // Popola i campi edit con i dati attuali
+            document.getElementById('editCluster').value = clienteEsistente.cluster || '';
+            document.getElementById('editRagioneSociale').value = clienteEsistente.ragione_sociale || '';
+            document.getElementById('editNomeReferente').value = clienteEsistente.nome_referente || '';
+            document.getElementById('editCellulare').value = clienteEsistente.cellulare || '';
+            document.getElementById('editProvincia').value = clienteEsistente.provincia || '';
+            document.getElementById('editComune').value = clienteEsistente.comune || '';
+            document.getElementById('editVia').value = clienteEsistente.via || '';
+            document.getElementById('editCivico').value = clienteEsistente.civico || '';
+        }
+
+        function annullaModificaCliente() {
+            document.getElementById('clienteView').classList.remove('hidden');
+            document.getElementById('clienteEdit').classList.add('hidden');
+            document.getElementById('btnModificaCliente').classList.remove('hidden');
+        }
+
+        async function salvaModificaCliente() {
+            const updates = {
+                cluster: document.getElementById('editCluster').value || null,
+                ragione_sociale: document.getElementById('editRagioneSociale').value.trim().toUpperCase() || null,
+                nome_referente: document.getElementById('editNomeReferente').value.trim().toUpperCase() || null,
+                cellulare: document.getElementById('editCellulare').value.trim() || null,
+                provincia: document.getElementById('editProvincia').value.trim().toUpperCase() || null,
+                comune: document.getElementById('editComune').value.trim().toUpperCase() || null,
+                via: document.getElementById('editVia').value.trim().toUpperCase() || null,
+                civico: document.getElementById('editCivico').value.trim().toUpperCase() || null
+            };
+
+            Utils.showLoading('Salvataggio...');
+            const { error } = await db.from('anagrafica').update(updates).eq('id', clienteEsistente.id);
+            Utils.hideLoading();
+
+            if (error) { Utils.toast('Errore: ' + error.message, 'danger'); return; }
+
+            // Aggiorna il client locale
+            Object.assign(clienteEsistente, updates);
+            mostraClienteTrovato(clienteEsistente);
+            annullaModificaCliente();
+            Utils.toast('Dati cliente aggiornati', 'success');
+        }
+
+        async function caricaUltimaChiamata(cfpiva) {
+            const { data } = await db
+                .from('chiamate')
+                .select('*')
+                .ilike('cf_piva', cfpiva)
+                .order('data_ora', { ascending: false })
+                .limit(1);
+
+            const box = document.getElementById('boxUltimaChiamata');
+            const content = document.getElementById('ultimaChiamataContent');
+
+            if (data && data.length > 0) {
+                const c = data[0];
+                const esitoLabel = {
+                    'non_risposto': 'Non risposto',
+                    'non_interessato': 'Non interessato',
+                    'passa_in_negozio': 'Passa in negozio',
+                    'ricontattare': 'Ricontattare',
+                    'appuntamento': 'Appuntamento',
+                    'passa_a_cerea': 'Passa a Cerea'
+                };
+                content.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 8px;">
+                        <div style="font-size: 11px; opacity: 0.8;">Data</div>
+                        <div style="font-weight: 600;">${Utils.formatDateTime(c.data_ora)}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 8px;">
+                        <div style="font-size: 11px; opacity: 0.8;">Operatore</div>
+                        <div style="font-weight: 600;">${Utils.escapeHtml(c.operatore_nome)}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 8px;">
+                        <div style="font-size: 11px; opacity: 0.8;">Esito</div>
+                        <div style="font-weight: 600;">${esitoLabel[c.esito] || c.esito}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 8px;">
+                        <div style="font-size: 11px; opacity: 0.8;">Motivo</div>
+                        <div style="font-weight: 600;">${Utils.escapeHtml(c.motivo_chiamata) || '-'}</div>
+                    </div>
+                    ${c.note ? `<div style="grid-column: 1/-1; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px;">
+                        <div style="font-size: 11px; opacity: 0.8;">Note</div>
+                        <div>${Utils.escapeHtml(c.note)}</div>
+                    </div>` : ''}
+                `;
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
+        // ==================== ESITI ====================
+        function selezionaEsito1(esito) {
+            // Reset
+            document.getElementById('btnRisposto').style.opacity = '0.5';
+            document.getElementById('btnNonRisposto').style.opacity = '0.5';
+
+            if (esito === 'risposto') {
+                document.getElementById('btnRisposto').style.opacity = '1';
+                document.getElementById('esitoLivello2').classList.remove('hidden');
+                esitoSelezionato = null; // Aspetta livello 2
+                document.getElementById('btnSalva').disabled = true;
+            } else {
+                document.getElementById('btnNonRisposto').style.opacity = '1';
+                document.getElementById('esitoLivello2').classList.add('hidden');
+                document.getElementById('campiRicontatto').classList.add('hidden');
+                esitoSelezionato = 'non_risposto';
+                document.getElementById('btnSalva').disabled = false;
+            }
+
+            resetEsito2();
+        }
+
+        function selezionaEsito2(esito) {
+            resetEsito2();
+            esitoSelezionato = esito;
+
+            // Evidenzia bottone selezionato
+            const btn = document.getElementById('btn_' + esito);
+            if (btn) {
+                btn.style.background = 'var(--primary)';
+                btn.style.color = 'white';
+                btn.style.borderColor = 'var(--primary)';
+            }
+
+            // Mostra campi extra per "ricontattare"
+            if (esito === 'ricontattare') {
+                document.getElementById('campiRicontatto').classList.remove('hidden');
+            } else {
+                document.getElementById('campiRicontatto').classList.add('hidden');
+            }
+
+            // Per "appuntamento", apriremo il calendario dopo il salvataggio
+            document.getElementById('btnSalva').disabled = false;
+
+            if (esito === 'appuntamento') {
+                document.getElementById('btnSalva').textContent = 'Salva e scegli data appuntamento →';
+            } else {
+                document.getElementById('btnSalva').textContent = 'Salva chiamata';
+            }
+        }
+
+        function resetEsito2() {
+            ['non_interessato', 'passa_in_negozio', 'ricontattare', 'appuntamento', 'passa_a_cerea'].forEach(e => {
+                const btn = document.getElementById('btn_' + e);
+                if (btn) {
+                    btn.style.background = '';
+                    btn.style.color = '';
+                    btn.style.borderColor = '';
+                }
+            });
+            // Ripristina stile speciale appuntamento
+            const btnApp = document.getElementById('btn_appuntamento');
+            if (btnApp) {
+                btnApp.style.background = 'var(--primary-bg)';
+                btnApp.style.borderColor = 'var(--primary)';
+                btnApp.style.color = 'var(--primary)';
+            }
+        }
+
+        // ==================== SALVATAGGIO ====================
+        async function salvaChiamata() {
+            if (!esitoSelezionato) {
+                Utils.toast('Seleziona un esito', 'warning');
+                return;
+            }
+
+            const cfpiva = document.getElementById('cfpiva').value.trim().toUpperCase();
+            const motivo = document.getElementById('motivoChiamata').value;
+            const copertura = document.getElementById('copertura').value;
+
+            if (!motivo) {
+                Utils.toast('Seleziona il motivo della chiamata', 'warning');
+                return;
+            }
+
+            if (!copertura) {
+                Utils.toast('Seleziona la copertura', 'warning');
+                return;
+            }
+
+            // Validazione ricontatto
+            if (esitoSelezionato === 'ricontattare') {
+                if (!document.getElementById('dataRicontatto').value || !document.getElementById('fasciaRicontatto').value) {
+                    Utils.toast('Compila data e fascia per il ricontatto', 'warning');
+                    return;
+                }
+            }
+
+            Utils.showLoading('Salvataggio...');
+
+            try {
+                // Se cliente nuovo, salva prima in anagrafica
+                if (!clienteEsistente) {
+                    const nomeRef = document.getElementById('nuovoNomeReferente').value.trim();
+                    const cellulare = document.getElementById('nuovoCellulare').value.trim();
+                    const cluster = document.getElementById('nuovoCluster').value;
+                    const ragSoc = document.getElementById('nuovoRagioneSociale').value.trim();
+                    const prov = document.getElementById('nuovoProvincia').value.trim();
+                    const comune = document.getElementById('nuovoComune').value.trim();
+                    const via = document.getElementById('nuovoVia').value.trim();
+                    const civico = document.getElementById('nuovoCivico').value.trim();
+
+                    if (!cluster || !ragSoc || !nomeRef || !cellulare || !prov || !comune || !via || !civico) {
+                        Utils.hideLoading();
+                        Utils.toast('Tutti i campi dell\'anagrafica sono obbligatori', 'warning');
+                        return;
+                    }
+
+                    const { data: nuovoCliente, error: errAna } = await db
+                        .from('anagrafica')
+                        .insert({
+                            cf_piva: cfpiva,
+                            cluster: cluster,
+                            ragione_sociale: ragSoc.toUpperCase(),
+                            nome_referente: nomeRef.toUpperCase(),
+                            cellulare: cellulare,
+                            provincia: prov.toUpperCase(),
+                            comune: comune.toUpperCase(),
+                            via: via.toUpperCase(),
+                            civico: civico.toUpperCase(),
+                            creato_da: Auth.getId()
+                        })
+                        .select()
+                        .single();
+
+                    if (errAna) throw errAna;
+                    anagraficaId = nuovoCliente.id;
+                    clienteEsistente = nuovoCliente;
+
+                    // Sync provvisorio con Google Sheet
+                    Utils.syncAnagraficaSheet({
+                        cf_piva: cfpiva, cluster, ragione_sociale: ragSoc.toUpperCase(),
+                        nome_referente: nomeRef.toUpperCase(), cellulare,
+                        provincia: prov.toUpperCase(), comune: comune.toUpperCase(),
+                        via: via.toUpperCase(), civico: civico.toUpperCase()
+                    });
+                }
+
+                // Prepara dati chiamata
+                const nomeCliente = clienteEsistente.nome_referente || clienteEsistente.ragione_sociale || cfpiva;
+
+                const chiamataData = {
+                    operatore_id: Auth.getId(),
+                    operatore_nome: Auth.getNome(),
+                    anagrafica_id: anagraficaId,
+                    cf_piva: cfpiva,
+                    nome_cliente: nomeCliente,
+                    cellulare: clienteEsistente.cellulare || null,
+                    copertura: document.getElementById('copertura').value || null,
+                    motivo_chiamata: motivo,
+                    esito: esitoSelezionato,
+                    note: document.getElementById('note').value.trim() || null
+                };
+
+                // Aggiungi campi ricontatto se necessario
+                if (esitoSelezionato === 'ricontattare') {
+                    chiamataData.data_ricontatto = document.getElementById('dataRicontatto').value;
+                    chiamataData.fascia_ricontatto = document.getElementById('fasciaRicontatto').value;
+                }
+
+                // Imposta passaggio_stato per esiti "passa"
+                if (esitoSelezionato === 'passa_in_negozio' || esitoSelezionato === 'passa_a_cerea') {
+                    chiamataData.passaggio_stato = 'in_attesa';
+                }
+
+                // Se la chiamata nasce da rilavorazione → chiudi subito, non reinserire nel flusso
+                if (origineRilavorazione) {
+                    chiamataData.rilavorazione_stato = 'completato';
+                }
+
+                // Salva chiamata
+                const { data: chiamata, error: errChi } = await db
+                    .from('chiamate')
+                    .insert(chiamataData)
+                    .select()
+                    .single();
+
+                if (errChi) throw errChi;
+
+                Utils.hideLoading();
+
+                // Se esito = appuntamento, redirect al form prenotazione interna
+                if (esitoSelezionato === 'appuntamento') {
+                    // Chiudi origine rilavorazione
+                    if (origineRilavorazione) {
+                        if (origineRilavorazione.tipo === 'non_presentato') {
+                            await db.from('appuntamenti').update({non_presentato_stato:'lavorato'}).eq('id', origineRilavorazione.id);
+                        } else {
+                            const upd = { rilavorazione_stato: 'completato' };
+                            if (origineRilavorazione.tipo === 'passa_negozio' || origineRilavorazione.tipo === 'cerea') upd.passaggio_stato = 'ricontattare';
+                            await db.from('chiamate').update(upd).eq('id', origineRilavorazione.id);
+                        }
+                        origineRilavorazione = null;
+                    }
+                    // Salva dati in sessionStorage per il form appuntamento
+                    sessionStorage.setItem('mirox_prenota', JSON.stringify({
+                        chiamata_id: chiamata.id,
+                        anagrafica_id: anagraficaId,
+                        nome: nomeCliente,
+                        codice_fiscale: cfpiva,
+                        telefono: clienteEsistente.cellulare || '',
+                        motivo: motivo
+                    }));
+                    window.location.href = 'prenota-interno.html';
+                    return;
+                }
+
+                Utils.toast('Chiamata salvata con successo!', 'success');
+
+                // Chiudi la chiamata origine dalla rilavorazione (solo dopo salvataggio effettivo)
+                if (origineRilavorazione) {
+                    if (origineRilavorazione.tipo === 'non_presentato') {
+                        // Origine è un appuntamento non presentato → aggiorna tabella appuntamenti
+                        await db.from('appuntamenti').update({non_presentato_stato:'lavorato'}).eq('id', origineRilavorazione.id);
+                    } else {
+                        // Origine è una chiamata (ricontatto, passa_negozio o cerea) → aggiorna tabella chiamate
+                        const updates = { rilavorazione_stato: 'completato' };
+                        if (origineRilavorazione.tipo === 'passa_negozio' || origineRilavorazione.tipo === 'cerea') {
+                            updates.passaggio_stato = 'ricontattare';
+                        }
+                        await db.from('chiamate').update(updates).eq('id', origineRilavorazione.id);
+                    }
+                    origineRilavorazione = null;
+                }
+
+                resetForm();
+
+            } catch (err) {
+                Utils.hideLoading();
+                console.error(err);
+                Utils.toast('Errore nel salvataggio: ' + err.message, 'danger');
+            }
+        }
+
+        // ==================== RESET ====================
+        function resetForm() {
+            document.getElementById('cfpiva').value = '';
+            document.getElementById('stepCliente').classList.add('hidden');
+            document.getElementById('blacklistWarning').classList.add('hidden');
+            document.getElementById('boxUltimaChiamata').classList.add('hidden');
+            document.getElementById('esitoLivello2').classList.add('hidden');
+            document.getElementById('campiRicontatto').classList.add('hidden');
+            document.getElementById('copertura').value = '';
+            document.getElementById('motivoChiamata').value = '';
+            document.getElementById('note').value = '';
+            document.getElementById('btnRisposto').style.opacity = '';
+            document.getElementById('btnNonRisposto').style.opacity = '';
+            document.getElementById('btnSalva').disabled = true;
+            document.getElementById('btnSalva').textContent = 'Salva chiamata';
+            
+            // Reset sezioni cliente
+            document.getElementById('clienteTrovato').classList.add('hidden');
+            document.getElementById('clienteNuovo').classList.add('hidden');
+            document.getElementById('clienteView').classList.remove('hidden');
+            document.getElementById('clienteEdit').classList.add('hidden');
+            document.getElementById('btnModificaCliente').classList.remove('hidden');
+            
+            // Reset variabili
+            clienteEsistente = null;
+            anagraficaId = null;
+            esitoSelezionato = null;
+            origineRilavorazione = null;
+            resetEsito2();
+
+            document.getElementById('cfpiva').focus();
+        }
+    </script>
+</body>
+</html>

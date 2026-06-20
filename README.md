@@ -15,9 +15,10 @@ Modulo CRM per la gestione di vendite, post-vendita e supporto operativo della r
 | Cartella / File | Cosa contiene |
 |---|---|
 | `index.html` | Login Supabase Auth |
-| `dashboard.html` | Home con tabs Vendita / Post-Vendita + badge ticket aperti |
+| `dashboard.html` | Home con tabs Vendita / Post-Vendita / Call Center + bottone topbar Call Center + badge ticket aperti |
 | `admin-vendita-config.html` | CRUD cataloghi (categorie, offerte, opzioni, reload, regole documenti) |
-| `moduli/` | 16 pagine funzionali (`apri_chiudi`, `switch_sim`, `ordini_smartphone`, `dispositivi_comodato`, `gestione_rimborsi`, `segnalazioni`, `simulatore_protecta`, `storico_cliente`, `ticket`, `verifica_contratti`, `controllo_fissi`, `controllo_lg`, `controllo_assicurazioni`, `controllo_allarmi`, `dashboard_pezzi`, `upload-contratti-vendita`) |
+| `moduli/` | 16 pagine funzionali Vendita / Post-Vendita (`apri_chiudi`, `switch_sim`, `ordini_smartphone`, `dispositivi_comodato`, `gestione_rimborsi`, `segnalazioni`, `simulatore_protecta`, `storico_cliente`, `ticket`, `verifica_contratti`, `controllo_fissi`, `controllo_lg`, `controllo_assicurazioni`, `controllo_allarmi`, `dashboard_pezzi`, `upload-contratti-vendita`) |
+| `moduli/call-center/` | **Modulo Call Center integrato (Fase 1)** — 12 pagine (`registra-chiamata`, `elenco-chiamate`, `rilavorazione`, `appuntamenti`, `appuntamenti-oggi`, `prenota-interno`, `esiti-appuntamenti`, `blacklist`, `call-center-lead-outbound`, `prenota-interno-outbound`, `registra-chiamata-outbound`, `configurazione`) + `prenota.html` (form pubblico). Vedi sezione "Modulo Call Center" sotto e [CLAUDE.md](CLAUDE.md) per i dettagli di coordinamento col CC prod |
 | `js/` | Librerie condivise: `config`, `auth`, `mirox-ui`, `mirox-upload`, `mirox-folder`, `mirox-mailer`, `anagrafica-helper`, `vendita-storage-helper` |
 | `css/` | `style.css`, `mirox-modules.css` |
 | `assets/` | Logo, favicon |
@@ -81,6 +82,52 @@ git push origin main
 | `NOTIFICA_RIENTRO_TO` | no | Default `info@konatech.it` |
 | `PUBLIC_BASE_URL` | no | Base URL del sito per i link nelle mail |
 | `MAIL_FROM_NAME` | no | Default `Mirox CRM` |
+
+## Modulo Call Center (integrato, Fase 1)
+
+A partire dal 2026-06-20 il progetto Call Center — fino a quel momento deployato a parte su `mirox-crm.netlify.app` — è integrato dentro Mirox Completo in `moduli/call-center/`. L'integrazione è **additiva**: il deploy CC esistente continua a funzionare invariato (entrambi puntano allo stesso project Supabase `lbgwamhjkjjfwgusafbi`).
+
+### Cosa c'è in `moduli/call-center/`
+
+12 pagine portate dal CC + i loro asset (`js/`, `css/`, `assets/`):
+
+- `registra-chiamata.html` (cuore CC: cerca CF/PIVA → registra esito)
+- `elenco-chiamate.html`, `rilavorazione.html` (rilettura via viste unificate `vw_elenco_chiamate_unificate` / `vw_rilavorazione_ricontatti_unificata`)
+- `appuntamenti.html`, `appuntamenti-oggi.html`, `prenota-interno.html`, `esiti-appuntamenti.html` (gestione appuntamenti)
+- `blacklist.html` (clienti da non contattare)
+- `call-center-lead-outbound.html`, `prenota-interno-outbound.html`, `registra-chiamata-outbound.html` (flusso outbound business)
+- `configurazione.html` (admin: utenti, orari, blocchi, parametri)
+- `prenota.html` (form pubblico per prenotazioni da sito/social — **non in dashboard**, raggiungibile solo via URL diretto)
+
+### Adattamenti applicati nel port
+
+Le pagine sono state copiate **mantenendo la loro logica interna** (testata in produzione da mesi). Modifiche fatte solo:
+
+- Redirect login: `window.location.href='index.html'` → `'../../index.html'` (nelle pagine HTML e in `js/auth.js`, `js/call-center-lead-outbound.js`, `js/prenota-interno-outbound.js`, `js/registra-chiamata-outbound.js`)
+- Aggiunto breadcrumb "← Torna alla dashboard Mirox" in cima a ogni pagina (eccetto `prenota.html` pubblica)
+- Rimosso `index.html` del CC (Mirox ha già il proprio login)
+- Sidebar CC laterale **mantenuta** dentro il modulo: è la navigazione nativa fra pagine CC. Il bottone "Esci" della sidebar usa il logout Mirox via `Auth.logout()` → `../../index.html`
+
+### Accesso dalla dashboard Mirox
+
+- **Topbar**: bottone "Call Center" (precedentemente disabled) → ora attiva la tab Call Center nella dashboard
+- **Tab "Call Center"** accanto a Vendita / Post-Vendita, con 10 card una per pagina del modulo
+- **Filtro permessi**: le card sono filtrate al runtime in base a `profilo.pagine_accessibili.<chiave>` (admin vede tutto). Chiavi riutilizzate identiche al CC prod: `registra_chiamata`, `elenco_chiamate`, `rilavorazione`, `call_center_lead_outbound`, `appuntamenti`, `prenota_interno`, `appuntamenti_oggi`, `esiti_appuntamenti`, `blacklist`, `configurazione` (admin-only)
+- Se un operatore non ha **nessun** permesso CC, viene mostrato un messaggio "Non hai accesso a nessun modulo Call Center"
+
+### Regole di coordinamento col CC prod (NON NEGOZIABILI)
+
+Il CC prod su `mirox-crm.netlify.app` legge le stesse tabelle. Per non romperlo:
+
+1. **Solo modifiche DB additive** — mai DROP/RENAME colonne, mai CHECK più stretti, mai modificare RPC esistenti (solo aggiungerne di nuove)
+2. **RLS nuove devono includere anche i path vecchi** (es. `crm_can_access_page('registra_chiamata') OR crm_can_access_page('cc_registra_chiamata')`) — usare le chiavi esistenti senza prefisso (deciso così nella sessione di Fase 1)
+3. Tutte le modifiche allo schema vanno discusse con l'utente prima di applicarle
+
+### Fasi successive previste (non in questa Fase 1)
+
+- **Fase 2**: estendere vista `storico_cliente` con UNION di `chiamate`, `appuntamenti`, `call_center_lead_outbound_chiamate`, `blacklist` (oggi sono assenti)
+- **Fase 3**: backfill `chiamate.anagrafica_id` per le ~872 chiamate vecchie senza FK + trigger auto-populate via JOIN su `cf_piva`
+- **Fase 4**: convergenza Upload Contratti — quando si arriva via CC, pre-compilare `origine_pratica` + creare colonna `chiamata_origine_id` su `vendita_pratiche`
 
 ## Schedulazioni
 

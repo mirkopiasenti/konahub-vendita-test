@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Outbound (business) - Mirox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .outbound-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .outbound-stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 14px 16px;
+        }
+        .outbound-stat-title {
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .outbound-stat-value {
+            margin-top: 4px;
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.1;
+            color: var(--text);
+        }
+        .outbound-filter-grid {
+            display: grid;
+            grid-template-columns: 1.3fr repeat(4, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .outbound-filter-toggles {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .outbound-check {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .outbound-check input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+        .outbound-table-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .outbound-icon-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .outbound-icon-btn:hover {
+            background: var(--bg);
+            color: var(--text);
+        }
+        .outbound-icon-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-bg);
+        }
+        .outbound-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .outbound-modal-lg {
+            max-width: 1100px;
+        }
+        .outbound-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .outbound-detail-grid .form-group {
+            margin-bottom: 0;
+        }
+        .outbound-detail-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .outbound-activity-list {
+            max-height: 220px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 8px;
+            background: var(--bg);
+        }
+        .outbound-activity-item {
+            border-bottom: 1px solid var(--border-light);
+            padding: 8px 6px;
+        }
+        .outbound-activity-item:last-child {
+            border-bottom: none;
+        }
+        .outbound-activity-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .outbound-step-badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .outbound-step-badge {
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            font-size: 12px;
+            padding: 4px 10px;
+            color: var(--text-secondary);
+            background: var(--bg);
+        }
+        .outbound-step-badge.active {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: var(--primary-bg);
+        }
+        .outbound-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .outbound-summary-item {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px;
+            background: var(--bg);
+        }
+        .outbound-summary-item .label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .outbound-summary-item .value {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 3px;
+        }
+        .outbound-preview-table {
+            margin-top: 12px;
+            max-height: 180px;
+            overflow: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+        @media (max-width: 1200px) {
+            .outbound-stats {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .outbound-filter-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .outbound-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .outbound-filter-grid {
+                grid-template-columns: 1fr;
+            }
+            .outbound-detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-layout">
+    <aside id="sidebar"></aside>
+
+    <main class="main-content">
+        <div style="margin-bottom:12px;padding:8px 0">
+            <a href="../../dashboard.html" style="color:var(--text-secondary);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Torna alla dashboard Mirox
+            </a>
+        </div>
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Lead Outbound (business)</h1>
+                <p class="page-subtitle">Elenco lead business per lavorazione outbound del call center</p>
+            </div>
+            <button class="btn btn-primary" id="btnOpenImport">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Carica CSV
+            </button>
+        </div>
+
+        <div class="outbound-stats">
+            <div class="outbound-stat-card">
+                <div class="outbound-stat-title">Totale lead</div>
+                <div class="outbound-stat-value" id="statTotale">0</div>
+            </div>
+            <div class="outbound-stat-card">
+                <div class="outbound-stat-title">Nuovi</div>
+                <div class="outbound-stat-value" id="statNuovi">0</div>
+            </div>
+            <div class="outbound-stat-card">
+                <div class="outbound-stat-title">Lavorati</div>
+                <div class="outbound-stat-value" id="statLavorati">0</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="outbound-filter-grid">
+                <div class="form-group">
+                    <label class="form-label">Ricerca</label>
+                    <input type="search" id="filtroRicerca" class="form-control" placeholder="Ragione sociale, telefono, email, località">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Stato</label>
+                    <select id="filtroStato" class="form-control">
+                        <option value="">Tutti</option>
+                        <option value="nuovo">Nuovo</option>
+                        <option value="non_risposto">Non risposto</option>
+                        <option value="ricontattare">Ricontattare</option>
+                        <option value="non_interessato">Non interessato</option>
+                        <option value="appuntamento_fissato_negozio">Appuntamento fissato negozio</option>
+                        <option value="appuntamento_fissato_esterno">Appuntamento fissato esterno</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Provincia</label>
+                    <select id="filtroProvincia" class="form-control">
+                        <option value="">Tutte</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CAP</label>
+                    <input type="text" id="filtroCap" class="form-control" placeholder="Es. 37100">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Assegnato a</label>
+                    <select id="filtroAssegnato" class="form-control">
+                        <option value="">Tutti</option>
+                    </select>
+                </div>
+            </div>
+            <div class="outbound-filter-toggles">
+                <label class="outbound-check"><input type="checkbox" id="filtroSoloNuovi" checked> Mostra solo Nuovi</label>
+                <label class="outbound-check"><input type="checkbox" id="filtroSoloMiei"> Solo miei</label>
+                <button class="btn btn-secondary btn-sm" id="btnResetFiltri">Reset filtri</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" style="margin-bottom:10px">
+                <h3 class="card-title">Elenco lead</h3>
+                <div class="text-sm text-secondary" id="leadCountInfo">0 risultati</div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ragione sociale</th>
+                            <th>Telefono</th>
+                            <th>Località</th>
+                            <th>Categoria</th>
+                            <th>Stato</th>
+                            <th>Assegnato a</th>
+                            <th>Ultimo contatto</th>
+                            <th>Follow-up</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyLead"></tbody>
+                </table>
+            </div>
+
+            <div id="leadEmpty" class="empty-state hidden">
+                <h3>Nessun lead trovato</h3>
+                <p class="text-secondary text-sm mt-1">Modifica i filtri o importa un CSV</p>
+            </div>
+
+            <div class="outbound-pagination">
+                <div class="text-sm text-secondary" id="pageInfo">Pagina 1</div>
+                <div class="flex gap-1">
+                    <button class="btn btn-secondary btn-sm" id="btnPrevPage">Precedente</button>
+                    <button class="btn btn-secondary btn-sm" id="btnNextPage">Successiva</button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal-overlay" id="modalImport">
+    <div class="modal" style="max-width:760px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Import CSV Lead Outbound</h3>
+            <button class="modal-close" id="btnCloseImport">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="outbound-step-badges">
+                <div class="outbound-step-badge active" id="stepBadge1">1. File</div>
+                <div class="outbound-step-badge" id="stepBadge2">2. Preview</div>
+                <div class="outbound-step-badge" id="stepBadge3">3. Conferma</div>
+            </div>
+
+            <div id="importStep1">
+                <div class="form-group">
+                    <label class="form-label">File CSV</label>
+                    <input type="file" id="csvFileInput" class="form-control" accept=".csv,text/csv">
+                </div>
+                <p class="text-sm text-secondary" id="csvFileName">Nessun file selezionato</p>
+                <div class="mt-2">
+                    <button class="btn btn-primary" id="btnAnalizzaCsv">Analizza CSV</button>
+                </div>
+            </div>
+
+            <div id="importStep2" class="hidden">
+                <h4 style="font-size:14px; font-weight:600; margin-bottom:8px;">Preview import</h4>
+                <div class="outbound-summary-grid">
+                    <div class="outbound-summary-item"><div class="label">Righe lette</div><div class="value" id="sumRigheLette">0</div></div>
+                    <div class="outbound-summary-item"><div class="label">Righe valide</div><div class="value" id="sumRigheValide">0</div></div>
+                    <div class="outbound-summary-item"><div class="label">Righe da inserire</div><div class="value" id="sumRigheInserite">0</div></div>
+                    <div class="outbound-summary-item"><div class="label">Righe duplicate</div><div class="value" id="sumRigheDuplicate">0</div></div>
+                </div>
+
+                <div class="outbound-preview-table" id="previewTableWrap"></div>
+
+                <div class="modal-footer" style="padding:12px 0 0; border:none;">
+                    <button class="btn btn-secondary" id="btnBackToStep1">Indietro</button>
+                    <button class="btn btn-primary" id="btnGoStep3">Continua</button>
+                </div>
+            </div>
+
+            <div id="importStep3" class="hidden">
+                <p>Confermi l'import dei lead validi dal file <strong id="confirmFileName">-</strong>?</p>
+                <p class="text-sm text-secondary">Verrà creato un import batch e applicata deduplica server-side.</p>
+                <div class="outbound-summary-grid">
+                    <div class="outbound-summary-item"><div class="label">Righe valide</div><div class="value" id="confirmValide">0</div></div>
+                    <div class="outbound-summary-item"><div class="label">Inserimento previsto</div><div class="value" id="confirmInserite">0</div></div>
+                </div>
+                <div class="modal-footer" style="padding:12px 0 0; border:none;">
+                    <button class="btn btn-secondary" id="btnBackToStep2">Indietro</button>
+                    <button class="btn btn-primary" id="btnConfermaImport">Conferma import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalLeadDettaglio">
+    <div class="modal outbound-modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title">Dettaglio lead</h3>
+            <button class="modal-close" id="btnCloseLeadModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="leadId">
+
+            <div class="outbound-detail-actions">
+                <button class="btn btn-secondary btn-sm" id="btnLeadEdit">Modifica</button>
+                <button class="btn btn-primary btn-sm hidden" id="btnLeadSave">Salva modifiche</button>
+                <button class="btn btn-secondary btn-sm hidden" id="btnLeadCancelEdit">Annulla</button>
+                <button class="btn btn-secondary btn-sm" id="btnLeadTouchContact">Registra lavorazione</button>
+            </div>
+
+            <div class="outbound-detail-grid">
+                <div class="form-group"><label class="form-label">Ragione sociale</label><input type="text" id="leadRagioneSociale" class="form-control" disabled></div>
+                <div class="form-group"><label class="form-label">Telefono</label><input type="text" id="leadTelefonoRaw" class="form-control" disabled></div>
+
+                <div class="form-group"><label class="form-label">Indirizzo</label><input type="text" id="leadIndirizzo" class="form-control" disabled></div>
+                <div class="form-group"><label class="form-label">CAP</label><input type="text" id="leadCap" class="form-control" disabled></div>
+
+                <div class="form-group"><label class="form-label">Località</label><input type="text" id="leadLocalita" class="form-control" disabled></div>
+                <div class="form-group"><label class="form-label">Provincia</label><input type="text" id="leadProvincia" class="form-control" disabled></div>
+
+                <div class="form-group"><label class="form-label">Regione</label><input type="text" id="leadRegione" class="form-control" disabled></div>
+                <div class="form-group"><label class="form-label">Nazione</label><input type="text" id="leadNazione" class="form-control" disabled></div>
+
+                <div class="form-group"><label class="form-label">Email</label><input type="email" id="leadEmail" class="form-control" disabled></div>
+                <div class="form-group"><label class="form-label">Sito Internet</label><input type="text" id="leadSitoInternet" class="form-control" disabled></div>
+
+                <div class="form-group"><label class="form-label">Categoria</label><input type="text" id="leadCategoria" class="form-control" disabled></div>
+                <div class="form-group"><label class="form-label">Zona</label><input type="text" id="leadZona" class="form-control" disabled></div>
+
+                <div class="form-group"><label class="form-label">Partita IVA</label><input type="text" id="leadPartitaIva" class="form-control" disabled></div>
+                <div class="form-group"><label class="form-label">Codice Fiscale</label><input type="text" id="leadCodiceFiscale" class="form-control" disabled></div>
+
+                <div class="form-group"><label class="form-label">Stato lead</label>
+                    <select id="leadStatoLead" class="form-control" disabled>
+                        <option value="nuovo">Nuovo</option>
+                        <option value="non_risposto">Non risposto</option>
+                        <option value="ricontattare">Ricontattare</option>
+                        <option value="non_interessato">Non interessato</option>
+                        <option value="appuntamento_fissato_negozio">Appuntamento fissato negozio</option>
+                        <option value="appuntamento_fissato_esterno">Appuntamento fissato esterno</option>
+                    </select>
+                </div>
+
+                <div class="form-group"><label class="form-label">Assegnato a</label>
+                    <select id="leadAssegnatoA" class="form-control" disabled>
+                        <option value="">Non assegnato</option>
+                    </select>
+                </div>
+
+                <div class="form-group"><label class="form-label">Prossimo follow-up</label><input type="datetime-local" id="leadFollowup" class="form-control" disabled></div>
+                <div class="form-group"><label class="form-label">Ultimo contatto</label><input type="datetime-local" id="leadUltimoContatto" class="form-control" disabled></div>
+
+                <div class="form-group" style="grid-column:1 / -1;"><label class="form-label">Note ultima</label><textarea id="leadNoteUltima" class="form-control" rows="3" disabled></textarea></div>
+
+            </div>
+
+            <div class="card" style="margin:16px 0 0; padding:14px;">
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label class="form-label">Aggiungi nota attività</label>
+                    <textarea id="leadNuovaNota" class="form-control" rows="2" placeholder="Scrivi una nota rapida..."></textarea>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="btnAggiungiNota">Salva nota</button>
+            </div>
+
+            <div class="card" style="margin:16px 0 0; padding:14px;">
+                <div class="card-header" style="margin-bottom:8px;">
+                    <h3 class="card-title" style="font-size:14px;">Cronologia attività</h3>
+                </div>
+                <div class="outbound-activity-list" id="leadActivityList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script src="js/notifiche.js"></script>
+<script src="js/call-center-lead-outbound.js"></script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prenota Appuntamento - WindTre Store Legnago</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { background:var(--bg); }
+        .booking-header { background:linear-gradient(135deg,#FF6600,#FF8533); color:white; padding:24px 16px; text-align:center; }
+        .booking-header h1 { font-size:22px; margin-bottom:4px; }
+        .booking-header p { opacity:.9; font-size:14px; }
+        .booking-container { max-width:540px; margin:0 auto; padding:16px; }
+        .step-dots { display:flex; justify-content:center; gap:8px; margin-bottom:20px; }
+        .step-dot { width:8px; height:8px; border-radius:50%; background:var(--border); }
+        .step-dot.active { background:var(--primary); width:24px; border-radius:4px; }
+        .cal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+        .cal-title { font-size:17px; font-weight:600; text-transform:capitalize; }
+        .cal-nav { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); width:56px; height:56px; cursor:pointer; font-size:28px; font-weight:600; display:flex; align-items:center; justify-content:center; }
+        .weekdays { display:grid; grid-template-columns:repeat(7,1fr); text-align:center; margin-bottom:8px; }
+        .weekdays div { font-size:12px; font-weight:600; color:var(--text-light); padding:8px 0; }
+        .days { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+        .day { aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:50%; font-size:14px; cursor:pointer; font-weight:500; }
+        .day:hover:not(.empty):not(.disabled) { background:var(--border-light); }
+        .day.empty,.day.disabled { cursor:default; }
+        .day.disabled { color:#ccc; pointer-events:none; }
+        .day.sunday { color:#cc0000; }
+        .day.selected { background:var(--primary)!important; color:white!important; }
+        .slots-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+        .slot { background:var(--bg); border:2px solid transparent; border-radius:var(--radius); padding:10px; text-align:center; font-size:14px; font-weight:500; cursor:pointer; }
+        .slot:hover { border-color:var(--primary); }
+        .slot.selected { background:var(--primary); color:white; border-color:var(--primary); }
+        .confirm-card { background:white; border-radius:var(--radius-lg); padding:32px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.08); }
+        .confirm-icon { width:64px; height:64px; background:var(--success); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+        .confirm-icon svg { stroke:white; width:32px; height:32px; }
+        .confirm-detail { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border-light); font-size:14px; }
+        @media(max-width:400px) { .slots-grid { grid-template-columns:repeat(3,1fr); } }
+    </style>
+</head>
+<body>
+    <div class="booking-header">
+        <h1 id="headerTitle">Prenota Appuntamento</h1>
+        <p>WindTre Store Legnago</p>
+    </div>
+
+    <div class="booking-container">
+        <div class="step-dots"><div class="step-dot" id="dot1"></div><div class="step-dot" id="dot2"></div></div>
+
+        <!-- Step 1: Calendario -->
+        <div id="step1">
+            <div class="card" style="margin-bottom:16px">
+                <div class="cal-header">
+                    <h3 class="cal-title" id="monthDisplay"></h3>
+                    <div style="display:flex;gap:12px">
+                        <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
+                        <button class="cal-nav" onclick="changeMonth(1)">›</button>
+                    </div>
+                </div>
+                <div class="weekdays"><div>L</div><div>M</div><div>M</div><div>G</div><div>V</div><div>S</div><div>D</div></div>
+                <div id="calendarDays" class="days"></div>
+            </div>
+
+            <div class="card" id="slotsSection" style="display:none">
+                <h3 style="font-size:15px;font-weight:600;margin-bottom:12px">Orari per <span id="selectedDateText"></span></h3>
+                <div id="slotsLoading" class="hidden" style="text-align:center;padding:20px"><div class="spinner"></div></div>
+                <div id="slotsGrid" class="slots-grid"></div>
+            </div>
+        </div>
+
+        <!-- Step 2: Form dati -->
+        <div id="step2" style="display:none">
+            <button onclick="goStep(1)" style="background:none;border:none;color:var(--text);cursor:pointer;font-size:14px;margin-bottom:16px;padding:0">← Cambia data/ora</button>
+            <div class="card">
+                <div class="form-group"><label class="form-label">Nome e Cognome *</label><input type="text" id="pNome" class="form-control" required></div>
+                <div class="form-group"><label class="form-label">Numero di Cellulare *</label><input type="tel" id="pTelefono" class="form-control" required placeholder="+39 333 1234567"></div>
+                <div class="form-group"><label class="form-label">Motivo *</label>
+                    <select id="pMotivo" class="form-control" required>
+                        <option value="">Seleziona...</option>
+                        <option value="Contratti Aziendali">Contratti Aziendali</option>
+                        <option value="Telefonia Mobile">Telefonia Mobile</option>
+                        <option value="Internet Casa">Internet Casa</option>
+                        <option value="Luce&Gas">Luce&Gas</option>
+                        <option value="Allarmi">Allarmi</option>
+                        <option value="Assicurazioni">Assicurazioni</option>
+                    </select>
+                </div>
+                <div class="form-group"><label class="form-label">Note <span style="font-weight:400;color:var(--text-light)">(facoltativo)</span></label><textarea id="pNote" class="form-control" rows="2" placeholder="Eventuali dettagli..."></textarea></div>
+                <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:8px" onclick="confermaPrenotazione()">Conferma prenotazione</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Conferma -->
+        <div id="step3" style="display:none">
+            <div class="confirm-card">
+                <div class="confirm-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                <h2 style="margin-bottom:4px">Prenotazione confermata!</h2>
+                <p style="color:var(--text-secondary);margin-bottom:24px">Il tuo appuntamento è stato registrato</p>
+                <div id="confirmDetails" style="text-align:left;margin-bottom:24px"></div>
+                <div style="background:rgba(255,102,0,0.1);padding:16px;border-radius:var(--radius);margin-bottom:20px">
+                    <div style="font-weight:600">WindTre Store Legnago</div>
+                    <div style="font-size:13px;color:var(--text-secondary)">Via Roma 11, 37045 Legnago (VR)</div>
+                </div>
+                <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="location.reload()">Nuova prenotazione</button>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script>
+let state = { data:null, slot:null, currentMonth:new Date() };
+let currentStep = 1;
+
+function goStep(n) {
+    currentStep = n;
+    document.getElementById('step1').style.display = n===1?'block':'none';
+    document.getElementById('step2').style.display = n===2?'block':'none';
+    document.getElementById('step3').style.display = n===3?'block':'none';
+    document.getElementById('dot1').className = 'step-dot'+(n===1?' active':'');
+    document.getElementById('dot2').className = 'step-dot'+(n===2?' active':'');
+}
+
+function changeMonth(d) { state.currentMonth.setMonth(state.currentMonth.getMonth()+d); renderCalendar(); }
+
+renderCalendar();
+
+function renderCalendar() {
+    const y=state.currentMonth.getFullYear(), m=state.currentMonth.getMonth();
+    const first=new Date(y,m,1), last=new Date(y,m+1,0);
+    const startDay=(first.getDay()+6)%7;
+    document.getElementById('monthDisplay').textContent=first.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+    const c=document.getElementById('calendarDays');
+    c.innerHTML='';
+    for(let i=0;i<startDay;i++) c.innerHTML+='<div class="day empty"></div>';
+    const today=new Date(); today.setHours(0,0,0,0);
+    const maxDate=new Date(); maxDate.setDate(today.getDate()+60);
+    for(let i=1;i<=last.getDate();i++){
+        const d=new Date(y,m,i);
+        const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+        let cls=['day'],click=true;
+        if(d.getDay()===0){cls.push('sunday','disabled');click=false;}
+        else if(d<today){cls.push('disabled');click=false;}
+        else if(d>maxDate){cls.push('disabled');click=false;}
+        if(state.data===ds) cls.push('selected');
+        const div=document.createElement('div');
+        div.className=cls.join(' '); div.textContent=i;
+        if(click) div.onclick=()=>selectDate(ds,i);
+        c.appendChild(div);
+    }
+}
+
+function selectDate(ds,day){
+    state.data=ds; state.slot=null;
+    renderCalendar();
+    const d=new Date(state.currentMonth.getFullYear(),state.currentMonth.getMonth(),day);
+    document.getElementById('selectedDateText').textContent=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+    document.getElementById('slotsSection').style.display='block';
+    loadSlots(ds);
+}
+
+async function loadSlots(data){
+    document.getElementById('slotsLoading').classList.remove('hidden');
+    document.getElementById('slotsGrid').innerHTML='';
+    const {data:slots,error}=await db.rpc('get_slot_disponibili',{p_data:data});
+    document.getElementById('slotsLoading').classList.add('hidden');
+    if(error||!slots||slots.length===0){
+        document.getElementById('slotsGrid').innerHTML='<p style="grid-column:1/-1;text-align:center;color:var(--text-secondary);padding:12px">Nessun orario disponibile</p>';
+        return;
+    }
+    document.getElementById('slotsGrid').innerHTML=slots.map(s=>{
+        const t=new Date(s);
+        const ora=t.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+        return `<div class="slot" onclick="selectSlot(this,'${s}')">${ora}</div>`;
+    }).join('');
+}
+
+function selectSlot(el,slot){
+    document.querySelectorAll('.slot').forEach(s=>s.classList.remove('selected'));
+    el.classList.add('selected');
+    state.slot=slot;
+    setTimeout(()=>goStep(2),200);
+}
+
+async function confermaPrenotazione(){
+    const nome=document.getElementById('pNome').value.trim();
+    const telefono=document.getElementById('pTelefono').value.trim();
+    const motivo=document.getElementById('pMotivo').value;
+    const note=document.getElementById('pNote').value.trim();
+    if(!nome||!telefono||!motivo){ alert('Compila tutti i campi obbligatori'); return; }
+
+    // Show loading
+    const btn=document.querySelector('#step2 .btn-primary');
+    btn.disabled=true; btn.textContent='Prenotazione in corso...';
+
+    const {data:app,error}=await db.from('appuntamenti').insert({
+        nome, telefono, motivo, note:note||null,
+        codice_fiscale:null, data_ora:state.slot,
+        fonte:'pubblico', stato:'confermato',
+        storico:JSON.stringify([{azione:'prenotazione online',data:new Date().toISOString()}])
+    }).select().single();
+
+    btn.disabled=false; btn.textContent='Conferma prenotazione';
+
+    if(error){ alert('Errore: '+error.message); return; }
+
+    // Mostra conferma
+    const d=new Date(state.slot);
+    document.getElementById('confirmDetails').innerHTML=`
+        <div class="confirm-detail"><span style="color:var(--text-secondary)">Data</span><span style="font-weight:600">${d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span></div>
+        <div class="confirm-detail"><span style="color:var(--text-secondary)">Ora</span><span style="font-weight:600">${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</span></div>
+        <div class="confirm-detail"><span style="color:var(--text-secondary)">Motivo</span><span style="font-weight:600">${motivo}</span></div>
+    `;
+    goStep(3);
+}
+</script>
+</body>
+</html>

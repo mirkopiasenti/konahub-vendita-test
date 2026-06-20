@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elenco Chiamate - Mirox</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-layout">
+    <aside id="sidebar"></aside>
+    <main class="main-content">
+        <div style="margin-bottom:12px;padding:8px 0">
+            <a href="../../dashboard.html" style="color:var(--text-secondary);text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Torna alla dashboard Mirox
+            </a>
+        </div>
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Elenco chiamate</h1>
+                <p class="page-subtitle">Storico completo delle chiamate effettuate</p>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+                <div class="form-group" style="flex:1;min-width:180px;margin:0">
+                    <label class="form-label">Cerca</label>
+                    <input type="search" id="searchBox" class="form-control" placeholder="Ragione sociale, CF, telefono..." oninput="filtroLocale()">
+                </div>
+                <div class="form-group" style="min-width:140px;margin:0">
+                    <label class="form-label">Da</label>
+                    <input type="date" id="dataInizio" class="form-control" onchange="caricaChiamate()">
+                </div>
+                <div class="form-group" style="min-width:140px;margin:0">
+                    <label class="form-label">A</label>
+                    <input type="date" id="dataFine" class="form-control" onchange="caricaChiamate()">
+                </div>
+                <button class="btn btn-primary" onclick="vediTutte()" style="margin-bottom:0">Vedi tutte</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div id="loading" style="text-align:center;padding:40px"><div class="spinner"></div></div>
+            <div id="lista" class="hidden"></div>
+            <div id="vuoto" class="hidden empty-state"><h3>Nessuna chiamata trovata</h3></div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal modifica esito -->
+<div class="modal-overlay" id="modalEsito">
+    <div class="modal" style="max-width:500px">
+        <div class="modal-header">
+            <h3 class="modal-title">Modifica esito</h3>
+            <button class="modal-close" onclick="Utils.closeModal('modalEsito')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="modalClienteInfo" style="margin-bottom:16px;font-weight:600"></p>
+            <div class="form-group">
+                <label class="form-label">Nuovo esito</label>
+                <select id="modalNuovoEsito" class="form-control" onchange="toggleModalCampi()">
+                    <option value="">Seleziona...</option>
+                    <option value="non_interessato">Non interessato</option>
+                    <option value="passa_in_negozio">Passa in negozio</option>
+                    <option value="passa_a_cerea">Passa a Cerea</option>
+                    <option value="ricontattare">Ricontattare</option>
+                    <option value="appuntamento">Appuntamento</option>
+                </select>
+            </div>
+            <div id="modalCampiRicontatto" class="hidden">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Data ricontatto</label>
+                        <input type="date" id="modalDataRic" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fascia</label>
+                        <select id="modalFasciaRic" class="form-control">
+                            <option value="Mattina">Mattina</option>
+                            <option value="Pomeriggio">Pomeriggio</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Note aggiuntive</label>
+                <textarea id="modalNoteExtra" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Utils.closeModal('modalEsito')">Annulla</button>
+            <button class="btn btn-primary" onclick="salvaModificaEsito()">Salva</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Note -->
+<div class="modal-overlay" id="modalNote">
+    <div class="modal" style="max-width:460px">
+        <div class="modal-header">
+            <h3 class="modal-title" style="display:flex;align-items:center;gap:8px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Note chiamata
+            </h3>
+            <button class="modal-close" onclick="Utils.closeModal('modalNote')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="modalNoteCliente" style="font-weight:600;margin-bottom:4px;font-size:15px"></p>
+            <p id="modalNoteData" style="font-size:12px;color:var(--text-secondary);margin-bottom:16px"></p>
+            <div id="modalNoteContent" style="background:var(--bg);border-radius:var(--radius);padding:16px;font-size:14px;line-height:1.6;white-space:pre-wrap;max-height:300px;overflow-y:auto"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="Utils.closeModal('modalNote')">Chiudi</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script src="js/notifiche.js"></script>
+<script>
+let chiamate = [];
+let chiamateFiltrate = [];
+let chiamataSelezionata = null;
+
+const ESITO_LABELS = {
+    'non_risposto':'Non risposto','non_interessato':'Non interessato',
+    'passa_in_negozio':'Passa in negozio','ricontattare':'Ricontattare','appuntamento':'Appuntamento',
+    'passa_a_cerea':'Passa a Cerea'
+};
+const ESITO_BADGE = {
+    'non_risposto':'badge-danger','non_interessato':'badge-neutral',
+    'passa_in_negozio':'badge-warning','ricontattare':'badge-info','appuntamento':'badge-success',
+    'passa_a_cerea':'badge-warning'
+};
+
+function getEsitoView(c) {
+    if (c.origine_tipo === 'outbound_business' && c.esito === 'appuntamento') {
+        if (c.appuntamento_tipo === 'negozio') {
+            return { label: 'Appuntamento fissato negozio', badge: 'badge-success' };
+        }
+        if (c.appuntamento_tipo === 'esterno') {
+            return { label: 'Appuntamento fissato esterno', badge: 'badge-success' };
+        }
+    }
+
+    return {
+        label: ESITO_LABELS[c.esito] || c.esito || '-',
+        badge: ESITO_BADGE[c.esito] || 'badge-neutral'
+    };
+}
+
+(async () => {
+    const { data:{session} } = await db.auth.getSession();
+    if (!session) { window.location.href='../../index.html'; return; }
+    const { data:profilo } = await db.from('profili').select('*').eq('id',session.user.id).single();
+    if (!profilo) return;
+    Auth._profilo = profilo;
+    App.initSidebar('elenco_chiamate');
+    await Notifiche.init();
+    await Utils.caricaColoriOperatori();
+    document.getElementById('dataInizio').value = Utils.today();
+    document.getElementById('dataFine').value = Utils.today();
+    document.getElementById('modalDataRic').min = Utils.today();
+    await caricaChiamate();
+})();
+
+async function caricaChiamate() {
+    document.getElementById('loading').classList.remove('hidden');
+    document.getElementById('lista').classList.add('hidden');
+    document.getElementById('vuoto').classList.add('hidden');
+
+    let query = db.from('vw_elenco_chiamate_unificate').select('*').order('data_ora',{ascending:false});
+
+    const da = document.getElementById('dataInizio').value;
+    const a = document.getElementById('dataFine').value;
+    if (da) query = query.gte('data_ora', da + 'T00:00:00');
+    if (a) query = query.lte('data_ora', a + 'T23:59:59');
+
+    const { data, error } = await query.limit(500);
+    document.getElementById('loading').classList.add('hidden');
+
+    if (error) { Utils.toast('Errore: '+error.message,'danger'); return; }
+    chiamate = data || [];
+    filtroLocale();
+}
+
+function vediTutte() {
+    document.getElementById('dataInizio').value = '';
+    document.getElementById('dataFine').value = '';
+    caricaChiamate();
+}
+
+function filtroLocale() {
+    const q = document.getElementById('searchBox').value.toLowerCase();
+    chiamateFiltrate = q ? chiamate.filter(c => {
+        const ragSociale = (c.ragione_sociale_view || c.nome_cliente || '');
+        return (c.nome_cliente||'').toLowerCase().includes(q) ||
+            ragSociale.toLowerCase().includes(q) ||
+            (c.cf_piva||'').toLowerCase().includes(q) ||
+            (c.cellulare||'').toLowerCase().includes(q) ||
+            (c.telefono||'').toLowerCase().includes(q) ||
+            (c.operatore_nome||'').toLowerCase().includes(q) ||
+            (c.esito||'').toLowerCase().includes(q);
+    }) : [...chiamate];
+    renderLista();
+}
+
+function renderLista() {
+    if (chiamateFiltrate.length === 0) {
+        document.getElementById('vuoto').classList.remove('hidden');
+        document.getElementById('lista').classList.add('hidden');
+        return;
+    }
+    document.getElementById('vuoto').classList.add('hidden');
+    document.getElementById('lista').classList.remove('hidden');
+
+    const myId = Auth.getId();
+    const isAdmin = Auth.isAdmin();
+
+    let html = '<div class="table-container"><table><thead><tr>';
+    html += '<th>Data/Ora</th><th>Ragione Sociale</th><th>CF/PIVA</th><th>Motivo</th><th>Copertura</th><th>Esito</th><th>Note</th><th>Operatore</th><th></th>';
+    html += '</tr></thead><tbody>';
+
+    for (const c of chiamateFiltrate) {
+        const ragSociale = c.ragione_sociale_view || c.nome_cliente || '-';
+        const isOutbound = c.origine_tipo === 'outbound_business';
+        const esitoView = getEsitoView(c);
+        const origineBadge = isOutbound
+            ? '<span class="badge badge-info" style="margin-top:4px">Outbound business</span>'
+            : '<span class="badge badge-neutral" style="margin-top:4px">Standard</span>';
+        const noteHtml = c.note ? `<span style="cursor:pointer;opacity:0.5;transition:opacity 0.2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5" onclick="mostraNote('${c.id}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>` : '<span style="color:var(--text-light)">-</span>';
+        const canEdit = !isOutbound && (isAdmin || c.operatore_id === myId);
+        
+        html += `<tr>
+            <td>${Utils.formatDateTime(c.data_ora)}</td>
+            <td>
+                <div style="font-weight:600">${Utils.escapeHtml(ragSociale)}</div>
+                <div>${origineBadge}</div>
+            </td>
+            <td style="font-size:12px">${Utils.escapeHtml(c.cf_piva || '-')}</td>
+            <td>${Utils.escapeHtml(c.motivo_chiamata||'')}</td>
+            <td>${Utils.escapeHtml(c.copertura||'-')}</td>
+            <td><span class="badge ${esitoView.badge}">${Utils.escapeHtml(esitoView.label)}</span></td>
+            <td style="text-align:center">${noteHtml}</td>
+            <td><span style="display:inline-flex;align-items:center;gap:6px">${Utils.avatarHtml(c.operatore_nome, c.operatore_id, 22)}<span style="font-size:13px">${Utils.escapeHtml(c.operatore_nome)}</span></span></td>
+            <td>${canEdit ? `<button class="btn btn-sm btn-secondary" onclick="apriModifica('${c.id}')">Modifica</button>` : ''}</td>
+        </tr>`;
+    }
+    html += '</tbody></table></div>';
+    document.getElementById('lista').innerHTML = html;
+}
+
+function apriModifica(id) {
+    chiamataSelezionata = chiamate.find(c => c.id === id);
+    if (!chiamataSelezionata) return;
+    if (chiamataSelezionata.origine_tipo !== 'standard') {
+        Utils.toast('Le chiamate outbound business non sono modificabili da questa pagina', 'info');
+        return;
+    }
+    const ragSociale = chiamataSelezionata.ragione_sociale_view || chiamataSelezionata.nome_cliente || '-';
+    document.getElementById('modalClienteInfo').textContent = ragSociale + ' — ' + (chiamataSelezionata.cf_piva||'');
+    document.getElementById('modalNuovoEsito').value = '';
+    document.getElementById('modalNoteExtra').value = '';
+    document.getElementById('modalCampiRicontatto').classList.add('hidden');
+    Utils.openModal('modalEsito');
+}
+
+function mostraNote(id) {
+    const c = chiamate.find(x => x.id === id);
+    if (!c) return;
+    const ragSociale = c.ragione_sociale_view || c.nome_cliente || '-';
+    document.getElementById('modalNoteCliente').textContent = ragSociale;
+    document.getElementById('modalNoteData').textContent = Utils.formatDateTime(c.data_ora) + ' — ' + c.operatore_nome;
+    document.getElementById('modalNoteContent').textContent = c.note || 'Nessuna nota';
+    Utils.openModal('modalNote');
+}
+
+function toggleModalCampi() {
+    const v = document.getElementById('modalNuovoEsito').value;
+    document.getElementById('modalCampiRicontatto').classList.toggle('hidden', v !== 'ricontattare');
+}
+
+async function salvaModificaEsito() {
+    if (!chiamataSelezionata || chiamataSelezionata.origine_tipo !== 'standard') {
+        Utils.toast('Questa operazione è disponibile solo per le chiamate standard', 'warning');
+        return;
+    }
+
+    const nuovoEsito = document.getElementById('modalNuovoEsito').value;
+    if (!nuovoEsito) { Utils.toast('Seleziona un esito','warning'); return; }
+
+    const updates = { esito: nuovoEsito };
+    const noteExtra = document.getElementById('modalNoteExtra').value.trim();
+    if (noteExtra) {
+        updates.note = (chiamataSelezionata.note||'') + (chiamataSelezionata.note ? '\n' : '') + '[MODIFICA] ' + noteExtra;
+    }
+
+    if (nuovoEsito === 'ricontattare') {
+        updates.data_ricontatto = document.getElementById('modalDataRic').value;
+        updates.fascia_ricontatto = document.getElementById('modalFasciaRic').value;
+        if (!updates.data_ricontatto) { Utils.toast('Inserisci data ricontatto','warning'); return; }
+    }
+
+    // Se cambia in appuntamento, redirect al form prenotazione
+    if (nuovoEsito === 'appuntamento') {
+        sessionStorage.setItem('mirox_prenota', JSON.stringify({
+            chiamata_id: chiamataSelezionata.id,
+            anagrafica_id: chiamataSelezionata.anagrafica_id,
+            nome: chiamataSelezionata.nome_cliente,
+            codice_fiscale: chiamataSelezionata.cf_piva,
+            telefono: chiamataSelezionata.cellulare || '',
+            motivo: chiamataSelezionata.motivo_chiamata || ''
+        }));
+        // Salva prima l'esito aggiornato
+        await db.from('chiamate').update(updates).eq('id', chiamataSelezionata.id);
+        window.location.href = 'prenota-interno.html';
+        return;
+    }
+
+    Utils.showLoading('Salvataggio...');
+    const { error } = await db.from('chiamate').update(updates).eq('id', chiamataSelezionata.id);
+    Utils.hideLoading();
+
+    if (error) { Utils.toast('Errore: '+error.message,'danger'); return; }
+    Utils.toast('Esito aggiornato','success');
+    Utils.closeModal('modalEsito');
+    await caricaChiamate();
+}
+</script>
+</body>
+</html>
