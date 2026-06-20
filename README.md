@@ -110,10 +110,10 @@ Le pagine sono state copiate **mantenendo la loro logica interna** (testata in p
 
 ### Accesso dalla dashboard Mirox
 
-- **Topbar**: bottone "Call Center" (precedentemente disabled) → ora attiva la tab Call Center nella dashboard
-- **Tab "Call Center"** accanto a Vendita / Post-Vendita, con 10 card una per pagina del modulo
-- **Filtro permessi**: le card sono filtrate al runtime in base a `profilo.pagine_accessibili.<chiave>` (admin vede tutto). Chiavi riutilizzate identiche al CC prod: `registra_chiamata`, `elenco_chiamate`, `rilavorazione`, `call_center_lead_outbound`, `appuntamenti`, `prenota_interno`, `appuntamenti_oggi`, `esiti_appuntamenti`, `blacklist`, `configurazione` (admin-only)
-- Se un operatore non ha **nessun** permesso CC, viene mostrato un messaggio "Non hai accesso a nessun modulo Call Center"
+- **Solo bottone topbar** "Call Center" (la dashboard ha solo tab Vendita / Post-Vendita; il CC non ha tab/card dedicate, la sua sidebar interna è già la navigazione)
+- Al login, il JS calcola la prima pagina CC accessibile in `profilo.pagine_accessibili` e imposta l'`href` del bottone topbar a quell'URL. Se l'utente non ha nessun permesso CC (e non è admin), il bottone resta `disabled`
+- Chiavi permessi riutilizzate identiche al CC prod: `registra_chiamata`, `elenco_chiamate`, `rilavorazione`, `call_center_lead_outbound`, `appuntamenti`, `prenota_interno`, `appuntamenti_oggi`, `esiti_appuntamenti`, `blacklist`, `configurazione` (admin-only)
+- Dentro ogni pagina CC: bottone arancione "← Torna alla dashboard Mirox" in cima
 
 ### Regole di coordinamento col CC prod (NON NEGOZIABILI)
 

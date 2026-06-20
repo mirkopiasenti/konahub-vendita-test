@@ -296,11 +296,10 @@ Le pagine CC ancora usano:
 
 ### Accesso dalla dashboard Mirox
 
-- **Topbar**: bottone "Call Center" → ora attiva la tab `call-center` invece di essere `disabled`. Smooth scroll all'inizio della dashboard
-- **Tab "Call Center"** accanto a Vendita / Post-Vendita nella hero, con 10 card una per pagina (Registra Chiamata, Elenco Chiamate, Rilavorazione, Lead Outbound, Appuntamenti, Nuovo Appuntamento, Appuntamenti Oggi, Esiti Appuntamenti, Black List, Configurazione)
-- **Filtro permessi runtime**: ogni card ha `data-perm="<chiave>"`; al login si nasconde quella per cui `profilo.pagine_accessibili[chiave] !== true` (admin vede tutto, ha `ruolo='admin'`). `Configurazione` ha `data-admin-only="true"` (solo admin)
-- **Empty state**: se 0 card visibili → messaggio "Non hai accesso a nessun modulo Call Center" + topbar Call Center diventa `disabled`
-- **Persistenza tab**: la `sessionStorage.mirox.dashboardTab` ora accetta anche `'call-center'` (oltre a `'vendita'`/`'post-vendita'`)
+- **Solo via bottone topbar** "Call Center" — niente tab/card nella dashboard (scelta UX dell'utente: la dashboard è focus Vendita/Post-Vendita, il CC ha la sua sidebar interna come navigazione)
+- **Redirect dinamico runtime**: al caricamento dashboard, il JS calcola la **prima pagina CC accessibile** per l'utente (ordine: registra_chiamata → elenco_chiamate → rilavorazione → call_center_lead_outbound → appuntamenti → prenota_interno → appuntamenti_oggi → esiti_appuntamenti → blacklist → configurazione admin-only) e imposta `href` del bottone topbar a quell'URL diretto
+- **Disabilitato se nessun permesso**: se l'utente non ha **nessuna** delle chiavi CC in `pagine_accessibili` (e non è admin), il bottone resta in classe `.disabled` (come nasce nell'HTML statico) e il click è bloccato
+- **Bottone "Torna alla dashboard Mirox"** in cima a ogni pagina CC integrata: arancione, ben visibile (era un breadcrumb piccolo, ora è un bottone stilizzato — eccetto `prenota.html` pubblica)
 
 ### Chiavi permessi (riusate identiche al CC prod)
 
