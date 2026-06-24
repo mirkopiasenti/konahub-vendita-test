@@ -128,12 +128,17 @@ Il CC prod su `mirox-crm.netlify.app` legge le stesse tabelle. Per non romperlo:
 - **Fase 2** (eseguita): vista `storico_cliente` estesa con 4 UNION nuove (`chiamata_cc`, `chiamata_cc_outbound`, `appuntamento_cc`, `blacklist`). Migration: `database/024_storico_cliente_extend_call_center.sql`. Il modulo `storico_cliente.html` ora mostra anche chiamate, appuntamenti e blacklist (totali aggiunti: 2.351 chiamate, 249 appuntamenti, 91 blacklist)
 - **Fase 3** (eseguita): backfill `chiamate.anagrafica_id` su 872 record orfani (ora 100% popolato) + backfill `appuntamenti.anagrafica_id` (99.2%) + trigger `BEFORE INSERT` su entrambe le tabelle per auto-popolare il FK quando manca. Migration: `database/025_chiamate_appuntamenti_anagrafica_autolink.sql`. Il CC prod continua a funzionare invariato (passa NULL sull'INSERT, il trigger lo riempie)
 
-### Fase 4 — applicata
+### Fase 4 — applicata (+ 4.1 rilassamento e auto-chiusura)
 
 - **Fase 4** (eseguita): convergenza Upload Contratti con il Call Center
-  - Nuova RPC `vendita_deriva_origine(p_anagrafica_id uuid)` ritorna jsonb `{origine_pratica, evento_tipo, evento_id, descrizione}` — priorità: appuntamento di oggi confermato → `appuntamento_callcenter`; chiamata `passa_in_negozio`/`passa_a_cerea` con `passaggio_stato='passato'` entro 10 giorni → `contatto_callcenter_entro_10_giorni`; altrimenti `spontaneo`. Migration: `database/026_vendita_deriva_origine_rpc.sql`
-  - Wizard `upload-contratti-vendita.html`: dopo lookup anagrafica, chiama la RPC, pre-compila il dropdown `origine_pratica` e mostra un banner azzurro con la descrizione del match ("Appuntamento di oggi ore 15:30 — Telefono CB"). L'operatore può overridare il valore: popup di conferma per evitare scollegamenti accidentali. Dropdown ora ha label umane (Spontaneo / Appuntamento Call Center / Contatto Call Center entro 10 giorni)
-  - Bottone "💼 Inizia vendita" in `appuntamenti-oggi.html` accanto al badge "Presentato": click → sessionStorage `mirox_vendita_da_cc` + redirect al wizard, che auto-popola cf_piva e lancia ricerca
+  - Nuova RPC `vendita_deriva_origine(p_anagrafica_id uuid)` ritorna jsonb `{origine_pratica, evento_tipo, evento_id, descrizione}`. Migration `026` (versione iniziale)
+  - Wizard `upload-contratti-vendita.html`: dopo lookup anagrafica, chiama la RPC, pre-compila il dropdown `origine_pratica` e mostra un banner azzurro con la descrizione del match. L'operatore può overridare il valore: popup di conferma per evitare scollegamenti accidentali. Dropdown ora ha label umane
+  - Bottone "💼 Inizia vendita" in `appuntamenti-oggi.html` accanto al badge "Presentato": click → sessionStorage `mirox_vendita_da_cc` + redirect al wizard
+- **Fase 4.1** (eseguita): rilassamento RPC + auto-chiusura eventi CC. Migration `027`
+  - RPC livello 1 ora copre anche appuntamenti FUTURI confermati fino a 30 giorni (cliente che arriva in anticipo)
+  - RPC livello 2 rilassato: include chiamate `passa_in_negozio`/`passa_a_cerea` anche con `passaggio_stato='in_attesa'` (non solo `'passato'`)
+  - **Trigger `trg_vendita_pratica_auto_chiudi_cc`** su `vendita_pratiche AFTER INSERT`: quando si crea una nuova pratica per anagrafica, gli appuntamenti futuri non gestiti della stessa anagrafica vengono `annullati` automaticamente e le chiamate in rilavorazione vengono `completate/chiuse`. Così il cliente sparisce dalle code CC senza rischio di essere ricontattato dopo aver già firmato
+  - Wizard al submit valorizza `vendita_pratiche.appuntamento_id` / `chiamata_id` con l'evento auto-rilevato (FK esistenti da schema legacy ora riempite)
 
 ### Fasi successive previste
 

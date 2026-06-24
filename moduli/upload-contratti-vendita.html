@@ -3955,12 +3955,28 @@ Reload Exchange
  };
  });
 
+ // Fase 4.1: valorizza appuntamento_id/chiamata_id se la pratica e' collegata
+ // a un evento Call Center auto-rilevato (RPC) o pre-impostato (sessionStorage da CC).
+ // Se l'operatore ha overridato l'origine, runtimeState.origineAutoRilevata e' null
+ // e nessuna FK viene passata (coerente con l'override).
+ const origineCurrente = refs.originePratica.value || 'spontaneo';
+ let praticaAppuntamentoId = null;
+ let praticaChiamataId = null;
+ const origineAuto = runtimeState.origineAutoRilevata;
+ if (origineAuto && origineAuto.origine_pratica === origineCurrente) {
+ if (origineAuto.evento_tipo === 'appuntamento') {
+ praticaAppuntamentoId = origineAuto.evento_id || null;
+ } else if (origineAuto.evento_tipo === 'chiamata') {
+ praticaChiamataId = origineAuto.evento_id || null;
+ }
+ }
+
  return {
  cliente,
  pratica: {
- origine_pratica: refs.originePratica.value || 'spontaneo',
- appuntamento_id: null,
- chiamata_id: null,
+ origine_pratica: origineCurrente,
+ appuntamento_id: praticaAppuntamentoId,
+ chiamata_id: praticaChiamataId,
  operatore_id: refs.operatoreId.value.trim() || null
  },
  contratti
