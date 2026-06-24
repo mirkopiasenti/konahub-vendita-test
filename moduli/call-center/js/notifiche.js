@@ -154,21 +154,35 @@ const Notifiche = {
     },
 
     /**
-     * Aggiorna il badge numerico nella sidebar sulla voce Rilavorazione.
+     * Aggiorna il badge numerico:
+     *  - vecchia sidebar: span.notifica-badge-sidebar dentro #nav-rilavorazione
+     *  - nuova topbar CC integrata Mirox: span.cc-tab-badge[data-badge-for=rilavorazione]
+     * Entrambi i target sono best-effort: se non presenti, nessun errore.
      */
     aggiornaBadgeSidebar() {
+        // Target 1: vecchia sidebar (CC prod / fallback)
         const navLink = document.getElementById('nav-rilavorazione');
-        if (!navLink) return;
+        if (navLink) {
+            const old = navLink.querySelector('.notifica-badge-sidebar');
+            if (old) old.remove();
+            if (this._conteggio > 0) {
+                const badge = document.createElement('span');
+                badge.className = 'notifica-badge-sidebar';
+                badge.textContent = this._conteggio;
+                navLink.appendChild(badge);
+            }
+        }
 
-        // Rimuovi badge esistente
-        const old = navLink.querySelector('.notifica-badge-sidebar');
-        if (old) old.remove();
-
-        if (this._conteggio > 0) {
-            const badge = document.createElement('span');
-            badge.className = 'notifica-badge-sidebar';
-            badge.textContent = this._conteggio;
-            navLink.appendChild(badge);
+        // Target 2: nuova tab CC integrata Mirox (cc-header.js)
+        const tabBadge = document.querySelector('.cc-tab-badge[data-badge-for="rilavorazione"]');
+        if (tabBadge) {
+            if (this._conteggio > 0) {
+                tabBadge.textContent = String(this._conteggio);
+                tabBadge.classList.remove('hidden');
+            } else {
+                tabBadge.textContent = '';
+                tabBadge.classList.add('hidden');
+            }
         }
     },
 

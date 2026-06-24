@@ -120,7 +120,12 @@
 
     const tabsHtml = tabsAccessibili.map((p) => {
       const isActive = p.perm === paginaCorrente;
-      return `<a class="cc-tab${isActive ? ' active' : ''}" href="${p.href}">${escapeHtml(p.label)}</a>`;
+      // Ogni tab espone data-perm cosi' i moduli notifiche possono trovarla e
+      // popolare il badge senza accoppiamento stretto con il rendering.
+      return `<a class="cc-tab${isActive ? ' active' : ''}" data-perm="${p.perm}" href="${p.href}">`
+        + `<span class="cc-tab-label">${escapeHtml(p.label)}</span>`
+        + `<span class="cc-tab-badge hidden" data-badge-for="${p.perm}"></span>`
+        + `</a>`;
     }).join('');
 
     container.innerHTML = `
