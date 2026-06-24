@@ -127,9 +127,7 @@ Dal 2026-06-24 il bottone **Admin** della topbar dashboard è attivo per gli ute
 - **Configurazione Call Center** ([`admin-call-center-config.html`](admin-call-center-config.html)) — orari settimanali, blocchi/chiusure, parametri di sistema (durata slot, anticipo, scadenze). Spostata da `moduli/call-center/configurazione.html` (eliminata)
 - **Catalogo Vendita** ([`admin-vendita-config.html`](admin-vendita-config.html)) — CRUD categorie/offerte/opzioni/reload. Ora gated dal ruolo `admin` (prima era protetto da una password client-side `1234`, rimossa)
 
-Il bottone "Admin" presente nel wizard `upload-contratti-vendita.html` continua a esistere ma:
-- È visibile **solo se** `profilo.ruolo='admin'`
-- Non chiede più password e fa redirect diretto a `admin.html`
+Il vecchio bottone "Admin" nel wizard `upload-contratti-vendita.html` è stato rimosso: il pannello Admin si raggiunge esclusivamente dal bottone topbar della dashboard.
 
 ### Regole di coordinamento col CC prod (NON NEGOZIABILI)
 

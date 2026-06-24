@@ -383,11 +383,9 @@ if (profilo.ruolo !== 'admin') {
 
 In `dashboard.html` lo script di init aggiunge `href='admin.html'` e rimuove `.disabled` dal `#btnAdmin` solo se `profilo.ruolo === 'admin'`. Per gli operatori il bottone resta visibile ma in stato disabled (no click).
 
-### Rimozione password admin in upload
+### Rimozione bottone Admin in upload
 
-Il bottone "Admin" dentro `moduli/upload-contratti-vendita.html` non chiede più la password client-side `'1234'`. Logica nuova:
-- Se `profilo.ruolo === 'admin'` → bottone visibile, click → redirect `../admin.html`
-- Altrimenti → bottone nascosto (`style.display='none'`)
+Il bottone "Admin" dentro `moduli/upload-contratti-vendita.html` è stato **rimosso** (sia HTML sia handler JS). L'accesso al pannello Admin avviene esclusivamente dalla topbar della dashboard (bottone `#btnAdmin`, attivo solo se `ruolo='admin'`). La vecchia password client-side `'1234'` non esiste più.
 
 ### Note operative
 
