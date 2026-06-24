@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestione Utenti - Admin Mirox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .admin-topbar {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 6px 36px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    gap: 24px;
+  }
+  .admin-topbar-left { justify-self: start; display: flex; align-items: center; gap: 12px; }
+  .admin-topbar-center { justify-self: center; }
+  .admin-topbar-right { justify-self: end; display: flex; align-items: center; gap: 12px; }
+  .admin-topbar-logo { height: 62px; width: 180px; position: relative; overflow: hidden; flex-shrink: 0; }
+  .admin-topbar-logo img { height: 200px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: block; }
+
+  .admin-back-button {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--primary); color: #fff; border: none;
+    padding: 9px 16px; border-radius: 10px;
+    font-size: 13px; font-weight: 600; text-decoration: none;
+    cursor: pointer; transition: all 0.2s ease; font-family: inherit;
+  }
+  .admin-back-button:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+  .admin-user-chip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 5px 14px 5px 5px;
+    background: var(--bg); border-radius: 999px; border: 1px solid var(--border);
+  }
+  .admin-user-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px;
+  }
+  .admin-user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .admin-btn-logout {
+    background: #fff; border: 1px solid var(--border); color: var(--text-secondary);
+    padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease; font-family: inherit;
+  }
+  .admin-btn-logout:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+
+  .admin-container {
+    max-width: 1200px;
+    margin: 28px auto 60px;
+    padding: 0 24px;
+  }
+  .perm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .perm-item { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 6px 0; }
+  .perm-item input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--primary); }
+
+  .empty-state-soft {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    padding: 36px; text-align: center; color: var(--text-secondary);
+  }
+
+  .info-banner {
+    background: var(--primary-bg, #FFF3E0);
+    border: 1px solid #fbd38d;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #7c2d12;
+  }
+  .info-banner strong { color: #9a3412; }
+
+  .table-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .role-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .role-chip.admin { background: #dbeafe; color: #1e40af; }
+  .role-chip.operatore { background: #f1f5f9; color: #475569; }
+
+  @media (max-width: 640px) {
+    .admin-topbar { padding: 10px 16px; }
+    .admin-topbar-logo { width: 130px; height: 50px; }
+    .admin-topbar-logo img { height: 150px; }
+    .admin-topbar-center { display: none; }
+    .admin-container { padding: 0 14px; margin: 18px auto 40px; }
+    .perm-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="admin-topbar">
+  <div class="admin-topbar-left">
+    <a href="admin.html" class="admin-back-button" title="Torna al pannello admin">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Admin
+    </a>
+  </div>
+  <div class="admin-topbar-center">
+    <div class="admin-topbar-logo"><img src="assets/logo.png" alt="Mirox"></div>
+  </div>
+  <div class="admin-topbar-right">
+    <div class="admin-user-chip">
+      <div class="admin-user-avatar" id="userAvatar">A</div>
+      <div class="admin-user-name" id="userName">…</div>
+    </div>
+    <button class="admin-btn-logout" id="btnLogout">Esci</button>
+  </div>
+</div>
+
+<main class="admin-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Gestione Utenti</h1>
+      <p class="page-subtitle">Ruoli, stato e permessi degli operatori Mirox</p>
+    </div>
+  </div>
+
+  <div class="info-banner">
+    <strong>Nota:</strong> per creare un nuovo utente: Supabase → Authentication → Add user (con email + password),
+    poi torna qui per assegnargli il ruolo e attivarlo.
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Operatori</h3>
+      <span class="page-subtitle" id="userCount" style="font-size:13px"></span>
+    </div>
+    <div id="utentiContainer"></div>
+  </div>
+</main>
+
+<!-- Modal Permessi CC -->
+<div class="modal-overlay" id="modalPermessi">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h3 class="modal-title">Permessi Call Center</h3>
+      <button class="modal-close" onclick="closeModal('modalPermessi')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="permNome" style="font-weight:600;margin-bottom:6px"></p>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px">
+        Seleziona le pagine CC accessibili a questo operatore. Gli admin vedono tutto.
+      </p>
+      <div class="perm-grid" id="permGrid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalPermessi')">Annulla</button>
+      <button class="btn btn-primary" onclick="salvaPermessi()">Salva permessi</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/mirox-ui.js"></script>
+<script>
+const PAGINE_LABELS = {
+  registra_chiamata: 'Registra chiamata',
+  elenco_chiamate: 'Elenco chiamate',
+  rilavorazione: 'Rilavorazione',
+  call_center_lead_outbound: 'Lead Outbound (business)',
+  appuntamenti: 'Appuntamenti',
+  prenota_interno: 'Nuovo appuntamento',
+  appuntamenti_oggi: 'Appuntamenti oggi',
+  esiti_appuntamenti: 'Esiti appuntamenti',
+  blacklist: 'Black List'
+};
+
+let utenti = [];
+let permEditId = null;
+let currentProfilo = null;
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+(async () => {
+  const profilo = await Auth.richiediAuth();
+  if (!profilo) return;
+  if (profilo.ruolo !== 'admin') {
+    await MiroxUI.alert('Accesso riservato agli amministratori.');
+    window.location.href = 'dashboard.html';
+    return;
+  }
+  currentProfilo = profilo;
+  const nome = profilo.nome || profilo.email || 'Admin';
+  document.getElementById('userName').textContent = nome;
+  document.getElementById('userAvatar').textContent = nome.trim().charAt(0).toUpperCase();
+  await caricaUtenti();
+})();
+
+document.getElementById('btnLogout').addEventListener('click', () => Auth.logout());
+
+async function caricaUtenti() {
+  document.getElementById('utentiContainer').innerHTML = '<div class="empty-state-soft">Caricamento utenti…</div>';
+  const { data, error } = await db.from('profili').select('*').order('attivo', { ascending: false }).order('nome');
+  if (error) {
+    document.getElementById('utentiContainer').innerHTML = `<div class="empty-state-soft">Errore caricamento: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  utenti = data || [];
+  document.getElementById('userCount').textContent = `${utenti.length} utenti totali`;
+
+  if (utenti.length === 0) {
+    document.getElementById('utentiContainer').innerHTML = '<div class="empty-state-soft">Nessun utente registrato.</div>';
+    return;
+  }
+
+  let html = '<div class="table-container"><table><thead><tr>'
+    + '<th>Nome</th>'
+    + '<th>Username</th>'
+    + '<th>Ruolo</th>'
+    + '<th>Stato</th>'
+    + '<th>Permessi CC</th>'
+    + '<th style="min-width:260px">Azioni</th>'
+    + '</tr></thead><tbody>';
+
+  for (const u of utenti) {
+    const isMe = u.id === currentProfilo.id;
+    const permCount = Object.values(u.pagine_accessibili || {}).filter(v => v).length;
+    const ruolo = u.ruolo || 'operatore';
+    html += `<tr>
+      <td style="font-weight:600">${escapeHtml(u.nome || '—')}${isMe ? ' <span class="badge badge-info" style="margin-left:6px">tu</span>' : ''}</td>
+      <td><span style="font-family:monospace;font-size:12px;color:var(--text-secondary)">${escapeHtml(u.username || u.email || '—')}</span></td>
+      <td><span class="role-chip ${ruolo}">${escapeHtml(ruolo)}</span></td>
+      <td><span class="badge ${u.attivo ? 'badge-success' : 'badge-danger'}">${u.attivo ? 'Attivo' : 'Disabilitato'}</span></td>
+      <td>${ruolo === 'admin' ? '<span class="badge badge-info">Tutte</span>' : `${permCount} / ${Object.keys(PAGINE_LABELS).length}`}</td>
+      <td>
+        <div class="table-actions">
+          ${ruolo === 'admin'
+            ? `<button class="btn btn-sm btn-secondary" ${isMe ? 'disabled title="Non puoi togliere il ruolo admin a te stesso"' : `onclick="cambiaRuolo('${u.id}','operatore')"`}>Rendi Operatore</button>`
+            : `<button class="btn btn-sm btn-secondary" onclick="cambiaRuolo('${u.id}','admin')">Rendi Admin</button>
+               <button class="btn btn-sm btn-secondary" onclick="apriPermessi('${u.id}')">Permessi CC</button>`
+          }
+          <button class="btn btn-sm ${u.attivo ? 'btn-danger' : 'btn-success'}" ${isMe ? 'disabled title="Non puoi disabilitare te stesso"' : `onclick="toggleAttivo('${u.id}',${!u.attivo})"`}>${u.attivo ? 'Disabilita' : 'Abilita'}</button>
+        </div>
+      </td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  document.getElementById('utentiContainer').innerHTML = html;
+}
+
+async function cambiaRuolo(id, nuovoRuolo) {
+  const u = utenti.find(x => x.id === id);
+  if (!u) return;
+  if (id === currentProfilo.id && nuovoRuolo === 'operatore') {
+    await MiroxUI.alert('Non puoi rimuovere il ruolo admin a te stesso.');
+    return;
+  }
+  const ok = await MiroxUI.confirm(
+    nuovoRuolo === 'admin'
+      ? `Promuovere <strong>${escapeHtml(u.nome || u.username || '')}</strong> ad amministratore? Avrà accesso a tutto il pannello Admin.`
+      : `Rendere <strong>${escapeHtml(u.nome || u.username || '')}</strong> un operatore? Perderà l'accesso al pannello Admin.`,
+    { html: true, danger: nuovoRuolo === 'operatore', okText: nuovoRuolo === 'admin' ? 'Rendi Admin' : 'Rendi Operatore' }
+  );
+  if (!ok) return;
+  MiroxUI.loading.show('Aggiornamento ruolo…');
+  const { error } = await db.from('profili').update({ ruolo: nuovoRuolo }).eq('id', id);
+  MiroxUI.loading.hide();
+  if (error) {
+    MiroxUI.toast(`Errore: ${error.message}`, 'error', 4500);
+    return;
+  }
+  MiroxUI.toast('Ruolo aggiornato', 'success');
+  await caricaUtenti();
+}
+
+async function toggleAttivo(id, attivo) {
+  const u = utenti.find(x => x.id === id);
+  if (!u) return;
+  if (id === currentProfilo.id) {
+    await MiroxUI.alert('Non puoi disabilitare te stesso.');
+    return;
+  }
+  const ok = await MiroxUI.confirm(
+    attivo
+      ? `Abilitare <strong>${escapeHtml(u.nome || u.username || '')}</strong>?`
+      : `Disabilitare <strong>${escapeHtml(u.nome || u.username || '')}</strong>? Non potrà più accedere a Mirox finché non lo riabiliti.`,
+    { html: true, danger: !attivo, okText: attivo ? 'Abilita' : 'Disabilita' }
+  );
+  if (!ok) return;
+  MiroxUI.loading.show('Aggiornamento stato…');
+  const { error } = await db.from('profili').update({ attivo }).eq('id', id);
+  MiroxUI.loading.hide();
+  if (error) {
+    MiroxUI.toast(`Errore: ${error.message}`, 'error', 4500);
+    return;
+  }
+  MiroxUI.toast(attivo ? 'Utente abilitato' : 'Utente disabilitato', 'success');
+  await caricaUtenti();
+}
+
+function apriPermessi(id) {
+  const u = utenti.find(x => x.id === id);
+  if (!u) return;
+  permEditId = id;
+  document.getElementById('permNome').textContent = u.nome || u.username || u.email || '';
+  const perms = u.pagine_accessibili || {};
+  let html = '';
+  for (const [key, label] of Object.entries(PAGINE_LABELS)) {
+    html += `<div class="perm-item"><input type="checkbox" id="perm_${key}" ${perms[key] ? 'checked' : ''}><label for="perm_${key}">${escapeHtml(label)}</label></div>`;
+  }
+  document.getElementById('permGrid').innerHTML = html;
+  openModal('modalPermessi');
+}
+
+async function salvaPermessi() {
+  if (!permEditId) return;
+  const u = utenti.find(x => x.id === permEditId);
+  const perms = Object.assign({}, u?.pagine_accessibili || {});
+  for (const key of Object.keys(PAGINE_LABELS)) {
+    perms[key] = document.getElementById('perm_' + key).checked;
+  }
+  MiroxUI.loading.show('Salvataggio permessi…');
+  const { error } = await db.from('profili').update({ pagine_accessibili: perms }).eq('id', permEditId);
+  MiroxUI.loading.hide();
+  if (error) {
+    MiroxUI.toast(`Errore: ${error.message}`, 'error', 4500);
+    return;
+  }
+  MiroxUI.toast('Permessi aggiornati', 'success');
+  closeModal('modalPermessi');
+  await caricaUtenti();
+}
+</script>
+</body>
+</html>

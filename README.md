@@ -15,10 +15,13 @@ Modulo CRM per la gestione di vendite, post-vendita e supporto operativo della r
 | Cartella / File | Cosa contiene |
 |---|---|
 | `index.html` | Login Supabase Auth |
-| `dashboard.html` | Home con tabs Vendita / Post-Vendita / Call Center + bottone topbar Call Center + badge ticket aperti |
-| `admin-vendita-config.html` | CRUD cataloghi (categorie, offerte, opzioni, reload, regole documenti) |
+| `dashboard.html` | Home con tabs Vendita / Post-Vendita + topbar con bottoni Ticket / Call Center / **Admin** (visibile solo se `ruolo='admin'`) + badge ticket aperti |
+| `admin.html` | **Hub Admin Mirox** — 3 card (Gestione Utenti, Configurazione Call Center, Catalogo Vendita). Accesso ristretto a `ruolo='admin'` |
+| `admin-utenti.html` | Gestione utenti: ruoli admin/operatore, abilita/disabilita, permessi granulari Call Center. Solo admin |
+| `admin-call-center-config.html` | Orari, blocchi e parametri di sistema del Call Center (spostata da `moduli/call-center/configurazione.html`). Solo admin |
+| `admin-vendita-config.html` | CRUD cataloghi (categorie, offerte, opzioni, reload, regole documenti). Solo admin |
 | `moduli/` | 16 pagine funzionali Vendita / Post-Vendita (`apri_chiudi`, `switch_sim`, `ordini_smartphone`, `dispositivi_comodato`, `gestione_rimborsi`, `segnalazioni`, `simulatore_protecta`, `storico_cliente`, `ticket`, `verifica_contratti`, `controllo_fissi`, `controllo_lg`, `controllo_assicurazioni`, `controllo_allarmi`, `dashboard_pezzi`, `upload-contratti-vendita`) |
-| `moduli/call-center/` | **Modulo Call Center integrato (Fase 1)** — 12 pagine (`registra-chiamata`, `elenco-chiamate`, `rilavorazione`, `appuntamenti`, `appuntamenti-oggi`, `prenota-interno`, `esiti-appuntamenti`, `blacklist`, `call-center-lead-outbound`, `prenota-interno-outbound`, `registra-chiamata-outbound`, `configurazione`) + `prenota.html` (form pubblico). Vedi sezione "Modulo Call Center" sotto e [CLAUDE.md](CLAUDE.md) per i dettagli di coordinamento col CC prod |
+| `moduli/call-center/` | **Modulo Call Center integrato (Fase 1)** — 11 pagine (`registra-chiamata`, `elenco-chiamate`, `rilavorazione`, `appuntamenti`, `appuntamenti-oggi`, `prenota-interno`, `esiti-appuntamenti`, `blacklist`, `call-center-lead-outbound`, `prenota-interno-outbound`, `registra-chiamata-outbound`) + `prenota.html` (form pubblico). La pagina `configurazione` è stata spostata sotto Admin Mirox (`admin-call-center-config.html`). Vedi sezione "Modulo Call Center" sotto e [CLAUDE.md](CLAUDE.md) per i dettagli di coordinamento col CC prod |
 | `js/` | Librerie condivise: `config`, `auth`, `mirox-ui`, `mirox-upload`, `mirox-folder`, `mirox-mailer`, `anagrafica-helper`, `vendita-storage-helper` |
 | `css/` | `style.css`, `mirox-modules.css` |
 | `assets/` | Logo, favicon |
@@ -89,15 +92,16 @@ A partire dal 2026-06-20 il progetto Call Center — fino a quel momento deploya
 
 ### Cosa c'è in `moduli/call-center/`
 
-12 pagine portate dal CC + i loro asset (`js/`, `css/`, `assets/`):
+11 pagine portate dal CC + i loro asset (`js/`, `css/`, `assets/`):
 
 - `registra-chiamata.html` (cuore CC: cerca CF/PIVA → registra esito)
 - `elenco-chiamate.html`, `rilavorazione.html` (rilettura via viste unificate `vw_elenco_chiamate_unificate` / `vw_rilavorazione_ricontatti_unificata`)
 - `appuntamenti.html`, `appuntamenti-oggi.html`, `prenota-interno.html`, `esiti-appuntamenti.html` (gestione appuntamenti)
 - `blacklist.html` (clienti da non contattare)
 - `call-center-lead-outbound.html`, `prenota-interno-outbound.html`, `registra-chiamata-outbound.html` (flusso outbound business)
-- `configurazione.html` (admin: utenti, orari, blocchi, parametri)
 - `prenota.html` (form pubblico per prenotazioni da sito/social — **non in dashboard**, raggiungibile solo via URL diretto)
+
+La pagina di configurazione del CC (utenti, orari, blocchi, parametri) è stata spostata fuori dal modulo in [`admin-call-center-config.html`](admin-call-center-config.html) sotto il pannello Admin Mirox.
 
 ### Adattamenti applicati nel port
 
@@ -112,8 +116,20 @@ Le pagine sono state copiate **mantenendo la loro logica interna** (testata in p
 
 - **Solo bottone topbar** "Call Center" (la dashboard ha solo tab Vendita / Post-Vendita; il CC non ha tab/card dedicate, la sua sidebar interna è già la navigazione)
 - Al login, il JS calcola la prima pagina CC accessibile in `profilo.pagine_accessibili` e imposta l'`href` del bottone topbar a quell'URL. Se l'utente non ha nessun permesso CC (e non è admin), il bottone resta `disabled`
-- Chiavi permessi riutilizzate identiche al CC prod: `registra_chiamata`, `elenco_chiamate`, `rilavorazione`, `call_center_lead_outbound`, `appuntamenti`, `prenota_interno`, `appuntamenti_oggi`, `esiti_appuntamenti`, `blacklist`, `configurazione` (admin-only)
+- Chiavi permessi riutilizzate identiche al CC prod: `registra_chiamata`, `elenco_chiamate`, `rilavorazione`, `call_center_lead_outbound`, `appuntamenti`, `prenota_interno`, `appuntamenti_oggi`, `esiti_appuntamenti`, `blacklist`. La vecchia chiave `configurazione` resta in DB per compatibilità col CC prod ma non è più usata da Mirox (la configurazione CC è sotto Admin, gated dal ruolo)
 - Dentro ogni pagina CC: bottone arancione "← Torna alla dashboard Mirox" in cima
+
+## Pannello Admin Mirox
+
+Dal 2026-06-24 il bottone **Admin** della topbar dashboard è attivo per gli utenti con `ruolo='admin'` e porta a [`admin.html`](admin.html), hub che raccoglie:
+
+- **Gestione Utenti** ([`admin-utenti.html`](admin-utenti.html)) — tabella `profili`: cambio ruolo admin↔operatore, abilita/disabilita, modale permessi granulari Call Center. Un admin non può togliere il proprio ruolo né disabilitarsi
+- **Configurazione Call Center** ([`admin-call-center-config.html`](admin-call-center-config.html)) — orari settimanali, blocchi/chiusure, parametri di sistema (durata slot, anticipo, scadenze). Spostata da `moduli/call-center/configurazione.html` (eliminata)
+- **Catalogo Vendita** ([`admin-vendita-config.html`](admin-vendita-config.html)) — CRUD categorie/offerte/opzioni/reload. Ora gated dal ruolo `admin` (prima era protetto da una password client-side `1234`, rimossa)
+
+Il bottone "Admin" presente nel wizard `upload-contratti-vendita.html` continua a esistere ma:
+- È visibile **solo se** `profilo.ruolo='admin'`
+- Non chiede più password e fa redirect diretto a `admin.html`
 
 ### Regole di coordinamento col CC prod (NON NEGOZIABILI)
 

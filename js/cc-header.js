@@ -29,8 +29,7 @@
     { perm: 'prenota_interno',           label: 'Nuovo Appuntamento', href: 'prenota-interno.html' },
     { perm: 'appuntamenti_oggi',         label: 'Appuntamenti Oggi',  href: 'appuntamenti-oggi.html' },
     { perm: 'esiti_appuntamenti',        label: 'Esiti Appuntamenti', href: 'esiti-appuntamenti.html' },
-    { perm: 'blacklist',                 label: 'Black List',         href: 'blacklist.html' },
-    { perm: 'configurazione',            label: 'Configurazione',     href: 'configurazione.html', adminOnly: true }
+    { perm: 'blacklist',                 label: 'Black List',         href: 'blacklist.html' }
   ];
 
   function escapeHtml(str) {

@@ -45,8 +45,7 @@ const APP_CONFIG = {
         prenota_interno:    { titolo: 'Nuovo appuntamento', icona: 'plus-circle',    href: 'prenota-interno.html',   gruppo: 'appuntamenti' },
         appuntamenti_oggi:  { titolo: 'Appuntamenti oggi',  icona: 'clock',          href: 'appuntamenti-oggi.html', gruppo: 'vendita' },
         esiti_appuntamenti: { titolo: 'Esiti appuntamenti', icona: 'check-circle',   href: 'esiti-appuntamenti.html',gruppo: 'call-center' },
-        blacklist:          { titolo: 'Black List',         icona: 'shield-off',     href: 'blacklist.html',         gruppo: 'altro' },
-        configurazione:     { titolo: 'Configurazione',     icona: 'settings',       href: 'configurazione.html',    gruppo: 'admin' }
+        blacklist:          { titolo: 'Black List',         icona: 'shield-off',     href: 'blacklist.html',         gruppo: 'altro' }
     },
     
     GRUPPI_SIDEBAR: {

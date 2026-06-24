@@ -27,6 +27,7 @@ Questo file viene letto automaticamente all'avvio di ogni sessione Claude. Conti
 | Cron / schedule (nuovo / modificato / rimosso) | `README.md` (Schedulazioni) + `CLAUDE.md` (Architettura layer 2) |
 | Nuova "nota operativa consapevole" (limitazione nota, soluzione temporanea) | `CLAUDE.md` (Note operative consapevoli) |
 | Limitazione documentata risolta / password admin rimossa, ecc. | `CLAUDE.md` (rimuovere o aggiornare la nota corrispondente) |
+| Cambio modello permessi / ruoli / pagine pannello Admin | `CLAUDE.md` (sezione "Pannello Admin Mirox") + `README.md` (sezione "Pannello Admin Mirox") |
 
 ### Self-check di fine task
 
@@ -67,7 +68,7 @@ Modifiche a schema / RLS / RPC / trigger su queste tabelle hanno rischio di **ro
 
 ### 1. Frontend (`/`, `/moduli/`, `/moduli/call-center/`, `/js/`, `/css/`)
 
-Pagine HTML statiche, no bundler. `/moduli/call-center/` contiene il modulo CC integrato (Fase 1, vedi sezione dedicata). JS condiviso Mirox esposto su `window`:
+Pagine HTML statiche, no bundler. `/moduli/call-center/` contiene il modulo CC integrato (Fase 1, vedi sezione dedicata). Le pagine `admin*.html` alla root costituiscono il **Pannello Admin Mirox** (`admin.html` hub + `admin-utenti.html` + `admin-call-center-config.html` + `admin-vendita-config.html`), tutte gated da `profili.ruolo='admin'`. JS condiviso Mirox esposto su `window`:
 
 | File JS | Espone | Uso |
 |---|---|---|
@@ -301,28 +302,29 @@ Quando l'utente carica un PDA + sceglie "Analizza con AI", i dati estratti dall'
 
 ## Modulo Call Center integrato (Fase 1, dal 2026-06-20)
 
-Le 12 pagine CC + asset stanno in `moduli/call-center/`. Sono **port pragmatico** dalle pagine prod del CC: logica interna invariata (è testata in produzione da mesi), modifiche minimali per integrarle in Mirox.
+Le 11 pagine CC + asset stanno in `moduli/call-center/` (la 12esima — `configurazione.html` — è stata spostata sotto Admin Mirox il 2026-06-24, vedi sezione "Pannello Admin Mirox"). Sono **port pragmatico** dalle pagine prod del CC: logica interna invariata (è testata in produzione da mesi), modifiche minimali per integrarle in Mirox.
 
-### Cosa è stato modificato nel port (Fase 1 + harmonization 2026-06-24)
+### Cosa è stato modificato nel port (Fase 1 + harmonization 2026-06-24 + Admin split 2026-06-24)
 
-1. **Redirect login**: `window.location.href='index.html'` → `'../../index.html'` (nei 12 HTML loggati + 4 JS: `js/auth.js`, `js/call-center-lead-outbound.js`, `js/prenota-interno-outbound.js`, `js/registra-chiamata-outbound.js`)
+1. **Redirect login**: `window.location.href='index.html'` → `'../../index.html'` (nei 11 HTML loggati + 4 JS: `js/auth.js`, `js/call-center-lead-outbound.js`, `js/prenota-interno-outbound.js`, `js/registra-chiamata-outbound.js`)
 2. **Rimosso `index.html`** del CC (Mirox ha il proprio login alla root)
 3. **Sidebar laterale CC RIMOSSA** (harmonization 2026-06-24): sostituita da `cc-header` (topbar + tabs orizzontali), generato dinamicamente da `js/cc-header.js`. Le tab sono filtrate per `pagine_accessibili` come la vecchia sidebar
 4. **CSS DEDUPLICATO**: cancellata cartella `moduli/call-center/css/` (era duplicato byte-per-byte di `css/style.css`). Tutte le pagine CC ora referenziano `../../css/style.css` (single source of truth)
 5. **Layout classes**: `.app-layout` → `.cc-layout`, `.main-content` → `.cc-main` (nuove classi in `css/style.css` senza margin-left della sidebar)
 6. **Vecchio breadcrumb arancione rimosso**: era redundante con il bottone "Dashboard" nella nuova topbar
+7. **`configurazione.html` ELIMINATA**: spostata fuori dal CC in `admin-call-center-config.html` (root). La tab Utenti è stata estratta in pagina separata `admin-utenti.html`. La vecchia chiave `configurazione` resta in `profili.pagine_accessibili` per coerenza col CC prod, ma non è più consumata da Mirox
 
 ### Componente JS `js/cc-header.js`
 
 Esposto globalmente come `window.CcHeader`. API: `CcHeader.render(paginaChiavePerm)`. Genera in `#ccHeader`:
 - **Topbar**: bottone "Dashboard" arancione (a sinistra) + logo Mirox (centro) + user chip + bottone logout (a destra)
-- **Tab nav orizzontale**: 10 voci CC, filtrate per `profili.pagine_accessibili[perm]` (admin vede tutte; `configurazione` ha `adminOnly:true`). Tab corrente in evidenza arancione
+- **Tab nav orizzontale**: 9 voci CC, filtrate per `profili.pagine_accessibili[perm]` (admin vede tutte). Tab corrente in evidenza arancione. La voce `configurazione` è stata rimossa il 2026-06-24 quando la pagina è migrata sotto Admin Mirox
 
 ### Cosa NON è ancora unificato (debito tecnico)
 
 Le pagine CC ancora usano:
 - `Utils.toast/openModal/closeModal/showLoading/...` (in `moduli/call-center/js/app.js`) invece di `MiroxUI.*`
-- `alert()` / `confirm()` nativi in alcuni punti (`blacklist.html` rimuovi conferma, `configurazione.html` elimina blocco)
+- `alert()` / `confirm()` nativi in alcuni punti (es. `blacklist.html` rimuovi conferma)
 - `db.from('anagrafica').insert(...)` diretto in `registra-chiamata.html` (riga ~651) invece di `AnagraficaHelper.cercaOcrea` — rischio basso di duplicati grazie al check precedente `cercaCliente()`, ma non rispetta lo standard Mirox
 
 → refactor profondo da fare iterativamente in sessioni successive, una pagina per volta
@@ -330,13 +332,13 @@ Le pagine CC ancora usano:
 ### Accesso dalla dashboard Mirox
 
 - **Solo via bottone topbar** "Call Center" — niente tab/card nella dashboard (scelta UX dell'utente: la dashboard è focus Vendita/Post-Vendita, il CC ha la sua sidebar interna come navigazione)
-- **Redirect dinamico runtime**: al caricamento dashboard, il JS calcola la **prima pagina CC accessibile** per l'utente (ordine: registra_chiamata → elenco_chiamate → rilavorazione → call_center_lead_outbound → appuntamenti → prenota_interno → appuntamenti_oggi → esiti_appuntamenti → blacklist → configurazione admin-only) e imposta `href` del bottone topbar a quell'URL diretto
+- **Redirect dinamico runtime**: al caricamento dashboard, il JS calcola la **prima pagina CC accessibile** per l'utente (ordine: registra_chiamata → elenco_chiamate → rilavorazione → call_center_lead_outbound → appuntamenti → prenota_interno → appuntamenti_oggi → esiti_appuntamenti → blacklist) e imposta `href` del bottone topbar a quell'URL diretto
 - **Disabilitato se nessun permesso**: se l'utente non ha **nessuna** delle chiavi CC in `pagine_accessibili` (e non è admin), il bottone resta in classe `.disabled` (come nasce nell'HTML statico) e il click è bloccato
 - **Bottone "Torna alla dashboard Mirox"** in cima a ogni pagina CC integrata: arancione, ben visibile (era un breadcrumb piccolo, ora è un bottone stilizzato — eccetto `prenota.html` pubblica)
 
 ### Chiavi permessi (riusate identiche al CC prod)
 
-`registra_chiamata`, `elenco_chiamate`, `rilavorazione`, `call_center_lead_outbound`, `appuntamenti`, `prenota_interno`, `appuntamenti_oggi`, `esiti_appuntamenti`, `blacklist`, `configurazione` (admin-only).
+`registra_chiamata`, `elenco_chiamate`, `rilavorazione`, `call_center_lead_outbound`, `appuntamenti`, `prenota_interno`, `appuntamenti_oggi`, `esiti_appuntamenti`, `blacklist`. La chiave `configurazione` resta valida in DB (CC prod la usa) ma da Mirox la pagina è sotto Admin (gated da `ruolo='admin'`, NON da `pagine_accessibili`).
 
 → Zero migrazione utenti: chi ha permesso `'registra_chiamata'` su `mirox-crm.netlify.app` vede la stessa card anche qua.
 
@@ -346,9 +348,51 @@ Form esterno per prenotazioni dal sito/social. **NON in dashboard** (non ha auth
 
 ### Rischi e limiti noti
 
-- **Configurazione CC pesante**: la tab Utenti carica TUTTI i profili e mostra i permessi solo per le pagine CC (la mappa `PAGINE_LABELS` in `configurazione.html` lista solo CC). Da estendere a futuro per includere i moduli Vendita/Post-Vendita
+- **Permessi granulari Mirox solo per CC**: la modale "Permessi CC" in `admin-utenti.html` lista solo le 9 chiavi CC (le pagine Vendita/Post-Vendita sono accessibili a tutti gli utenti attivi, non c'è ancora granularità). Da estendere quando serve gating per modulo Vendita/Post-Vendita
 - **`vw_elenco_chiamate_unificate` / `vw_rilavorazione_ricontatti_unificata`**: usate dalle pagine CC, dipendono dalla colonna `chiamate.rilavorazione_stato` (esiste) e dalle viste già createSE — verificate online in Fase 1
 - **`get_slot_disponibili` RPC**: usata da `prenota.html`, `prenota-interno.html`, `appuntamenti.html` (per spostamento). Confermata esistente nel DB
+
+---
+
+## Pannello Admin Mirox (dal 2026-06-24)
+
+Hub centralizzato di amministrazione, gated da `profili.ruolo='admin'`. Visibile dalla dashboard come bottone topbar "Admin" (disabilitato per operatori).
+
+### Pagine
+
+| Pagina | Scopo |
+|---|---|
+| `admin.html` | Hub con 3 card di navigazione (Gestione Utenti / Configurazione CC / Catalogo Vendita) |
+| `admin-utenti.html` | CRUD su `profili`: cambio ruolo admin↔operatore con conferma, abilita/disabilita, modale permessi granulari CC (9 chiavi). Un admin non può togliersi il ruolo né disabilitarsi |
+| `admin-call-center-config.html` | Configurazione CC (orari settimanali, blocchi/chiusure, parametri sistema). Spostata da `moduli/call-center/configurazione.html` (eliminata). NON dipende da `CcHeader` o dai JS del CC: usa solo `js/config.js` + `js/auth.js` + `js/mirox-ui.js` Mirox |
+| `admin-vendita-config.html` | Esistente: CRUD cataloghi vendita. Aggiunto check `ruolo='admin'` (prima era solo `richiediAuth`). Bottone "← Admin" rimpiazza "← Dashboard" |
+
+### Guard pattern (riusato in tutte le pagine admin*)
+
+```js
+const profilo = await Auth.richiediAuth();
+if (!profilo) return;
+if (profilo.ruolo !== 'admin') {
+  await MiroxUI.alert('Accesso riservato agli amministratori.');
+  window.location.href = 'dashboard.html';
+  return;
+}
+```
+
+### Attivazione bottone Admin in dashboard
+
+In `dashboard.html` lo script di init aggiunge `href='admin.html'` e rimuove `.disabled` dal `#btnAdmin` solo se `profilo.ruolo === 'admin'`. Per gli operatori il bottone resta visibile ma in stato disabled (no click).
+
+### Rimozione password admin in upload
+
+Il bottone "Admin" dentro `moduli/upload-contratti-vendita.html` non chiede più la password client-side `'1234'`. Logica nuova:
+- Se `profilo.ruolo === 'admin'` → bottone visibile, click → redirect `../admin.html`
+- Altrimenti → bottone nascosto (`style.display='none'`)
+
+### Note operative
+
+- La creazione di un nuovo utente richiede ancora due step manuali (Supabase Authentication → add user con email/password, poi qui si gli assegna ruolo/permessi). Una function `admin-create-user` con service_role potrebbe automatizzare in futuro
+- I permessi granulari Vendita/Post-Vendita NON esistono ancora: tutte queste pagine sono accessibili a chiunque sia loggato e attivo. Quando serviranno, estendere la mappa `PAGINE_LABELS` in `admin-utenti.html`
 
 ---
 
@@ -370,11 +414,11 @@ Form esterno per prenotazioni dal sito/social. **NON in dashboard** (non ha auth
 
 ## Note operative consapevoli (non "correggere" senza chiedere)
 
-- **Password admin client-side hardcoded** `1234` in `moduli/upload-contratti-vendita.html` (riga ~862). Noto, da rivedere in futuro
 - **Edge Functions Supabase**: non in uso, non aggiungerne senza discutere prima
 - **Cluster `Turista`**: accettato solo da `crea-vendita-pratica-carrello.js`. È voluto.
 - **File SQL in `/database/`**: parziali, NON riflettono lo stato attuale del DB (vedi `database/README.md`)
 - **Modulo `simulatore_protecta.html`**: ~960 KB, molto pesante perché contiene asset embedded. Modificare con cautela.
+- **Permessi granulari Vendita/Post-Vendita**: non esistono ancora. Solo CC ha permessi fine-grained via `pagine_accessibili`. Le pagine Vendita/Post-Vendita sono accessibili a tutti gli utenti attivi, indipendentemente dal ruolo (admin/operatore). Solo il pannello Admin è gated dal `ruolo`.
 
 ---
 
@@ -387,3 +431,5 @@ Form esterno per prenotazioni dal sito/social. **NON in dashboard** (non ha auth
 | Aggiungere una **categoria vendita** | INSERT su `vendita_categorie` + eventuale ramo in `validateCategorySpecificRules` (carrello function) + UI wizard se ha campi speciali |
 | Sapere lo **stato reale dello schema** | Query a `information_schema` / `pg_*` dal SQL Editor Supabase (non fidarsi dei file in `/database/`) |
 | Modificare le **regole di accesso pagine Call Center** | NON farlo da qui — è gestito dall'altro progetto. Coordinare con utente. |
+| **Promuovere un utente ad Admin** o gestire i permessi CC | Dashboard → Admin → Gestione Utenti (`admin-utenti.html`). Bottoni "Rendi Admin"/"Rendi Operatore" + modale "Permessi CC". Solo accessibile se sei admin |
+| **Aggiungere una nuova pagina al pannello Admin** | Nuova card in `admin.html` + nuova pagina `admin-<nome>.html` alla root, riusare guard pattern `Auth.richiediAuth()` + check `ruolo === 'admin'` (vedi sezione "Pannello Admin Mirox") |

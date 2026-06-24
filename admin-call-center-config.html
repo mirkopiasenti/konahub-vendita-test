@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configurazione Call Center - Admin Mirox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .admin-topbar {
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    padding: 6px 36px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    gap: 24px;
+  }
+  .admin-topbar-left { justify-self: start; display: flex; align-items: center; gap: 12px; }
+  .admin-topbar-center { justify-self: center; }
+  .admin-topbar-right { justify-self: end; display: flex; align-items: center; gap: 12px; }
+  .admin-topbar-logo { height: 62px; width: 180px; position: relative; overflow: hidden; flex-shrink: 0; }
+  .admin-topbar-logo img { height: 200px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: block; }
+
+  .admin-back-button {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--primary); color: #fff; border: none;
+    padding: 9px 16px; border-radius: 10px;
+    font-size: 13px; font-weight: 600; text-decoration: none;
+    cursor: pointer; transition: all 0.2s ease; font-family: inherit;
+  }
+  .admin-back-button:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+  .admin-user-chip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 5px 14px 5px 5px;
+    background: var(--bg); border-radius: 999px; border: 1px solid var(--border);
+  }
+  .admin-user-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px;
+  }
+  .admin-user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .admin-btn-logout {
+    background: #fff; border: 1px solid var(--border); color: var(--text-secondary);
+    padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease; font-family: inherit;
+  }
+  .admin-btn-logout:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+
+  .admin-container {
+    max-width: 1200px;
+    margin: 28px auto 60px;
+    padding: 0 24px;
+  }
+
+  .orario-row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 12px;
+    align-items: start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .orario-row:last-child { border-bottom: none; }
+  .orario-day-name { font-weight: 600; padding-top: 8px; }
+  .orario-fasce { display: flex; flex-direction: column; gap: 8px; }
+  .fascia-row { display: flex; align-items: center; gap: 12px; }
+  .fascia-label { font-size: 12px; color: var(--text-secondary); min-width: 80px; }
+  .fascia-inputs { display: flex; align-items: center; gap: 8px; }
+  .fascia-inputs input[type=time] { width: 120px; padding: 8px 12px; font-size: 14px; }
+  .fascia-inputs span { color: var(--text-light); font-size: 13px; }
+
+  @media (max-width: 640px) {
+    .admin-topbar { padding: 10px 16px; }
+    .admin-topbar-logo { width: 130px; height: 50px; }
+    .admin-topbar-logo img { height: 150px; }
+    .admin-topbar-center { display: none; }
+    .admin-container { padding: 0 14px; margin: 18px auto 40px; }
+    .orario-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="admin-topbar">
+  <div class="admin-topbar-left">
+    <a href="admin.html" class="admin-back-button" title="Torna al pannello admin">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Admin
+    </a>
+  </div>
+  <div class="admin-topbar-center">
+    <div class="admin-topbar-logo"><img src="assets/logo.png" alt="Mirox"></div>
+  </div>
+  <div class="admin-topbar-right">
+    <div class="admin-user-chip">
+      <div class="admin-user-avatar" id="userAvatar">A</div>
+      <div class="admin-user-name" id="userName">…</div>
+    </div>
+    <button class="admin-btn-logout" id="btnLogout">Esci</button>
+  </div>
+</div>
+
+<main class="admin-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Configurazione Call Center</h1>
+      <p class="page-subtitle">Orari, blocchi e parametri di funzionamento</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="orari" onclick="switchTab('orari')">Orari</button>
+    <button class="tab" data-tab="blocchi" onclick="switchTab('blocchi')">Blocchi</button>
+    <button class="tab" data-tab="parametri" onclick="switchTab('parametri')">Parametri</button>
+  </div>
+
+  <!-- TAB ORARI -->
+  <div id="tabOrari">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Orari settimanali</h3>
+        <button class="btn btn-primary btn-sm" onclick="salvaOrari()">Salva orari</button>
+      </div>
+      <div id="orariContainer"></div>
+    </div>
+  </div>
+
+  <!-- TAB BLOCCHI -->
+  <div id="tabBlocchi" class="hidden">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Blocchi e chiusure</h3>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modalBlocco')">+ Nuovo blocco</button>
+      </div>
+      <div id="blocchiLista"></div>
+    </div>
+  </div>
+
+  <!-- TAB PARAMETRI -->
+  <div id="tabParametri" class="hidden">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Parametri sistema</h3>
+        <button class="btn btn-primary btn-sm" onclick="salvaParametri()">Salva parametri</button>
+      </div>
+      <div id="parametriForm"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal Nuovo Blocco -->
+<div class="modal-overlay" id="modalBlocco">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Nuovo blocco</h3>
+      <button class="modal-close" onclick="closeModal('modalBlocco')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select id="bloccoTipo" class="form-control" onchange="toggleBloccoFascia()">
+          <option value="giornata">Giornata intera</option>
+          <option value="fascia">Fascia oraria</option>
+        </select>
+      </div>
+      <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">Da</label><input type="date" id="bloccoDataInizio" class="form-control"></div>
+        <div class="form-group"><label class="form-label">A</label><input type="date" id="bloccoDataFine" class="form-control"></div>
+      </div>
+      <div id="bloccoFasciaFields" class="hidden" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">Ora inizio</label><input type="time" id="bloccoOraInizio" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Ora fine</label><input type="time" id="bloccoOraFine" class="form-control"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Motivo</label>
+        <input type="text" id="bloccoMotivo" class="form-control" placeholder="Es. ferie, formazione, evento">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalBlocco')">Annulla</button>
+      <button class="btn btn-primary" onclick="creaBlocco()">Crea blocco</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/mirox-ui.js"></script>
+<script>
+let orari = [];
+let blocchi = [];
+let currentProfilo = null;
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+(async () => {
+  const profilo = await Auth.richiediAuth();
+  if (!profilo) return;
+  if (profilo.ruolo !== 'admin') {
+    await MiroxUI.alert('Accesso riservato agli amministratori.');
+    window.location.href = 'dashboard.html';
+    return;
+  }
+  currentProfilo = profilo;
+  const nome = profilo.nome || profilo.email || 'Admin';
+  document.getElementById('userName').textContent = nome;
+  document.getElementById('userAvatar').textContent = nome.trim().charAt(0).toUpperCase();
+  await Promise.all([caricaOrari(), caricaBlocchi(), caricaParametri()]);
+})();
+
+document.getElementById('btnLogout').addEventListener('click', () => Auth.logout());
+
+function switchTab(tab) {
+  ['orari', 'blocchi', 'parametri'].forEach(t => {
+    document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle('hidden', t !== tab);
+  });
+  document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === tab));
+}
+
+// ========== ORARI ==========
+async function caricaOrari() {
+  const { data, error } = await db.from('orari_standard').select('*').order('giorno').order('ora_inizio');
+  if (error) { MiroxUI.toast('Errore caricamento orari: ' + error.message, 'error'); return; }
+  orari = data || [];
+  const giorni = ['', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+
+  const perGiorno = {};
+  for (const o of orari) {
+    if (!perGiorno[o.giorno]) perGiorno[o.giorno] = [];
+    perGiorno[o.giorno].push(o);
+  }
+
+  let html = '';
+  for (let g = 1; g <= 7; g++) {
+    const fasce = perGiorno[g] || [];
+    html += `<div class="orario-row">
+      <div class="orario-day-name">${giorni[g]}</div>
+      <div class="orario-fasce">`;
+    if (fasce.length === 0) {
+      html += `<div style="color:var(--text-light);font-size:13px">Nessuna fascia configurata</div>`;
+    }
+    fasce.forEach((o, idx) => {
+      const fasciaLabel = idx === 0 ? 'Mattina' : 'Pomeriggio';
+      html += `<div class="fascia-row">
+        <div class="fascia-label">${fasciaLabel}</div>
+        <div class="fascia-inputs">
+          <input type="time" value="${o.ora_inizio}" class="form-control" data-id="${o.id}" data-field="ora_inizio">
+          <span>—</span>
+          <input type="time" value="${o.ora_fine}" class="form-control" data-id="${o.id}" data-field="ora_fine">
+          <input type="checkbox" ${o.attivo ? 'checked' : ''} data-id="${o.id}" data-field="attivo" style="width:18px;height:18px;accent-color:var(--primary);margin-left:8px" title="Attivo">
+        </div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+  document.getElementById('orariContainer').innerHTML = html;
+}
+
+async function salvaOrari() {
+  MiroxUI.loading.show('Salvataggio orari…');
+  try {
+    for (const o of orari) {
+      const inizio = document.querySelector(`input[data-id="${o.id}"][data-field="ora_inizio"]`).value;
+      const fine = document.querySelector(`input[data-id="${o.id}"][data-field="ora_fine"]`).value;
+      const attivo = document.querySelector(`input[data-id="${o.id}"][data-field="attivo"]`).checked;
+      const { error } = await db.from('orari_standard').update({ ora_inizio: inizio, ora_fine: fine, attivo }).eq('id', o.id);
+      if (error) throw error;
+    }
+    MiroxUI.loading.hide();
+    MiroxUI.toast('Orari salvati', 'success');
+  } catch (e) {
+    MiroxUI.loading.hide();
+    MiroxUI.toast('Errore: ' + e.message, 'error', 4500);
+  }
+}
+
+// ========== BLOCCHI ==========
+async function caricaBlocchi() {
+  const { data, error } = await db.from('blocchi').select('*').order('data_inizio', { ascending: false });
+  if (error) { MiroxUI.toast('Errore caricamento blocchi: ' + error.message, 'error'); return; }
+  blocchi = data || [];
+  if (blocchi.length === 0) {
+    document.getElementById('blocchiLista').innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:32px">Nessun blocco configurato</div>';
+    return;
+  }
+  let html = '<div class="table-container"><table><thead><tr><th>Tipo</th><th>Da</th><th>A</th><th>Orario</th><th>Motivo</th><th></th></tr></thead><tbody>';
+  for (const b of blocchi) {
+    html += `<tr>
+      <td><span class="badge ${b.tipo === 'giornata' ? 'badge-danger' : 'badge-warning'}">${escapeHtml(b.tipo)}</span></td>
+      <td>${formatDate(b.data_inizio)}</td>
+      <td>${formatDate(b.data_fine)}</td>
+      <td>${b.tipo === 'fascia' ? (escapeHtml(b.ora_inizio) + ' — ' + escapeHtml(b.ora_fine)) : '—'}</td>
+      <td>${escapeHtml(b.motivo || '—')}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="eliminaBlocco('${b.id}')">Elimina</button></td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  document.getElementById('blocchiLista').innerHTML = html;
+}
+
+function toggleBloccoFascia() {
+  const tipo = document.getElementById('bloccoTipo').value;
+  document.getElementById('bloccoFasciaFields').classList.toggle('hidden', tipo !== 'fascia');
+}
+
+async function creaBlocco() {
+  const tipo = document.getElementById('bloccoTipo').value;
+  const dataInizio = document.getElementById('bloccoDataInizio').value;
+  const dataFine = document.getElementById('bloccoDataFine').value;
+  const motivo = document.getElementById('bloccoMotivo').value || null;
+  if (!dataInizio || !dataFine) { MiroxUI.toast('Inserisci le date', 'warning'); return; }
+
+  const ins = { tipo, data_inizio: dataInizio, data_fine: dataFine, motivo, creato_da: currentProfilo?.id || null };
+  if (tipo === 'fascia') {
+    ins.ora_inizio = document.getElementById('bloccoOraInizio').value;
+    ins.ora_fine = document.getElementById('bloccoOraFine').value;
+    if (!ins.ora_inizio || !ins.ora_fine) { MiroxUI.toast('Inserisci gli orari', 'warning'); return; }
+  }
+  MiroxUI.loading.show('Creazione blocco…');
+  const { error } = await db.from('blocchi').insert(ins);
+  MiroxUI.loading.hide();
+  if (error) { MiroxUI.toast('Errore: ' + error.message, 'error', 4500); return; }
+  MiroxUI.toast('Blocco creato', 'success');
+  closeModal('modalBlocco');
+  // Reset form
+  document.getElementById('bloccoTipo').value = 'giornata';
+  document.getElementById('bloccoDataInizio').value = '';
+  document.getElementById('bloccoDataFine').value = '';
+  document.getElementById('bloccoOraInizio').value = '';
+  document.getElementById('bloccoOraFine').value = '';
+  document.getElementById('bloccoMotivo').value = '';
+  toggleBloccoFascia();
+  await caricaBlocchi();
+}
+
+async function eliminaBlocco(id) {
+  const ok = await MiroxUI.confirm('Eliminare questo blocco?', { danger: true, okText: 'Elimina' });
+  if (!ok) return;
+  MiroxUI.loading.show('Eliminazione…');
+  const { error } = await db.from('blocchi').delete().eq('id', id);
+  MiroxUI.loading.hide();
+  if (error) { MiroxUI.toast('Errore: ' + error.message, 'error', 4500); return; }
+  MiroxUI.toast('Blocco eliminato', 'success');
+  await caricaBlocchi();
+}
+
+// ========== PARAMETRI ==========
+async function caricaParametri() {
+  const { data, error } = await db.from('impostazioni').select('*').order('chiave');
+  if (error) { MiroxUI.toast('Errore caricamento parametri: ' + error.message, 'error'); return; }
+  const labels = {
+    nome_negozio: 'Nome negozio',
+    indirizzo: 'Indirizzo',
+    telefono: 'Telefono',
+    email: 'Email',
+    durata_slot: 'Durata slot (min)',
+    durata_appuntamento: 'Durata appuntamento (min)',
+    buffer_appuntamenti: 'Buffer tra appuntamenti (min)',
+    anticipo_minimo: 'Anticipo minimo (ore)',
+    anticipo_massimo: 'Anticipo massimo (giorni)',
+    orario_chiusura_giornata: 'Ora chiusura giornata',
+    giorni_scadenza_passa_negozio: 'Giorni scadenza "Passa in negozio"'
+  };
+  let html = '';
+  for (const p of (data || [])) {
+    const label = labels[p.chiave] || p.chiave;
+    html += `<div class="form-group">
+      <label class="form-label">${escapeHtml(label)}</label>
+      <input type="text" class="form-control" value="${escapeHtml(p.valore)}" data-chiave="${escapeHtml(p.chiave)}">
+    </div>`;
+  }
+  document.getElementById('parametriForm').innerHTML = html || '<div style="text-align:center;color:var(--text-secondary);padding:32px">Nessun parametro presente</div>';
+}
+
+async function salvaParametri() {
+  MiroxUI.loading.show('Salvataggio parametri…');
+  const inputs = document.querySelectorAll('#parametriForm input[data-chiave]');
+  try {
+    for (const inp of inputs) {
+      const { error } = await db.from('impostazioni').update({ valore: inp.value }).eq('chiave', inp.dataset.chiave);
+      if (error) throw error;
+    }
+    MiroxUI.loading.hide();
+    MiroxUI.toast('Parametri salvati', 'success');
+  } catch (e) {
+    MiroxUI.loading.hide();
+    MiroxUI.toast('Errore: ' + e.message, 'error', 4500);
+  }
+}
+</script>
+</body>
+</html>

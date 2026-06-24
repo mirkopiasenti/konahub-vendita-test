@@ -418,7 +418,7 @@
       <div class="action-square-label">Call Center</div>
     </a>
 
-    <a class="action-square disabled" href="#" onclick="return false;">
+    <a class="action-square disabled" href="#" id="btnAdmin" onclick="return false;">
       <div class="action-square-icon">
         <svg viewBox="0 0 24 24">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -436,6 +436,18 @@
       document.getElementById('userName').textContent = nome;
       document.getElementById('userAvatar').textContent = nome.trim().charAt(0).toUpperCase();
 
+      // Bottone Admin: attivo solo se ruolo='admin'
+      try {
+        const btnAdmin = document.getElementById('btnAdmin');
+        if (btnAdmin && profilo.ruolo === 'admin') {
+          btnAdmin.classList.remove('disabled');
+          btnAdmin.setAttribute('href', 'admin.html');
+          btnAdmin.onclick = null;
+        }
+      } catch(e) {
+        console.error('Errore setup bottone Admin:', e);
+      }
+
       // Bottone Call Center in topbar: redirect diretto alla prima pagina CC
       // accessibile per questo utente. Nasconde se nessun permesso CC.
       try {
@@ -450,8 +462,7 @@
           { perm: 'prenota_interno',           url: 'moduli/call-center/prenota-interno.html' },
           { perm: 'appuntamenti_oggi',         url: 'moduli/call-center/appuntamenti-oggi.html' },
           { perm: 'esiti_appuntamenti',        url: 'moduli/call-center/esiti-appuntamenti.html' },
-          { perm: 'blacklist',                 url: 'moduli/call-center/blacklist.html' },
-          { perm: 'configurazione',            url: 'moduli/call-center/configurazione.html', adminOnly: true }
+          { perm: 'blacklist',                 url: 'moduli/call-center/blacklist.html' }
         ];
         const prima = ccPages.find(p => isAdmin || (!p.adminOnly && perms[p.perm] === true));
         const btn = document.getElementById('btnCallCenter');

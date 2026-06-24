@@ -1015,15 +1015,13 @@
 
  const btnAdmin = document.getElementById('btnAdminAccess');
  if (btnAdmin) {
+ if (profilo.ruolo === 'admin') {
  btnAdmin.addEventListener('click', () => {
- const pwd = prompt('Inserisci password amministratore:');
- if (pwd === null) return;
- if (pwd === '1234') {
- window.location.href = '../admin-vendita-config.html';
- } else {
- alert('Password errata');
- }
+ window.location.href = '../admin.html';
  });
+ } else {
+ btnAdmin.style.display = 'none';
+ }
  }
  })();
 </script>
