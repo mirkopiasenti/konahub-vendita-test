@@ -894,6 +894,9 @@ tr:hover {
     flex-direction: column;
     min-height: 100vh;
     background: var(--bg);
+    /* CSS variable per topbar height: cosi' le .cc-tabs sticky sotto si
+       allineano automaticamente anche se il padding cambia in futuro. */
+    --cc-topbar-height: 64px;
 }
 
 .cc-topbar {
@@ -907,6 +910,8 @@ tr:hover {
     top: 0;
     z-index: 50;
     gap: 24px;
+    min-height: var(--cc-topbar-height);
+    box-sizing: border-box;
 }
 
 .cc-topbar-left { justify-self: start; display: flex; align-items: center; gap: 12px; }
@@ -1002,7 +1007,7 @@ tr:hover {
     overflow-x: auto;
     scrollbar-width: thin;
     position: sticky;
-    top: 64px;
+    top: var(--cc-topbar-height, 64px);
     z-index: 49;
 }
 .cc-tab {
@@ -1063,8 +1068,13 @@ tr:hover {
 }
 
 @media (max-width: 768px) {
-    .cc-topbar { padding: 8px 16px; grid-template-columns: 1fr auto; gap: 12px; }
-    .cc-topbar-right { display: none; }
-    .cc-tabs { padding: 0 16px; top: 64px; }
+    .cc-topbar { padding: 8px 16px; grid-template-columns: 1fr auto auto; gap: 8px; }
+    .cc-topbar-center { display: none; }
+    /* Su mobile mantengo visibile il logout (essenziale), nascondo solo
+       lo user chip che e' info ridondante. Senza questo, l'utente mobile
+       non potrebbe disconnettersi dalla topbar CC. */
+    .cc-topbar-right { gap: 6px; }
+    .cc-user-chip { display: none; }
+    .cc-tabs { padding: 6px 16px 0; top: var(--cc-topbar-height, 64px); }
     .cc-main { padding: 16px; }
 }

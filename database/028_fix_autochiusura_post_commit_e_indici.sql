@@ -36,7 +36,8 @@ BEGIN
         RETURN jsonb_build_object(
             'appuntamenti_annullati', 0,
             'chiamate_chiuse', 0,
-            'skipped', true
+            'skipped', true,
+            'reason', 'anagrafica_o_pratica_null'
         );
     END IF;
 
