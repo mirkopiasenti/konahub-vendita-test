@@ -40,23 +40,50 @@
     return div.innerHTML;
   }
 
-  function getProfilo() {
-    // Auth dello shared root (window.Auth) ha precedenza; fallback al CC Auth
+  function getProfilo(profiloExplicit) {
+    // 1) Profilo passato esplicitamente (modo piu' robusto)
+    if (profiloExplicit && typeof profiloExplicit === 'object') return profiloExplicit;
+    // 2) Auth globale (var Auth o const Auth in script normali) - non e' su window.
+    //    typeof check evita ReferenceError se Auth non esiste in scope.
+    try {
+      if (typeof Auth !== 'undefined' && Auth) {
+        if (typeof Auth.getProfilo === 'function') {
+          const p = Auth.getProfilo();
+          if (p) return p;
+        }
+        if (Auth._profilo) return Auth._profilo;
+      }
+    } catch (_) { /* Auth non in scope */ }
+    // 3) Fallback su window.Auth (Mirox shared)
     if (root.Auth && typeof root.Auth.getProfilo === 'function') {
       const p = root.Auth.getProfilo();
       if (p) return p;
     }
-    // Auth interno CC (Auth._profilo)
     if (root.Auth && root.Auth._profilo) return root.Auth._profilo;
     return null;
   }
 
   function logoutSafe() {
+    // Auth globale di scope (CC e Mirox lo dichiarano con const)
+    try {
+      if (typeof Auth !== 'undefined' && Auth && typeof Auth.logout === 'function') {
+        Auth.logout();
+        return;
+      }
+    } catch (_) { /* Auth non in scope */ }
     if (root.Auth && typeof root.Auth.logout === 'function') {
       root.Auth.logout();
       return;
     }
-    // Fallback diretto
+    // Fallback diretto via db globale (analogo: const db)
+    try {
+      if (typeof db !== 'undefined' && db && db.auth && typeof db.auth.signOut === 'function') {
+        db.auth.signOut().finally(() => {
+          root.location.href = '../../index.html';
+        });
+        return;
+      }
+    } catch (_) { /* db non in scope */ }
     if (root.db && root.db.auth && typeof root.db.auth.signOut === 'function') {
       root.db.auth.signOut().finally(() => {
         root.location.href = '../../index.html';
@@ -66,16 +93,16 @@
     root.location.href = '../../index.html';
   }
 
-  function render(paginaCorrente) {
+  function render(paginaCorrente, profiloExplicit) {
     const container = document.getElementById('ccHeader');
     if (!container) {
       console.warn('CcHeader.render: #ccHeader non trovato nel DOM');
       return;
     }
 
-    const profilo = getProfilo();
+    const profilo = getProfilo(profiloExplicit);
     if (!profilo) {
-      console.warn('CcHeader.render: profilo non disponibile');
+      console.warn('CcHeader.render: profilo non disponibile - chiamare CcHeader.render(perm, profilo) o settare Auth._profilo prima');
       return;
     }
 
