@@ -192,6 +192,7 @@ body {
 <script src="../js/config.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-storage.js"></script>
 <script src="../js/mirox-folder.js"></script>
 <script src="../js/mirox-upload.js"></script>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
@@ -883,7 +884,8 @@ function renderAllegatiPopup(c, allegati, isReadOnly) {
     return;
   }
   list.innerHTML = allegati.map(d => {
-    const url = sb.storage.from(d.storage_bucket || CONTRATTI_BUCKET).getPublicUrl(d.storage_path).data?.publicUrl || '#';
+    const bucket = d.storage_bucket || CONTRATTI_BUCKET;
+    const path = d.storage_path || '';
     const label = (d.tipo_documento || 'documento').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const baseDl = label.replace(/\.[a-z0-9]+$/i, '');
     return `
@@ -891,8 +893,8 @@ function renderAllegatiPopup(c, allegati, isReadOnly) {
         <div class="att-icon">PDF</div>
         <div class="att-name">${escapeHtml(label)}<div style="font-size:11px;font-weight:500;color:#94a3b8;margin-top:2px;">${escapeHtml(fmtDateTime(d.uploaded_at))}</div></div>
         <div class="att-actions">
-          <a href="${escapeHtml(url)}" target="_blank" rel="noopener">Apri</a>
-          <a href="${escapeHtml(url)}" download="${escapeHtml(baseDl)}.pdf">Scarica</a>
+          <a href="#" onclick="MiroxStorage.openAttachment('${escapeHtml(bucket)}','${escapeHtml(path)}');return false;" rel="noopener">Apri</a>
+          <a href="#" onclick="MiroxStorage.openAttachment('${escapeHtml(bucket)}','${escapeHtml(path)}');return false;">Scarica</a>
           ${isReadOnly ? '' : `<button type="button" onclick="rimuoviAllegato('${escapeHtml(d.id)}', '${escapeHtml(d.storage_path)}', '${escapeHtml(d.storage_bucket || CONTRATTI_BUCKET)}')">🗑</button>`}
         </div>
       </div>`;

@@ -318,6 +318,7 @@ body {
 <script src="../js/auth.js"></script>
 <script src="../js/anagrafica-helper.js"></script>
 <script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-storage.js"></script>
 <script src="../js/mirox-folder.js"></script>
 <script src="../js/mirox-upload.js"></script>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
@@ -756,9 +757,13 @@ async function apriAllegatiOperazione(idx) {
         .order('uploaded_at', { ascending: false });
       if (docsErr) throw docsErr;
       const items = (docs || []).map(d => {
-        const url = sb.storage.from(d.storage_bucket || 'contratti-vendita').getPublicUrl(d.storage_path).data?.publicUrl || '#';
         const display = (d.tipo_documento || 'Documento').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        return { name: d.file_name || display, displayName: display, url };
+        return {
+          name: d.file_name || display,
+          displayName: display,
+          bucket: d.storage_bucket || 'contratti-vendita',
+          path: d.storage_path
+        };
       });
       loader.hide();
       window.MiroxUI.allegati({
@@ -792,8 +797,7 @@ async function apriAllegatiOperazione(idx) {
       if (filtered.length) {
         items = filtered.map(file => {
           const path = `${f}/${file.name}`;
-          const url = sb.storage.from(cfg.bucket).getPublicUrl(path).data?.publicUrl || '#';
-          return { name: file.name, displayName: _displayFileName(file.name), url };
+          return { name: file.name, displayName: _displayFileName(file.name), bucket: cfg.bucket, path };
         });
         break;
       }
@@ -838,8 +842,7 @@ async function scaricaDocumentoIdentita(uuid) {
         .limit(1);
       if (docs && docs.length) {
         const d = docs[0];
-        const url = sb.storage.from(d.storage_bucket || 'contratti-vendita').getPublicUrl(d.storage_path).data?.publicUrl;
-        if (url) candidati.push({ ts: new Date(d.uploaded_at), url, source: 'Upload Contratti', fileName: d.file_name || 'documento.pdf' });
+        if (d.storage_path) candidati.push({ ts: new Date(d.uploaded_at), bucket: d.storage_bucket || 'contratti-vendita', path: d.storage_path, source: 'Upload Contratti', fileName: d.file_name || 'documento.pdf' });
       }
     } catch (e) { console.warn('Lookup vendita_documenti:', e.message); }
 
@@ -861,11 +864,8 @@ async function scaricaDocumentoIdentita(uuid) {
           const { data: files } = await sb.storage.from('apri-chiudi-files').list(folder, { limit: 50 });
           const match = (files || []).find(f => f.name && f.name.toLowerCase().startsWith(labelTarget.toLowerCase()));
           if (match) {
-            const url = sb.storage.from('apri-chiudi-files').getPublicUrl(`${folder}/${match.name}`).data?.publicUrl;
-            if (url) {
-              candidati.push({ ts: new Date(p.data_inserimento), url, source: 'Apri/Chiudi', fileName: match.name });
-              break; // trovato il più recente per questa fonte
-            }
+            candidati.push({ ts: new Date(p.data_inserimento), bucket: 'apri-chiudi-files', path: `${folder}/${match.name}`, source: 'Apri/Chiudi', fileName: match.name });
+            break;
           }
         }
       }
@@ -888,11 +888,8 @@ async function scaricaDocumentoIdentita(uuid) {
           const { data: files } = await sb.storage.from('switch-sim-files').list(folder, { limit: 50 });
           const match = (files || []).find(f => f.name && f.name.toLowerCase().startsWith(labelTarget.toLowerCase()));
           if (match) {
-            const url = sb.storage.from('switch-sim-files').getPublicUrl(`${folder}/${match.name}`).data?.publicUrl;
-            if (url) {
-              candidati.push({ ts: new Date(p.data_inserimento), url, source: 'Switch SIM', fileName: match.name });
-              break;
-            }
+            candidati.push({ ts: new Date(p.data_inserimento), bucket: 'switch-sim-files', path: `${folder}/${match.name}`, source: 'Switch SIM', fileName: match.name });
+            break;
           }
         }
       }
@@ -910,20 +907,23 @@ async function scaricaDocumentoIdentita(uuid) {
     candidati.sort((a, b) => b.ts - a.ts);
     const best = candidati[0];
     loader.success('Documento trovato (fonte: ' + best.source + ')');
-    // Apre il file in una nuova scheda (download dipende dal Content-Disposition del bucket;
-    // forziamo download tramite tag <a download> dinamico)
+    // Bucket privati: genera signed URL on-demand
+    const signed = await window.MiroxStorage.signedUrl(best.bucket, best.path);
+    if (!signed) {
+      await window.MiroxUI.alert('Impossibile generare il link al documento. Riprova fra qualche secondo.', { type: 'error', title: 'Errore' });
+      return;
+    }
     setTimeout(() => {
       const a = document.createElement('a');
-      a.href = best.url;
+      a.href = signed;
       a.target = '_blank';
       a.rel = 'noopener';
-      // Policy Mirox: tutti i file sono PDF — forziamo estensione .pdf nel download
       const baseDl = (best.fileName || 'documento_identita').replace(/\.[a-z0-9]+$/i, '');
       a.download = baseDl + '.pdf';
       document.body.appendChild(a);
       a.click();
       a.remove();
-    }, 600);
+    }, 300);
   } catch (e) {
     loader.error('Errore di ricerca');
     console.error('Errore download documento:', e);

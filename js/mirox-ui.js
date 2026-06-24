@@ -269,13 +269,24 @@
                 const name = esc(it.displayName || it.name || 'Documento');
                 // Policy Mirox: tutti gli allegati sono PDF. L'icona mostra sempre "PDF".
                 const ext = 'PDF';
-                const openUrl = it.url || it.downloadUrl;
-                const dlUrl = it.downloadUrl || it.url;
-                // Forza il nome del download in .pdf usando il displayName come base
-                const baseDl = (it.displayName || it.name || 'documento').replace(/\.[a-z0-9]+$/i, '');
-                const dlName = baseDl + '.pdf';
-                const openBtn = openUrl ? `<a href="${esc(openUrl)}" target="_blank" rel="noopener">${esc(it.openText || 'Apri')}</a>` : '';
-                const dlBtn = dlUrl ? `<a href="${esc(dlUrl)}" download="${esc(dlName)}">${esc(it.downloadText || 'Scarica')}</a>` : '';
+                let openBtn = '';
+                let dlBtn = '';
+                if (it.bucket && it.path) {
+                    // Bucket privati: genera signed URL on-click via MiroxStorage
+                    const b = esc(it.bucket);
+                    const p = esc(it.path);
+                    const openLbl = esc(it.openText || 'Apri');
+                    const dlLbl = esc(it.downloadText || 'Scarica');
+                    openBtn = `<a href="#" onclick="MiroxStorage.openAttachment('${b}','${p}');return false;" rel="noopener">${openLbl}</a>`;
+                    dlBtn = `<a href="#" onclick="MiroxStorage.openAttachment('${b}','${p}');return false;">${dlLbl}</a>`;
+                } else {
+                    const openUrl = it.url || it.downloadUrl;
+                    const dlUrl = it.downloadUrl || it.url;
+                    const baseDl = (it.displayName || it.name || 'documento').replace(/\.[a-z0-9]+$/i, '');
+                    const dlName = baseDl + '.pdf';
+                    openBtn = openUrl ? `<a href="${esc(openUrl)}" target="_blank" rel="noopener">${esc(it.openText || 'Apri')}</a>` : '';
+                    dlBtn = dlUrl ? `<a href="${esc(dlUrl)}" download="${esc(dlName)}">${esc(it.downloadText || 'Scarica')}</a>` : '';
+                }
                 return `<div class="mx-attach-item">
                     <div class="mx-attach-icon">${esc(ext)}</div>
                     <div class="mx-attach-name">${name}</div>

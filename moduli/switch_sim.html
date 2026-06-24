@@ -1495,6 +1495,7 @@
 <script src="../js/auth.js"></script>
 <script src="../js/anagrafica-helper.js"></script>
 <script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-storage.js"></script>
 <script src="../js/mirox-folder.js"></script>
 <script src="../js/mirox-upload.js"></script>
 <style>
@@ -2125,7 +2126,8 @@ Mostra anche ricariche in OK
  const path = `${safeFolder}/${label}_${Date.now()}_${baseName}.pdf`;
  const { error } = await sb.storage.from(SWITCH_SIM_BUCKET).upload(path, blob, { upsert: true, contentType: 'application/pdf' });
  if (error) throw error;
- return sb.storage.from(SWITCH_SIM_BUCKET).getPublicUrl(path).data?.publicUrl || null;
+ // Bucket privato: salviamo il path, signed URL on-demand
+ return path;
  } catch (e) { console.error('Upload switch-sim errore (' + label + '):', e); return null; }
  }
 
@@ -2194,8 +2196,7 @@ Mostra anche ricariche in OK
        if (filtered.length) {
          items = filtered.map(f => {
            const path = `${folder}/${f.name}`;
-           const url = sb.storage.from(SWITCH_SIM_BUCKET).getPublicUrl(path).data?.publicUrl || '#';
-           return { name: f.name, displayName: _displayNameSwitchSim(f.name), url };
+           return { name: f.name, displayName: _displayNameSwitchSim(f.name), bucket: SWITCH_SIM_BUCKET, path };
          });
          break;
        }

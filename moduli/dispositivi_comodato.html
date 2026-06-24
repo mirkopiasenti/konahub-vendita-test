@@ -469,6 +469,7 @@
 <script src="../js/auth.js"></script>
 <script src="../js/anagrafica-helper.js"></script>
 <script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-storage.js"></script>
 <script src="../js/mirox-folder.js"></script>
 <script src="../js/mirox-upload.js"></script>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>
@@ -687,7 +688,8 @@
        items.push({
          name: consegna.name,
          displayName: 'Modulo di Consegna',
-         url: sb.storage.from(COMODATO_BUCKET).getPublicUrl(`dispositivo_${deviceId}/${consegna.name}`).data?.publicUrl
+         bucket: COMODATO_BUCKET,
+         path: `dispositivo_${deviceId}/${consegna.name}`
        });
      }
      // Modulo riconsegna visibile solo a pratica chiusa (rientrato) E se esiste un secondo PDF
@@ -697,7 +699,8 @@
        items.push({
          name: riconsegna.name,
          displayName: 'Modulo di Riconsegna',
-         url: sb.storage.from(COMODATO_BUCKET).getPublicUrl(`dispositivo_${deviceId}/${riconsegna.name}`).data?.publicUrl
+         bucket: COMODATO_BUCKET,
+         path: `dispositivo_${deviceId}/${riconsegna.name}`
        });
      }
      loader.hide();
@@ -724,7 +727,8 @@
  const path = `dispositivo_${deviceId}/${Date.now()}_${baseName}.pdf`;
  const { error } = await sb.storage.from(COMODATO_BUCKET).upload(path, blob, { upsert: true, contentType: 'application/pdf' });
  if (error) throw error;
- return sb.storage.from(COMODATO_BUCKET).getPublicUrl(path).data?.publicUrl || null;
+ // Salviamo il path (bucket privato): il signed URL si genera on-demand via MiroxStorage
+ return path;
  } catch (e) { console.error('Upload PDF errore:', e); return null; }
  }
  
