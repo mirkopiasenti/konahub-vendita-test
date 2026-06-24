@@ -4422,7 +4422,12 @@ Reload Exchange
  cliente_form: getClienteFormData(),
  pratica: {
  origine_pratica: refs.originePratica.value || 'spontaneo',
- operatore_id: refs.operatoreId.value.trim() || ''
+ operatore_id: refs.operatoreId.value.trim() || '',
+ // Fase 4.1-fix B2: persisti l'origine auto-rilevata (RPC) nel draft cosi'
+ // al restore non perdiamo le FK appuntamento_id/chiamata_id e il banner
+ origine_auto_rilevata: runtimeState.origineAutoRilevata
+ ? { ...runtimeState.origineAutoRilevata }
+ : null
  },
  contract_form: getContractFormDraft(),
  pratica_files: {
@@ -4557,6 +4562,24 @@ Reload Exchange
  refs.originePratica.value = draft.pratica?.origine_pratica || 'spontaneo';
  refs.operatoreId.value = draft.pratica?.operatore_id || '';
 
+ // Fase 4.1-fix B2/B5: ripristina origine auto-rilevata + banner
+ // dal draft, cosi' restituiamo lo stato corretto della UI e al submit
+ // le FK appuntamento_id/chiamata_id vengono di nuovo passate al backend.
+ const auto = draft.pratica?.origine_auto_rilevata;
+ if (auto && auto.origine_pratica && auto.descrizione) {
+ runtimeState.origineAutoRilevata = {
+ origine_pratica: auto.origine_pratica,
+ descrizione: auto.descrizione,
+ anagrafica_id: auto.anagrafica_id || null,
+ evento_tipo: auto.evento_tipo || null,
+ evento_id: auto.evento_id || null
+ };
+ if (refs.origineAutoTesto) refs.origineAutoTesto.textContent = auto.descrizione;
+ if (refs.origineAutoBanner) refs.origineAutoBanner.classList.remove('hidden');
+ } else {
+ resetOrigineAutoRilevata();
+ }
+
  state.cart.cliente = draft.cart?.cliente ? { ...draft.cart.cliente } : null;
  state.cart.contratti = (draft.cart?.contratti || []).map((item) => ({
  ...item,
@@ -4635,7 +4658,7 @@ Reload Exchange
    return hasAlmenoUnaSelezione;
  }
 
- async function promptRestoreDraftIfNeeded() {
+ async function promptRestoreDraftIfNeeded(options = {}) {
  const draft = loadDraftFromSession();
  if (!draft) return false;
 
@@ -4644,6 +4667,19 @@ Reload Exchange
  if (!draftMeetsRestoreRequirements(draft)) {
    clearDraftFromSession();
    return false;
+ }
+
+ // Fase 4.1-fix B4: se stiamo arrivando da Call Center per un cliente specifico
+ // (skipPromptIfCfDiverso) e il draft e' su un cliente DIVERSO, scartiamo il
+ // draft silenziosamente: altrimenti il restore sovrascriverebbe i dati che il
+ // flusso CC sta per pre-popolare, creando uno stato confuso.
+ const ccCfPiva = String(options?.skipPromptIfCfDiverso || '').trim().toUpperCase();
+ if (ccCfPiva) {
+   const draftCfPiva = String(draft?.cliente_form?.cf_piva || draft?.cart?.cliente?.cf_piva || '').trim().toUpperCase();
+   if (draftCfPiva && draftCfPiva !== ccCfPiva) {
+     clearDraftFromSession();
+     return false;
+   }
  }
 
  const summary = {
@@ -5239,25 +5275,31 @@ Reload Exchange
  setResult({ init: true });
  try {
  await loadConfig();
- await promptRestoreDraftIfNeeded();
+
+ // Fase 4.1-fix B4: se arriviamo da CC con un CF specifico e c'e' un draft
+ // su altro cliente, scartiamo il draft per evitare stato confuso.
+ // La sessionStorage viene letta MA non rimossa qui: serve per il check.
+ let ccPayload = null;
+ try {
+ const raw = sessionStorage.getItem('mirox_vendita_da_cc');
+ if (raw) ccPayload = JSON.parse(raw);
+ } catch (e) {
+ console.warn('mirox_vendita_da_cc parse eccezione:', e);
+ }
+
+ await promptRestoreDraftIfNeeded({ skipPromptIfCfDiverso: ccPayload?.cf_piva || null });
 
  // Fase 4: arrivo da Call Center (es. appuntamenti-oggi "Inizia vendita").
  // Se sessionStorage contiene un payload mirox_vendita_da_cc, pre-popoliamo
  // CF/PIVA e lanciamo la ricerca anagrafica automaticamente. La RPC
  // vendita_deriva_origine viene poi chiamata dentro cercaCliente, quindi
  // l'origine_pratica + banner si valorizzano da soli.
- try {
- const raw = sessionStorage.getItem('mirox_vendita_da_cc');
- if (raw) {
+ if (ccPayload) {
  sessionStorage.removeItem('mirox_vendita_da_cc');
- const payload = JSON.parse(raw);
- if (payload && payload.cf_piva && refs.cfPiva) {
- refs.cfPiva.value = String(payload.cf_piva).trim().toUpperCase();
+ if (ccPayload.cf_piva && refs.cfPiva) {
+ refs.cfPiva.value = String(ccPayload.cf_piva).trim().toUpperCase();
  await cercaCliente({ force: true });
  }
- }
- } catch (e) {
- console.warn('mirox_vendita_da_cc init eccezione:', e);
  }
  } catch (error) {
  setMessage(error.message, 'err');

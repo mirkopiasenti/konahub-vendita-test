@@ -51,7 +51,7 @@ const RegistraChiamataOutbound = {
             return;
         }
 
-        App.initSidebar(canAccessOutboundPage ? 'call_center_lead_outbound' : 'rilavorazione');
+        CcHeader.render(canAccessOutboundPage ? 'call_center_lead_outbound' : 'rilavorazione');
         await Notifiche.init();
 
         this.bindEvents();

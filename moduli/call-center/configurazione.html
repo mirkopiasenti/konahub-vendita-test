@@ -2,12 +2,12 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="icon" type="image/png" href="../../assets/favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configurazione - Mirox</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../../css/style.css">
     <style>
         .perm-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
         .perm-item { display:flex; align-items:center; gap:8px; font-size:13px; padding:6px 0; }
@@ -23,15 +23,9 @@
     </style>
 </head>
 <body>
-<div class="app-layout">
-    <aside id="sidebar"></aside>
-    <main class="main-content">
-        <div style="margin-bottom:16px">
-            <a href="../../dashboard.html" style="display:inline-flex;align-items:center;gap:8px;background:#FF6600;color:white;padding:10px 16px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;box-shadow:0 2px 6px rgba(255,102,0,0.25);transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(255,102,0,0.35)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 6px rgba(255,102,0,0.25)'">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                Torna alla dashboard Mirox
-            </a>
-        </div>
+<div class="cc-layout">
+    <div id="ccHeader"></div>
+    <main class="cc-main">
         <div class="page-header">
             <div>
                 <h1 class="page-title">Configurazione</h1>
@@ -129,6 +123,7 @@
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
 <script src="js/notifiche.js"></script>
+    <script src="../../js/cc-header.js"></script>
 <script>
 let utenti=[], orari=[], blocchi=[], permEditId=null;
 
@@ -146,7 +141,7 @@ const PAGINE_LABELS = {
     const { data:profilo } = await db.from('profili').select('*').eq('id',session.user.id).single();
     if (!profilo || profilo.ruolo!=='admin') { window.location.href='../../index.html'; return; }
     Auth._profilo = profilo;
-    App.initSidebar('configurazione');
+    CcHeader.render('configurazione');
     await Notifiche.init();
     await Promise.all([caricaUtenti(), caricaOrari(), caricaBlocchi(), caricaParametri()]);
 })();

@@ -86,7 +86,7 @@ const LeadOutbound = {
             return;
         }
 
-        App.initSidebar('call_center_lead_outbound');
+        CcHeader.render('call_center_lead_outbound');
         await Notifiche.init();
         await Utils.caricaColoriOperatori();
 

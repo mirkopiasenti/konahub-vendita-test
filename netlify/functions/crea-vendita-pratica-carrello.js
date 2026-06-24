@@ -883,6 +883,26 @@ exports.handler = async (event) => {
       }
     }
 
+    // Fase 4.1-fix: auto-chiusura eventi CC (appuntamenti futuri non gestiti
+    // + chiamate in rilavorazione) per questo cliente. Eseguita SOLO ora,
+    // dopo che la pratica + i contratti sono andati a buon fine. Cosi' un
+    // eventuale rollback (catch sotto) non lascia eventi CC orfani.
+    // Best-effort: warning ma non fa fallire la pratica gia' creata.
+    let cleanupCcEventi = null;
+    try {
+      const { data: cleanupResult, error: cleanupError } = await supabase.rpc(
+        'vendita_chiudi_eventi_cc_per_pratica',
+        { p_anagrafica_id: anagraficaId, p_pratica_id: praticaRow.id }
+      );
+      if (cleanupError) {
+        console.warn('Auto-chiusura eventi CC fallita (non bloccante):', cleanupError.message);
+      } else {
+        cleanupCcEventi = cleanupResult;
+      }
+    } catch (cleanupEx) {
+      console.warn('Auto-chiusura eventi CC eccezione (non bloccante):', cleanupEx?.message || cleanupEx);
+    }
+
     return response(200, {
       success: true,
       anagrafica_id: anagraficaId,
@@ -890,7 +910,8 @@ exports.handler = async (event) => {
       storage_base_path: storageBasePath,
       nome_cartella_storage: nomeCartellaStorage,
       contratti: createdContracts,
-      pda_warnings: pdaWarnings
+      pda_warnings: pdaWarnings,
+      cleanup_cc_eventi: cleanupCcEventi
     });
   } catch (error) {
     if (createdPraticaId) {

@@ -148,12 +148,20 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 funct
   3. Default → `spontaneo`
   - Migration 026 (versione iniziale) + 027 (rilassamento + trigger auto-chiusura)
 
-### Trigger auto-chiusura eventi CC su nuova pratica (dal 2026-06-24)
-- `trg_vendita_pratica_auto_chiudi_cc` — `AFTER INSERT ON vendita_pratiche FOR EACH ROW`. Quando si crea una nuova pratica vendita, per quella `anagrafica_id`:
-  - **Annulla** automaticamente gli `appuntamenti` con `stato='confermato'` AND `presentato IS NULL` AND `data_ora >= ieri`. Setta `stato='annullato'` + `motivo_modifica='Chiuso automaticamente: cliente passato in anticipo, pratica vendita <uuid> creata il <data>'`. Lascia stare i `presentato='si'` (vanno esitati in "Esiti Appuntamenti") e i `presentato='no'` (restano per "Rilavorazione → Non Presentati")
-  - **Chiude** le `chiamate` con `rilavorazione_stato='da_lavorare'` OR `passaggio_stato='in_attesa'`: setta `rilavorazione_stato='completato'` e `passaggio_stato='chiuso'` (solo se era `'in_attesa'`). Così le pagine CC Rilavorazione non mostrano più quel cliente
-  - Idempotente: se nessun evento da chiudere → no-op silenzioso
-  - Migration: `database/027_vendita_deriva_origine_rilassata_e_autochiusura_cc.sql`
+### Auto-chiusura eventi CC su nuova pratica (dal 2026-06-24, fix B1)
+**ATTENZIONE**: il vecchio trigger DB `trg_vendita_pratica_auto_chiudi_cc` è stato **DROPPATO** in migration 028. Motivo: scattava su INSERT pratica PRIMA della creazione contratti, lasciando appuntamenti annullati orfani in caso di rollback. La logica è stata spostata nel backend Netlify per essere eseguita solo dopo successo completo.
+
+- **RPC** `vendita_chiudi_eventi_cc_per_pratica(p_anagrafica_id uuid, p_pratica_id uuid) RETURNS jsonb` — chiamata dal backend `crea-vendita-pratica-carrello.js` come ultimo step, DOPO che pratica + contratti + promozione PDA sono andati a buon fine. Ritorna `{appuntamenti_annullati, chiamate_chiuse, skipped}`. Best-effort: se fallisce non rompe la creazione pratica.
+- Logica identica al vecchio trigger:
+  - **Annulla** `appuntamenti` con `stato='confermato'` AND `presentato IS NULL` AND `data_ora >= ieri` → `stato='annullato'` + `motivo_modifica='Chiuso automaticamente: cliente passato in anticipo, pratica vendita <uuid>'`. Lascia stare `presentato='si'` (vanno esitati in "Esiti Appuntamenti") e `presentato='no'` (restano per "Rilavorazione → Non Presentati")
+  - **Chiude** `chiamate` con `rilavorazione_stato='da_lavorare'` OR `passaggio_stato='in_attesa'` → `rilavorazione_stato='completato'` + `passaggio_stato='chiuso'` (solo se era `'in_attesa'`)
+  - Anti-rollback safety: verifica che la pratica esista davvero prima di operare
+- Migration: `database/027` (introduce funzione + trigger originale) + `database/028` (rimuove trigger, mantiene funzione + nuova variante con pratica_id)
+
+### Indici performance RPC (dal 2026-06-24)
+- `idx_appuntamenti_anagrafica_stato_data` — `(anagrafica_id, stato, data_ora) WHERE anagrafica_id IS NOT NULL` — usato da `vendita_deriva_origine` livello 1
+- `idx_chiamate_anagrafica_esito_data` — `(anagrafica_id, esito, data_ora DESC) WHERE anagrafica_id IS NOT NULL` — usato da `vendita_deriva_origine` livello 2
+- `idx_chiamate_anagrafica_rilavorazione` — `(anagrafica_id) WHERE anagrafica_id IS NOT NULL AND (rilavorazione_stato='da_lavorare' OR passaggio_stato='in_attesa')` — usato da `vendita_chiudi_eventi_cc_per_pratica`
 
 ### Wizard: pass-through evento origine al backend
 Il wizard Upload Contratti, al submit, passa `pratica.appuntamento_id` e `pratica.chiamata_id` valorizzati con `runtimeState.origineAutoRilevata.evento_id` (solo se l'operatore non ha overridato l'origine auto-rilevata). Le colonne FK su `vendita_pratiche` esistono già da schema legacy e vengono ora effettivamente riempite per il flusso CC.
@@ -295,21 +303,29 @@ Quando l'utente carica un PDA + sceglie "Analizza con AI", i dati estratti dall'
 
 Le 12 pagine CC + asset stanno in `moduli/call-center/`. Sono **port pragmatico** dalle pagine prod del CC: logica interna invariata (è testata in produzione da mesi), modifiche minimali per integrarle in Mirox.
 
-### Cosa è stato modificato nel port
+### Cosa è stato modificato nel port (Fase 1 + harmonization 2026-06-24)
 
-1. **Redirect login**: `window.location.href='index.html'` → `'../../index.html'` (nei 9 HTML loggati + 4 JS: `js/auth.js`, `js/call-center-lead-outbound.js`, `js/prenota-interno-outbound.js`, `js/registra-chiamata-outbound.js`)
-2. **Breadcrumb dashboard**: aggiunto link "← Torna alla dashboard Mirox" in cima a ogni `<main>` (eccetto `prenota.html` pubblica)
-3. **Rimosso `index.html`** del CC (Mirox ha il proprio login alla root)
-4. **Sidebar laterale CC mantenuta**: era una scelta architetturale già rifinita lato prod; rimuoverla avrebbe richiesto refactor di tutti i 12 file. Il bottone "Esci" della sidebar fa logout via `Auth.logout()` → `../../index.html`
+1. **Redirect login**: `window.location.href='index.html'` → `'../../index.html'` (nei 12 HTML loggati + 4 JS: `js/auth.js`, `js/call-center-lead-outbound.js`, `js/prenota-interno-outbound.js`, `js/registra-chiamata-outbound.js`)
+2. **Rimosso `index.html`** del CC (Mirox ha il proprio login alla root)
+3. **Sidebar laterale CC RIMOSSA** (harmonization 2026-06-24): sostituita da `cc-header` (topbar + tabs orizzontali), generato dinamicamente da `js/cc-header.js`. Le tab sono filtrate per `pagine_accessibili` come la vecchia sidebar
+4. **CSS DEDUPLICATO**: cancellata cartella `moduli/call-center/css/` (era duplicato byte-per-byte di `css/style.css`). Tutte le pagine CC ora referenziano `../../css/style.css` (single source of truth)
+5. **Layout classes**: `.app-layout` → `.cc-layout`, `.main-content` → `.cc-main` (nuove classi in `css/style.css` senza margin-left della sidebar)
+6. **Vecchio breadcrumb arancione rimosso**: era redundante con il bottone "Dashboard" nella nuova topbar
 
-### Cosa NON è stato modificato (debito tecnico esplicito, vedi task #18)
+### Componente JS `js/cc-header.js`
+
+Esposto globalmente come `window.CcHeader`. API: `CcHeader.render(paginaChiavePerm)`. Genera in `#ccHeader`:
+- **Topbar**: bottone "Dashboard" arancione (a sinistra) + logo Mirox (centro) + user chip + bottone logout (a destra)
+- **Tab nav orizzontale**: 10 voci CC, filtrate per `profili.pagine_accessibili[perm]` (admin vede tutte; `configurazione` ha `adminOnly:true`). Tab corrente in evidenza arancione
+
+### Cosa NON è ancora unificato (debito tecnico)
 
 Le pagine CC ancora usano:
-- `Utils.toast/openModal/closeModal/showLoading/...` (CC interno, in `js/app.js` CC) invece di `MiroxUI.*`
+- `Utils.toast/openModal/closeModal/showLoading/...` (in `moduli/call-center/js/app.js`) invece di `MiroxUI.*`
 - `alert()` / `confirm()` nativi in alcuni punti (`blacklist.html` rimuovi conferma, `configurazione.html` elimina blocco)
 - `db.from('anagrafica').insert(...)` diretto in `registra-chiamata.html` (riga ~651) invece di `AnagraficaHelper.cercaOcrea` — rischio basso di duplicati grazie al check precedente `cercaCliente()`, ma non rispetta lo standard Mirox
 
-→ refactor profondo da fare iterativamente in sessioni successive, una pagina per volta, dopo aver verificato che il mount Fase 1 funziona stabile
+→ refactor profondo da fare iterativamente in sessioni successive, una pagina per volta
 
 ### Accesso dalla dashboard Mirox
 

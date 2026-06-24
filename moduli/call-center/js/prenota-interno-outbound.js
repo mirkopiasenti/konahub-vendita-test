@@ -45,7 +45,7 @@ const PrenotaInternoOutbound = {
             return;
         }
 
-        App.initSidebar(canAccessOutboundPage ? 'call_center_lead_outbound' : 'rilavorazione');
+        CcHeader.render(canAccessOutboundPage ? 'call_center_lead_outbound' : 'rilavorazione');
         await Notifiche.init();
 
         const params = new URLSearchParams(window.location.search);
