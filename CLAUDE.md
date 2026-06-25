@@ -85,7 +85,7 @@ Pagine HTML statiche, no bundler. `/moduli/call-center/` contiene il modulo CC i
 
 ### 2. Server (`/netlify/functions/`)
 
-Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. Per questo motivo, dal 2026-06-24 (Fase B hardening) **TUTTE le functions tranne `cron-rientro-sim`** richiedono `Authorization: Bearer <jwt>` valido (validato via `_lib/require-auth.js`). `admin-vendita-config` richiede ulteriore check `ruolo='admin'`. Il client deve usare `MiroxApi.fetch()` o aggiungere l'header manualmente. 8 functions + 2 lib condivise:
+Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. Per questo motivo, dal 2026-06-24 (Fase B hardening) **TUTTE le functions tranne `cron-rientro-sim` e `public-prenota`** richiedono `Authorization: Bearer <jwt>` valido (validato via `_lib/require-auth.js`). `admin-vendita-config` richiede ulteriore check `ruolo='admin'`. Le 2 functions non-auth (`cron-rientro-sim` cron-only, `public-prenota` form pubblico) sono esplicitamente esposte. Il client deve usare `MiroxApi.fetch()` o aggiungere l'header manualmente. 9 functions + 2 lib condivise:
 
 - `vendita-config.js` (GET) — catalogo per wizard
 - `admin-vendita-config.js` (GET/POST action-based) — CRUD admin offerte/opzioni/reload + replace regole documentali
@@ -95,6 +95,7 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. Per que
 - `search-anagrafica.js` (GET) — lookup CF/PIVA
 - `mirox-send-email.js` (POST) — endpoint pubblico mailer
 - `cron-rientro-sim.js` (scheduled `0 7 * * *`) — notifica giornaliera switch SIM. **Non auth-gated** (chiamata dal cron Netlify, non da utente)
+- `public-prenota.js` (GET/POST) — **endpoint pubblico** chiamato dal form `prenota.html` (anon). GET `?action=slots&data=YYYY-MM-DD` ritorna gli slot via RPC `get_slot_disponibili` (SECURITY DEFINER). POST crea l'appuntamento con validazione lato server e re-check disponibilità slot. Rate-limiting in-memory (6 richieste / 10 min per IP). Usa `service_role` per bypassare le RLS che dopo migration 031 chiudono `appuntamenti`/`slot_bloccati`/`blocchi`/`orari_standard`/`impostazioni` a `authenticated`. **Non auth-gated** (intenzionalmente pubblico)
 - `_lib/mailer.js` — helper SMTP Gmail + template DB + log
 - `_lib/require-auth.js` — helper auth: valida JWT Supabase nell'header `Authorization: Bearer <token>`, ritorna `{ok, user, profilo}` o `{ok:false, status, error}`. Supporta opt `adminOnly: true` per richiedere `ruolo='admin'`. Usare in TUTTE le nuove functions
 
@@ -363,7 +364,7 @@ Le pagine CC ancora usano:
 
 ### Pagina pubblica `prenota.html`
 
-Form esterno per prenotazioni dal sito/social. **NON in dashboard** (non ha auth guard). Raggiungibile solo via URL diretto. Lasciata invariata: usa `alert()` nativo e insert diretto su `appuntamenti` con `fonte='pubblico'`.
+Form esterno per prenotazioni dal sito/social. **NON in dashboard** (non ha auth guard). Raggiungibile solo via URL diretto. Dal 2026-06-25 (migration 031 + Fase C.2 hardening) **NON parla più con Supabase direttamente**: tutte le chiamate (slot disponibili + creazione appuntamento) passano per la Netlify function pubblica `public-prenota.js` che gira con `service_role` + validazione + rate-limiting. Il form HTML usa `fetch()` standard senza Auth. Usa `alert()` nativo per messaggi.
 
 ### Rischi e limiti noti
 

@@ -46,6 +46,7 @@ Tutte le functions (eccetto `cron-rientro-sim`) richiedono `Authorization: Beare
 | `search-anagrafica` | GET | authenticated | Ricerca cliente per CF/PIVA |
 | `mirox-send-email` | POST | authenticated | Invio email con template DB |
 | `cron-rientro-sim` | scheduled | nessuna (cron Netlify) | Notifica giornaliera rientro SIM |
+| `public-prenota` | GET / POST | nessuna (form pubblico) | Endpoint per `prenota.html`: GET slot disponibili + POST creazione appuntamento. Service_role + rate-limiting in-memory |
 
 ## Setup locale
 

@@ -108,8 +108,12 @@
         </div>
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/config.js"></script>
+<script>
+// prenota.html e' PUBBLICA: non parla con Supabase direttamente.
+// Tutte le richieste passano per la Netlify function public-prenota,
+// che gira con service_role lato server con validazione + rate limiting.
+const PUBLIC_ENDPOINT = '/.netlify/functions/public-prenota';
+</script>
 <script>
 let state = { data:null, slot:null, currentMonth:new Date() };
 let currentStep = 1;
@@ -164,9 +168,14 @@ function selectDate(ds,day){
 async function loadSlots(data){
     document.getElementById('slotsLoading').classList.remove('hidden');
     document.getElementById('slotsGrid').innerHTML='';
-    const {data:slots,error}=await db.rpc('get_slot_disponibili',{p_data:data});
+    let slots = [];
+    try {
+        const res = await fetch(`${PUBLIC_ENDPOINT}?action=slots&data=${encodeURIComponent(data)}`);
+        const json = await res.json().catch(()=>({ok:false}));
+        if(res.ok && json.ok) slots = json.slots || [];
+    } catch(e) { /* fall through to empty */ }
     document.getElementById('slotsLoading').classList.add('hidden');
-    if(error||!slots||slots.length===0){
+    if(!slots.length){
         document.getElementById('slotsGrid').innerHTML='<p style="grid-column:1/-1;text-align:center;color:var(--text-secondary);padding:12px">Nessun orario disponibile</p>';
         return;
     }
@@ -195,16 +204,21 @@ async function confermaPrenotazione(){
     const btn=document.querySelector('#step2 .btn-primary');
     btn.disabled=true; btn.textContent='Prenotazione in corso...';
 
-    const {data:app,error}=await db.from('appuntamenti').insert({
-        nome, telefono, motivo, note:note||null,
-        codice_fiscale:null, data_ora:state.slot,
-        fonte:'pubblico', stato:'confermato',
-        storico:JSON.stringify([{azione:'prenotazione online',data:new Date().toISOString()}])
-    }).select().single();
+    let json = { ok: false, error: 'Errore di rete' };
+    try {
+        const res = await fetch(PUBLIC_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome, telefono, motivo, note: note||null, data_ora: state.slot })
+        });
+        json = await res.json().catch(()=>({ok:false, error:'Risposta non valida'}));
+    } catch(e) {
+        json = { ok: false, error: 'Errore di rete: ' + (e?.message||e) };
+    }
 
     btn.disabled=false; btn.textContent='Conferma prenotazione';
 
-    if(error){ alert('Errore: '+error.message); return; }
+    if(!json.ok){ alert('Errore: ' + (json.error||'sconosciuto')); return; }
 
     // Mostra conferma
     const d=new Date(state.slot);
