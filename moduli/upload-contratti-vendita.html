@@ -3041,7 +3041,14 @@ Reload Exchange
  refs.operatoreId.value = window.__operatoreProfilo?.id || '';
 
  refs.categoria.value = '';
- if (refs.filePda) refs.filePda.value = '';
+ // Pulisce a fondo il file PDA: oltre al .value dell'input, resetta anche
+ // runtimeState.fileFallback (cache parallela) e rinfresca l'UI della drop-zone.
+ // Senza questo, dopo "Pratica inviata con successo" il nome del PDA della
+ // pratica precedente restava visibile nella nuova pratica.
+ if (refs.filePda) clearInputFile(refs.filePda);
+ // Reset esplicito del testo informativo PDA (renderDynamicSections lo aggiorna
+ // ma il "Nessun file selezionato" puo' restare cached dal frame precedente).
+ if (refs.pdaSelectedInfo) refs.pdaSelectedInfo.textContent = 'Nessun file selezionato';
  if (refs.anagraficaOcrBanner) refs.anagraficaOcrBanner.classList.add('hidden');
  if (refs.pdaOcrStatus) refs.pdaOcrStatus.style.display = 'none';
 
