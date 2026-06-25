@@ -2239,11 +2239,38 @@ Reload Exchange
  const dbgPrefix = '[REINS]';
  if (uiState.view !== 'wizard' || uiState.step !== 3) { console.log(dbgPrefix, 'skip: non in step 3', uiState); return; }
  if (runtimeState.editingTempId) { console.log(dbgPrefix, 'skip: editing contratto esistente', runtimeState.editingTempId); return; }
- const anagraficaId = runtimeState.anagraficaId;
+ let anagraficaId = runtimeState.anagraficaId;
  const categoria = getSelectedCategoria();
  console.log(dbgPrefix, 'check inputs', { anagraficaId, categoria });
- if (!anagraficaId) { console.warn(dbgPrefix, 'skip: anagraficaId mancante (cliente non a DB?). Devi prima cercare il cliente.'); return; }
  if (!categoria?.id) { console.warn(dbgPrefix, 'skip: categoria mancante'); return; }
+
+ // Fallback lookup: se anagraficaId non e' stato popolato (es. flusso OCR dove
+ // applyOcrToAnagrafica riempie i campi ma NON chiama search-anagrafica) ma il form
+ // ha un CF/PIVA valido, facciamo un lookup last-minute. Copre anche edge case
+ // futuri dove un altro path saltasse il setting di runtimeState.anagraficaId.
+ if (!anagraficaId) {
+ const cfPiva = normalizeCfPiva((refs.cfPiva && refs.cfPiva.value) || '');
+ if (cfPiva && (isItalianFiscalCode(cfPiva) || isItalianVatNumber(cfPiva))) {
+ console.log(dbgPrefix, 'anagraficaId mancante, provo lookup last-minute su', cfPiva);
+ try {
+ const data = await fetchJsonOrTechnicalError(
+ `/.netlify/functions/search-anagrafica?cf_piva=${encodeURIComponent(cfPiva)}`,
+ {},
+ 'Lookup anagrafica per check reinserimento'
+ );
+ if (data && data.found && data.data && data.data.id) {
+ anagraficaId = data.data.id;
+ runtimeState.anagraficaId = anagraficaId;
+ console.log(dbgPrefix, 'lookup last-minute OK, anagraficaId =', anagraficaId);
+ } else {
+ console.log(dbgPrefix, 'lookup last-minute: cliente non a DB, skip');
+ }
+ } catch (lookupErr) {
+ console.warn(dbgPrefix, 'lookup last-minute fallito (non blocca il wizard):', lookupErr);
+ }
+ }
+ }
+ if (!anagraficaId) { console.warn(dbgPrefix, 'skip definitivo: anagraficaId non recuperabile'); return; }
 
  const key = `${anagraficaId}_${categoria.id}`;
  if (runtimeState.lastReinsCheckKey === key) { console.log(dbgPrefix, 'skip: gia\' verificato per questa coppia in sessione'); return; }
