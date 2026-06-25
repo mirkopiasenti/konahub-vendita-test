@@ -77,17 +77,25 @@ body {
 }
 .pill.finanziamento { background: var(--info-bg);    color: var(--info); }
 .pill.anticipo      { background: var(--success-bg); color: var(--success); }
-.pill.in-attivazione { background: var(--warning-bg); color: var(--warning); }
-.pill.ok             { background: var(--success-bg); color: var(--success); }
-.pill.ko             { background: var(--danger-bg);  color: var(--danger); }
 
+/* Dropdown stato stilizzato come pillola colorata (no chip separata sopra). */
 .stato-select {
-  padding: 5px 8px; font-size: 12px; font-family: inherit;
-  border: 1px solid var(--border); border-radius: 8px; background: #fff;
-  color: var(--text); cursor: pointer;
+  padding: 4px 26px 4px 12px;
+  font-size: 11px; font-weight: 600; font-family: inherit;
+  text-transform: uppercase; letter-spacing: .02em;
+  border: 1px solid transparent; border-radius: 999px;
+  background-color: var(--border-light); color: var(--text-secondary);
+  cursor: pointer; appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23475569' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  white-space: nowrap; transition: background-color .15s ease, color .15s ease;
 }
-.stato-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255,102,0,.12); }
+.stato-select:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,102,0,.18); }
 .stato-select.saving { opacity: 0.5; pointer-events: none; }
+.stato-select.vuoto         { background-color: var(--border-light); color: var(--text-light); }
+.stato-select.in-attivazione{ background-color: var(--warning-bg);   color: var(--warning); }
+.stato-select.ok            { background-color: var(--success-bg);   color: var(--success); }
+.stato-select.ko            { background-color: var(--danger-bg);    color: var(--danger); }
 
 .btn-mini {
   display: inline-flex; align-items: center; gap: 5px;
@@ -231,6 +239,7 @@ function render() {
     <th>Stato</th>`;
 
   const STATI_ALR = ['In Attivazione','OK','KO'];
+  const statoClass = (s) => s ? slug(s) : 'vuoto';
 
   const rows = lista.map(r => {
     const ana = r.anagrafica || {};
@@ -247,8 +256,7 @@ function render() {
       <td>${escapeHtml(operatoreNome(r))}</td>
       <td>${modPag ? `<span class="pill ${slug(modPag)}">${escapeHtml(modPag)}</span>` : '<span style="color:var(--text-light);">—</span>'}</td>
       <td>
-        <span class="pill ${slug(stato)}" id="pill-${r.id}">${escapeHtml(stato)}</span>
-        <select class="stato-select" data-row-id="${r.id}" data-prev="${escapeHtml(stato)}" onchange="onCambiaStato(this)" style="margin-left:6px;">${options}</select>
+        <select class="stato-select ${statoClass(stato)}" data-row-id="${r.id}" data-prev="${escapeHtml(stato)}" onchange="onCambiaStato(this)">${options}</select>
       </td>
     </tr>`;
   }).join('');
@@ -286,6 +294,7 @@ window.onCambiaStato = async function(sel) {
     const riga = AlrState.righe.find(r => r.id === rowId);
     if (riga) riga.stato = next;
     sel.dataset.prev = next;
+    sel.className = `stato-select ${next ? next.toLowerCase().replace(/\s+/g,'-') : 'vuoto'}`;
     MiroxUI.toast({ message: 'Stato aggiornato', type: 'ok' });
     render();
   } catch (e) {
