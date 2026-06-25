@@ -2125,9 +2125,11 @@ Reload Exchange
  // Esclude i contratti gia' classificati come reinserimento (per evitare
  // catene di reinserimenti dello stesso evento).
  async function checkReinserimento(anagraficaId, categoriaId, categoriaNome) {
- if (!anagraficaId || !categoriaId) return [];
+ const dbgPrefix = '[REINS query]';
+ console.log(dbgPrefix, 'start', { anagraficaId, categoriaId, categoriaNome });
+ if (!anagraficaId || !categoriaId) { console.log(dbgPrefix, 'skip: id mancanti'); return []; }
  const cfg = CATEGORIE_REINSERIMENTO_CONFIG[categoriaNome];
- if (!cfg) return [];
+ if (!cfg) { console.log(dbgPrefix, 'skip: categoria senza post-vendita', categoriaNome); return []; }
 
  const cutoff = new Date();
  cutoff.setDate(cutoff.getDate() - REINSERIMENTO_WINDOW_DAYS);
@@ -2142,7 +2144,8 @@ Reload Exchange
  .eq('stato_inserimento', 'inserimento')
  .gte('data_contratto', cutoffIso)
  .order('data_contratto', { ascending: false });
- if (e1) { console.error('checkReinserimento: errore contratti', e1); return []; }
+ if (e1) { console.error(dbgPrefix, 'errore query contratti', e1); return []; }
+ console.log(dbgPrefix, 'contratti trovati (pre-filtro post-vendita):', contratti?.length, contratti);
  if (!contratti || contratti.length === 0) return [];
 
  const ids = contratti.map((c) => c.id);
@@ -2151,7 +2154,8 @@ Reload Exchange
  .select('contratto_id, stato')
  .in('contratto_id', ids)
  .in('stato', cfg.stati);
- if (e2) { console.error('checkReinserimento: errore post-vendita', e2); return []; }
+ if (e2) { console.error(dbgPrefix, 'errore query post-vendita', e2); return []; }
+ console.log(dbgPrefix, 'post-vendita match:', postRows);
 
  const statoMap = new Map((postRows || []).map((r) => [r.contratto_id, r.stato]));
  return contratti
@@ -2232,17 +2236,21 @@ Reload Exchange
  // sulla coppia (anagraficaId, categoriaId): non richiede la domanda se l'utente
  // ha gia' risposto per quella coppia nella sessione corrente.
  async function checkAndOfferReinserimento() {
- if (uiState.view !== 'wizard' || uiState.step !== 3) return;
- if (runtimeState.editingTempId) return; // in editing usa la scelta gia' salvata sul cart item
+ const dbgPrefix = '[REINS]';
+ if (uiState.view !== 'wizard' || uiState.step !== 3) { console.log(dbgPrefix, 'skip: non in step 3', uiState); return; }
+ if (runtimeState.editingTempId) { console.log(dbgPrefix, 'skip: editing contratto esistente', runtimeState.editingTempId); return; }
  const anagraficaId = runtimeState.anagraficaId;
  const categoria = getSelectedCategoria();
- if (!anagraficaId || !categoria?.id) return;
+ console.log(dbgPrefix, 'check inputs', { anagraficaId, categoria });
+ if (!anagraficaId) { console.warn(dbgPrefix, 'skip: anagraficaId mancante (cliente non a DB?). Devi prima cercare il cliente.'); return; }
+ if (!categoria?.id) { console.warn(dbgPrefix, 'skip: categoria mancante'); return; }
 
  const key = `${anagraficaId}_${categoria.id}`;
- if (runtimeState.lastReinsCheckKey === key) return;
+ if (runtimeState.lastReinsCheckKey === key) { console.log(dbgPrefix, 'skip: gia\' verificato per questa coppia in sessione'); return; }
  runtimeState.lastReinsCheckKey = key;
 
  const candidates = await checkReinserimento(anagraficaId, categoria.id, categoria.nome);
+ console.log(dbgPrefix, 'candidati trovati:', candidates);
  if (!candidates || candidates.length === 0) {
  runtimeState.pendingReinserimento = null;
  return;
