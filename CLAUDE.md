@@ -476,8 +476,25 @@ Ogni errore tecnico nel CRM (rete, OCR, submit, JS non gestiti...) viene notific
 
 ### Implementato dove (al 2026-06-25)
 
-- `moduli/upload-contratti-vendita.html`: boot, ricerca anagrafica, submit pratica, OCR (con branching `ocr_credit_exhausted`), upload PDA staging (entrambi i bottoni "Analizza con AI" e "Continua senza AI"). Global handlers attivi via `install({source:'upload-contratti-vendita'})`
-- Altre pagine: ancora da integrare iterativamente
+**Integrazione globale (31 pagine, ogni pagina ha `install({source:'<nome>'})` al boot per catturare errori JS non gestiti):**
+
+- **Root** (5): `dashboard`, `admin`, `admin-utenti`, `admin-vendita-config`, `admin-call-center-config`
+- **Vendita/Post-Vendita** (15): `upload-contratti-vendita` (integrazione completa con `reportInfo` sui 5 catch tecnici principali + branching OCR credito esaurito), `apri_chiudi`, `switch_sim`, `ordini_smartphone`, `simulatore_protecta`, `dashboard_pezzi`, `storico_cliente`, `dispositivi_comodato`, `gestione_rimborsi`, `verifica_contratti`, `controllo_fissi`, `controllo_lg`, `controllo_assicurazioni`, `controllo_allarmi`, `ticket`
+- **Call Center** (11): `appuntamenti`, `appuntamenti-oggi`, `blacklist`, `call-center-lead-outbound`, `elenco-chiamate`, `esiti-appuntamenti`, `prenota-interno`, `prenota-interno-outbound`, `registra-chiamata`, `registra-chiamata-outbound`, `rilavorazione`
+
+**Pagine escluse (volutamente)**:
+
+- `index.html` — schermata di login, prima dell'autenticazione (nessun JWT da iniettare)
+- `moduli/segnalazioni.html` — esclusa per scelta operativa (da integrare in seconda battuta)
+- `moduli/call-center/prenota.html` — form pubblico anon (nessuna auth, `mirox-send-email` ritornerebbe 401)
+
+**Tipo di integrazione applicato sulle 30 pagine batch** (dal 2026-06-25):
+
+1. Aggiunto include `mirox-api.js` dove mancava (necessario per `Authorization: Bearer <jwt>` su `mirox-send-email`)
+2. Aggiunto include `mirox-error-reporter.js`
+3. Aggiunto snippet inline `if (window.MiroxErrorReporter) MiroxErrorReporter.install({source:'<nome-pagina>'})` subito dopo l'include — installa i global handler il prima possibile
+
+NON sono stati ancora aggiunti `reportInfo` ai singoli `catch` esistenti: i global handler intanto catturano tutti gli errori JS non gestiti (`window.error` + `unhandledrejection`). Quando un singolo modulo ha bisogno di mail mirate per un catch specifico (es. "submit fallita", "fetch X fallito"), si segue il pattern del wizard upload-contratti (`showErrorOverlay(..., reportInfo)` oppure `MiroxErrorReporter.report({...})` direttamente). Da fare iterativamente quando emerge necessità per singolo modulo.
 
 ---
 

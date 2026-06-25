@@ -594,6 +594,8 @@
 <script src="../js/mirox-api.js"></script>
 <script src="../js/mirox-mailer.js"></script>
 <script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-error-reporter.js"></script>
+<script>if (window.MiroxErrorReporter) window.MiroxErrorReporter.install({ source: 'ordini-smartphone' });</script>
 <script src="../js/mirox-folder.js"></script>
 <script src="../js/mirox-upload.js"></script>
 <script>(async () => { window.__profilo = await Auth.richiediAuth(); })();</script>

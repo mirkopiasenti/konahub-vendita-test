@@ -173,7 +173,13 @@ Componente: `js/mirox-error-reporter.js` → `window.MiroxErrorReporter`. Traspo
 
 **OCR — gestione credito esaurito**: `ocr-pda.js` ritorna `error_code='ocr_credit_exhausted'` quando Anthropic risponde con "credit balance is too low". Il wizard upload contratti mostra un popup esplicito "OCR non disponibile — Credito API esaurito. Procedi con l'inserimento manuale" + invia mail livello `critical`. Stessa logica per rate limit (429), 5xx, auth error.
 
-**Pagine integrate al 2026-06-25**: `moduli/upload-contratti-vendita.html` (boot, ricerca anagrafica, submit pratica, OCR + upload PDA). Altre pagine: integrazione iterativa.
+**Pagine integrate al 2026-06-25** (31 pagine: tutte tranne `index.html`, `moduli/segnalazioni.html` e `moduli/call-center/prenota.html`):
+
+- Root: `dashboard`, `admin`, `admin-utenti`, `admin-vendita-config`, `admin-call-center-config`
+- Vendita / Post-Vendita: `upload-contratti-vendita` (integrazione completa con popup OCR mirato per credito esaurito), `apri_chiudi`, `switch_sim`, `ordini_smartphone`, `simulatore_protecta`, `dashboard_pezzi`, `storico_cliente`, `dispositivi_comodato`, `gestione_rimborsi`, `verifica_contratti`, `controllo_fissi`, `controllo_lg`, `controllo_assicurazioni`, `controllo_allarmi`, `ticket`
+- Call Center: tutte tranne `prenota.html` (anon pubblica)
+
+Sulle 30 pagine batch è installato solo l'handler globale (`window.error` + `unhandledrejection`), che cattura tutti gli errori JS non gestiti. Per mail mirate su catch specifici si segue il pattern del wizard upload-contratti (vedi `CLAUDE.md` per dettagli).
 
 Dettagli operativi: vedi [CLAUDE.md](CLAUDE.md) sezione "Sistema di error reporting via email".
 
