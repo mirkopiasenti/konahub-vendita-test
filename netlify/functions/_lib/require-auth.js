@@ -29,6 +29,44 @@ const { createClient } = require('@supabase/supabase-js');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Client singleton riusato finche' il container Netlify e' caldo
+let _adminClient = null;
+function getAdminClient() {
+    if (_adminClient) return _adminClient;
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
+    _adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false }
+    });
+    return _adminClient;
+}
+
+// Cache token -> {user, profilo, expires} per evitare 2 round-trip a Supabase
+// (getUser + lookup profili) ad ogni invocazione. TTL breve per limitare il
+// rischio di servire profili stale dopo logout/disable.
+const PROFILO_TTL_MS = 60 * 1000; // 60s
+const PROFILO_CACHE = new Map(); // token -> { user, profilo, expires }
+
+function cacheGet(token) {
+    const entry = PROFILO_CACHE.get(token);
+    if (!entry) return null;
+    if (Date.now() > entry.expires) {
+        PROFILO_CACHE.delete(token);
+        return null;
+    }
+    return entry;
+}
+
+function cacheSet(token, user, profilo) {
+    PROFILO_CACHE.set(token, { user, profilo, expires: Date.now() + PROFILO_TTL_MS });
+    // Cleanup periodico per evitare crescita illimitata
+    if (PROFILO_CACHE.size > 500) {
+        const now = Date.now();
+        for (const [k, v] of PROFILO_CACHE.entries()) {
+            if (now > v.expires) PROFILO_CACHE.delete(k);
+        }
+    }
+}
+
 function getBearer(event) {
     const h = (event.headers || {});
     // Netlify normalizza header in lowercase ma alcuni proxy mantengono case
@@ -47,7 +85,8 @@ function getBearer(event) {
  * @returns {Promise<{ok: true, user, profilo} | {ok: false, status, error}>}
  */
 async function requireAuth(event, opts = {}) {
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    const admin = getAdminClient();
+    if (!admin) {
         return { ok: false, status: 500, error: 'Configurazione server incompleta (SUPABASE_URL/SERVICE_ROLE_KEY mancanti)' };
     }
 
@@ -56,10 +95,17 @@ async function requireAuth(event, opts = {}) {
         return { ok: false, status: 401, error: 'Manca header Authorization Bearer' };
     }
 
-    // Service role client per validare il token e leggere il profilo bypassando le RLS
-    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-        auth: { persistSession: false, autoRefreshToken: false }
-    });
+    // Cache hit: salta i 2 round-trip Supabase
+    const cached = cacheGet(token);
+    if (cached) {
+        if (cached.profilo.attivo === false) {
+            return { ok: false, status: 403, error: 'Account disabilitato' };
+        }
+        if (opts.adminOnly && cached.profilo.ruolo !== 'admin') {
+            return { ok: false, status: 403, error: 'Operazione riservata agli amministratori' };
+        }
+        return { ok: true, user: cached.user, profilo: cached.profilo };
+    }
 
     let user;
     try {
@@ -83,6 +129,8 @@ async function requireAuth(event, opts = {}) {
     } catch (e) {
         return { ok: false, status: 500, error: 'Errore lettura profilo: ' + (e?.message || String(e)) };
     }
+
+    cacheSet(token, user, profilo);
 
     if (profilo.attivo === false) {
         return { ok: false, status: 403, error: 'Account disabilitato' };
@@ -108,4 +156,4 @@ function jsonError(statusCode, message, extraHeaders = {}) {
     };
 }
 
-module.exports = { requireAuth, jsonError, getBearer };
+module.exports = { requireAuth, jsonError, getBearer, getAdminClient };

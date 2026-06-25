@@ -20,6 +20,14 @@
     const DEFAULT_EXPIRES = 300; // 5 minuti
     const FALLBACK_MSG = 'Documento non disponibile o sessione scaduta. Riprova dopo aver effettuato il login.';
 
+    // Cache signed URL per evitare chiamate ripetute alla stessa risorsa.
+    // Il TTL della cache e' inferiore alla scadenza del signed URL (per
+    // dare margine: se l'utente clicca a 4'59" non beccca un URL scaduto).
+    const URL_CACHE = new Map(); // "bucket/path" -> { url, expires }
+    const CACHE_SAFETY_MS = 30 * 1000; // 30s di safety prima della scadenza reale
+
+    function cacheKey(bucket, path) { return bucket + '|' + path; }
+
     async function signedUrl(bucket, path, expiresIn) {
         if (!bucket || !path) return null;
         const client = root.db;
@@ -28,13 +36,28 @@
             return null;
         }
         const exp = Number.isFinite(expiresIn) && expiresIn > 0 ? expiresIn : DEFAULT_EXPIRES;
+
+        const key = cacheKey(bucket, path);
+        const cached = URL_CACHE.get(key);
+        if (cached && Date.now() < cached.expires) return cached.url;
+
         try {
             const { data, error } = await client.storage.from(bucket).createSignedUrl(path, exp);
             if (error) {
                 console.warn('[MiroxStorage] createSignedUrl error', bucket, path, error.message);
                 return null;
             }
-            return data?.signedUrl || null;
+            const url = data?.signedUrl || null;
+            if (url) {
+                URL_CACHE.set(key, { url, expires: Date.now() + (exp * 1000) - CACHE_SAFETY_MS });
+                if (URL_CACHE.size > 500) {
+                    const now = Date.now();
+                    for (const [k, v] of URL_CACHE.entries()) {
+                        if (now >= v.expires) URL_CACHE.delete(k);
+                    }
+                }
+            }
+            return url;
         } catch (e) {
             console.warn('[MiroxStorage] createSignedUrl exception', bucket, path, e?.message || e);
             return null;
