@@ -22,7 +22,7 @@ Modulo CRM per la gestione di vendite, post-vendita e supporto operativo della r
 | `admin-vendita-config.html` | CRUD cataloghi (categorie, offerte, opzioni, reload, regole documenti). Solo admin |
 | `moduli/` | 16 pagine funzionali Vendita / Post-Vendita (`apri_chiudi`, `switch_sim`, `ordini_smartphone`, `dispositivi_comodato`, `gestione_rimborsi`, `segnalazioni`, `simulatore_protecta`, `storico_cliente`, `ticket`, `verifica_contratti`, `controllo_fissi`, `controllo_lg`, `controllo_assicurazioni`, `controllo_allarmi`, `dashboard_pezzi`, `upload-contratti-vendita`) |
 | `moduli/call-center/` | **Modulo Call Center integrato (Fase 1)** — 11 pagine (`registra-chiamata`, `elenco-chiamate`, `rilavorazione`, `appuntamenti`, `appuntamenti-oggi`, `prenota-interno`, `esiti-appuntamenti`, `blacklist`, `call-center-lead-outbound`, `prenota-interno-outbound`, `registra-chiamata-outbound`) + `prenota.html` (form pubblico). La pagina `configurazione` è stata spostata sotto Admin Mirox (`admin-call-center-config.html`). Vedi sezione "Modulo Call Center" sotto e [CLAUDE.md](CLAUDE.md) per i dettagli di coordinamento col CC prod |
-| `js/` | Librerie condivise: `config`, `auth`, `mirox-ui`, `mirox-storage`, `mirox-upload`, `mirox-folder`, `mirox-mailer`, `anagrafica-helper`, `vendita-storage-helper` |
+| `js/` | Librerie condivise: `config`, `auth`, `mirox-ui`, `mirox-storage`, `mirox-api`, `mirox-upload`, `mirox-folder`, `mirox-mailer`, `anagrafica-helper`, `vendita-storage-helper` |
 | `css/` | `style.css`, `mirox-modules.css` |
 | `assets/` | Logo, favicon |
 | `netlify/functions/` | Endpoint server-side (vedi sotto) |
@@ -34,16 +34,18 @@ Modulo CRM per la gestione di vendite, post-vendita e supporto operativo della r
 
 ### Netlify Functions
 
-| Function | Metodo | Scopo |
-|---|---|---|
-| `vendita-config` | GET | Carica catalogo per il wizard contratti |
-| `admin-vendita-config` | GET / POST | CRUD admin del catalogo |
-| `crea-vendita-pratica-carrello` | POST | Crea pratica + N contratti con validazioni; promuove i PDA da staging |
-| `upload-vendita-documento` | POST multipart | Upload PDF su bucket `contratti-vendita` (anche staging `temp/<sess>/`) |
-| `ocr-pda` | POST multipart | OCR del PDA (Pratica di Adesione PDF) via Claude API — pre-compila l'anagrafica |
-| `search-anagrafica` | GET | Ricerca cliente per CF/PIVA |
-| `mirox-send-email` | POST | Invio email con template DB |
-| `cron-rientro-sim` | scheduled | Notifica giornaliera rientro SIM |
+Tutte le functions (eccetto `cron-rientro-sim`) richiedono `Authorization: Bearer <jwt>` valido — il client usa `MiroxApi.fetch()` che lo inietta automaticamente dalla sessione Supabase.
+
+| Function | Metodo | Auth | Scopo |
+|---|---|---|---|
+| `vendita-config` | GET | authenticated | Carica catalogo per il wizard contratti |
+| `admin-vendita-config` | GET / POST | **admin** | CRUD admin del catalogo |
+| `crea-vendita-pratica-carrello` | POST | authenticated | Crea pratica + N contratti con validazioni; promuove i PDA da staging |
+| `upload-vendita-documento` | POST multipart | authenticated | Upload PDF su bucket `contratti-vendita` (anche staging `temp/<sess>/`) |
+| `ocr-pda` | POST multipart | authenticated | OCR del PDA (Pratica di Adesione PDF) via Claude API — pre-compila l'anagrafica |
+| `search-anagrafica` | GET | authenticated | Ricerca cliente per CF/PIVA |
+| `mirox-send-email` | POST | authenticated | Invio email con template DB |
+| `cron-rientro-sim` | scheduled | nessuna (cron Netlify) | Notifica giornaliera rientro SIM |
 
 ## Setup locale
 

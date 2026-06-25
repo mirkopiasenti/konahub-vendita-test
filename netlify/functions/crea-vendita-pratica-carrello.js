@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { requireAuth } = require('./_lib/require-auth');
 
 const ORIGINI_PRATICA_AMMESSE = new Set([
   'appuntamento_callcenter',
@@ -13,7 +14,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Content-Type': 'application/json'
 };
@@ -418,6 +419,9 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return response(405, { success: false, error: 'Metodo non consentito: usa POST' });
   }
+
+  const auth = await requireAuth(event);
+  if (!auth.ok) return response(auth.status, { success: false, error: auth.error });
 
   const contentType = event.headers?.['content-type'] || event.headers?.['Content-Type'] || '';
 

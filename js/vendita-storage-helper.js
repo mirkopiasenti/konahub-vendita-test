@@ -40,7 +40,11 @@ async function uploadVenditaDocumento(params = {}) {
   if (file_name) formData.append('file_name', file_name);
   if (uploaded_by) formData.append('uploaded_by', uploaded_by);
 
-  const response = await fetch('/.netlify/functions/upload-vendita-documento', {
+  // FormData: NON settare Content-Type manualmente (il browser inserisce il boundary)
+  const fetcher = (typeof window !== 'undefined' && window.MiroxApi && window.MiroxApi.fetch)
+    ? window.MiroxApi.fetch
+    : fetch;
+  const response = await fetcher('/.netlify/functions/upload-vendita-documento', {
     method: 'POST',
     body: formData
   });

@@ -16,13 +16,14 @@
 
 const Busboy = require('busboy');
 const Anthropic = require('@anthropic-ai/sdk').default;
+const { requireAuth } = require('./_lib/require-auth');
 
 const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 const MODEL = 'claude-haiku-4-5-20251001';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Content-Type': 'application/json'
 };
@@ -122,6 +123,10 @@ function normalizeResult(raw) {
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers: CORS_HEADERS, body: '' };
   if (event.httpMethod !== 'POST') return response(405, { success: false, error: 'Metodo non consentito: usa POST' });
+
+  // Protezione cost burn: l'OCR consuma ANTHROPIC_API_KEY a pagamento
+  const auth = await requireAuth(event);
+  if (!auth.ok) return response(auth.status, { success: false, error: auth.error });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {

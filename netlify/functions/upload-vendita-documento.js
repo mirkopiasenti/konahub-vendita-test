@@ -1,12 +1,13 @@
 const Busboy = require('busboy');
 const { createClient } = require('@supabase/supabase-js');
+const { requireAuth } = require('./_lib/require-auth');
 
 const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
 const STORAGE_BUCKET = 'contratti-vendita';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Content-Type': 'application/json'
 };
@@ -254,6 +255,9 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return response(405, { success: false, error: 'Metodo non consentito: usa POST' });
   }
+
+  const auth = await requireAuth(event);
+  if (!auth.ok) return response(auth.status, { success: false, error: auth.error });
 
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

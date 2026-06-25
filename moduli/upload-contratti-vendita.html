@@ -1005,6 +1005,7 @@
 <script src="../js/config.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-api.js"></script>
 <script> // Auth guard: blocca rendering se non loggato
  (async () => {
  const profilo = await Auth.richiediAuth();
@@ -3334,7 +3335,9 @@ Reload Exchange
  async function fetchJsonOrTechnicalError(url, fetchOptions = {}, fallbackMessage = 'Errore richiesta') {
  let response;
  try {
- response = await fetch(url, fetchOptions);
+ // MiroxApi.fetch inietta Authorization: Bearer <jwt> da Supabase session
+ const fetcher = (window.MiroxApi && window.MiroxApi.fetch) ? window.MiroxApi.fetch : fetch;
+ response = await fetcher(url, fetchOptions);
  } catch (networkError) {
  throw createTechnicalError(`${fallbackMessage}: errore di rete`, String(networkError?.message || networkError || ''));
  }

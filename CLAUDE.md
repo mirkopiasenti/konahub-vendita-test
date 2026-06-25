@@ -77,6 +77,7 @@ Pagine HTML statiche, no bundler. `/moduli/call-center/` contiene il modulo CC i
 | `js/anagrafica-helper.js` | `window.AnagraficaHelper` | `detectKind`, `cerca`, `cercaOcrea`, `setupAnagraficaSection` |
 | `js/mirox-ui.js` | `window.MiroxUI` | `alert/confirm/prompt/loading/toast/allegati`. `allegati()` accetta sia `{url}` legacy sia `{bucket, path}` (genera signed URL on-click via MiroxStorage) |
 | `js/mirox-storage.js` | `window.MiroxStorage` | `signedUrl(bucket,path,exp)`, `openAttachment(bucket,path)` — signed URL on-demand per i bucket privati (vedi sezione "Storage buckets") |
+| `js/mirox-api.js` | `window.MiroxApi` | `fetch(url, opts)` wrapper che inietta `Authorization: Bearer <jwt>` dalla sessione Supabase. Usare per TUTTE le chiamate alle Netlify functions (vedi "Auth functions") |
 | `js/mirox-upload.js` | `window.MiroxUpload` | drag-drop binding su `.mx-drop-zone` |
 | `js/mirox-folder.js` | `window.MiroxFolder` | `build(oldName, newName, date)` per nomi cartella Storage |
 | `js/mirox-mailer.js` | `window.MiroxMailer` | `send({to, template, vars})` |
@@ -84,7 +85,7 @@ Pagine HTML statiche, no bundler. `/moduli/call-center/` contiene il modulo CC i
 
 ### 2. Server (`/netlify/functions/`)
 
-Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 functions + 1 lib condivisa:
+Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. Per questo motivo, dal 2026-06-24 (Fase B hardening) **TUTTE le functions tranne `cron-rientro-sim`** richiedono `Authorization: Bearer <jwt>` valido (validato via `_lib/require-auth.js`). `admin-vendita-config` richiede ulteriore check `ruolo='admin'`. Il client deve usare `MiroxApi.fetch()` o aggiungere l'header manualmente. 8 functions + 2 lib condivise:
 
 - `vendita-config.js` (GET) — catalogo per wizard
 - `admin-vendita-config.js` (GET/POST action-based) — CRUD admin offerte/opzioni/reload + replace regole documentali
@@ -93,8 +94,9 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. 8 funct
 - `ocr-pda.js` (POST multipart, max 20MB) — OCR del PDA via Claude API (`claude-haiku-4-5-20251001`). Estrae cf_piva/ragione_sociale/nome_referente/cellulare/email/indirizzo. Sempre 200 anche se OCR parziale (campi `null`); 500 solo per errori hard. Richiede `ANTHROPIC_API_KEY`.
 - `search-anagrafica.js` (GET) — lookup CF/PIVA
 - `mirox-send-email.js` (POST) — endpoint pubblico mailer
-- `cron-rientro-sim.js` (scheduled `0 7 * * *`) — notifica giornaliera switch SIM
+- `cron-rientro-sim.js` (scheduled `0 7 * * *`) — notifica giornaliera switch SIM. **Non auth-gated** (chiamata dal cron Netlify, non da utente)
 - `_lib/mailer.js` — helper SMTP Gmail + template DB + log
+- `_lib/require-auth.js` — helper auth: valida JWT Supabase nell'header `Authorization: Bearer <token>`, ritorna `{ok, user, profilo}` o `{ok:false, status, error}`. Supporta opt `adminOnly: true` per richiedere `ruolo='admin'`. Usare in TUTTE le nuove functions
 
 ### 3. Database (Supabase Postgres)
 
@@ -419,6 +421,8 @@ Il bottone "Admin" dentro `moduli/upload-contratti-vendita.html` è stato **rimo
 - **Anagrafica**: SEMPRE via `AnagraficaHelper.cerca` / `cercaOcrea` (RPC `cerca_o_crea_anagrafica`) per evitare doppioni
 - **Upload PDF**: SEMPRE via Netlify function. MAI `db.storage.from(...).upload()` dal client — la service_role non deve mai uscire dal server
 - **Lettura allegati da bucket privati**: SEMPRE via `MiroxStorage.openAttachment(bucket, path)` o `MiroxStorage.signedUrl(...)`. **MAI** `getPublicUrl()` per i bucket privati (vedi sezione "Storage buckets"). Eccezione: `moduli-template` resta pubblico e accetta `getPublicUrl()`
+- **Chiamate a Netlify functions dal client**: SEMPRE via `MiroxApi.fetch(url, opts)` — inietta `Authorization: Bearer <jwt>` dalla sessione Supabase. MAI `fetch()` diretto, altrimenti la function ritorna 401. Per FormData, NON settare `Content-Type` manualmente (il browser inserisce il boundary)
+- **Auth in nuove Netlify functions**: usare `const { requireAuth } = require('./_lib/require-auth')` e all'inizio dell'handler `const auth = await requireAuth(event); if (!auth.ok) return response(auth.status, { success: false, error: auth.error });`. Per endpoint solo admin: `requireAuth(event, { adminOnly: true })`. CORS `Access-Control-Allow-Headers` deve includere `Authorization`
 - **Email**: via `MiroxMailer.send({to, template, vars})` → endpoint `mirox-send-email`. Mai SMTP diretto dal client.
 - **Nomi cartelle Storage**: via `MiroxFolder.build()` lato client o pattern equivalente nelle Netlify functions (`sanitizeSegment`)
 - **Timestamp**: `timestamptz` salvati in UTC, mostrati in `Europe/Rome` lato UI (vedi pattern `formatCrmDateTime` nei moduli)

@@ -19,6 +19,7 @@
  */
 
 const { sendEmail } = require('./_lib/mailer');
+const { requireAuth } = require('./_lib/require-auth');
 
 const CORS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
@@ -38,6 +39,9 @@ exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
         return reply(405, { ok: false, error: 'Metodo non consentito (usa POST)' });
     }
+
+    const auth = await requireAuth(event);
+    if (!auth.ok) return reply(auth.status, { ok: false, error: auth.error });
 
     let body;
     try {

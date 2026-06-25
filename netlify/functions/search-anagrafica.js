@@ -1,8 +1,9 @@
 const { createClient } = require('@supabase/supabase-js');
+const { requireAuth } = require('./_lib/require-auth');
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Content-Type': 'application/json'
 };
@@ -39,6 +40,9 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') {
     return response(405, { success: false, error: 'Metodo non consentito: usa GET' });
   }
+
+  const auth = await requireAuth(event);
+  if (!auth.ok) return response(auth.status, { success: false, error: auth.error });
 
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

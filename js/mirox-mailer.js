@@ -39,7 +39,8 @@
         };
 
         try {
-            const res = await fetch(ENDPOINT, {
+            const fetcher = (window.MiroxApi && window.MiroxApi.fetch) ? window.MiroxApi.fetch : fetch;
+            const res = await fetcher(ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

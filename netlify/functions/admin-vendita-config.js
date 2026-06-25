@@ -1,8 +1,9 @@
 const { createClient } = require('@supabase/supabase-js');
+const { requireAuth } = require('./_lib/require-auth');
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Content-Type': 'application/json'
 };
@@ -768,6 +769,10 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: CORS_HEADERS, body: '' };
   }
+
+  // Admin endpoint: richiede ruolo='admin'
+  const auth = await requireAuth(event, { adminOnly: true });
+  if (!auth.ok) return response(auth.status, { success: false, error: auth.error });
 
   let supabase;
   try {
