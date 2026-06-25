@@ -81,6 +81,7 @@ Pagine HTML statiche, no bundler. `/moduli/call-center/` contiene il modulo CC i
 | `js/mirox-upload.js` | `window.MiroxUpload` | drag-drop binding su `.mx-drop-zone` |
 | `js/mirox-folder.js` | `window.MiroxFolder` | `build(oldName, newName, date)` per nomi cartella Storage |
 | `js/mirox-mailer.js` | `window.MiroxMailer` | `send({to, template, vars})` |
+| `js/mirox-error-reporter.js` | `window.MiroxErrorReporter` | `now()` timestamp Europe/Rome; `report({source, level, title, message, technical, context, silent})` invia mail di notifica al proprietario via `mirox-send-email` con throttling 60s per fingerprint; `install({source, ownerEmail})` aggancia handler globali `window.error` + `unhandledrejection`. Destinatario default `mirko.piasenti@gmail.com`. Vedi sezione "Sistema di error reporting via email" |
 | `js/vendita-storage-helper.js` | `uploadVenditaDocumento(...)` | wrapper upload PDF via Netlify function |
 
 ### 2. Server (`/netlify/functions/`)
@@ -91,7 +92,7 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. Per que
 - `admin-vendita-config.js` (GET/POST action-based) — CRUD admin offerte/opzioni/reload + replace regole documentali
 - `crea-vendita-pratica-carrello.js` (POST) — multi-contratto: anagrafica upsert → pratica → N contratti con validazioni categoria-specifiche, rollback completo su errore. **Promuove** i PDA caricati in staging (`temp/<sess>/`) alla cartella definitiva della pratica e crea i record `vendita_documenti` corrispondenti. Cellulare + email obbligatori.
 - `upload-vendita-documento.js` (POST multipart busboy, max 20MB) — bucket `contratti-vendita`, rollback file se INSERT DB fallisce. Supporta modalità staging: se viene passato `temp_session_id` (UUID), salva in `temp/<sess>/` senza creare record DB.
-- `ocr-pda.js` (POST multipart, max 20MB) — OCR del PDA via Claude API (`claude-haiku-4-5-20251001`). Estrae cf_piva/ragione_sociale/nome_referente/cellulare/email/indirizzo. Sempre 200 anche se OCR parziale (campi `null`); 500 solo per errori hard. Richiede `ANTHROPIC_API_KEY`.
+- `ocr-pda.js` (POST multipart, max 20MB) — OCR del PDA via Claude API (`claude-haiku-4-5-20251001`). Estrae cf_piva/ragione_sociale/nome_referente/cellulare/email/indirizzo. 200 con `data: {...}` se l'OCR estrae (campi `null` se parziale). In caso di errore "hard" l'errore Anthropic viene classificato in `error_code` strutturato: `ocr_credit_exhausted` (credit balance low → 503), `ocr_rate_limited` (429 → 503), `ocr_unavailable` (5xx/529 → 503), `ocr_auth_error` (401/403 → 503), `ocr_generic_error` (default → 500). Payload errore: `{success:false, error, error_code, http_status, provider_status, provider_message}`. Il client decide il popup in base a `error_code`. Richiede `ANTHROPIC_API_KEY`.
 - `search-anagrafica.js` (GET) — lookup CF/PIVA
 - `mirox-send-email.js` (POST) — endpoint pubblico mailer
 - `cron-rientro-sim.js` (scheduled `0 7 * * *`) — notifica giornaliera switch SIM. **Non auth-gated** (chiamata dal cron Netlify, non da utente)
@@ -449,6 +450,37 @@ Il bottone "Admin" dentro `moduli/upload-contratti-vendita.html` è stato **rimo
 
 ---
 
+## Sistema di error reporting via email (dal 2026-06-25)
+
+Ogni errore tecnico nel CRM (rete, OCR, submit, JS non gestiti...) viene notificato via email al proprietario con timestamp preciso Europe/Rome. L'utente in popup vede sempre la pillola "Orario errore: GG/MM/AAAA HH:MM:SS" sotto al messaggio.
+
+### Componenti
+
+- **Client**: `js/mirox-error-reporter.js` → `window.MiroxErrorReporter` (vedi tabella JS condivisi). Throttling 60s per fingerprint per evitare flood in loop. Destinatario default `mirko.piasenti@gmail.com` (override con `install({ownerEmail})`).
+- **Trasporto**: la mail viene inviata via `MiroxApi.fetch('/.netlify/functions/mirox-send-email')` con HTML inline (no template DB). Subject `[MIROX][LEVEL] <titolo> — <timestamp>`. Body con tabella metadata (livello, sorgente, utente, pagina, browser) + dettagli tecnici + contesto JSON. Loggata su `email_log` con `related_table='error_report'`.
+- **Backend OCR** (`netlify/functions/ocr-pda.js`): l'errore Anthropic viene classificato in `error_code` strutturato e ritornato in payload `{success:false, error, error_code, http_status, provider_status, provider_message}` con HTTP 503/500 a seconda. Codici: `ocr_credit_exhausted` (credit balance low), `ocr_rate_limited` (429), `ocr_unavailable` (5xx/529), `ocr_auth_error` (401/403), `ocr_generic_error`. Il client `fetchJsonOrTechnicalError` propaga `error_code` su `err.serverErrorCode` e `err.httpStatus`.
+
+### Livelli mail
+
+- `critical` → eventi che richiedono azione immediata (es. credito OCR esaurito, boot wizard fallito)
+- `error` → submit pratica fallita, lookup anagrafica giù, OCR temporaneamente down
+- `warning` → OCR fallito su singolo PDA, errore parsing
+- `info` → eventi informativi (non usato oggi)
+
+### Come usarlo in altre pagine
+
+1. Includere `<script src="../js/mirox-error-reporter.js"></script>` dopo `mirox-api.js`
+2. Al boot: `if (window.MiroxErrorReporter) window.MiroxErrorReporter.install({ source: 'nome-pagina' });` (aggancia `window.error` + `unhandledrejection` per catturare il resto)
+3. Negli `catch` di errori tecnici (rete, 5xx, eccezioni inattese): chiamare `MiroxErrorReporter.report({source, level, title, message, technical, context, silent:true})` oppure passare un quarto parametro `reportInfo` alle funzioni `showErrorOverlay`-style se la pagina ne ha una (il wizard upload-contratti-vendita ha integrato il pattern: vedi `showErrorOverlay(title, text, technicalText, reportInfo)` con `reportInfo = {level, errorCode, context}`)
+4. NON usare per errori di validazione utente ("compila il campo Email") — solo per problemi tecnici e di sistema. Il throttling 60s previene comunque flood
+
+### Implementato dove (al 2026-06-25)
+
+- `moduli/upload-contratti-vendita.html`: boot, ricerca anagrafica, submit pratica, OCR (con branching `ocr_credit_exhausted`), upload PDA staging (entrambi i bottoni "Analizza con AI" e "Continua senza AI"). Global handlers attivi via `install({source:'upload-contratti-vendita'})`
+- Altre pagine: ancora da integrare iterativamente
+
+---
+
 ## Convenzioni (rispettare per coerenza)
 
 - **Path**: pagine in `/moduli/` → JS/CSS/link con `../` (es. `../js/config.js`, `../dashboard.html`). Pagine in `/moduli/call-center/` → JS/CSS/link Mirox con `../../` (es. `../../index.html`). I JS interni del CC (`/moduli/call-center/js/`) sono path-relativi alla pagina e funzionano out-of-the-box
@@ -460,6 +492,7 @@ Il bottone "Admin" dentro `moduli/upload-contratti-vendita.html` è stato **rimo
 - **Chiamate a Netlify functions dal client**: SEMPRE via `MiroxApi.fetch(url, opts)` — inietta `Authorization: Bearer <jwt>` dalla sessione Supabase. MAI `fetch()` diretto, altrimenti la function ritorna 401. Per FormData, NON settare `Content-Type` manualmente (il browser inserisce il boundary)
 - **Auth in nuove Netlify functions**: usare `const { requireAuth } = require('./_lib/require-auth')` e all'inizio dell'handler `const auth = await requireAuth(event); if (!auth.ok) return response(auth.status, { success: false, error: auth.error });`. Per endpoint solo admin: `requireAuth(event, { adminOnly: true })`. CORS `Access-Control-Allow-Headers` deve includere `Authorization`
 - **Email**: via `MiroxMailer.send({to, template, vars})` → endpoint `mirox-send-email`. Mai SMTP diretto dal client.
+- **Error reporting (errori tecnici)**: per problemi di rete, 5xx, eccezioni inattese, OCR down ecc. SEMPRE usare `MiroxErrorReporter.report(...)` o passare `reportInfo` a `showErrorOverlay`. NON usare per validation utente. Il sistema fa throttling automatico 60s per fingerprint. Vedi sezione "Sistema di error reporting via email"
 - **Nomi cartelle Storage**: via `MiroxFolder.build()` lato client o pattern equivalente nelle Netlify functions (`sanitizeSegment`)
 - **Timestamp**: `timestamptz` salvati in UTC, mostrati in `Europe/Rome` lato UI (vedi pattern `formatCrmDateTime` nei moduli)
 - **Nessun bundler**: import solo come `<script src=...>`, niente `import` / `require` lato browser

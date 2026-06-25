@@ -779,6 +779,22 @@
  font-size: 11px;
  }
 
+ .loading-timestamp {
+ width: 100%;
+ margin: -4px 0 0;
+ padding: 6px 10px;
+ background: #fff7ed;
+ border: 1px solid #fed7aa;
+ border-radius: 8px;
+ color: #9a3412;
+ font-size: 12px;
+ font-weight: 600;
+ text-align: center;
+ letter-spacing: 0.3px;
+ }
+
+ .loading-timestamp.hidden { display: none; }
+
  .loading-actions {
  width: 100%;
  display: flex;
@@ -1029,6 +1045,7 @@
 <script src="../js/auth.js"></script>
 <script src="../js/mirox-ui.js"></script>
 <script src="../js/mirox-api.js"></script>
+<script src="../js/mirox-error-reporter.js"></script>
 <script> // Auth guard: blocca rendering se non loggato
  (async () => {
  const profilo = await Auth.richiediAuth();
@@ -1373,6 +1390,7 @@ Reload Exchange
 <div id="loadingIcon" class="loading-icon hidden"></div>
 <h3 id="loadingTitle" class="loading-title">Caricamento in corso</h3>
 <p id="loadingText" class="loading-text">Attendere...</p>
+<p id="loadingTimestamp" class="loading-timestamp hidden"></p>
 <div id="loadingSummary" class="loading-summary hidden"></div>
 <details id="loadingDetails" class="loading-details hidden">
 <summary>Dettagli tecnici</summary>
@@ -1623,7 +1641,8 @@ Reload Exchange
  loadingSecondaryBtn: document.getElementById('loadingSecondaryBtn'),
  loadingSummary: document.getElementById('loadingSummary'),
  loadingDetails: document.getElementById('loadingDetails'),
- loadingDetailsText: document.getElementById('loadingDetailsText')
+ loadingDetailsText: document.getElementById('loadingDetailsText'),
+ loadingTimestamp: document.getElementById('loadingTimestamp')
  };
 
  function setConnectionStatus(status = 'checking', text = 'Verifica...') {
@@ -1918,6 +1937,19 @@ Reload Exchange
  refs.loadingDetails.classList.remove('hidden');
  }
 
+ // Mostra/nasconde il chip orario errore (Europe/Rome) nell'overlay.
+ // Chiamato da showErrorOverlay: tutte le altre show* lo resettano.
+ function renderOverlayTimestamp(stamp) {
+ if (!refs.loadingTimestamp) return;
+ if (!stamp) {
+ refs.loadingTimestamp.classList.add('hidden');
+ refs.loadingTimestamp.textContent = '';
+ return;
+ }
+ refs.loadingTimestamp.textContent = 'Orario errore: ' + stamp;
+ refs.loadingTimestamp.classList.remove('hidden');
+ }
+
  function resetOverlayActions() {
  runtimeState.overlayActions.primary = null;
  runtimeState.overlayActions.secondary = null;
@@ -1967,6 +1999,7 @@ Reload Exchange
  refs.loadingIcon.classList.remove('success', 'error');
  renderOverlaySummary([]);
  renderOverlayTechnical('');
+ renderOverlayTimestamp(null);
  setOverlayActions({});
  refs.loadingOverlay.classList.remove('hidden');
  }
@@ -1990,6 +2023,7 @@ Reload Exchange
  refs.loadingIcon.classList.add('success');
  renderOverlaySummary(summaryRows);
  renderOverlayTechnical('');
+ renderOverlayTimestamp(null);
  setOverlayActions({
  secondary: { label: 'Chiudi', onClick: () => hideLoadingOverlay() },
  primary: { label: 'Nuova pratica', onClick: () => hideLoadingOverlay() }
@@ -1997,7 +2031,16 @@ Reload Exchange
  refs.loadingOverlay.classList.remove('hidden');
  }
 
- function showErrorOverlay(title, text, technicalText = '') {
+ // showErrorOverlay
+ //  - title/text: testo visibile all'utente
+ //  - technicalText: dettagli tecnici (mostrati nel <details> nel modal)
+ //  - reportInfo: se valorizzato, invia anche una mail di notifica al
+ //    proprietario tramite MiroxErrorReporter. Forma:
+ //      { level?: 'critical'|'error'|'warning', context?: object,
+ //        errorCode?: string, source?: string }
+ //    Se null/false/undefined, mostra solo il popup senza mandare mail
+ //    (validation utente non e' un incidente).
+ function showErrorOverlay(title, text, technicalText = '', reportInfo = null) {
  refs.loadingTitle.textContent = title || 'Errore durante l\'invio';
  refs.loadingText.textContent = text || 'Si è verificato un errore inatteso.';
  refs.loadingSpinner.classList.add('hidden');
@@ -2007,10 +2050,33 @@ Reload Exchange
  refs.loadingIcon.classList.add('error');
  renderOverlaySummary([]);
  renderOverlayTechnical(technicalText);
+ // Orario errore (Europe/Rome) sempre visibile per ogni popup di errore
+ const stamp = (window.MiroxErrorReporter && window.MiroxErrorReporter.now)
+ ? window.MiroxErrorReporter.now().formatted
+ : new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' });
+ renderOverlayTimestamp(stamp);
  setOverlayActions({
  primary: { label: 'Chiudi', onClick: () => hideLoadingOverlay() }
  });
  refs.loadingOverlay.classList.remove('hidden');
+ // Invio mail di notifica al proprietario (best-effort, non blocca il popup)
+ if (reportInfo && window.MiroxErrorReporter) {
+ try {
+ const ctx = reportInfo.context && typeof reportInfo.context === 'object'
+ ? Object.assign({}, reportInfo.context)
+ : {};
+ if (reportInfo.errorCode) ctx.error_code = reportInfo.errorCode;
+ window.MiroxErrorReporter.report({
+ source: reportInfo.source || 'upload-contratti-vendita',
+ level: reportInfo.level || 'error',
+ title: title || 'Errore wizard upload contratti',
+ message: text || '',
+ technical: technicalText || '',
+ context: ctx,
+ silent: true
+ });
+ } catch (e) { /* mai blocchiamo l'utente per la mail */ }
+ }
  }
 
  function showInfoOverlay(title, text) {
@@ -2022,6 +2088,7 @@ Reload Exchange
  refs.loadingIcon.classList.remove('success', 'error');
  renderOverlaySummary([]);
  renderOverlayTechnical('');
+ renderOverlayTimestamp(null);
  setOverlayActions({
  primary: { label: 'Chiudi', onClick: () => hideLoadingOverlay() }
  });
@@ -2041,6 +2108,7 @@ Reload Exchange
  refs.loadingIcon.classList.remove('error');
  renderOverlaySummary([]);
  renderOverlayTechnical('');
+ renderOverlayTimestamp(null);
  setOverlayActions({
  primary: {
  label: 'Continua',
@@ -2059,6 +2127,7 @@ Reload Exchange
  refs.loadingIcon.classList.remove('success', 'error');
  renderOverlaySummary([]);
  renderOverlayTechnical('');
+ renderOverlayTimestamp(null);
  setOverlayActions({
  secondary: {
  label: cancelLabel,
@@ -2097,6 +2166,7 @@ Reload Exchange
  { label: 'Ultimo salvataggio', value: draftSummary.savedAt || '-' }
  ]);
  renderOverlayTechnical('');
+ renderOverlayTimestamp(null);
  setOverlayActions({
  secondary: {
  label: 'Scarta',
@@ -2208,6 +2278,7 @@ Reload Exchange
  refs.loadingSummary.innerHTML = `<div class="reinserimento-list">${radiosHtml}</div>`;
  refs.loadingSummary.classList.remove('hidden');
  renderOverlayTechnical('');
+ renderOverlayTimestamp(null);
 
  setOverlayActions({
  secondary: {
@@ -3593,18 +3664,32 @@ Reload Exchange
  const fetcher = (window.MiroxApi && window.MiroxApi.fetch) ? window.MiroxApi.fetch : fetch;
  response = await fetcher(url, fetchOptions);
  } catch (networkError) {
- throw createTechnicalError(`${fallbackMessage}: errore di rete`, String(networkError?.message || networkError || ''));
+ const netErr = createTechnicalError(`${fallbackMessage}: errore di rete`, String(networkError?.message || networkError || ''));
+ netErr.serverErrorCode = 'network_error';
+ netErr.httpStatus = 0;
+ netErr.requestUrl = url;
+ throw netErr;
  }
 
  let data = null;
  try {
  data = await response.json();
  } catch (parseError) {
- throw createTechnicalError(`${fallbackMessage}: risposta non valida`, String(parseError?.message || parseError || ''));
+ const parseErr = createTechnicalError(`${fallbackMessage}: risposta non valida`, String(parseError?.message || parseError || ''));
+ parseErr.serverErrorCode = 'invalid_response';
+ parseErr.httpStatus = response.status;
+ parseErr.requestUrl = url;
+ throw parseErr;
  }
 
  if (!response.ok || !data?.success) {
- throw createTechnicalError(data?.error || fallbackMessage);
+ const err = createTechnicalError(data?.error || fallbackMessage);
+ err.serverErrorCode = data?.error_code || null;
+ err.httpStatus = response.status;
+ err.providerStatus = data?.provider_status || null;
+ err.providerMessage = data?.provider_message || null;
+ err.requestUrl = url;
+ throw err;
  }
 
  return data;
@@ -3947,7 +4032,21 @@ Reload Exchange
  return true;
  } catch (error) {
  markTechnicalError('Errore');
- showErrorOverlay('Errore ricerca anagrafica', error.message, error.technicalDetails || '');
+ showErrorOverlay(
+ 'Errore ricerca anagrafica',
+ error.message,
+ error.technicalDetails || '',
+ {
+ level: 'error',
+ errorCode: error.serverErrorCode || 'lookup_anagrafica_failed',
+ context: {
+ step: 'ricerca_anagrafica',
+ cf_piva: refs.cfPiva && refs.cfPiva.value,
+ http_status: error.httpStatus || null,
+ request_url: error.requestUrl || null
+ }
+ }
+ );
  throw error;
  } finally {
  runtimeState.search.inProgress = false;
@@ -4537,10 +4636,29 @@ Reload Exchange
  uploadResults,
  uploadDebug
  });
+ // Submit pratica e' il punto piu' critico: ogni errore va mandato
+ // via mail al proprietario con livello ERROR (anche se "logico"
+ // come validation lato server, perche' indica una desync UI/BE).
+ const ragSocSub = (payload && payload.cliente && payload.cliente.ragione_sociale) || '-';
+ const cfPivaSub = (payload && payload.cliente && payload.cliente.cf_piva) || '-';
+ const contrattiCount = (state && state.cart && state.cart.contratti && state.cart.contratti.length) || 0;
  showErrorOverlay(
  'Errore durante l\'invio',
  error.message,
- technical ? JSON.stringify({ uploadResults, uploadDebug }, null, 2) : ''
+ technical ? JSON.stringify({ uploadResults, uploadDebug }, null, 2) : '',
+ {
+ level: 'error',
+ errorCode: error.serverErrorCode || (technical ? 'submit_pratica_failed' : 'submit_validation_failed'),
+ context: {
+ step: 'submit_pratica',
+ cliente: ragSocSub,
+ cf_piva: cfPivaSub,
+ contratti_in_carrello: contrattiCount,
+ http_status: error.httpStatus || null,
+ request_url: error.requestUrl || null,
+ technical: technical
+ }
+ }
  );
  } finally {
  refs.btnInviaPratica.disabled = false;
@@ -5290,19 +5408,59 @@ Reload Exchange
  // 1) Upload PDA in staging
  const uploadInfo = await uploadPdaStaging(file);
  runtimeState.pendingPda = uploadInfo;
- // 2) OCR (best-effort: in caso di errore proseguo comunque a step 2)
+ // 2) OCR (best-effort: in caso di errore proseguo comunque a step 2).
+ // Il backend ocr-pda.js classifica l'errore Anthropic in error_code
+ // strutturato che la fetchJsonOrTechnicalError propaga su err.serverErrorCode.
+ // - ocr_credit_exhausted -> popup esplicito "credito esaurito", mail CRITICAL
+ // - ocr_rate_limited / ocr_unavailable / ocr_auth_error -> popup "OCR temp non disponibile", mail ERROR
+ // - altrimenti -> popup neutro, mail WARNING
  let ocrData = null;
  try {
  ocrData = await chiamaOcr(file);
  } catch (ocrErr) {
  hideLoadingOverlay();
+ const errCode = ocrErr?.serverErrorCode || '';
+ const isCreditExhausted = errCode === 'ocr_credit_exhausted';
+ const isUnavailable = ['ocr_rate_limited', 'ocr_unavailable', 'ocr_auth_error'].includes(errCode);
+ let popupTitle, popupText, popupBtn, mailLevel;
+ if (isCreditExhausted) {
+ popupTitle = 'OCR non disponibile — Credito API esaurito';
+ popupText = 'Il servizio OCR e\' temporaneamente non disponibile perche\' il credito API Anthropic e\' esaurito. '
+ + 'Procedi con l\'inserimento manuale dei dati anagrafici: e\' stato gia\' inviato un avviso via email per ricaricare il credito.';
+ popupBtn = 'Continua manualmente';
+ mailLevel = 'critical';
+ } else if (isUnavailable) {
+ popupTitle = 'OCR temporaneamente non disponibile';
+ popupText = 'Il servizio OCR ha risposto con un errore di servizio. Procedi con l\'inserimento manuale dei dati anagrafici. '
+ + 'Una notifica e\' stata inviata via email.';
+ popupBtn = 'Continua manualmente';
+ mailLevel = 'error';
+ } else {
+ popupTitle = 'Estrazione AI non riuscita';
+ popupText = 'Non sono riuscito a leggere i dati dal PDA. Procedo allo step Anagrafica senza pre-compilazione: '
+ + 'compila manualmente i dati. Una notifica e\' stata inviata via email.';
+ popupBtn = 'Continua';
+ mailLevel = 'warning';
+ }
  await new Promise((res) => {
  showErrorOverlay(
- 'Estrazione AI non riuscita',
- 'Procedo allo step Anagrafica senza pre-compilazione. Compila manualmente i dati.',
- String(ocrErr?.message || ocrErr || '')
+ popupTitle,
+ popupText,
+ String(ocrErr?.message || ocrErr || ''),
+ {
+ level: mailLevel,
+ errorCode: errCode || 'ocr_unknown',
+ context: {
+ step: 'step_1_pda_ocr',
+ file_name: file && file.name,
+ file_size: file && file.size,
+ http_status: ocrErr?.httpStatus || null,
+ provider_status: ocrErr?.providerStatus || null,
+ provider_message: ocrErr?.providerMessage || null
+ }
+ }
  );
- setOverlayActions({ primary: { label: 'Continua', onClick: () => { hideLoadingOverlay(); res(); } } });
+ setOverlayActions({ primary: { label: popupBtn, onClick: () => { hideLoadingOverlay(); res(); } } });
  });
  if (runtimeState.anagraficaCompleted) {
  goToStep(3);
@@ -5322,7 +5480,24 @@ Reload Exchange
  queueDraftSave();
  } catch (error) {
  hideLoadingOverlay();
+ if (isTechnicalError(error)) {
+ showErrorOverlay(
+ 'Errore upload PDA',
+ error.message || 'Errore upload PDA',
+ error.technicalDetails || '',
+ {
+ level: 'error',
+ errorCode: error.serverErrorCode || 'pda_staging_upload_failed',
+ context: {
+ step: 'step_1_pda_upload_with_ai',
+ http_status: error.httpStatus || null,
+ request_url: error.requestUrl || null
+ }
+ }
+ );
+ } else {
  showUserError(error.message || 'Errore upload PDA', 'Step 1 - PDA');
+ }
  }
  });
 
@@ -5346,7 +5521,24 @@ Reload Exchange
  queueDraftSave();
  } catch (error) {
  hideLoadingOverlay();
+ if (isTechnicalError(error)) {
+ showErrorOverlay(
+ 'Errore upload PDA',
+ error.message || 'Errore upload PDA',
+ error.technicalDetails || '',
+ {
+ level: 'error',
+ errorCode: error.serverErrorCode || 'pda_staging_upload_failed',
+ context: {
+ step: 'step_1_pda_upload_no_ai',
+ http_status: error.httpStatus || null,
+ request_url: error.requestUrl || null
+ }
+ }
+ );
+ } else {
  showUserError(error.message || 'Errore upload PDA', 'Step 1 - PDA');
+ }
  }
  });
 
@@ -5573,6 +5765,13 @@ Reload Exchange
  });
 
  (async function init() {
+ // Sistema di error reporting via email: ogni errore JS non gestito
+ // (window.error / unhandledrejection) viene notificato al proprietario
+ // del CRM con timestamp Europe/Rome. I catch espliciti del wizard usano
+ // showErrorOverlay(..., reportInfo) per inviare mail mirate.
+ if (window.MiroxErrorReporter && typeof window.MiroxErrorReporter.install === 'function') {
+ window.MiroxErrorReporter.install({ source: 'upload-contratti-vendita' });
+ }
  initUploadBoxes();
  updateStep3ActionsLabels();
  markTechnicalChecking('Verifica...');
@@ -5612,7 +5811,20 @@ Reload Exchange
  setMessage(error.message, 'err');
  if (isTechnicalError(error)) {
  markTechnicalError('Errore');
- showErrorOverlay('Errore tecnico', error.message, error.technicalDetails || '');
+ showErrorOverlay(
+ 'Errore tecnico',
+ error.message,
+ error.technicalDetails || '',
+ {
+ level: 'critical',
+ errorCode: error.serverErrorCode || 'boot_wizard_failed',
+ context: {
+ step: 'boot_wizard',
+ http_status: error.httpStatus || null,
+ request_url: error.requestUrl || null
+ }
+ }
+ );
  } else {
  showUserError(error.message);
  }

@@ -120,6 +120,56 @@ function normalizeResult(raw) {
   return out;
 }
 
+// Mappa errore SDK Anthropic -> codice strutturato + status HTTP + messaggio utente.
+// Il client usa error_code per decidere quale popup mostrare (es. credito esaurito).
+function classifyAnthropicError(error) {
+  const status = Number(error?.status || error?.statusCode || 0);
+  const rawMsg = String(error?.message || '');
+  const lowerMsg = rawMsg.toLowerCase();
+  const errType = String(error?.error?.type || error?.type || '').toLowerCase();
+
+  // Credito API esaurito: Anthropic ritorna 400 "Your credit balance is too low"
+  if (
+    lowerMsg.includes('credit balance') ||
+    lowerMsg.includes('credit_balance') ||
+    lowerMsg.includes('insufficient credit') ||
+    lowerMsg.includes('insufficient_quota') ||
+    lowerMsg.includes('billing') && lowerMsg.includes('low')
+  ) {
+    return {
+      code: 'ocr_credit_exhausted',
+      httpStatus: 503,
+      userMessage: 'Servizio OCR temporaneamente non disponibile: il credito API Anthropic e\' esaurito. Procedi con l\'inserimento manuale.'
+    };
+  }
+  if (status === 429 || errType === 'rate_limit_error' || lowerMsg.includes('rate limit')) {
+    return {
+      code: 'ocr_rate_limited',
+      httpStatus: 503,
+      userMessage: 'Servizio OCR temporaneamente non disponibile: troppe richieste in poco tempo. Riprova fra qualche secondo o procedi manualmente.'
+    };
+  }
+  if (status === 401 || status === 403 || errType === 'authentication_error' || errType === 'permission_error') {
+    return {
+      code: 'ocr_auth_error',
+      httpStatus: 503,
+      userMessage: 'Servizio OCR non disponibile: la chiave API Anthropic non e\' valida. Procedi con l\'inserimento manuale.'
+    };
+  }
+  if (status === 529 || (status >= 500 && status < 600) || errType === 'overloaded_error' || errType === 'api_error') {
+    return {
+      code: 'ocr_unavailable',
+      httpStatus: 503,
+      userMessage: 'Servizio OCR temporaneamente non disponibile (API Anthropic in errore). Procedi con l\'inserimento manuale.'
+    };
+  }
+  return {
+    code: 'ocr_generic_error',
+    httpStatus: 500,
+    userMessage: rawMsg || 'Errore generico durante l\'OCR. Procedi con l\'inserimento manuale.'
+  };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers: CORS_HEADERS, body: '' };
   if (event.httpMethod !== 'POST') return response(405, { success: false, error: 'Metodo non consentito: usa POST' });
@@ -175,7 +225,14 @@ exports.handler = async (event) => {
     return response(200, { success: true, data: normalizeResult(parsed) });
   } catch (error) {
     console.error('ocr-pda error:', error);
-    const msg = error?.message || 'Errore durante OCR';
-    return response(500, { success: false, error: msg });
+    const classification = classifyAnthropicError(error);
+    return response(classification.httpStatus, {
+      success: false,
+      error: classification.userMessage,
+      error_code: classification.code,
+      http_status: classification.httpStatus,
+      provider_status: Number(error?.status || error?.statusCode || 0) || null,
+      provider_message: String(error?.message || '').slice(0, 500)
+    });
   }
 };

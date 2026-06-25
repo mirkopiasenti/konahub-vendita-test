@@ -22,7 +22,7 @@ Modulo CRM per la gestione di vendite, post-vendita e supporto operativo della r
 | `admin-vendita-config.html` | CRUD cataloghi (categorie, offerte, opzioni, reload, regole documenti). Solo admin |
 | `moduli/` | 16 pagine funzionali Vendita / Post-Vendita (`apri_chiudi`, `switch_sim`, `ordini_smartphone`, `dispositivi_comodato`, `gestione_rimborsi`, `segnalazioni`, `simulatore_protecta`, `storico_cliente`, `ticket`, `verifica_contratti`, `controllo_fissi`, `controllo_lg`, `controllo_assicurazioni`, `controllo_allarmi`, `dashboard_pezzi`, `upload-contratti-vendita`) |
 | `moduli/call-center/` | **Modulo Call Center integrato (Fase 1)** — 11 pagine (`registra-chiamata`, `elenco-chiamate`, `rilavorazione`, `appuntamenti`, `appuntamenti-oggi`, `prenota-interno`, `esiti-appuntamenti`, `blacklist`, `call-center-lead-outbound`, `prenota-interno-outbound`, `registra-chiamata-outbound`) + `prenota.html` (form pubblico). La pagina `configurazione` è stata spostata sotto Admin Mirox (`admin-call-center-config.html`). Vedi sezione "Modulo Call Center" sotto e [CLAUDE.md](CLAUDE.md) per i dettagli di coordinamento col CC prod |
-| `js/` | Librerie condivise: `config`, `auth`, `mirox-ui`, `mirox-storage`, `mirox-api`, `mirox-upload`, `mirox-folder`, `mirox-mailer`, `anagrafica-helper`, `vendita-storage-helper` |
+| `js/` | Librerie condivise: `config`, `auth`, `mirox-ui`, `mirox-storage`, `mirox-api`, `mirox-upload`, `mirox-folder`, `mirox-mailer`, `mirox-error-reporter`, `anagrafica-helper`, `vendita-storage-helper` |
 | `css/` | `style.css`, `mirox-modules.css` |
 | `assets/` | Logo, favicon |
 | `netlify/functions/` | Endpoint server-side (vedi sotto) |
@@ -42,7 +42,7 @@ Tutte le functions (eccetto `cron-rientro-sim`) richiedono `Authorization: Beare
 | `admin-vendita-config` | GET / POST | **admin** | CRUD admin del catalogo |
 | `crea-vendita-pratica-carrello` | POST | authenticated | Crea pratica + N contratti con validazioni; promuove i PDA da staging |
 | `upload-vendita-documento` | POST multipart | authenticated | Upload PDF su bucket `contratti-vendita` (anche staging `temp/<sess>/`) |
-| `ocr-pda` | POST multipart | authenticated | OCR del PDA (Pratica di Adesione PDF) via Claude API — pre-compila l'anagrafica |
+| `ocr-pda` | POST multipart | authenticated | OCR del PDA (Pratica di Adesione PDF) via Claude API — pre-compila l'anagrafica. In caso di errore Anthropic ritorna `error_code` strutturato (`ocr_credit_exhausted`, `ocr_rate_limited`, `ocr_unavailable`, `ocr_auth_error`, `ocr_generic_error`) per popup mirato lato client |
 | `search-anagrafica` | GET | authenticated | Ricerca cliente per CF/PIVA |
 | `mirox-send-email` | POST | authenticated | Invio email con template DB |
 | `cron-rientro-sim` | scheduled | nessuna (cron Netlify) | Notifica giornaliera rientro SIM |
@@ -161,6 +161,21 @@ Il CC prod su `mirox-crm.netlify.app` legge le stesse tabelle. Per non romperlo:
 
 - **Fase 5** (debito tecnico): refactor profondo pagine CC a `MiroxUI.*` / `AnagraficaHelper.cercaOcrea` (rimuovere `Utils.toast`, `alert/confirm` nativi, `db.from('anagrafica').insert(...)` diretto)
 - **Estensioni Fase 4**: bottoni "Inizia vendita" anche in `registra-chiamata.html` (dopo passa-in-negozio), `esiti-appuntamenti.html` (prima di esitare), `rilavorazione.html` (tab Passa Negozio/Cerea) — da fare on-demand quando si ha bisogno
+
+## Error reporting via email (dal 2026-06-25)
+
+Sistema centralizzato di notifica errori tecnici. Ogni errore "hard" del CRM (rete, OCR, submit pratica, eccezioni JS non gestite) genera:
+
+1. **Popup utente** con messaggio chiaro + pillola arancione "Orario errore: GG/MM/AAAA HH:MM:SS" (Europe/Rome con secondi)
+2. **Email automatica** al proprietario (`mirko.piasenti@gmail.com`) con metadata (livello, sorgente, utente, pagina, browser), dettagli tecnici e contesto JSON
+
+Componente: `js/mirox-error-reporter.js` → `window.MiroxErrorReporter`. Trasporto: `mirox-send-email` con HTML inline. Throttling 60s per fingerprint (stessa sorgente+livello+messaggio) per evitare flood. Livelli: `critical` / `error` / `warning` / `info`.
+
+**OCR — gestione credito esaurito**: `ocr-pda.js` ritorna `error_code='ocr_credit_exhausted'` quando Anthropic risponde con "credit balance is too low". Il wizard upload contratti mostra un popup esplicito "OCR non disponibile — Credito API esaurito. Procedi con l'inserimento manuale" + invia mail livello `critical`. Stessa logica per rate limit (429), 5xx, auth error.
+
+**Pagine integrate al 2026-06-25**: `moduli/upload-contratti-vendita.html` (boot, ricerca anagrafica, submit pratica, OCR + upload PDA). Altre pagine: integrazione iterativa.
+
+Dettagli operativi: vedi [CLAUDE.md](CLAUDE.md) sezione "Sistema di error reporting via email".
 
 ## Schedulazioni
 
