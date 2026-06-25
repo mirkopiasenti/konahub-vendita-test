@@ -80,6 +80,16 @@ body {
 .pill.carta-di-debito  { background: var(--primary-bg); color: var(--primary-dark); }
 .pill.mensile          { background: var(--success-bg); color: var(--success); }
 .pill.annuale          { background: var(--warning-bg); color: var(--warning); }
+.pill.ok               { background: var(--success-bg); color: var(--success); }
+.pill.ko               { background: var(--danger-bg);  color: var(--danger); }
+
+.stato-select {
+  padding: 5px 8px; font-size: 12px; font-family: inherit;
+  border: 1px solid var(--border); border-radius: 8px; background: #fff;
+  color: var(--text); cursor: pointer;
+}
+.stato-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255,102,0,.12); }
+.stato-select.saving { opacity: 0.5; pointer-events: none; }
 
 .btn-mini {
   display: inline-flex; align-items: center; gap: 5px;
@@ -152,7 +162,7 @@ async function loadAll() {
     const { data, error } = await sb
       .from('post_vendita_controllo_assicurazioni')
       .select(`
-        id, contratto_id, pratica_id, anagrafica_id, created_at, updated_at,
+        id, contratto_id, pratica_id, anagrafica_id, stato, created_at, updated_at,
         anagrafica:anagrafica_id ( id, cf_piva, ragione_sociale, cluster, cellulare, email ),
         contratto:contratto_id (
           id, categoria_id, operatore_id, data_contratto, created_at,
@@ -197,7 +207,7 @@ function matchSearch(r, q) {
   const haystack = [
     ana.ragione_sociale, ana.cf_piva, ana.cluster, ana.cellulare, ana.email,
     c.nome_offerta_snapshot, c.modalita_pagamento_assicurazione, c.ricorrenza_assicurazione,
-    operatoreNome(r)
+    operatoreNome(r), r.stato
   ].filter(Boolean).join(' ').toLowerCase();
   return haystack.includes(q);
 }
@@ -220,13 +230,18 @@ function render() {
     <th>Offerta scelta</th>
     <th>Operatore</th>
     <th>Metodo di pagamento</th>
-    <th>Ricorrenza</th>`;
+    <th>Ricorrenza</th>
+    <th>Stato</th>`;
+
+  const STATI_ASS = ['', 'OK', 'KO'];
 
   const rows = lista.map(r => {
     const ana = r.anagrafica || {};
     const c = r.contratto || {};
     const metodoPag = c.modalita_pagamento_assicurazione || '';
     const ricor = c.ricorrenza_assicurazione || '';
+    const stato = r.stato || '';
+    const options = STATI_ASS.map(s => `<option value="${escapeHtml(s)}" ${s === stato ? 'selected' : ''}>${s === '' ? '—' : escapeHtml(s)}</option>`).join('');
     return `<tr>
       <td>${fmtDate(dataInserimento(r))}</td>
       <td class="cell-cliente">${escapeHtml(ana.ragione_sociale || '-')}</td>
@@ -236,6 +251,10 @@ function render() {
       <td>${escapeHtml(operatoreNome(r))}</td>
       <td>${metodoPag ? `<span class="pill ${slug(metodoPag)}">${escapeHtml(metodoPag)}</span>` : '<span style="color:var(--text-light);">—</span>'}</td>
       <td>${ricor ? `<span class="pill ${slug(ricor)}">${escapeHtml(ricor)}</span>` : '<span style="color:var(--text-light);">—</span>'}</td>
+      <td>
+        ${stato ? `<span class="pill ${slug(stato)}">${escapeHtml(stato)}</span>` : '<span style="color:var(--text-light);">—</span>'}
+        <select class="stato-select" data-row-id="${r.id}" data-prev="${escapeHtml(stato)}" onchange="onCambiaStato(this)" style="margin-left:6px;">${options}</select>
+      </td>
     </tr>`;
   }).join('');
 
@@ -246,6 +265,44 @@ document.getElementById('searchAss').addEventListener('input', e => {
   AssState.search = e.target.value;
   render();
 });
+
+window.onCambiaStato = async function(sel) {
+  const rowId = sel.dataset.rowId;
+  const prev = sel.dataset.prev;
+  const next = sel.value;
+  if (!rowId || prev === next) return;
+
+  const prevLabel = prev || '—';
+  const nextLabel = next || '—';
+  const conferma = await MiroxUI.confirm(`Cambiare lo stato di questa pratica Assicurazioni da "${prevLabel}" a "${nextLabel}"?`);
+  if (!conferma) { sel.value = prev; return; }
+
+  sel.classList.add('saving');
+  try {
+    const profilo = window.__profilo || null;
+    const { error } = await sb
+      .from('post_vendita_controllo_assicurazioni')
+      .update({
+        stato: next === '' ? null : next,
+        stato_cambiato_at: new Date().toISOString(),
+        stato_cambiato_da: profilo?.id || null
+      })
+      .eq('id', rowId);
+    if (error) throw error;
+
+    const riga = AssState.righe.find(r => r.id === rowId);
+    if (riga) riga.stato = next === '' ? null : next;
+    sel.dataset.prev = next;
+    MiroxUI.toast({ message: 'Stato aggiornato', type: 'ok' });
+    render();
+  } catch (e) {
+    console.error('Errore update stato:', e);
+    sel.value = prev;
+    MiroxUI.alert('Errore aggiornamento stato: ' + (e.message || e));
+  } finally {
+    sel.classList.remove('saving');
+  }
+};
 
 window.addEventListener('load', () => { loadAll(); });
 </script>

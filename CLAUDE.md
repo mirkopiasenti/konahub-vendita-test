@@ -132,8 +132,8 @@ Tutte le functions usano `SUPABASE_SERVICE_ROLE_KEY` e bypassano le RLS. Per que
 - `post_vendita_gestione_rimborsi` — codice da RPC `genera_codice_rimborso()`
 - `post_vendita_controllo_fissi` — follow-up dei contratti Fisso dopo conferma in Verifica Contratti. Stati: `Da completare` → `In Attivazione` → (`Attivo` | `KO`). Popolata in automatico dal trigger `trg_vendita_contratti_to_controllo_fissi` su UPDATE `vendita_contratti.stato_controllo` quando un contratto Fisso passa a `controllato`. Campi manuali: `codice_cliente`, `tecnologia`, `cod_contratto`, `cod_pos`, `numero_fisso`, `attivazione_prevista`, `data_attivazione`, `motivo_ko`. Chat in `storico_chat` jsonb (`[{timestamp, message, autore}]`). CHECK constraint su `stato`, `tecnologia` (FTTC/FWA OUT/FWA IN/FWA VOCE/FTTH_OF/FTTH_FWCOP), `cod_pos` (9001415852/900822241).
 - `post_vendita_controllo_lg` — follow-up dei contratti Energia (L&G = Luce & Gas, nome user-facing del modulo) dopo conferma in Verifica Contratti. Popolata in automatico dal trigger `trg_vendita_contratti_to_controllo_lg` su UPDATE `vendita_contratti.stato_controllo` quando un contratto Energia passa a `controllato`. Nessun campo manuale: tutti i dati sono letti dal join con `vendita_contratti` (`numero_contratto_energia`, `pod_pdr`, `ex_fornitore`, `operatore_id`) e `anagrafica` (`ragione_sociale`, `cf_piva`, `cellulare`). Colonne aggiornate dall'**upload CSV WindTre** (modulo Controllo L&G): `stato` (text, no CHECK), `causale_stato_pratica`, `messaggio_esito_sap`, `causa_annullamento` (questi 3 valorizzati solo per stato='Rifiutato'), `ultimo_csv_upload_at`, `ultimo_csv_upload_da`.
-- `post_vendita_controllo_assicurazioni` — follow-up dei contratti Assicurazioni dopo conferma in Verifica Contratti. Popolata in automatico dal trigger `trg_vendita_contratti_to_controllo_assicurazioni`. Nessun campo manuale, nessuno stato: tutti i dati dal join con `vendita_contratti` (`nome_offerta_snapshot`, `modalita_pagamento_assicurazione`, `ricorrenza_assicurazione`, `operatore_id`) e `anagrafica`. Tabella minimal (solo id + FK + audit timestamp).
-- `post_vendita_controllo_allarmi` — follow-up dei contratti Allarmi dopo conferma in Verifica Contratti. Popolata in automatico dal trigger `trg_vendita_contratti_to_controllo_allarmi`. Nessun campo manuale, nessuno stato: dati dal join con `vendita_contratti` (`nome_offerta_snapshot`, `modalita_pagamento`, `operatore_id`) e `anagrafica`. Tabella minimal.
+- `post_vendita_controllo_assicurazioni` — follow-up dei contratti Assicurazioni dopo conferma in Verifica Contratti. Popolata in automatico dal trigger `trg_vendita_contratti_to_controllo_assicurazioni`. Dati di display dal join con `vendita_contratti` (`nome_offerta_snapshot`, `modalita_pagamento_assicurazione`, `ricorrenza_assicurazione`, `operatore_id`) e `anagrafica`. **Stato** (migration 033): colonna `stato` text NULL CHECK IN (`OK`,`KO`), default NULL. Dropdown in `controllo_assicurazioni.html` per scegliere l'esito (l'operatore lo seleziona quando ha l'esito; NULL = ancora da valutare, mostrato come "—"). `KO` rende il contratto candidato a essere padre di un reinserimento (vedi "Reinserimento contratti" in Regole di business). Audit: `stato_cambiato_at`, `stato_cambiato_da`.
+- `post_vendita_controllo_allarmi` — follow-up dei contratti Allarmi dopo conferma in Verifica Contratti. Popolata in automatico dal trigger `trg_vendita_contratti_to_controllo_allarmi`. Dati di display dal join con `vendita_contratti` (`nome_offerta_snapshot`, `modalita_pagamento`, `operatore_id`) e `anagrafica`. **Stato** (migration 033): colonna `stato` text NOT NULL CHECK IN (`In Attivazione`,`OK`,`KO`), default `In Attivazione`. Dropdown in `controllo_allarmi.html` per cambiare stato. `In Attivazione` (default alla creazione automatica) e `KO` rendono il contratto candidato a essere padre di un reinserimento. Audit: `stato_cambiato_at`, `stato_cambiato_da`.
 
 ### Trasversali
 - `segnalazioni` (+ `segnalazioni_backup`)
@@ -194,6 +194,12 @@ Dal 2026-06-24 (migration `029`) i bucket dati clienti sono **PRIVATI**. Lettura
 **Convenzione campi DB**: dopo migration 029 le colonne `cartella_url` / `preventivo_pdf_url` su `vendita_apri_chiudi`, `vendita_switch_sim`, `vendita_simulatore_protecta` contengono il **path** nel bucket (es. `dispositivo_X/file.pdf`), NON più un URL pubblico. I record legacy hanno ancora gli URL completi: il codice di lettura li gestisce entrambi (regex `replace` su prefisso `https://...storage/v1/object/public/<bucket>/`).
 
 **RLS storage**: SELECT/INSERT/DELETE ristretti a `authenticated` per i bucket privati; le scritture passano comunque per Netlify functions con service_role.
+
+**Eccezione `segnalazioni-files` + tabella `segnalazioni` per konahub legacy** (migration `032`, 2026-06-25): il konahub (CRM provvisorio su deploy separato) usa `moduli/segnalazioni.html` senza Supabase Auth — tutte le chiamate sono `anon`. La 029 (storage) + la 030 (tabella) avevano rotto il modulo. La 032 riapre solo il minimo per `anon` (additivo alle policy authenticated esistenti, Mirox NON è toccato):
+- Tabella `segnalazioni`: SELECT + INSERT + UPDATE (no DELETE)
+- Bucket `segnalazioni-files`: SELECT + INSERT (no DELETE)
+
+Bucket resta `public=false`. Da revocare quando il konahub verrà dismesso — vedi "Note operative consapevoli".
 
 ---
 
@@ -281,6 +287,35 @@ Quando l'utente carica un PDA + sceglie "Analizza con AI", i dati estratti dall'
 
 ### Origine pratica (CHECK constraint su `vendita_pratiche`)
 `appuntamento_callcenter`, `contatto_callcenter_entro_10_giorni`, `spontaneo`
+
+### Reinserimento contratti (dal 2026-06-25, migration 033)
+Quando una pratica va in KO post-vendita (o `Rifiutata`/`Annullata`/`In lavorazione` per Energia) e viene ricaricata come pratica nuova dopo qualche giorno, la dashboard mensile dei pezzi rischierebbe il **doppio conteggio** (KO + reinserita = 2 pezzi quando è 1 sola vendita). Per evitarlo:
+
+**Schema** (migration 033 su `vendita_contratti`):
+- `stato_inserimento` text NOT NULL DEFAULT `'inserimento'` CHECK IN (`'inserimento'`,`'reinserimento'`)
+- `reinserimento_di_contratto_id` uuid NULL REFERENCES `vendita_contratti(id)` ON DELETE SET NULL
+- CHECK di coerenza: `'reinserimento'` ⇒ FK NOT NULL; `'inserimento'` ⇒ FK IS NULL
+- Indice composto `(anagrafica_id, categoria_id, data_contratto DESC)` per il lookup; indice parziale su `reinserimento_di_contratto_id` per il drill-down inverso
+
+**Flusso wizard** (`upload-contratti-vendita.html`):
+1. All'apertura dello **step 3 (Dati contratto)** il wizard chiama `checkReinserimento(anagrafica_id, categoria_id, categoria_nome)` se la coppia (anagrafica, categoria) non è già stata verificata in sessione (`runtimeState.lastReinsCheckKey`)
+2. La funzione fa due query: prima recupera i contratti `vendita_contratti` del cliente per quella categoria negli ultimi **90 giorni** (`stato_inserimento='inserimento'`, esclude catene di reinserimenti), poi recupera dalla tabella post-vendita appropriata gli stati che fanno scattare il popup
+3. Mapping categoria → tabella → stati trigger:
+   - **Fisso** → `post_vendita_controllo_fissi.stato` IN (`KO`,`In Attivazione`)
+   - **Energia** → `post_vendita_controllo_lg.stato` IN (`Rifiutato`,`Annullato`,`Nuovo`,`In lavorazione`,`In attivazione`) (tutto tranne `Attivato`/NULL)
+   - **Allarmi** → `post_vendita_controllo_allarmi.stato` IN (`KO`,`In Attivazione`)
+   - **Assicurazioni** → `post_vendita_controllo_assicurazioni.stato` = `KO`
+   - Mobile / Customer Base → no check (nessuna tabella post-vendita)
+4. Se ≥1 candidato → popup modale (riusa `loadingOverlay`) con elenco (radio: data, offerta, eventuali numero contratto/POD, stato post-vendita) + 2 bottoni `Sì, è un reinserimento` / `No, è un inserimento nuovo`
+5. La scelta finisce in `runtimeState.pendingReinserimento` (`{contratto_id, descrizione}` o `null`), poi nel draft del carrello (`stato_inserimento`, `reinserimento_di_contratto_id`)
+6. In carrello: chip arancione **Reinserimento** se `stato_inserimento='reinserimento'`. Il popup non si rimostra per la stessa coppia (anagrafica, categoria); reset alla prossima `resetContractFields()` (multi-contratto: l'utente può aggiungere un secondo contratto Fisso dello stesso cliente che viene ri-chiesto)
+
+**Backend** (`crea-vendita-pratica-carrello.js`):
+- Default `stato_inserimento='inserimento'` se non passato; CHECK enum
+- Se `'reinserimento'`: valida `reinserimento_di_contratto_id` come UUID, fa SELECT `vendita_contratti` per verificare che esista E appartenga alla **stessa anagrafica** E alla **stessa categoria** (errori 400 altrimenti)
+- Se `'inserimento'`: forza `reinserimento_di_contratto_id=null` (idempotente)
+
+**Dashboard** (futura): WHERE `stato_inserimento <> 'reinserimento'` per il conteggio pezzi del mese. Metrica derivata "tasso di rilavorazione = reinserimenti / inserimenti totali" disponibile come bonus.
 
 ### Controllo Fissi (post-vendita)
 - Tabella: `post_vendita_controllo_fissi` (vedi Mappa Supabase → Post-Vendita).
@@ -440,6 +475,15 @@ Il bottone "Admin" dentro `moduli/upload-contratti-vendita.html` è stato **rimo
 - **File SQL in `/database/`**: parziali, NON riflettono lo stato attuale del DB (vedi `database/README.md`)
 - **Modulo `simulatore_protecta.html`**: ~960 KB, molto pesante perché contiene asset embedded. Modificare con cautela.
 - **Permessi granulari Vendita/Post-Vendita**: non esistono ancora. Solo CC ha permessi fine-grained via `pagine_accessibili`. Le pagine Vendita/Post-Vendita sono accessibili a tutti gli utenti attivi, indipendentemente dal ruolo (admin/operatore). Solo il pannello Admin è gated dal `ruolo`.
+- **TODO cleanup konahub** (migration `032`, 2026-06-25): quando il konahub (CRM provvisorio, deploy separato) verrà dismesso e tutte le segnalazioni passeranno per Mirox, **revocare le 5 policy anon** ripristinando lo stato hardened post-029/030. Cleanup SQL:
+  ```sql
+  DROP POLICY "segnalazioni_anon_select"        ON segnalazioni;
+  DROP POLICY "segnalazioni_anon_insert"        ON segnalazioni;
+  DROP POLICY "segnalazioni_anon_update"        ON segnalazioni;
+  DROP POLICY "Read anon segnalazioni files"    ON storage.objects;
+  DROP POLICY "Upload anon segnalazioni files"  ON storage.objects;
+  ```
+  Le policy authenticated restano in piedi → nessuna azione lato Mirox.
 
 ---
 

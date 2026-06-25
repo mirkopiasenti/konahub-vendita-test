@@ -751,6 +751,45 @@ exports.handler = async (event) => {
         index
       });
 
+      // Validazione reinserimento (migration 033).
+      //   - stato_inserimento default 'inserimento'; ammessi 'inserimento'/'reinserimento'
+      //   - se 'reinserimento' => reinserimento_di_contratto_id DEVE essere UUID valido
+      //     e riferire un contratto esistente con stessa anagrafica e stessa categoria.
+      //   - se 'inserimento' => reinserimento_di_contratto_id viene forzato a null.
+      const statoInsRaw = cleanString(item.stato_inserimento);
+      const statoInserimento = statoInsRaw || 'inserimento';
+      if (!['inserimento', 'reinserimento'].includes(statoInserimento)) {
+        throw new Error(`contratti[${index}].stato_inserimento non valido: usa "inserimento" o "reinserimento"`);
+      }
+      item.stato_inserimento = statoInserimento;
+
+      if (statoInserimento === 'reinserimento') {
+        const reinsId = normalizeUuidOrNull(item.reinserimento_di_contratto_id);
+        if (!reinsId) {
+          throw new Error(`contratti[${index}].reinserimento_di_contratto_id obbligatorio (UUID) se stato_inserimento='reinserimento'`);
+        }
+        const { data: parentContract, error: parentErr } = await supabase
+          .from('vendita_contratti')
+          .select('id, anagrafica_id, categoria_id')
+          .eq('id', reinsId)
+          .maybeSingle();
+        if (parentErr) {
+          throw new Error(`Errore verifica reinserimento_di_contratto_id (contratti[${index}]): ${parentErr.message}`);
+        }
+        if (!parentContract) {
+          throw new Error(`contratti[${index}].reinserimento_di_contratto_id non trovato`);
+        }
+        if (parentContract.anagrafica_id !== anagraficaId) {
+          throw new Error(`contratti[${index}].reinserimento_di_contratto_id appartiene a un altro cliente`);
+        }
+        if (parentContract.categoria_id !== item.categoria_id) {
+          throw new Error(`contratti[${index}].reinserimento_di_contratto_id e' di una categoria diversa`);
+        }
+        item.reinserimento_di_contratto_id = reinsId;
+      } else {
+        item.reinserimento_di_contratto_id = null;
+      }
+
       // Validazione tipo_firma:
       //  - categorie PDA (Mobile/Customer Base/Fisso): valore obbligatorio in
       //    ('elettronica','cartacea')
@@ -837,6 +876,12 @@ exports.handler = async (event) => {
         // Campi specifici Assicurazioni (vedi migration 021): null per altre categorie.
         modalita_pagamento_assicurazione: item.modalita_pagamento_assicurazione,
         ricorrenza_assicurazione: item.ricorrenza_assicurazione,
+
+        // Reinserimento (vedi migration 033): default 'inserimento'.
+        // Se 'reinserimento', reinserimento_di_contratto_id e' gia' stato
+        // validato sopra (UUID, stessa anagrafica, stessa categoria).
+        stato_inserimento: item.stato_inserimento,
+        reinserimento_di_contratto_id: item.reinserimento_di_contratto_id,
 
         stato_controllo: 'da_controllare'
       };

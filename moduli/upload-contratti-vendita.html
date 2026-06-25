@@ -787,6 +787,29 @@
  flex-wrap: wrap;
  }
 
+ /* Migration 033 — popup reinserimento: lista candidati con radio */
+ .reinserimento-list {
+ display: flex;
+ flex-direction: column;
+ gap: 8px;
+ }
+ .reinserimento-candidate {
+ display: flex;
+ align-items: flex-start;
+ gap: 10px;
+ padding: 10px 12px;
+ background: #fff7ed;
+ border: 1px solid #fdba74;
+ border-radius: 10px;
+ cursor: pointer;
+ font-size: 13px;
+ line-height: 1.4;
+ text-align: left;
+ }
+ .reinserimento-candidate:hover { background: #ffedd5; }
+ .reinserimento-candidate input { margin-top: 4px; }
+ .reinserimento-candidate strong { color: #9a3412; }
+
  .loading-actions button {
  min-width: 120px;
  }
@@ -1381,6 +1404,16 @@ Reload Exchange
  // Per Energia, Allarmi, Assicurazioni nessun PDA e nessun PDF contratto.
  const CATEGORIE_PDA = ['Mobile', 'Customer Base', 'Fisso'];
  const TIPI_FIRMA = ['elettronica', 'cartacea'];
+ // Reinserimento (migration 033): per ogni categoria con post-vendita, indica la tabella
+ // di lookup e quali stati post-vendita considerare "non finalizzati" (cioe' candidati
+ // a essere padri di un eventuale reinserimento). Categorie non in mappa = no check.
+ const CATEGORIE_REINSERIMENTO_CONFIG = {
+   'Fisso':         { table: 'post_vendita_controllo_fissi',         stati: ['KO','In Attivazione'] },
+   'Energia':       { table: 'post_vendita_controllo_lg',            stati: ['Rifiutato','Annullato','Nuovo','In lavorazione','In attivazione'] },
+   'Allarmi':       { table: 'post_vendita_controllo_allarmi',       stati: ['KO','In Attivazione'] },
+   'Assicurazioni': { table: 'post_vendita_controllo_assicurazioni', stati: ['KO'] }
+ };
+ const REINSERIMENTO_WINDOW_DAYS = 90;
  const uiState = {
  view: 'wizard',
  // 1 = Categoria+PDA, 2 = Anagrafica, 3 = Dati Contratto, 4 = Firma, 5 = Documenti
@@ -1417,7 +1450,18 @@ Reload Exchange
  origineAutoRilevata: null, // {origine_pratica, descrizione, anagrafica_id, evento_tipo, evento_id}
  // Tipo di firma scelto per il contratto in compilazione: 'elettronica' | 'cartacea' | null.
  // Resettato al cambio categoria e dopo addContrattoToCart.
- pendingTipoFirma: null
+ pendingTipoFirma: null,
+ // Migration 033 - Reinserimento contratti (anti-doppio-conteggio dashboard).
+ //   anagraficaId       : id dell'anagrafica corrente (popolato in cercaCliente).
+ //   pendingReinserimento: per il contratto in compilazione, oggetto
+ //                        { contratto_id, descrizione } se l'operatore ha confermato
+ //                        nel popup "Si, e' un reinserimento". null altrimenti.
+ //   lastReinsCheckKey  : chiave `${anagraficaId}_${categoriaId}` dell'ultima
+ //                        verifica fatta. Evita di rimostrare il popup quando
+ //                        l'utente naviga avanti/indietro senza cambiare scelta.
+ anagraficaId: null,
+ pendingReinserimento: null,
+ lastReinsCheckKey: null
  };
  const DOC_TYPES = {
  DOCUMENTO_IDENTITA: 'documento_identita',
@@ -2072,6 +2116,153 @@ Reload Exchange
  refs.loadingOverlay.classList.remove('hidden');
  }
 
+ // ====================================================================
+ // Migration 033 - Reinserimento contratti
+ // ====================================================================
+ // Cerca i contratti precedenti del cliente nella stessa categoria che
+ // potrebbero essere "rilavorabili" (KO / In Attivazione / In lavorazione
+ // / Rifiutato / Annullato a seconda della categoria). Finestra: 90 giorni.
+ // Esclude i contratti gia' classificati come reinserimento (per evitare
+ // catene di reinserimenti dello stesso evento).
+ async function checkReinserimento(anagraficaId, categoriaId, categoriaNome) {
+ if (!anagraficaId || !categoriaId) return [];
+ const cfg = CATEGORIE_REINSERIMENTO_CONFIG[categoriaNome];
+ if (!cfg) return [];
+
+ const cutoff = new Date();
+ cutoff.setDate(cutoff.getDate() - REINSERIMENTO_WINDOW_DAYS);
+ const cutoffIso = cutoff.toISOString();
+
+ try {
+ const { data: contratti, error: e1 } = await db
+ .from('vendita_contratti')
+ .select('id, data_contratto, nome_offerta_snapshot, numero_contratto_energia, pod_pdr')
+ .eq('anagrafica_id', anagraficaId)
+ .eq('categoria_id', categoriaId)
+ .eq('stato_inserimento', 'inserimento')
+ .gte('data_contratto', cutoffIso)
+ .order('data_contratto', { ascending: false });
+ if (e1) { console.error('checkReinserimento: errore contratti', e1); return []; }
+ if (!contratti || contratti.length === 0) return [];
+
+ const ids = contratti.map((c) => c.id);
+ const { data: postRows, error: e2 } = await db
+ .from(cfg.table)
+ .select('contratto_id, stato')
+ .in('contratto_id', ids)
+ .in('stato', cfg.stati);
+ if (e2) { console.error('checkReinserimento: errore post-vendita', e2); return []; }
+
+ const statoMap = new Map((postRows || []).map((r) => [r.contratto_id, r.stato]));
+ return contratti
+ .filter((c) => statoMap.has(c.id))
+ .map((c) => ({
+ contratto_id: c.id,
+ data_contratto: c.data_contratto,
+ offerta: c.nome_offerta_snapshot || null,
+ numero_contratto: c.numero_contratto_energia || null,
+ pod_pdr: c.pod_pdr || null,
+ stato_post: statoMap.get(c.id)
+ }));
+ } catch (err) {
+ console.error('checkReinserimento: eccezione', err);
+ return [];
+ }
+ }
+
+ function describeReinserimentoCandidate(c) {
+ const dataFmt = c.data_contratto
+ ? new Date(c.data_contratto).toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric' })
+ : '-';
+ const dettagli = [
+ c.offerta || 'Offerta sconosciuta',
+ c.numero_contratto ? `n. ${c.numero_contratto}` : null,
+ c.pod_pdr ? `POD/PDR ${c.pod_pdr}` : null,
+ `stato: ${c.stato_post}`
+ ].filter(Boolean).join(' · ');
+ return { dataFmt, dettagli };
+ }
+
+ function showReinserimentoOverlay(candidates, onChoose, onSkip) {
+ const multipli = candidates.length > 1;
+ refs.loadingTitle.textContent = 'Possibile reinserimento';
+ refs.loadingText.textContent = multipli
+ ? `Per questo cliente abbiamo trovato ${candidates.length} pratiche precedenti nella stessa categoria, non ancora finalizzate. Se questa nuova pratica e' un reinserimento, seleziona quale stai ricaricando.`
+ : 'Per questo cliente esiste gia\' una pratica precedente nella stessa categoria, non ancora finalizzata. Questa nuova pratica e\' un reinserimento di quella?';
+ refs.loadingSpinner.classList.add('hidden');
+ refs.loadingIcon.textContent = '!';
+ refs.loadingIcon.classList.remove('hidden');
+ refs.loadingIcon.classList.remove('success', 'error');
+
+ const radiosHtml = candidates.map((c, idx) => {
+ const { dataFmt, dettagli } = describeReinserimentoCandidate(c);
+ return `<label class="reinserimento-candidate">
+ <input type="radio" name="reinsCandidate" value="${escapeHtml(c.contratto_id)}" ${idx === 0 ? 'checked' : ''}>
+ <span><strong>${escapeHtml(dataFmt)}</strong> — ${escapeHtml(dettagli)}</span>
+ </label>`;
+ }).join('');
+ refs.loadingSummary.innerHTML = `<div class="reinserimento-list">${radiosHtml}</div>`;
+ refs.loadingSummary.classList.remove('hidden');
+ renderOverlayTechnical('');
+
+ setOverlayActions({
+ secondary: {
+ label: 'No, e\' un inserimento nuovo',
+ onClick: () => {
+ hideLoadingOverlay();
+ if (typeof onSkip === 'function') onSkip();
+ }
+ },
+ primary: {
+ label: 'Si\', e\' un reinserimento',
+ onClick: () => {
+ const sel = refs.loadingSummary.querySelector('input[name="reinsCandidate"]:checked');
+ const chosenId = sel ? sel.value : null;
+ const chosen = chosenId ? candidates.find((c) => c.contratto_id === chosenId) : null;
+ hideLoadingOverlay();
+ if (chosen && typeof onChoose === 'function') onChoose(chosen);
+ else if (typeof onSkip === 'function') onSkip();
+ }
+ }
+ });
+ refs.loadingOverlay.classList.remove('hidden');
+ }
+
+ // Hook chiamato all'apertura dello step 3 (Dati Contratto). Idempotente
+ // sulla coppia (anagraficaId, categoriaId): non richiede la domanda se l'utente
+ // ha gia' risposto per quella coppia nella sessione corrente.
+ async function checkAndOfferReinserimento() {
+ if (uiState.view !== 'wizard' || uiState.step !== 3) return;
+ if (runtimeState.editingTempId) return; // in editing usa la scelta gia' salvata sul cart item
+ const anagraficaId = runtimeState.anagraficaId;
+ const categoria = getSelectedCategoria();
+ if (!anagraficaId || !categoria?.id) return;
+
+ const key = `${anagraficaId}_${categoria.id}`;
+ if (runtimeState.lastReinsCheckKey === key) return;
+ runtimeState.lastReinsCheckKey = key;
+
+ const candidates = await checkReinserimento(anagraficaId, categoria.id, categoria.nome);
+ if (!candidates || candidates.length === 0) {
+ runtimeState.pendingReinserimento = null;
+ return;
+ }
+ showReinserimentoOverlay(
+ candidates,
+ (chosen) => {
+ const { dataFmt, dettagli } = describeReinserimentoCandidate(chosen);
+ runtimeState.pendingReinserimento = {
+ contratto_id: chosen.contratto_id,
+ descrizione: `${dataFmt} — ${dettagli}`
+ };
+ setMessage('Contratto marcato come REINSERIMENTO della pratica precedente', 'info');
+ },
+ () => {
+ runtimeState.pendingReinserimento = null;
+ }
+ );
+ }
+
  function refreshUploadBox(input) {
  if (!input) return;
  const ui = runtimeState.uploadBoxes[input.id];
@@ -2418,6 +2609,12 @@ Reload Exchange
  renderDynamicSections();
  renderWizardLayout();
  queueDraftSave();
+ // Migration 033: all'apertura dello step 3 verifica se questo cliente ha
+ // pratiche precedenti non finalizzate nella stessa categoria. Fire-and-forget
+ // (l'overlay e' modale e blocca l'UI finche' l'operatore non risponde).
+ if (uiState.step === 3) {
+ checkAndOfferReinserimento();
+ }
  }
 
  function openCartView() {
@@ -2761,6 +2958,12 @@ Reload Exchange
  if (refs.ricorrenzaAssicurazione) refs.ricorrenzaAssicurazione.value = '';
  // I dati OCR del contratto precedente non valgono per il nuovo
  if (typeof runtimeState !== 'undefined') runtimeState.lastOcrData = null;
+ // Migration 033: la scelta reinserimento e' per-contratto. Resettiamo per il prossimo
+ // contratto del carrello (lo stesso cliente potrebbe avere piu' candidati separati).
+ if (typeof runtimeState !== 'undefined') {
+ runtimeState.pendingReinserimento = null;
+ runtimeState.lastReinsCheckKey = null;
+ }
  clearInputFile(refs.fileCopiaSimMnp);
  clearInputFile(refs.fileCopiaBolletta);
  if (refs.fileContrattoFirmato) clearInputFile(refs.fileContrattoFirmato);
@@ -2782,6 +2985,9 @@ Reload Exchange
  runtimeState.tempSessionId = null;
  runtimeState.pendingPda = null;
  runtimeState.pendingTipoFirma = null;
+ runtimeState.anagraficaId = null;
+ runtimeState.pendingReinserimento = null;
+ runtimeState.lastReinsCheckKey = null;
 
  praticaFiles.documento_identita = null;
 
@@ -3193,6 +3399,10 @@ Reload Exchange
  pda_file_name: (runtimeState.pendingPda && runtimeState.pendingPda.file_name) || null,
  // Step Firma (solo per categorie PDA): 'elettronica' | 'cartacea' | null
  tipo_firma: isCurrentCategoriaPda() ? (runtimeState.pendingTipoFirma || null) : null,
+ // Migration 033 - Reinserimento (anti-doppio-conteggio dashboard mensile).
+ stato_inserimento: runtimeState.pendingReinserimento ? 'reinserimento' : 'inserimento',
+ reinserimento_di_contratto_id: runtimeState.pendingReinserimento?.contratto_id || null,
+ reinserimento_descrizione: runtimeState.pendingReinserimento?.descrizione || null,
  score: {
  punteggio_gara: Number(punteggioGara.toFixed(2)),
  punteggio_extra_gara: Number(punteggioExtra.toFixed(2))
@@ -3284,6 +3494,8 @@ Reload Exchange
  if (item.flags.sim_mnp_required) chips.push('<span class="chip warn">Fotocopia SIM</span>');
  if (item.flags.bolletta_required) chips.push('<span class="chip warn">Bolletta</span>');
  if (docs.length> 0) chips.push('<span class="chip doc">Documenti caricati</span>');
+ // Migration 033: chip "Reinserimento" se confermato nel popup all'apertura step 3.
+ if (item.stato_inserimento === 'reinserimento') chips.push('<span class="chip warn">Reinserimento</span>');
 
  return`
 <article class="cart-item">
@@ -3623,6 +3835,10 @@ Reload Exchange
  );
 
  if (!data.found) {
+ // Migration 033: cliente nuovo, niente check reinserimento possibile.
+ runtimeState.anagraficaId = null;
+ runtimeState.lastReinsCheckKey = null;
+ runtimeState.pendingReinserimento = null;
  if (presetCluster) {
  setClusterValue(presetCluster, { lock: lockCluster });
  } else if (runtimeState.clusterLocked && isTuristaCluster(refs.cluster.value)) {
@@ -3642,6 +3858,10 @@ Reload Exchange
  }
 
  const found = data.data || {};
+ // Migration 033: salva l'id dell'anagrafica per il check reinserimento
+ // (eseguito all'apertura dello step 3). Se cambia il cliente, lastReinsCheckKey
+ // si invalida automaticamente perche' la chiave cambia.
+ runtimeState.anagraficaId = found.id || null;
  if (presetCluster) {
  setClusterValue(presetCluster, { lock: lockCluster });
  } else if (runtimeState.clusterLocked && isTuristaCluster(refs.cluster.value)) {
@@ -3834,6 +4054,20 @@ Reload Exchange
  }
  // Ripristina scelta firma + eventuale contratto firmato in memoria
  runtimeState.pendingTipoFirma = TIPI_FIRMA.includes(item.tipo_firma) ? item.tipo_firma : null;
+ // Migration 033: ripristina la scelta reinserimento gia' fatta per questo contratto del carrello.
+ if (item.stato_inserimento === 'reinserimento' && item.reinserimento_di_contratto_id) {
+ runtimeState.pendingReinserimento = {
+ contratto_id: item.reinserimento_di_contratto_id,
+ descrizione: item.reinserimento_descrizione || ''
+ };
+ } else {
+ runtimeState.pendingReinserimento = null;
+ }
+ // Evita di ri-mostrare il popup quando si carica un contratto del carrello (la scelta e' gia' fatta).
+ const cat = state.categorie.find((c) => c.id === item.categoria_id);
+ if (runtimeState.anagraficaId && cat?.id) {
+ runtimeState.lastReinsCheckKey = `${runtimeState.anagraficaId}_${cat.id}`;
+ }
  if (refs.fileContrattoFirmato) {
  setInputFile(refs.fileContrattoFirmato, item.files?.contratto_firmato || null);
  }
@@ -3979,7 +4213,10 @@ Reload Exchange
  tipo_firma: item.tipo_firma || null,
  // Campi Assicurazioni
  modalita_pagamento_assicurazione: item.modalita_pagamento_assicurazione || null,
- ricorrenza_assicurazione: item.ricorrenza_assicurazione || null
+ ricorrenza_assicurazione: item.ricorrenza_assicurazione || null,
+ // Migration 033 - Reinserimento (anti-doppio-conteggio dashboard)
+ stato_inserimento: item.stato_inserimento || 'inserimento',
+ reinserimento_di_contratto_id: item.reinserimento_di_contratto_id || null
  };
  });
 
