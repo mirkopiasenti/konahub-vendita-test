@@ -8,10 +8,17 @@ const CORS_HEADERS = {
   'Content-Type': 'application/json'
 };
 
-function response(statusCode, payload) {
+// Per le risposte success aggiungiamo Cache-Control breve: i cataloghi
+// vendita cambiano raramente. private=non condividere in CDN (l'output
+// dipende dall'utente loggato in teoria, qui no ma per sicurezza).
+const SUCCESS_HEADERS = Object.assign({}, CORS_HEADERS, {
+  'Cache-Control': 'private, max-age=60'
+});
+
+function response(statusCode, payload, useCache = false) {
   return {
     statusCode,
-    headers: CORS_HEADERS,
+    headers: (useCache && statusCode === 200) ? SUCCESS_HEADERS : CORS_HEADERS,
     body: JSON.stringify(payload)
   };
 }
@@ -120,7 +127,7 @@ exports.handler = async (event) => {
       documenti_regole: regoleRes.data || [],
       offerte_opzioni: offerteOpzioniRes.data || [],
       offerte_reload: offerteReloadRes.data || []
-    });
+    }, /* useCache */ true);
   } catch (error) {
     return response(500, {
       success: false,

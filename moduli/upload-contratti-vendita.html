@@ -3364,15 +3364,28 @@ Reload Exchange
  }
  }
 
- async function loadConfig() {
- setMessage('Caricamento configurazione vendita...', 'info');
- markTechnicalChecking('Verifica...');
- const data = await fetchJsonOrTechnicalError(
- '/.netlify/functions/vendita-config',
- {},
- 'Errore nel caricamento configurazione'
- );
+ // Cache della configurazione vendita in sessionStorage (stale-while-revalidate).
+ // La config cambia raramente (modifica admin manuale), quindi usiamo la cache
+ // per render istantaneo e rinfreschiamo in background per la prossima volta.
+ const CONFIG_CACHE_KEY = 'mirox_vendita_config_v1';
+ const CONFIG_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minuti
 
+ function readConfigCache() {
+ try {
+ const raw = sessionStorage.getItem(CONFIG_CACHE_KEY);
+ if (!raw) return null;
+ const parsed = JSON.parse(raw);
+ if (!parsed || typeof parsed.ts !== 'number') return null;
+ if (Date.now() - parsed.ts > CONFIG_CACHE_TTL_MS) return null;
+ return parsed.data || null;
+ } catch (e) { return null; }
+ }
+ function writeConfigCache(data) {
+ try { sessionStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); }
+ catch (e) { /* quota / private mode: ignore */ }
+ }
+
+ function applyConfig(data) {
  state.categorie = data.categorie || [];
  state.offerte = data.offerte || [];
  state.opzioni = data.opzioni || [];
@@ -3380,17 +3393,45 @@ Reload Exchange
  state.documenti_regole = data.documenti_regole || [];
  state.offerte_opzioni = data.offerte_opzioni || [];
  state.offerte_reload = data.offerte_reload || [];
-
  if (state.categorie.length === 0) {
  throw new Error('Nessuna categoria attiva disponibile');
  }
-
  renderCategorie();
  renderOfferte();
  renderOpzioni();
  renderReload();
  renderDynamicSections();
  renderWizardLayout();
+ }
+
+ async function loadConfig() {
+ // Cache hit: rendering istantaneo + refresh in background per la prossima volta
+ const cached = readConfigCache();
+ if (cached) {
+ setMessage('Configurazione (cache)', 'info');
+ applyConfig(cached);
+ // Background refresh: aggiorna SOLO la cache, non ritocca il DOM per evitare
+ // flicker se l'utente e' gia' in interazione col wizard
+ fetchJsonOrTechnicalError('/.netlify/functions/vendita-config', {}, 'Errore refresh config')
+ .then((fresh) => writeConfigCache(fresh))
+ .catch((e) => console.warn('Refresh config background fallito:', e?.message || e));
+ // Province in background
+ loadProvinceComuni().catch((e) => console.warn('province-comuni non caricato:', e));
+ setMessage('Configurazione caricata', 'ok');
+ markTechnicalConnected('Connesso');
+ return;
+ }
+
+ // Cache miss: caricamento normale
+ setMessage('Caricamento configurazione vendita...', 'info');
+ markTechnicalChecking('Verifica...');
+ const data = await fetchJsonOrTechnicalError(
+ '/.netlify/functions/vendita-config',
+ {},
+ 'Errore nel caricamento configurazione'
+ );
+ applyConfig(data);
+ writeConfigCache(data);
  // Carica dataset province/comuni in background (non blocca il wizard se fallisce)
  loadProvinceComuni().catch((e) => console.warn('province-comuni non caricato:', e));
  setMessage('Configurazione caricata', 'ok');
