@@ -22,21 +22,40 @@ Il sistema consensi privacy (migration `034`) è già implementato lato codice. 
 
 ---
 
-## 2. Verifica identità + abilitazione mittente alfanumerico (~1 giorno lavorativo)
+## 2. Richiesta mittente alfanumerico (~1 giorno lavorativo)
 
-In Italia per usare un **mittente alfanumerico** (es. `MIROX` o `KONATECH` al posto di un numero di telefono) AGCOM richiede che l'account sia verificato. Smshosting fa la verifica via documenti.
+> **Importante**: su Smshosting NON c'è una sezione "Verifica identità" separata. L'identità viene verificata contestualmente alla richiesta del mittente alfanumerico (es. `MIROX` o `KONATECH` al posto di un numero anonimo). Se cerchi "Verifica account" nel pannello non lo troverai — segui invece questa procedura.
 
-1. Dal pannello, vai in **"Impostazioni" → "Verifica account"**
-2. Carica:
-   - Visura camerale aggiornata di Kona Tech S.r.l. (puoi scaricarla da Telemaco o farla fare al commercialista)
-   - Documento d'identità del legale rappresentante (carta di identità o patente)
-3. Compila il modulo di richiesta del mittente alfanumerico:
-   - **Mittente desiderato**: `MIROX` (max 11 caratteri, solo lettere maiuscole + numeri, no spazi)
-   - **Tipologia**: Transactional (OTP / notifiche di servizio)
-   - **Settore**: Telecomunicazioni / Rivendita servizi TLC
-4. Smshosting risponde entro 24-48 ore lavorative con conferma o richiesta integrazioni
+### Modo veloce (consigliato): contatta direttamente il supporto
 
-> **Nota**: senza mittente alfanumerico approvato puoi usare un mittente numerico, ma il cliente vedrà un numero anonimo e l'OTP sembra meno credibile. Aspetta l'approvazione prima del go-live.
+Smshosting risponde rapidamente. Chiama o scrivi:
+
+- **Telefono**: `+39 0437 30419` (lun-ven 9:00-12:30 e 14:30-18:00)
+- **Email**: `assistenza@smshosting.it`
+- **Chat live**: icona fumetto in basso a destra nel pannello
+
+Di':
+> "Buongiorno, sono di **Kona Tech S.r.l.** (P.IVA `05146970230`), ho creato l'account oggi. Vorrei richiedere un **mittente alfanumerico `MIROX`** per l'invio di **SMS OTP transactional** (consensi privacy GDPR). Come procedo?"
+
+Ti guidano nel form e ti dicono quali documenti caricare (di solito **visura camerale + carta d'identità del legale rappresentante**).
+
+### Da pannello (se preferisci fare da solo)
+
+Dalla dashboard Smshosting cerca una di queste voci nel menu (la UI può cambiare):
+
+- **Impostazioni → Mittenti** (oppure "Sender ID")
+- **Account → Mittenti personalizzati**
+- Pulsante **"+ Aggiungi mittente"** o **"Richiedi nuovo mittente"**
+
+Nel form di richiesta:
+
+- **Mittente desiderato**: `MIROX` (max 11 caratteri, solo lettere maiuscole + numeri, no spazi)
+- **Tipo**: Transactional / OTP (NON marketing)
+- **Settore**: Telecomunicazioni / Rivendita servizi TLC
+- Carica visura camerale + documento d'identità del legale rappresentante
+- Smshosting risponde entro 24-48 ore lavorative con conferma o richiesta integrazioni
+
+> **Puoi iniziare a testare il sistema senza aspettare l'approvazione del mittente**: imposta `SMSHOSTING_SIMULATE=true` su Netlify (vedi sezione 5). In quella modalità l'SMS non viene inviato realmente, ma il codice OTP viene loggato nei Real-time logs Netlify (cerca `[smshosting][SIMULATED]`) e puoi inserirlo nel modale per validare tutto il flusso (PDF, dedupe, salvataggio DB).
 
 ---
 
