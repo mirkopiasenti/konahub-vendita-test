@@ -227,7 +227,7 @@
         const icon = loadingState.querySelector('[data-mx-icon]');
         const title = loadingState.querySelector('[data-mx-title]');
         if (spin) spin.style.display = 'none';
-        if (icon) { icon.style.display = 'flex'; icon.className = 'mx-loading-ok'; icon.textContent = '✓'; }
+        if (icon) { icon.style.display = 'flex'; icon.className = 'mx-loading-ok'; icon.textContent = 'OK'; }
         if (title) { title.textContent = t; title.style.color = '#16a34a'; }
         setTimeout(loadingHide, 1100);
     }

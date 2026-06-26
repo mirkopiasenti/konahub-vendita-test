@@ -1639,7 +1639,7 @@
 <button type="button" id="aggiungiNumeroBtn" class="add-number-btn" disabled> Aggiungi
 </button>
 </div>
-<div id="mnpInputError" class="mnp-input-error hidden"> ️ Inserisci sia il numero che l'offerta
+<div id="mnpInputError" class="mnp-input-error hidden">Inserisci sia il numero che l'offerta
 </div>
 </div>
 </div> <!-- Lista numeri aggiunti con offerte -->
@@ -2438,14 +2438,14 @@ Mostra anche ricariche in OK
  
  // Controllo formato numero (10 cifre)
  if (!/^\d{10}$/.test(numero)) {
- window.MiroxUI && window.MiroxUI.alert('️ Il numero deve essere di 10 cifre (es: 3331234567)', {type:'warning', title:'Attenzione'});
+ window.MiroxUI && window.MiroxUI.alert('Il numero deve essere di 10 cifre (es: 3331234567)', {type:'warning', title:'Attenzione'});
  numeroInput.focus();
  return;
  }
  
  // Controllo duplicati (verifica solo il numero)
  if (numeriMNP.some(item => item.numero === numero)) {
- window.MiroxUI && window.MiroxUI.alert('️ Questo numero è già stato aggiunto', {type:'warning', title:'Attenzione'});
+ window.MiroxUI && window.MiroxUI.alert('Questo numero è già stato aggiunto', {type:'warning', title:'Attenzione'});
  return;
  }
  
@@ -2511,7 +2511,7 @@ Mostra anche ricariche in OK
 <span class="mnp-item-offerta-badge"> ${item.offerta}</span>
 </div>
 </div>
-<button type="button"class="remove-number-btn"onclick="rimuoviNumero(${index})"> ️ Rimuovi
+<button type="button"class="remove-number-btn"onclick="rimuoviNumero(${index})">Rimuovi
 </button>
 </div> `).join('');
  }
@@ -2618,7 +2618,7 @@ Mostra anche ricariche in OK
 
  // Validazione: almeno un numero MNP
  if (numeriMNP.length === 0) {
-   window.MiroxUI && window.MiroxUI.alert('⚠ Aggiungi almeno un numero MNP prima di salvare', {type:'warning', title:'Attenzione'});
+   window.MiroxUI && window.MiroxUI.alert('Aggiungi almeno un numero MNP prima di salvare', {type:'warning', title:'Attenzione'});
    document.getElementById('numeroMNP').focus();
    return;
  }
@@ -2916,7 +2916,7 @@ Mostra anche ricariche in OK
 <td class="${hasNuovoCF ? 'highlight-yellow' : ''}" title="${record.nuovoCFPIVA || ''}">${record.nuovoCFPIVA || '-'}</td>
 <td title="${record.numeroMNP || ''}">${record.numeroMNP || '-'}</td>
 <td title="${record.dataInserimento || ''}">${record.dataInserimento || '-'}</td>
-<td>${record.folderUrl || record.rowIndex ? `<button type="button" class="action-btn" style="background:#fff;border:1px solid #e2e8f0;color:#0f172a;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;" onclick="apriAllegatiSwitchSim(${record.rowIndex})" title="Mostra elenco allegati pratica">📎 Allegati</button>` : '-'}</td>
+<td>${record.folderUrl || record.rowIndex ? `<button type="button" class="action-btn" style="background:#fff;border:1px solid #e2e8f0;color:#0f172a;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;" onclick="apriAllegatiSwitchSim(${record.rowIndex})" title="Mostra elenco allegati pratica">Allegati</button>` : '-'}</td>
 <td style="white-space:nowrap;">
 <button type="button" class="action-btn" style="background:#DCFCE7;color:#047857;border:1px solid #BBF7D0;font-weight:700;margin-right:6px;padding:7px 14px;border-radius:8px;cursor:pointer;" onclick="apriAttivazione(${record.rowIndex})" title="Attiva pratica (apri dettagli)">ATTIVAZIONE</button>
 <button type="button" class="action-btn" style="background:#FEE2E2;color:#b91c1c;border:1px solid #FECACA;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;" onclick="cambiaStatoAttesa(${record.rowIndex}, 'KO')" title="Pratica KO">KO</button>
@@ -3088,7 +3088,7 @@ Mostra anche ricariche in OK
 <td class="${hasNuovoCF ? 'highlight-yellow' : ''}"title="${record.nuovoCFPIVA || ''}">${record.nuovoCFPIVA || '-'}</td>
 <td title="${record.numeroMNP || ''}">${record.numeroMNP || '-'}</td>
 <td title="${record.giornoRientro || ''}">${record.giornoRientro || '-'}</td>
-<td>${record.folderUrl || record.rowIndex ? `<button type="button" class="action-btn" style="background:#fff;border:1px solid #e2e8f0;color:#0f172a;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;" onclick="apriAllegatiSwitchSim(${record.rowIndex})" title="Mostra elenco allegati pratica">📎 Allegati</button>` : '-'}</td>
+<td>${record.folderUrl || record.rowIndex ? `<button type="button" class="action-btn" style="background:#fff;border:1px solid #e2e8f0;color:#0f172a;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;" onclick="apriAllegatiSwitchSim(${record.rowIndex})" title="Mostra elenco allegati pratica">Allegati</button>` : '-'}</td>
 <td class="riepilogo-actions" style="white-space:nowrap;">
 <button type="button" class="action-btn" style="background:#2196F3;color:white;margin-right:.3rem;padding:6px 12px;border-radius:8px;cursor:pointer;border:none;font-weight:600;" onclick="apriDettagli(${record.rowIndex})" title="Apri dettagli tecnici">DETTAGLI</button>
 ${showActions
@@ -3324,14 +3324,14 @@ ${showActions
  // ========================================
  
  // A - Stato (non modificabile, solo info)
- console.log('ℹ️ Stato (A - readonly):', record.stato);
- 
+ console.log('Stato (A - readonly):', record.stato);
+
  // U - Cartella Drive (link, non modificabile)
- console.log('ℹ️ Cartella Drive (U - link):', record.folderUrl);
- 
+ console.log('Cartella Drive (U - link):', record.folderUrl);
+
  // N, O - Ricariche (non presenti in dettagli, gestite in pagina Ricariche)
- console.log('ℹ️ 1° Ricarica (N):', record.primaRicarica || '(gestita in Ricariche)');
- console.log('ℹ️ 2° Ricarica (O):', record.secondaRicarica || '(gestita in Ricariche)');
+ console.log('1° Ricarica (N):', record.primaRicarica || '(gestita in Ricariche)');
+ console.log('2° Ricarica (O):', record.secondaRicarica || '(gestita in Ricariche)');
  
  console.groupEnd();
  
@@ -3350,7 +3350,7 @@ ${showActions
  console.groupEnd();
  
  // ALERT ALL'UTENTE
- const messaggioErrore = '️ ATTENZIONE: Rilevate discrepanze tra Google Sheet e Modal!\n\n' +
+ const messaggioErrore = 'ATTENZIONE: Rilevate discrepanze tra Google Sheet e Modal!\n\n' +
  errori.join('\n\n') +
  '\n\nControlla la Console (F12) per dettagli.';
  window.MiroxUI && window.MiroxUI.alert(messaggioErrore, {type:'error', title:'Errore'});
@@ -3762,7 +3762,7 @@ ${showActions
  return`
 <div style="margin-bottom: 0.5rem;">
 <div style="font-size: 0.75rem; color: #666; margin-bottom: 0.25rem;">Ricarica Entro:</div>
-<div class="ricarica-data ${classeData}">${dataPrevista} ${scaduta ? '️' : (presto ? '' : '')}</div>
+<div class="ricarica-data ${classeData}">${dataPrevista}</div>
 </div>
 <button type="button" class="btn-gestisci"onclick="apriModalRicarica(${ricarica.rowIndex}, '${tipo}')"> GESTISCI
 </button> `;

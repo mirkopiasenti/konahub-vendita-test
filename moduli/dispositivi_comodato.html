@@ -469,6 +469,9 @@
 <script src="../js/auth.js"></script>
 <script src="../js/anagrafica-helper.js"></script>
 <script src="../js/mirox-ui.js"></script>
+<script src="../js/mirox-api.js"></script>
+<script src="../js/mirox-error-reporter.js"></script>
+<script>if (window.MiroxErrorReporter) window.MiroxErrorReporter.install({ source: 'dispositivi-comodato' });</script>
 <script src="../js/mirox-storage.js"></script>
 <script src="../js/mirox-folder.js"></script>
 <script src="../js/mirox-upload.js"></script>
@@ -525,7 +528,7 @@
 <div class="form-section">
 <h2>Dispositivo</h2>
 <div class="info-box">
-<p><strong>⚠ Attenzione:</strong> Almeno uno tra IMEI Prodotto o Numero SIM Temporanea deve essere compilato.</p>
+<p><strong>Attenzione:</strong> Almeno uno tra IMEI Prodotto o Numero SIM Temporanea deve essere compilato.</p>
 </div>
 <div class="form-row">
 <div class="form-group">
@@ -716,7 +719,7 @@
      setTimeout(() => window.MiroxUI.alert('Impossibile leggere gli allegati: ' + e.message, { type: 'error', title: 'Errore' }), 200);
    }
  }
- async function uploadComodatoPdf(deviceId, base64, filename) {
+ async function uploadComodatoPdf(deviceId, base64, filename, ragioneSociale) {
  try {
  const bin = atob(base64);
  const buf = new Uint8Array(bin.length);
@@ -724,7 +727,12 @@
  const blob = new Blob([buf], { type: 'application/pdf' });
  // Forza estensione .pdf (policy Mirox: tutti gli allegati sono PDF)
  const baseName = (filename || 'modulo').replace(/\.[a-z0-9]+$/i, '');
- const path = `dispositivo_${deviceId}/${Date.now()}_${baseName}.pdf`;
+ // Cartella: <RAGSOC>_<id8>. Stessa cartella per consegna + rientro dello stesso record.
+ // Fallback legacy "dispositivo_<id>" se ragione sociale non disponibile.
+ const ragSafe = window.MiroxFolder ? window.MiroxFolder.sanitize(ragioneSociale || '') : '';
+ const idShort = String(deviceId || '').replace(/-/g, '').slice(0, 8) || 'xxxxxxxx';
+ const folder = ragSafe ? `${ragSafe}_${idShort}` : `dispositivo_${deviceId}`;
+ const path = `${folder}/${Date.now()}_${baseName}.pdf`;
  const { error } = await sb.storage.from(COMODATO_BUCKET).upload(path, blob, { upsert: true, contentType: 'application/pdf' });
  if (error) throw error;
  // Salviamo il path (bucket privato): il signed URL si genera on-demand via MiroxStorage
@@ -740,8 +748,8 @@
  function apriRientroDispositivo(dispositivoId) {
    if (!window.tuttiDispositivi) return;
    const d = window.tuttiDispositivi.find(x => String(x.id) === String(dispositivoId));
-   if (!d) { window.MiroxUI && window.MiroxUI.alert('⚠ Dispositivo non trovato', {type:'error', title:'Errore'}); return; }
-   if (d.stato !== 'fuori') { window.MiroxUI && window.MiroxUI.alert('⚠ Questo dispositivo è già rientrato', {type:'warning', title:'Attenzione'}); return; }
+   if (!d) { window.MiroxUI && window.MiroxUI.alert('Dispositivo non trovato', {type:'error', title:'Errore'}); return; }
+   if (d.stato !== 'fuori') { window.MiroxUI && window.MiroxUI.alert('Questo dispositivo è già rientrato', {type:'warning', title:'Attenzione'}); return; }
    dispositivoSelezionato = {
      id: d.id,
      nome: d.nome,
@@ -882,7 +890,7 @@
 
  function generaPDFUscita() {
  if (!validaFormUscita()) {
- window.MiroxUI && window.MiroxUI.alert('⚠ Compila correttamente tutti i campi obbligatori prima di generare il PDF', {type:'warning', title:'Attenzione'});
+ window.MiroxUI && window.MiroxUI.alert('Compila correttamente tutti i campi obbligatori prima di generare il PDF', {type:'warning', title:'Attenzione'});
  return;
  }
 
@@ -1039,12 +1047,12 @@
  const fileInput = document.getElementById('upload-pdf-uscita');
  
  if (!fileInput.files.length) {
- window.MiroxUI && window.MiroxUI.alert('️ Carica il PDF firmato prima di procedere', {type:'warning', title:'Attenzione'});
+ window.MiroxUI && window.MiroxUI.alert('Carica il PDF firmato prima di procedere', {type:'warning', title:'Attenzione'});
  return;
  }
 
  if (!datiUscitaTemp) {
- window.MiroxUI && window.MiroxUI.alert('️ Errore: dati non trovati. Rigenera il PDF.', {type:'error', title:'Errore'});
+ window.MiroxUI && window.MiroxUI.alert('Errore: dati non trovati. Rigenera il PDF.', {type:'error', title:'Errore'});
  return;
  }
 
@@ -1083,7 +1091,8 @@
  .single();
  if (insErr) throw insErr;
 
- const pdfUrl = await uploadComodatoPdf(inserted.id, base64PDF, file.name);
+ const ragsocConsegna = datiUscitaTemp.ragione_sociale || `${datiUscitaTemp.nome || ''} ${datiUscitaTemp.cognome || ''}`.trim();
+ const pdfUrl = await uploadComodatoPdf(inserted.id, base64PDF, file.name, ragsocConsegna);
  if (pdfUrl) {
  await sb.from('post_vendita_dispositivi_comodato')
  .update({ cartella_url: pdfUrl })
@@ -1112,7 +1121,7 @@
  const usaNomeCognome = false;
 
  if (!usaCF && !usaNomeCognome) {
- window.MiroxUI && window.MiroxUI.alert('⚠ Inserisci il Codice Fiscale del cliente per cercare', {type:'warning', title:'Attenzione'});
+ window.MiroxUI && window.MiroxUI.alert('Inserisci il Codice Fiscale del cliente per cercare', {type:'warning', title:'Attenzione'});
  return;
  }
 
@@ -1189,12 +1198,12 @@
  const operatore = document.getElementById('rientro-operatore').value.trim();
  
  if (!operatore) {
- window.MiroxUI && window.MiroxUI.alert('️ Inserisci chi riceve il dispositivo', {type:'warning', title:'Attenzione'});
+ window.MiroxUI && window.MiroxUI.alert('Inserisci chi riceve il dispositivo', {type:'warning', title:'Attenzione'});
  return;
  }
 
  if (!dispositivoSelezionato) {
- window.MiroxUI && window.MiroxUI.alert('️ Errore: dispositivo non selezionato', {type:'error', title:'Errore'});
+ window.MiroxUI && window.MiroxUI.alert('Errore: dispositivo non selezionato', {type:'error', title:'Errore'});
  return;
  }
 
@@ -1333,7 +1342,7 @@
  const fileInput = document.getElementById('upload-pdf-rientro');
  
  if (!fileInput.files.length) {
- window.MiroxUI && window.MiroxUI.alert('️ Carica il PDF firmato prima di procedere', {type:'warning', title:'Attenzione'});
+ window.MiroxUI && window.MiroxUI.alert('Carica il PDF firmato prima di procedere', {type:'warning', title:'Attenzione'});
  return;
  }
 
@@ -1346,7 +1355,8 @@
  const base64PDF = await fileToBase64(file);
  const profilo = window.__profilo || await Auth.getSessione();
 
- const pdfUrl = await uploadComodatoPdf(dispositivoSelezionato.id, base64PDF, file.name);
+ const ragsocRientro = `${dispositivoSelezionato.nome || ''} ${dispositivoSelezionato.cognome || ''}`.trim();
+ const pdfUrl = await uploadComodatoPdf(dispositivoSelezionato.id, base64PDF, file.name, ragsocRientro);
 
  const { error } = await sb
  .from('post_vendita_dispositivi_comodato')
@@ -1474,7 +1484,7 @@
  const azioneRientroHtml = d.stato === 'fuori'
    ? `<button type="button" class="btn btn-primary" style="padding:6px 12px;font-size:12px;" onclick="apriRientroDispositivo('${d.id}')">Rientro</button>`
    : '';
- const azioneAllegatiHtml = `<button type="button" class="btn" style="padding:6px 10px;font-size:12px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-weight:600;margin-left:6px;" onclick="apriAllegatiComodato('${d.id}')" title="Mostra allegati pratica">📎 Allegati</button>`;
+ const azioneAllegatiHtml = `<button type="button" class="btn" style="padding:6px 10px;font-size:12px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-weight:600;margin-left:6px;" onclick="apriAllegatiComodato('${d.id}')" title="Mostra allegati pratica">Allegati</button>`;
  const azioniRowHtml = (azioneRientroHtml || azioneAllegatiHtml)
    ? `${azioneRientroHtml}${azioneAllegatiHtml}`
    : '<span style="color:#94a3b8;font-size:12px;">—</span>';
@@ -1549,7 +1559,7 @@
  window.addEventListener('DOMContentLoaded', () => {
  // Verifica configurazione
  if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
- window.MiroxUI && window.MiroxUI.alert('️ ATTENZIONE: Configura prima l\'URL di Google Apps Script nella variabile APPS_SCRIPT_URL', {type:'warning', title:'Attenzione'});
+ window.MiroxUI && window.MiroxUI.alert('ATTENZIONE: Configura prima l\'URL di Google Apps Script nella variabile APPS_SCRIPT_URL', {type:'warning', title:'Attenzione'});
  }
  });
 </script>

@@ -268,13 +268,13 @@ body {
   <div>
     <label>&nbsp;</label>
     <button type="button" class="btn-csv" id="btnImportCsv" title="Carica file CSV WindTre per aggiornare gli stati">
-      📥 Carica CSV WindTre
+      Carica CSV WindTre
     </button>
     <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none;">
   </div>
   <div>
     <label>&nbsp;</label>
-    <button type="button" class="btn-mini" onclick="loadAll()">🔄 Aggiorna</button>
+    <button type="button" class="btn-mini" onclick="loadAll()">Aggiorna</button>
   </div>
 </div>
 
@@ -350,7 +350,7 @@ async function loadAll() {
     render();
   } catch (e) {
     console.error('Errore caricamento Controllo L&G:', e);
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Errore caricamento</h3><p>${escapeHtml(e.message)}</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><h3>Errore caricamento</h3><p>${escapeHtml(e.message)}</p></div>`;
   }
 }
 
@@ -431,7 +431,7 @@ function render() {
   }
 
   if (lista.length === 0) {
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚡</div><h3>Nessun contratto</h3><p>${q || LGState.filtroCluster || LGState.filtroStato ? 'Nessun risultato con i filtri attuali.' : 'Nessun contratto Energia verificato.'}</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><h3>Nessun contratto</h3><p>${q || LGState.filtroCluster || LGState.filtroStato ? 'Nessun risultato con i filtri attuali.' : 'Nessun contratto Energia verificato.'}</p></div>`;
     return;
   }
 
@@ -461,7 +461,7 @@ function render() {
       <td class="cell-mono">${escapeHtml(ana.cellulare || '—')}</td>
       <td>${escapeHtml(operatoreNome(r))}</td>
       <td>${r.stato ? `<span class="stato-pill ${statoSlug(r.stato)}">${escapeHtml(r.stato)}</span>` : '<span style="color:var(--text-light);">—</span>'}</td>
-      <td style="text-align:right;">${isRifiutato ? `<button type="button" class="eye-btn" title="Vedi dettagli rifiuto" onclick="apriDettaglioRifiutato('${r.id}')">👁️</button>` : ''}</td>
+      <td style="text-align:right;">${isRifiutato ? `<button type="button" class="eye-btn" title="Vedi dettagli rifiuto" onclick="apriDettaglioRifiutato('${r.id}')">Dettagli</button>` : ''}</td>
     </tr>`;
   }).join('');
 
@@ -507,7 +507,7 @@ function apriDettaglioRifiutato(rigaId) {
   `;
   const footer = `<button type="button" class="mx-btn mx-btn-secondary" data-mx-close>Chiudi</button>`;
   const m = MiroxUI._build({
-    title: '👁️ Dettagli stato Rifiutato',
+    title: 'Dettagli stato Rifiutato',
     bodyHtml: body, footerHtml: footer
   });
   m.foot.querySelector('[data-mx-close]').addEventListener('click', m.close);
@@ -821,7 +821,7 @@ function mostraReportImport(report) {
   const sectionsHtml = [
     aggiornati.length > 0 ? `
       <div class="report-section">
-        <h4>✅ Stati aggiornati (${aggiornati.length})</h4>
+        <h4>Stati aggiornati (${aggiornati.length})</h4>
         <div class="report-list">${renderTable(aggiornati, [
           { label: 'Num. Contratto', get: r => r.numContratto },
           { label: 'Ragione Sociale', get: r => r.ragSoc },
@@ -831,7 +831,7 @@ function mostraReportImport(report) {
       </div>` : '',
     doubleCheckKo.length > 0 ? `
       <div class="report-section">
-        <h4>⚠️ Doppio check CF/PIVA fallito (${doubleCheckKo.length})</h4>
+        <h4>Doppio check CF/PIVA fallito (${doubleCheckKo.length})</h4>
         <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Numero contratto trovato, ma il codice fiscale / partita IVA del CSV non corrisponde a quello in anagrafica. <strong>Non aggiornati.</strong></p>
         <div class="report-list">${renderTable(doubleCheckKo, [
           { label: 'Num. Contratto', get: r => r.numContratto },
@@ -844,7 +844,7 @@ function mostraReportImport(report) {
       </div>` : '',
     noMatchDb.length > 0 ? `
       <div class="report-section">
-        <h4>📋 Non trovati nel DB (${noMatchDb.length})</h4>
+        <h4>Non trovati nel DB (${noMatchDb.length})</h4>
         <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Numero contratto presente nel CSV ma non corrisponde a nessuna riga del modulo Controllo L&G (es. pratica non ancora caricata in Mirox).</p>
         <div class="report-list">${renderTable(noMatchDb, [
           { label: 'Num. Contratto', get: r => r.numContratto },
@@ -853,7 +853,7 @@ function mostraReportImport(report) {
       </div>` : '',
     stateInvariati.length > 0 ? `
       <div class="report-section">
-        <h4>📊 Stato gi&agrave; aggiornato (${stateInvariati.length})</h4>
+        <h4>Stato gi&agrave; aggiornato (${stateInvariati.length})</h4>
         <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Lo stato del DB era gi&agrave; uguale a quello del CSV. Nessun cambiamento.</p>
         <div class="report-list">${renderTable(stateInvariati.slice(0, 50), [
           { label: 'Num. Contratto', get: r => r.numContratto },
@@ -861,7 +861,7 @@ function mostraReportImport(report) {
           { label: 'Stato', get: r => r.stato }
         ])}${stateInvariati.length > 50 ? `<div style="padding:8px;text-align:center;font-size:11.5px;color:var(--text-light);">... e altre ${stateInvariati.length - 50} righe</div>` : ''}</div>
       </div>` : '',
-    updateErrors > 0 ? `<div class="report-section"><h4 style="color:var(--danger);">❌ Errori salvataggio (${updateErrors})</h4><p style="font-size:12px;color:var(--text-secondary);">Alcuni UPDATE sono falliti. Controlla la console browser per i dettagli.</p></div>` : ''
+    updateErrors > 0 ? `<div class="report-section"><h4 style="color:var(--danger);">Errori salvataggio (${updateErrors})</h4><p style="font-size:12px;color:var(--text-secondary);">Alcuni UPDATE sono falliti. Controlla la console browser per i dettagli.</p></div>` : ''
   ].join('');
 
   const body = `
@@ -891,7 +891,7 @@ function mostraReportImport(report) {
   `;
   const footer = `<button type="button" class="mx-btn mx-btn-primary" data-mx-close>Chiudi</button>`;
   const m = MiroxUI._build({
-    title: '📥 Report import CSV WindTre',
+    title: 'Report import CSV WindTre',
     bodyHtml: body, footerHtml: footer, large: true
   });
   // Espando il modal per ospitare il report

@@ -132,10 +132,10 @@ function filtroOggi() {
                 <div class="oggi-meta">${Utils.escapeHtml(a.motivo)} — CF: ${Utils.escapeHtml(a.codice_fiscale||'-')} — Tel: ${Utils.escapeHtml(a.telefono||'-')} — <span style="display:inline-flex;align-items:center;gap:4px">${Utils.avatarHtml(a.fissato_da_nome||'Online', a.fissato_da_operatore_id, 18)} ${Utils.escapeHtml(a.fissato_da_nome||'Online')}</span></div>
             </div>
             <div class="oggi-actions">
-                ${!a.presentato ? `<button class="btn btn-success" onclick="segnaPresente('${a.id}')">✓ Presentato</button>` : ''}
+                ${!a.presentato ? `<button class="btn btn-success" onclick="segnaPresente('${a.id}')">Presentato</button>` : ''}
                 ${a.presentato==='si' ? '<span class="badge badge-success">Presentato</span>' : ''}
                 ${a.presentato==='no' ? '<span class="badge badge-danger">Non presentato</span>' : ''}
-                ${a.presentato==='si' && a.codice_fiscale ? `<button class="btn btn-primary" onclick="iniziaVendita('${a.id}', '${(a.codice_fiscale||'').toUpperCase()}', '${a.anagrafica_id||''}')" style="margin-left:8px">💼 Inizia vendita</button>` : ''}
+                ${a.presentato==='si' && a.codice_fiscale ? `<button class="btn btn-primary" onclick="iniziaVendita('${a.id}', '${(a.codice_fiscale||'').toUpperCase()}', '${a.anagrafica_id||''}')" style="margin-left:8px">Inizia vendita</button>` : ''}
             </div>
         </div>`;
     }

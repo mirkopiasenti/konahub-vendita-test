@@ -278,11 +278,11 @@
             if ($('email')) $('email').value = res.data.email || '';
             const dbCluster = (res.data.cluster || '').trim();
             if (dbCluster && dbCluster !== state.cluster) {
-              setStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-') +
-                ' — ⚠ cluster in DB era "' + dbCluster + '" ma è stato corretto a "' + state.cluster +
+              setStatus('Cliente trovato: ' + (res.data.ragione_sociale || '-') +
+                ' — cluster in DB era "' + dbCluster + '" ma è stato corretto a "' + state.cluster +
                 '" in base al ' + (kind === 'cf' ? 'CF' : 'P.IVA'), 'warn');
             } else {
-              setStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-'), 'ok');
+              setStatus('Cliente trovato: ' + (res.data.ragione_sociale || '-'), 'ok');
             }
             setFieldsReadonly(true);
             showFields(true);

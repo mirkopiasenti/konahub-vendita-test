@@ -139,7 +139,7 @@ body {
   </div>
   <div>
     <label>&nbsp;</label>
-    <button type="button" class="btn-mini" onclick="loadAll()">🔄 Aggiorna</button>
+    <button type="button" class="btn-mini" onclick="loadAll()">Aggiorna</button>
   </div>
 </div>
 
@@ -194,7 +194,7 @@ async function loadAll() {
     render();
   } catch (e) {
     console.error('Errore caricamento Controllo Allarmi:', e);
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Errore caricamento</h3><p>${escapeHtml(e.message)}</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><h3>Errore caricamento</h3><p>${escapeHtml(e.message)}</p></div>`;
   }
 }
 
@@ -229,7 +229,7 @@ function render() {
   const lista = AlrState.righe.filter(r => matchSearch(r, q));
 
   if (lista.length === 0) {
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">🚨</div><h3>Nessun contratto</h3><p>${q ? 'Nessun risultato per la ricerca.' : 'Nessun contratto Allarmi verificato.'}</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><h3>Nessun contratto</h3><p>${q ? 'Nessun risultato per la ricerca.' : 'Nessun contratto Allarmi verificato.'}</p></div>`;
     return;
   }
 

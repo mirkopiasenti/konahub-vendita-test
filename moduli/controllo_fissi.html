@@ -261,7 +261,7 @@ body {
   </div>
   <div>
     <label>&nbsp;</label>
-    <button type="button" class="btn-mini" onclick="loadAll()">🔄 Aggiorna</button>
+    <button type="button" class="btn-mini" onclick="loadAll()">Aggiorna</button>
   </div>
 </div>
 
@@ -303,7 +303,7 @@ body {
   </div>
   <div>
     <label>&nbsp;</label>
-    <button type="button" class="btn-mini" onclick="loadAll()">🔄 Aggiorna</button>
+    <button type="button" class="btn-mini" onclick="loadAll()">Aggiorna</button>
   </div>
 </div>
 
@@ -434,7 +434,7 @@ async function loadAll() {
     render();
   } catch (e) {
     console.error('Errore caricamento controllo fissi:', e);
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Errore caricamento</h3><p>${escapeHtml(e.message)}</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><h3>Errore caricamento</h3><p>${escapeHtml(e.message)}</p></div>`;
   }
 }
 
@@ -518,7 +518,7 @@ function renderDaCompletare(wrap) {
   const q = (CFState.searchDa || '').toLowerCase().trim();
   const lista = CFState.righe.filter(r => r.stato === 'Da completare' && matchSearch(r, q));
   if (lista.length === 0) {
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nessuna pratica</h3><p>Non ci sono pratiche con stato "Da completare".</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><h3>Nessuna pratica</h3><p>Non ci sono pratiche con stato "Da completare".</p></div>`;
     return;
   }
   const headers = `
@@ -556,7 +556,7 @@ function renderElenco(wrap) {
     if (CFState.filtroStato)       lista = lista.filter(r => r.stato === CFState.filtroStato);
   }
   if (lista.length === 0) {
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>Nessun contratto</h3><p>Nessun risultato con i filtri attuali.</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><h3>Nessun contratto</h3><p>Nessun risultato con i filtri attuali.</p></div>`;
     return;
   }
   const headers = `
@@ -741,7 +741,7 @@ function openDettaglio(id) {
         </div>
         <div class="right">
           <button type="button" class="btn-action btn-action-secondary" onclick="salvaCampi()">Salva modifiche</button>
-          <button type="button" class="btn-action btn-action-success" onclick="confermaCompilazione()">✓ Compilazione Completata</button>
+          <button type="button" class="btn-action btn-action-success" onclick="confermaCompilazione()">Compilazione Completata</button>
         </div>
       </div>`;
   } else if (stato === 'In Attivazione') {

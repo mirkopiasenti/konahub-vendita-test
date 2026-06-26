@@ -39,6 +39,18 @@ Prima di dichiarare un task concluso:
 
 ---
 
+## Convenzione UI — Niente emoji (regola permanente)
+
+**Regola assoluta**: nessuna emoji è ammessa in nessun file HTML o JS del progetto — né nelle pagine esistenti né in quelle nuove. Questo vale per:
+- Testo visibile all'utente (label bottoni, titoli sezioni, intestazioni popup/modal, messaggi alert/confirm, stati empty-state)
+- Testo nei `console.log` / `console.warn` / `console.error`
+- Attributi HTML (`title`, `placeholder`, `aria-label`, ecc.)
+- Commenti inline nel codice visibile (non quelli nello `<script>`)
+
+Sostituire sempre con testo descrittivo (es. `🔄 Aggiorna` → `Aggiorna`, `⚠ Attenzione:` → `Attenzione:`, `✓ Conferma` → `Conferma`).
+
+---
+
 ## Roadmap & boundaries (LEGGERE PRIMA DI MODIFICARE)
 
 - **Vendita / Post-Vendita** = focus storico, completato in larga parte

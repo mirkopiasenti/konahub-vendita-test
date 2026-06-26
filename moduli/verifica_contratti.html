@@ -231,7 +231,7 @@ body {
     </div>
     <div>
       <label>&nbsp;</label>
-      <button type="button" class="btn-mini" onclick="caricaContratti('da_controllare')">🔄 Aggiorna</button>
+      <button type="button" class="btn-mini" onclick="caricaContratti('da_controllare')">Aggiorna</button>
     </div>
   </div>
   <div class="contracts-table-wrap">
@@ -254,7 +254,7 @@ body {
     </div>
     <div>
       <label>&nbsp;</label>
-      <button type="button" class="btn-mini" onclick="caricaContratti('controllato')">🔄 Aggiorna</button>
+      <button type="button" class="btn-mini" onclick="caricaContratti('controllato')">Aggiorna</button>
     </div>
   </div>
   <div class="contracts-table-wrap">
@@ -384,7 +384,7 @@ async function caricaContratti(statoControllo) {
     renderListaContratti(stateKey);
   } catch (e) {
     console.error('Errore caricamento contratti:', e);
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Errore caricamento</h3><p>${escapeHtml(e.message)}</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><h3>Errore caricamento</h3><p>${escapeHtml(e.message)}</p></div>`;
   }
 }
 
@@ -419,7 +419,7 @@ function renderListaContratti(stateKey) {
     const filtered = tot > 0 && items.length === 0; // ci sono contratti ma il filtro li nasconde
     wrap.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">📭</div>
+        <div class="empty-icon"></div>
         <h3>Nessun contratto</h3>
         <p>${filtered
           ? `Ci sono <strong>${tot}</strong> contratti in totale ma il filtro non ne mostra nessuno. Pulisci i filtri o la ricerca.`
@@ -446,7 +446,7 @@ function renderListaContratti(stateKey) {
         <td>${escapeHtml(offertaTxt)}</td>
         <td><span class="stato-pill ${escapeHtml(c.stato_controllo)}">${escapeHtml(c.stato_controllo || '-')}</span></td>
         <td style="text-align:right;white-space:nowrap;">
-          <button type="button" class="btn-mini btn-primary" onclick="apriDettaglioContratto('${escapeHtml(c.id)}', '${stateKey}')">🔍 Dettagli</button>
+          <button type="button" class="btn-mini btn-primary" onclick="apriDettaglioContratto('${escapeHtml(c.id)}', '${stateKey}')">Dettagli</button>
         </td>
       </tr>`;
   }).join('');
@@ -554,7 +554,7 @@ function apriPopupDettaglio(c, opts) {
 
   const bodyHtml = `
     <div class="det-section">
-      <h4>👤 Dati cliente <small style="font-weight:500;text-transform:none;letter-spacing:0;color:#94a3b8;font-size:11px;">(modifiche su tabella anagrafica condivisa)</small></h4>
+      <h4>Dati cliente <small style="font-weight:500;text-transform:none;letter-spacing:0;color:#94a3b8;font-size:11px;">(modifiche su tabella anagrafica condivisa)</small></h4>
       <div class="det-grid">
         <div class="det-field"><label>CF / P.IVA</label><input type="text" id="vc_cf_piva" value="${escapeHtml(ana.cf_piva || '')}" ${disabled} readonly style="text-transform:uppercase;"></div>
         <div class="det-field"><label>Cluster</label><input type="text" id="vc_cluster" value="${escapeHtml(ana.cluster || '')}" ${disabled} readonly></div>
@@ -569,7 +569,7 @@ function apriPopupDettaglio(c, opts) {
     </div>
 
     <div class="det-section">
-      <h4>📋 Dati contratto</h4>
+      <h4>Dati contratto</h4>
       <div class="det-grid">
         <div class="det-field" id="vc_field_categoria"><label>Categoria</label><select id="vc_categoria_id" ${disabled}><option value="">—</option>${selectOpt(categorie, c.categoria_id, 'id', 'nome')}</select></div>
         <div class="det-field" id="vc_field_offerta"><label>Offerta</label><select id="vc_offerta_id" ${disabled}><option value="">—</option>${selectOpt(offerteFiltered, c.offerta_id, 'id', 'nome_offerta')}</select></div>
@@ -614,7 +614,7 @@ function apriPopupDettaglio(c, opts) {
     </div>
 
     <div class="det-section" id="vc_section_device">
-      <h4>📱 Dispositivo associato</h4>
+      <h4>Dispositivo associato</h4>
       <div class="det-grid">
         <div class="det-field" id="vc_field_dispositivo"><label>Dispositivo Associato</label>
           <select id="vc_dispositivo_associato" ${disabled}>
@@ -655,7 +655,7 @@ function apriPopupDettaglio(c, opts) {
     </div>
 
     <div class="det-section" id="vc_section_extra">
-      <h4>⚡ Campi specifici categoria</h4>
+      <h4>Campi specifici categoria</h4>
       <div class="det-grid">
         <div class="det-field" id="vc_field_pod">
           <label>POD / PDR contatore <span class="required vc-required-energia">*</span></label>
@@ -684,7 +684,7 @@ function apriPopupDettaglio(c, opts) {
     </div>
 
     <div class="det-section">
-      <h4>📎 Allegati pratica</h4>
+      <h4>Allegati pratica</h4>
       <div id="vc_allegati_list" class="allegati-list"></div>
       ${isReadOnly ? '' : `
         <div class="allegato-upload" style="display:flex;flex-direction:column;gap:10px;">
@@ -698,7 +698,7 @@ function apriPopupDettaglio(c, opts) {
               <option value="altro">Altro</option>
             </select>
             <input type="file" id="vc_new_doc_file" accept=".pdf" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;background:#fff;width:100%;min-width:0;">
-            <button type="button" class="btn-mini btn-primary" style="padding:9px 16px;white-space:nowrap;" onclick="caricaNuovoAllegato('${escapeHtml(c.id)}', '${escapeHtml(c.anagrafica_id)}', '${escapeHtml(c.pratica_id)}')">⬆️ Carica</button>
+            <button type="button" class="btn-mini btn-primary" style="padding:9px 16px;white-space:nowrap;" onclick="caricaNuovoAllegato('${escapeHtml(c.id)}', '${escapeHtml(c.anagrafica_id)}', '${escapeHtml(c.pratica_id)}')">Carica</button>
           </div>
         </div>
       `}
@@ -706,7 +706,7 @@ function apriPopupDettaglio(c, opts) {
 
     ${isReadOnly ? `
       <div class="det-section">
-        <h4>✓ Info verifica</h4>
+        <h4>Info verifica</h4>
         <div class="det-grid">
           <div class="det-field"><label>Verificato da</label><div class="field-readonly-value">${escapeHtml((c.verificatore && c.verificatore.nome) || '-')}</div></div>
           <div class="det-field"><label>Data verifica</label><div class="field-readonly-value">${escapeHtml(fmtDateTime(c.controllato_at))}</div></div>
@@ -729,12 +729,12 @@ function apriPopupDettaglio(c, opts) {
          <div class="left"></div>
          <div class="right">
            <button type="button" class="mx-btn mx-btn-secondary" data-mx-close-popup>Annulla</button>
-           <button type="button" class="mx-btn mx-btn-secondary" onclick="salvaModifiche('${escapeHtml(c.id)}')">💾 Salva modifica</button>
-           <button type="button" class="mx-btn mx-btn-primary" onclick="confermaVerifica('${escapeHtml(c.id)}')">✓ Conferma verifica</button>
+           <button type="button" class="mx-btn mx-btn-secondary" onclick="salvaModifiche('${escapeHtml(c.id)}')">Salva modifica</button>
+           <button type="button" class="mx-btn mx-btn-primary" onclick="confermaVerifica('${escapeHtml(c.id)}')">Conferma verifica</button>
          </div>
        </div>`;
 
-  const titolo = `${isReadOnly ? '📄' : '✏️'} Contratto · ${escapeHtml(ana.ragione_sociale || c.id)}`;
+  const titolo = `Contratto · ${escapeHtml(ana.ragione_sociale || c.id)}`;
   const m = window.MiroxUI._build({ title: titolo, bodyHtml, footerHtml, large: true });
   // Trick: rendere il modal extra large
   m.modal.style.maxWidth = '980px';
@@ -898,7 +898,7 @@ function renderAllegatiPopup(c, allegati, isReadOnly) {
         <div class="att-actions">
           <a href="#" onclick="MiroxStorage.openAttachment('${escapeHtml(bucket)}','${escapeHtml(path)}');return false;" rel="noopener">Apri</a>
           <a href="#" onclick="MiroxStorage.openAttachment('${escapeHtml(bucket)}','${escapeHtml(path)}');return false;">Scarica</a>
-          ${isReadOnly ? '' : `<button type="button" onclick="rimuoviAllegato('${escapeHtml(d.id)}', '${escapeHtml(d.storage_path)}', '${escapeHtml(d.storage_bucket || CONTRATTI_BUCKET)}')">🗑</button>`}
+          ${isReadOnly ? '' : `<button type="button" onclick="rimuoviAllegato('${escapeHtml(d.id)}', '${escapeHtml(d.storage_path)}', '${escapeHtml(d.storage_bucket || CONTRATTI_BUCKET)}')">Rimuovi</button>`}
         </div>
       </div>`;
   }).join('');
@@ -1057,9 +1057,9 @@ async function confermaVerifica(id) {
   const isEnergiaCat = catName.toLowerCase().includes('energia');
   let confermaMsg = 'Confermi di voler salvare le modifiche e marcare questo contratto come <strong>VERIFICATO</strong>?<br><br>Il contratto passerà nella tab "Verificati" e non sarà più visibile qui.';
   if (isFissoCat) {
-    confermaMsg += '<br><br>⚠️ Trattandosi di un contratto <strong>Fisso</strong>, comparirà anche nel modulo <strong>Controllo Fissi</strong> con stato "Da completare". L\'azione è irreversibile.';
+    confermaMsg += '<br><br>Trattandosi di un contratto <strong>Fisso</strong>, comparirà anche nel modulo <strong>Controllo Fissi</strong> con stato "Da completare". L\'azione è irreversibile.';
   } else if (isEnergiaCat) {
-    confermaMsg += '<br><br>⚠️ Trattandosi di un contratto <strong>Energia</strong>, comparirà anche nel modulo <strong>Controllo L&amp;G</strong>. L\'azione è irreversibile.';
+    confermaMsg += '<br><br>Trattandosi di un contratto <strong>Energia</strong>, comparirà anche nel modulo <strong>Controllo L&amp;G</strong>. L\'azione è irreversibile.';
   }
   const ok = await window.MiroxUI.confirm(
     confermaMsg,

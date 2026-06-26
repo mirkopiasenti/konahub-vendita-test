@@ -624,7 +624,7 @@ function renderClienteCard(c) {
         </div>
       </div>
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-light);display:flex;gap:10px;flex-wrap:wrap;">
-        <button type="button" onclick="scaricaDocumentoIdentita('${escapeHtml(c.id)}')" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:#FF6600;color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;">📄 Download documento identità</button>
+        <button type="button" onclick="scaricaDocumentoIdentita('${escapeHtml(c.id)}')" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:#FF6600;color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;">Download documento identità</button>
         <span id="docHelpText" style="font-size:12px;color:var(--text-light);align-self:center;">Scarica sempre l'ultimo documento d'identità caricato per questo cliente</span>
       </div>
     </div>
@@ -668,8 +668,8 @@ function renderTimeline(storico) {
                   <span class="stato-badge ${statoClasse(op.stato)}">${escapeHtml(op.stato || '-')}</span>
                 </div>
                 <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-                  <button type="button" onclick="apriDettaglioOperazione(${idx})" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;font-family:inherit;">🔍 Dettagli</button>
-                  ${hasAllegati ? `<button type="button" onclick="apriAllegatiOperazione(${idx})" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;font-family:inherit;">📎 Allegati</button>` : ''}
+                  <button type="button" onclick="apriDettaglioOperazione(${idx})" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;font-family:inherit;">Dettagli</button>
+                  ${hasAllegati ? `<button type="button" onclick="apriAllegatiOperazione(${idx})" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;font-family:inherit;">Allegati</button>` : ''}
                 </div>
               </div>
             </div>
@@ -710,7 +710,7 @@ async function apriDettaglioOperazione(idx) {
       .filter(([k, v]) => v !== null && v !== '' && v !== false && k !== 'id')
       .map(([k, v]) => {
         let display;
-        if (typeof v === 'boolean') display = v ? '✓ Sì' : 'No';
+        if (typeof v === 'boolean') display = v ? 'Sì' : 'No';
         else if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) display = fmtDateTime(v);
         else if (typeof v === 'object') display = '<code style="font-size:11px;">' + escapeHtml(JSON.stringify(v)) + '</code>';
         else display = escapeHtml(String(v));

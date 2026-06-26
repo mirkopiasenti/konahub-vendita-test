@@ -389,11 +389,11 @@ function renderGriglia() {
         conteggi[r.id].__total += 1;
         totaliOperatore[opNome] += 1;
         totaleGenerale += 1;
-        console.log(`[DashboardPezzi] ✓ contratto ${c.id} (${c.nome_offerta_snapshot}) → riga "${r.nome}" / ${opNome}`);
+        console.log(`[DashboardPezzi] contratto ${c.id} (${c.nome_offerta_snapshot}) → riga "${r.nome}" / ${opNome}`);
       }
     });
     if (!matchato) {
-      console.warn(`[DashboardPezzi] ✗ contratto ${c.id} (cat=${c.categoria_snapshot}, off=${c.nome_offerta_snapshot}) NON ha matchato NESSUNA riga`);
+      console.warn(`[DashboardPezzi] contratto ${c.id} (cat=${c.categoria_snapshot}, off=${c.nome_offerta_snapshot}) NON ha matchato NESSUNA riga`);
     }
   });
   console.log(`[DashboardPezzi] totale conteggiato: ${totaleGenerale}`);
@@ -401,7 +401,7 @@ function renderGriglia() {
   // HTML
   const wrap = document.getElementById('pezziTable');
   if (!righe.length) {
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>Nessuna riga configurata in <code>dashboard_righe_giornaliera</code>.</div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon"></div>Nessuna riga configurata in <code>dashboard_righe_giornaliera</code>.</div>`;
     return;
   }
 
@@ -438,7 +438,7 @@ function renderGriglia() {
 // ============================================================
 async function caricaDati() {
   const wrap = document.getElementById('pezziTable');
-  wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div>Caricamento...</div>';
+  wrap.innerHTML = '<div class="empty-state"><div class="empty-icon"></div>Caricamento...</div>';
   try {
     await caricaRighe();
     const contratti = await caricaContrattiDelGiorno(DPState.dataSelezionata);
@@ -448,7 +448,7 @@ async function caricaDati() {
     renderGriglia();
   } catch (e) {
     console.error('[DashboardPezzi] errore:', e);
-    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div>Errore: ${escapeHtml(e.message)}</div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon"></div>Errore: ${escapeHtml(e.message)}</div>`;
   }
 }
 

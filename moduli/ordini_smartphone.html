@@ -846,12 +846,12 @@
        const detectedCluster = anagState.cluster;
        if (dbCluster && dbCluster !== detectedCluster) {
          setAnagStatus(
-           '✓ Cliente trovato: ' + (res.data.ragione_sociale || '-') +
-           ' — ⚠ cluster in DB era "' + dbCluster + '" ma è stato corretto a "' + detectedCluster + '" in base al ' + (kind === 'cf' ? 'CF' : 'P.IVA'),
+           'Cliente trovato: ' + (res.data.ragione_sociale || '-') +
+           ' — cluster in DB era "' + dbCluster + '" ma è stato corretto a "' + detectedCluster + '" in base al ' + (kind === 'cf' ? 'CF' : 'P.IVA'),
            'warn'
          );
        } else {
-         setAnagStatus('✓ Cliente trovato: ' + (res.data.ragione_sociale || '-'), 'ok');
+         setAnagStatus('Cliente trovato: ' + (res.data.ragione_sociale || '-'), 'ok');
        }
        setAnagFieldsReadonly(true);
        showAnagFields(true);

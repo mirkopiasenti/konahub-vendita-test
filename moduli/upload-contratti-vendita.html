@@ -1109,7 +1109,7 @@
 <h3 style="font-size:15px;margin:0 0 6px;color:#0f172a;">PDA — Pratica di Adesione *</h3>
 <p class="hint" style="margin:0 0 10px;">Carica il PDF del contratto firmato. Puoi farlo analizzare dall'AI per pre-compilare automaticamente i dati anagrafici, oppure procedere manualmente.</p>
 <label for="file_pda" id="pdaDropZone" class="pda-drop">
-<div class="pda-drop-icon" id="pdaDropIcon">📄</div>
+<div class="pda-drop-icon" id="pdaDropIcon">PDF</div>
 <div class="pda-drop-title" id="pdaDropTitle">Trascina qui il PDA o clicca per selezionare</div>
 <div class="pda-drop-hint" id="pdaDropHint">Solo PDF, max 20 MB</div>
 </label>
@@ -2863,17 +2863,9 @@ Reload Exchange
  renderCategorieCards();
  }
 
- const CATEGORIA_ICONS = {
- 'mobile': '📱',
- 'customer base': '🔄',
- 'fisso': '🏠',
- 'energia': '⚡',
- 'allarmi': '🛡️',
- 'assicurazioni': '☂️'
- };
+ const CATEGORIA_ICONS = {};
  function getCategoriaIcon(nome) {
- const k = String(nome || '').trim().toLowerCase();
- return CATEGORIA_ICONS[k] || '📁';
+ return '';
  }
  function isCategoriaPda(nome) {
  const k = String(nome || '').trim().toLowerCase();
@@ -5388,14 +5380,14 @@ Reload Exchange
  const file = refs.filePda && refs.filePda.files ? refs.filePda.files[0] : null;
  if (file) {
  zone.classList.add('has-file');
- if (titleEl) titleEl.textContent = '✓ ' + file.name;
+ if (titleEl) titleEl.textContent = file.name;
  if (hintEl) hintEl.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB — clicca per cambiare';
- if (iconEl) iconEl.textContent = '✓';
+ if (iconEl) iconEl.textContent = 'OK';
  } else {
  zone.classList.remove('has-file');
  if (titleEl) titleEl.textContent = 'Trascina qui il PDA o clicca per selezionare';
  if (hintEl) hintEl.textContent = 'Solo PDF, max 20 MB';
- if (iconEl) iconEl.textContent = '📄';
+ if (iconEl) iconEl.textContent = 'PDF';
  }
  }
 
