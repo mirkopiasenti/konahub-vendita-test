@@ -8,8 +8,10 @@
 
 [functions]
   node_bundler = "esbuild"
-  # External modules che non vanno bundlati
-  external_node_modules = ["@supabase/supabase-js", "nodemailer"]
+  # External modules che non vanno bundlati.
+  # pdfkit: ha font AFM e asset binari interni che esbuild non riesce a
+  #   bundlare correttamente (a runtime fallirebbe con ENOENT su Helvetica.afm).
+  external_node_modules = ["@supabase/supabase-js", "nodemailer", "pdfkit"]
 
 # Headers di sicurezza/cache base
 [[headers]]
