@@ -4407,6 +4407,19 @@ Reload Exchange
  updateLoadingOverlay('Caricamento in corso', 'Creazione pratica e contratti...');
  markTechnicalChecking('Verifica...');
 
+ // Pre-step: consenso privacy GDPR (migration 034). Garantisce
+ // anagrafica, fa dedupe 48 mesi, altrimenti apre modale OTP/cartaceo.
+ // Ritorna { consenso_id, anagrafica_id, riusato }.
+ hideLoadingOverlay();
+ const consensoResult = await ensureConsensoPrivacy(payload);
+ if (!consensoResult || !consensoResult.consenso_id) {
+   throw new Error('Consenso privacy non raccolto: impossibile procedere con l\'invio pratica.');
+ }
+ payload.pratica = payload.pratica || {};
+ payload.pratica.consenso_id = consensoResult.consenso_id;
+
+ showLoadingOverlay('Caricamento in corso', 'Creazione pratica e contratti...');
+
  const createResult = await fetchJsonOrTechnicalError(
  '/.netlify/functions/crea-vendita-pratica-carrello',
  {
@@ -5831,6 +5844,597 @@ Reload Exchange
  setResult({ success: false, error: error.message });
  }
  })();
+
+ // =================================================================
+ // CONSENSO PRIVACY GDPR (migration 034)
+ // =================================================================
+ // ensureConsensoPrivacy(payload) e' chiamato da inviaPratica prima
+ // della creazione pratica. Sequenza:
+ //  1) POST garantisci-anagrafica con cliente -> anagrafica_id
+ //  2) GET check-consenso-privacy?anagrafica_id -> se valido riusa
+ //  3) Altrimenti modale "OTP via SMS o cartaceo?" -> branch:
+ //     - OTP: richiedi-otp-privacy + verifica-otp-privacy
+ //     - Cartaceo: genera-pdf-consenso-cartaceo + upload-consenso-cartaceo
+ // Ritorna { consenso_id, anagrafica_id, riusato }.
+ // =================================================================
+
+ (function injectConsensoCss() {
+   if (document.getElementById('mx-consenso-css')) return;
+   const s = document.createElement('style');
+   s.id = 'mx-consenso-css';
+   s.textContent = `
+.cp-wrap{display:flex;flex-direction:column;gap:14px;font-size:13.5px;color:#0f172a;}
+.cp-section{border:1px solid #e2e8f0;border-radius:10px;padding:14px;background:#f8fafc;}
+.cp-section h4{margin:0 0 8px;font-size:13px;font-weight:700;color:#FF6600;text-transform:uppercase;letter-spacing:.3px;}
+.cp-section .cp-row{display:flex;justify-content:space-between;gap:8px;padding:4px 0;font-size:13px;}
+.cp-section .cp-row span:first-child{color:#64748b;font-weight:600;}
+.cp-section .cp-row span:last-child{color:#0f172a;text-align:right;word-break:break-word;}
+.cp-choices{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;}
+.cp-choice{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:18px;border:2px solid #e2e8f0;border-radius:12px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s ease,background .15s ease;}
+.cp-choice:hover{border-color:#FF6600;background:#FFF7ED;}
+.cp-choice .cp-choice-title{font-size:14px;font-weight:700;color:#0f172a;}
+.cp-choice .cp-choice-sub{font-size:12px;color:#64748b;line-height:1.4;}
+.cp-choice .cp-choice-badge{font-size:10.5px;font-weight:700;color:#16a34a;background:#DCFCE7;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px;}
+.cp-num{display:flex;align-items:center;gap:8px;}
+.cp-num input{flex:1;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:inherit;}
+.cp-num input:focus{outline:none;border-color:#FF6600;box-shadow:0 0 0 3px rgba(255,102,0,.12);}
+.cp-checkbox{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;cursor:pointer;}
+.cp-checkbox input{margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:#FF6600;}
+.cp-checkbox-text{font-size:12.5px;line-height:1.5;color:#0f172a;}
+.cp-checkbox-text strong{color:#FF6600;}
+.cp-otp-grid{display:flex;gap:8px;justify-content:center;margin:8px 0 4px;}
+.cp-otp-grid input{width:42px;height:48px;text-align:center;font-size:20px;font-weight:700;border:1.5px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;font-family:inherit;}
+.cp-otp-grid input:focus{outline:none;border-color:#FF6600;box-shadow:0 0 0 3px rgba(255,102,0,.12);}
+.cp-status{padding:10px 12px;border-radius:10px;font-size:12.5px;font-weight:600;text-align:center;}
+.cp-status-ok{background:#DCFCE7;color:#15803D;border:1px solid #BBF7D0;}
+.cp-status-err{background:#FEE2E2;color:#B91C1C;border:1px solid #FCA5A5;}
+.cp-status-info{background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;}
+.cp-timer{font-variant-numeric:tabular-nums;font-weight:700;}
+.cp-link{background:transparent;border:none;color:#FF6600;font-weight:600;cursor:pointer;font-size:12.5px;padding:0;text-decoration:underline;}
+.cp-link:disabled{color:#94a3b8;cursor:default;text-decoration:none;}
+.cp-drop{border:2px dashed #cbd5e1;border-radius:12px;padding:24px;text-align:center;cursor:pointer;background:#fff;color:#475569;font-size:13px;}
+.cp-drop.is-over{border-color:#FF6600;background:#FFF7ED;color:#0f172a;}
+.cp-drop strong{color:#FF6600;}
+.cp-info{background:#FFF7ED;border:1px solid #FED7AA;color:#9A3412;border-radius:10px;padding:12px;font-size:12.5px;line-height:1.5;}
+.cp-info strong{color:#7C2D12;}
+`;
+   document.head.appendChild(s);
+ })();
+
+ function cpEsc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+ function cpFormatItalianDate(iso) {
+   try {
+     const d = iso instanceof Date ? iso : new Date(iso);
+     if (Number.isNaN(d.getTime())) return '-';
+     return new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', day: '2-digit', month: '2-digit', year: 'numeric' }).format(d);
+   } catch (_) { return '-'; }
+ }
+
+ function cpNormalizeMobile(raw) {
+   if (raw == null) return null;
+   let s = String(raw).trim().replace(/[\s.\-()/]/g, '');
+   if (/^0039\d+$/.test(s)) s = '+' + s.slice(2);
+   if (/^3\d{9}$/.test(s)) s = '+39' + s;
+   if (!/^\+\d{11,15}$/.test(s)) return null;
+   return s;
+ }
+
+ function cpBuildClientCard(cliente) {
+   const isBusiness = String(cliente.cluster || '').toLowerCase() === 'business';
+   const labelCfPiva = isBusiness ? 'P.IVA' : 'Codice fiscale';
+   const labelRagSoc = isBusiness ? 'Ragione sociale' : 'Nome e cognome';
+   const addr = [cliente.via, cliente.civico].filter(Boolean).join(' ').trim();
+   const cap = [cliente.comune, cliente.provincia ? '(' + cliente.provincia + ')' : ''].filter(Boolean).join(' ').trim();
+   const fullAddr = [addr, cap].filter(Boolean).join(', ') || '-';
+   return `
+     <div class="cp-section">
+       <h4>Dati del cliente</h4>
+       <div class="cp-row"><span>${labelRagSoc}</span><span>${cpEsc(cliente.ragione_sociale || '-')}</span></div>
+       <div class="cp-row"><span>${labelCfPiva}</span><span>${cpEsc(cliente.cf_piva || '-')}</span></div>
+       <div class="cp-row"><span>Cluster</span><span>${cpEsc(cliente.cluster || '-')}</span></div>
+       <div class="cp-row"><span>Indirizzo</span><span>${cpEsc(fullAddr)}</span></div>
+       <div class="cp-row"><span>Email</span><span>${cpEsc(cliente.email || '-')}</span></div>
+       <div class="cp-row"><span>Cellulare</span><span>${cpEsc(cliente.cellulare || '-')}</span></div>
+     </div>`;
+ }
+
+ // ----- ENTRY POINT ------------------------------------------------
+ async function ensureConsensoPrivacy(payload) {
+   const cliente = payload && payload.cliente ? payload.cliente : {};
+   if (!cliente.cf_piva || !cliente.cellulare || !cliente.email || !cliente.ragione_sociale) {
+     throw new Error('Dati cliente incompleti per il consenso privacy. Compila CF/PIVA, ragione sociale, email e cellulare.');
+   }
+
+   // 1) garantisci-anagrafica -> anagrafica_id
+   showLoadingOverlay('Verifica anagrafica', 'Preparazione del cliente in corso...');
+   const garRes = await MiroxApi.fetch('/.netlify/functions/garantisci-anagrafica', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ cliente })
+   });
+   const garJson = await garRes.json().catch(() => ({}));
+   if (!garRes.ok || !garJson.success) {
+     hideLoadingOverlay();
+     throw new Error('Errore preparazione anagrafica: ' + (garJson.error || ('HTTP ' + garRes.status)));
+   }
+   const anagraficaId = garJson.anagrafica_id;
+
+   // 2) check-consenso-privacy
+   updateLoadingOverlay('Verifica consenso privacy', 'Controllo consensi attivi del cliente...');
+   const chkRes = await MiroxApi.fetch('/.netlify/functions/check-consenso-privacy?anagrafica_id=' + encodeURIComponent(anagraficaId));
+   const chkJson = await chkRes.json().catch(() => ({}));
+   if (!chkRes.ok || !chkJson.success) {
+     hideLoadingOverlay();
+     throw new Error('Errore verifica consenso: ' + (chkJson.error || ('HTTP ' + chkRes.status)));
+   }
+
+   hideLoadingOverlay();
+
+   if (chkJson.valido && chkJson.consenso) {
+     const scadenza = cpFormatItalianDate(chkJson.consenso.valido_fino_al);
+     MiroxUI.toast('Consenso privacy gia\' attivo per questo cliente (valido fino al ' + scadenza + ')', 'success', 5000);
+     return { consenso_id: chkJson.consenso.id, anagrafica_id: anagraficaId, riusato: true };
+   }
+
+   // 3) modale "OTP o cartaceo?"
+   const modality = await chooseConsensoModality({ cliente });
+   if (!modality) throw new Error('Raccolta consenso annullata');
+
+   if (modality === 'otp') {
+     const r = await runOtpFlow({ anagraficaId, cliente, praticaId: null });
+     if (!r) throw new Error('Raccolta OTP annullata');
+     return { consenso_id: r.consenso_id, anagrafica_id: anagraficaId, riusato: false };
+   } else {
+     const r = await runCartaceoFlow({ anagraficaId, cliente, praticaId: null });
+     if (!r) throw new Error('Raccolta consenso cartaceo annullata');
+     return { consenso_id: r.consenso_id, anagrafica_id: anagraficaId, riusato: false };
+   }
+ }
+
+ // ----- SCELTA MODALITA' -------------------------------------------
+ function chooseConsensoModality({ cliente }) {
+   return new Promise((resolve) => {
+     const html = cpBuildClientCard(cliente) + `
+       <div style="margin-top:6px;font-size:13.5px;color:#0f172a;">
+         Per archiviare i dati di questo cliente nel CRM Mirox e' richiesto il consenso al trattamento dei dati personali ai sensi dell'art. 13 GDPR. Scegli la modalita' di raccolta:
+       </div>
+       <div class="cp-choices">
+         <button type="button" class="cp-choice" data-cp-modality="otp">
+           <span class="cp-choice-badge">Consigliato</span>
+           <span class="cp-choice-title">Firma con OTP via SMS</span>
+           <span class="cp-choice-sub">Invio codice di verifica al cellulare del cliente. Il consenso viene archiviato in formato elettronico con audit trail completo.</span>
+         </button>
+         <button type="button" class="cp-choice" data-cp-modality="cartaceo">
+           <span class="cp-choice-title">Modulo cartaceo</span>
+           <span class="cp-choice-sub">Scarica il PDF gia' precompilato, fallo firmare a mano dal cliente, poi carica la scansione.</span>
+         </button>
+       </div>
+     `;
+     const footer = `<button type="button" class="mx-btn mx-btn-secondary" data-cp-cancel>Annulla</button>`;
+     const m = MiroxUI._build({ title: 'Consenso privacy GDPR', bodyHtml: html, footerHtml: footer, large: true, onClose: () => resolve(null) });
+     m.body.querySelectorAll('[data-cp-modality]').forEach((btn) => {
+       btn.addEventListener('click', () => {
+         const v = btn.getAttribute('data-cp-modality');
+         m.close();
+         resolve(v);
+       });
+     });
+     m.foot.querySelector('[data-cp-cancel]').addEventListener('click', () => { m.close(); resolve(null); });
+   });
+ }
+
+ // ----- FLUSSO OTP -------------------------------------------------
+ function runOtpFlow({ anagraficaId, cliente, praticaId }) {
+   return new Promise((resolve) => {
+     let consensoId = null;
+     let scadeAt = null;
+     let timerHandle = null;
+     let resendCooldown = 0;
+     let cooldownHandle = null;
+
+     const html = cpBuildClientCard(cliente) + `
+       <div class="cp-section">
+         <h4>Numero per invio OTP</h4>
+         <div class="cp-num">
+           <input type="tel" id="cpOtpCellulare" value="${cpEsc(cliente.cellulare || '')}" placeholder="+39 XXX XXX XXXX" />
+           <button type="button" class="mx-btn mx-btn-secondary" id="cpOtpEditNum" style="white-space:nowrap;">Modifica numero</button>
+         </div>
+         <div style="font-size:11.5px;color:#64748b;margin-top:6px;">Pre-compilato da anagrafica. Modifica se il numero corretto e' diverso.</div>
+       </div>
+       <label class="cp-checkbox">
+         <input type="checkbox" id="cpOtpMarketing" />
+         <span class="cp-checkbox-text">
+           <strong>Consenso marketing (facoltativo).</strong> Acconsento al trattamento dei miei dati personali per finalita' di marketing diretto, ovvero ricezione di comunicazioni commerciali via SMS, email o telefono relative a nuove offerte e servizi del titolare. Sempre revocabile.
+         </span>
+       </label>
+       <div id="cpOtpStatus" class="cp-status cp-status-info" style="display:none;"></div>
+       <div id="cpOtpInputArea" style="display:none;">
+         <div class="cp-section">
+           <h4>Codice OTP ricevuto dal cliente</h4>
+           <div class="cp-otp-grid" id="cpOtpGrid">
+             ${[0,1,2,3,4,5].map(i => `<input type="text" inputmode="numeric" maxlength="1" data-cp-otp="${i}" />`).join('')}
+           </div>
+           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:#64748b;">
+             <span>Scadenza: <span class="cp-timer" id="cpOtpTimer">--:--</span></span>
+             <button type="button" class="cp-link" id="cpOtpResend">Reinvia SMS</button>
+           </div>
+         </div>
+       </div>
+     `;
+     const footer = `
+       <button type="button" class="mx-btn mx-btn-secondary" data-cp-cancel>Annulla</button>
+       <button type="button" class="mx-btn mx-btn-primary" id="cpOtpSend">Invia SMS</button>
+       <button type="button" class="mx-btn mx-btn-primary" id="cpOtpVerify" style="display:none;">Verifica OTP</button>
+     `;
+     const m = MiroxUI._build({ title: 'Consenso privacy - Firma con OTP', bodyHtml: html, footerHtml: footer, large: true, onClose: () => {
+       if (timerHandle) clearInterval(timerHandle);
+       if (cooldownHandle) clearInterval(cooldownHandle);
+       resolve(null);
+     }});
+
+     const cellularInput = m.body.querySelector('#cpOtpCellulare');
+     const editBtn = m.body.querySelector('#cpOtpEditNum');
+     const marketingChk = m.body.querySelector('#cpOtpMarketing');
+     const statusEl = m.body.querySelector('#cpOtpStatus');
+     const inputArea = m.body.querySelector('#cpOtpInputArea');
+     const sendBtn = m.foot.querySelector('#cpOtpSend');
+     const verifyBtn = m.foot.querySelector('#cpOtpVerify');
+     const resendBtn = m.body.querySelector('#cpOtpResend');
+     const timerEl = m.body.querySelector('#cpOtpTimer');
+     const otpInputs = Array.from(m.body.querySelectorAll('[data-cp-otp]'));
+     cellularInput.readOnly = true;
+
+     editBtn.addEventListener('click', () => {
+       cellularInput.readOnly = false;
+       cellularInput.focus();
+       cellularInput.select();
+       editBtn.disabled = true;
+       editBtn.textContent = 'Modifica attiva';
+     });
+
+     function setStatus(text, type) {
+       if (!text) { statusEl.style.display = 'none'; return; }
+       statusEl.style.display = 'block';
+       statusEl.className = 'cp-status cp-status-' + (type || 'info');
+       statusEl.textContent = text;
+     }
+
+     function startCountdown() {
+       if (timerHandle) clearInterval(timerHandle);
+       timerHandle = setInterval(() => {
+         const ms = new Date(scadeAt).getTime() - Date.now();
+         if (ms <= 0) {
+           clearInterval(timerHandle);
+           timerEl.textContent = 'SCADUTO';
+           setStatus('Il codice OTP e\' scaduto. Reinvia un nuovo SMS.', 'err');
+         } else {
+           const totalSec = Math.floor(ms / 1000);
+           const mm = String(Math.floor(totalSec / 60)).padStart(2, '0');
+           const ss = String(totalSec % 60).padStart(2, '0');
+           timerEl.textContent = mm + ':' + ss;
+         }
+       }, 1000);
+     }
+
+     function startResendCooldown(seconds) {
+       if (cooldownHandle) clearInterval(cooldownHandle);
+       resendCooldown = seconds;
+       resendBtn.disabled = true;
+       resendBtn.textContent = 'Reinvia tra ' + resendCooldown + 's';
+       cooldownHandle = setInterval(() => {
+         resendCooldown -= 1;
+         if (resendCooldown <= 0) {
+           clearInterval(cooldownHandle);
+           resendBtn.disabled = false;
+           resendBtn.textContent = 'Reinvia SMS';
+         } else {
+           resendBtn.textContent = 'Reinvia tra ' + resendCooldown + 's';
+         }
+       }, 1000);
+     }
+
+     async function maybeUpdateAnagrafica(newNumber) {
+       if (!newNumber || newNumber === cliente.cellulare) return;
+       const ok = await MiroxUI.confirm(
+         'Hai usato un numero diverso da quello salvato in anagrafica (' + cpEsc(cliente.cellulare || '-') + '). Vuoi aggiornare anche il cellulare nell\'anagrafica del cliente con ' + cpEsc(newNumber) + '?',
+         { title: 'Aggiornare anagrafica?', okText: 'Si, aggiorna', cancelText: 'No, solo OTP' }
+       );
+       if (!ok) return;
+       try {
+         const updPayload = Object.assign({}, cliente, { cellulare: newNumber });
+         await MiroxApi.fetch('/.netlify/functions/garantisci-anagrafica', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ cliente: updPayload })
+         });
+         cliente.cellulare = newNumber;
+       } catch (_) { /* best-effort */ }
+     }
+
+     async function sendOtp(isResend) {
+       const numNorm = cpNormalizeMobile(cellularInput.value);
+       if (!numNorm) {
+         setStatus('Numero cellulare non valido. Usa formato italiano (3XX...) o E.164 (+39...).', 'err');
+         return;
+       }
+       sendBtn.disabled = true;
+       sendBtn.textContent = 'Invio in corso...';
+       setStatus('Invio SMS in corso al ' + numNorm + '...', 'info');
+
+       try {
+         const res = await MiroxApi.fetch('/.netlify/functions/richiedi-otp-privacy', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+             anagrafica_id: anagraficaId,
+             cellulare: numNorm,
+             consenso_marketing: !!marketingChk.checked,
+             pratica_id: praticaId
+           })
+         });
+         const json = await res.json().catch(() => ({}));
+         if (!res.ok || !json.success) {
+           sendBtn.disabled = false;
+           sendBtn.textContent = isResend ? 'Reinvia SMS' : 'Invia SMS';
+           setStatus(json.error || ('Errore invio SMS (HTTP ' + res.status + ')'), 'err');
+           return;
+         }
+         consensoId = json.consenso_id;
+         scadeAt = json.scade_at;
+         if (!isResend) await maybeUpdateAnagrafica(numNorm);
+
+         sendBtn.style.display = 'none';
+         verifyBtn.style.display = 'inline-flex';
+         inputArea.style.display = 'block';
+         cellularInput.readOnly = true;
+         editBtn.disabled = true;
+         marketingChk.disabled = true;
+         const simulatedNote = json.simulated ? ' (modalita\' simulazione)' : '';
+         setStatus('SMS inviato al ' + numNorm + simulatedNote + '. Chiedi al cliente di leggere il codice ricevuto.', 'ok');
+         startCountdown();
+         startResendCooldown(60);
+         otpInputs[0].focus();
+       } catch (e) {
+         sendBtn.disabled = false;
+         sendBtn.textContent = isResend ? 'Reinvia SMS' : 'Invia SMS';
+         setStatus('Errore di rete: ' + (e && e.message ? e.message : String(e)), 'err');
+       }
+     }
+
+     async function verifyOtp() {
+       const code = otpInputs.map(i => i.value || '').join('');
+       if (!/^\d{6}$/.test(code)) {
+         setStatus('Inserisci tutte e 6 le cifre dell\'OTP', 'err');
+         otpInputs[0].focus();
+         return;
+       }
+       if (!consensoId) {
+         setStatus('Sessione OTP non valida. Reinvia un nuovo SMS.', 'err');
+         return;
+       }
+       verifyBtn.disabled = true;
+       verifyBtn.textContent = 'Verifica in corso...';
+       try {
+         const res = await MiroxApi.fetch('/.netlify/functions/verifica-otp-privacy', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ consenso_id: consensoId, otp: code })
+         });
+         const json = await res.json().catch(() => ({}));
+         if (!res.ok || !json.success) {
+           verifyBtn.disabled = false;
+           verifyBtn.textContent = 'Verifica OTP';
+           setStatus(json.error || ('Errore verifica OTP (HTTP ' + res.status + ')'), 'err');
+           if (json.scaduto) {
+             sendBtn.style.display = 'inline-flex';
+             sendBtn.disabled = false;
+             sendBtn.textContent = 'Reinvia SMS';
+             verifyBtn.style.display = 'none';
+           }
+           return;
+         }
+         setStatus('Consenso confermato. Valido fino al ' + cpFormatItalianDate(json.valido_fino_al) + '. Procedo con l\'invio pratica.', 'ok');
+         if (timerHandle) clearInterval(timerHandle);
+         if (cooldownHandle) clearInterval(cooldownHandle);
+         setTimeout(() => {
+           m.close();
+           resolve({ consenso_id: json.consenso_id, valido_fino_al: json.valido_fino_al });
+         }, 900);
+       } catch (e) {
+         verifyBtn.disabled = false;
+         verifyBtn.textContent = 'Verifica OTP';
+         setStatus('Errore di rete: ' + (e && e.message ? e.message : String(e)), 'err');
+       }
+     }
+
+     otpInputs.forEach((inp, i) => {
+       inp.addEventListener('input', (e) => {
+         const v = (e.target.value || '').replace(/\D/g, '').slice(0, 1);
+         e.target.value = v;
+         if (v && i < otpInputs.length - 1) otpInputs[i + 1].focus();
+       });
+       inp.addEventListener('keydown', (e) => {
+         if (e.key === 'Backspace' && !e.target.value && i > 0) otpInputs[i - 1].focus();
+         if (e.key === 'Enter') verifyOtp();
+       });
+       inp.addEventListener('paste', (e) => {
+         const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+         const digits = text.replace(/\D/g, '').slice(0, 6).split('');
+         if (digits.length) {
+           e.preventDefault();
+           digits.forEach((d, idx) => { if (otpInputs[idx]) otpInputs[idx].value = d; });
+           otpInputs[Math.min(digits.length, 5)].focus();
+         }
+       });
+     });
+
+     sendBtn.addEventListener('click', () => sendOtp(false));
+     verifyBtn.addEventListener('click', verifyOtp);
+     resendBtn.addEventListener('click', () => sendOtp(true));
+     m.foot.querySelector('[data-cp-cancel]').addEventListener('click', () => {
+       if (timerHandle) clearInterval(timerHandle);
+       if (cooldownHandle) clearInterval(cooldownHandle);
+       m.close();
+       resolve(null);
+     });
+   });
+ }
+
+ // ----- FLUSSO CARTACEO --------------------------------------------
+ function runCartaceoFlow({ anagraficaId, cliente, praticaId }) {
+   return new Promise((resolve) => {
+     let downloaded = false;
+     let scannedFile = null;
+
+     const html = cpBuildClientCard(cliente) + `
+       <label class="cp-checkbox">
+         <input type="checkbox" id="cpCartMarketing" />
+         <span class="cp-checkbox-text">
+           <strong>Consenso marketing (facoltativo).</strong> Acconsento al trattamento dei miei dati personali per finalita' di marketing diretto, ovvero ricezione di comunicazioni commerciali via SMS, email o telefono relative a nuove offerte e servizi del titolare. Sempre revocabile.
+         </span>
+       </label>
+       <div class="cp-info">
+         <strong>Procedura:</strong>
+         <ol style="margin:6px 0 0;padding-left:20px;line-height:1.7;">
+           <li>Scarica il PDF dell'informativa precompilato con i dati del cliente.</li>
+           <li>Stampalo e fallo firmare a mano dal cliente.</li>
+           <li>Scansiona il modulo firmato e caricalo qui sotto in formato PDF.</li>
+         </ol>
+       </div>
+       <div style="display:flex;gap:10px;align-items:center;">
+         <button type="button" class="mx-btn mx-btn-primary" id="cpCartDownload">Scarica modulo PDF</button>
+         <span id="cpCartDownloadInfo" style="font-size:12px;color:#64748b;"></span>
+       </div>
+       <div class="cp-section">
+         <h4>Carica scansione del modulo firmato</h4>
+         <div class="cp-drop" id="cpCartDrop">
+           Trascina qui il PDF della scansione, oppure <strong>clicca per selezionare</strong>.
+           <input type="file" id="cpCartFile" accept="application/pdf" style="display:none;" />
+         </div>
+         <div id="cpCartFileInfo" style="margin-top:8px;font-size:12.5px;color:#0f172a;display:none;"></div>
+       </div>
+       <div id="cpCartStatus" class="cp-status cp-status-info" style="display:none;"></div>
+     `;
+     const footer = `
+       <button type="button" class="mx-btn mx-btn-secondary" data-cp-cancel>Annulla</button>
+       <button type="button" class="mx-btn mx-btn-primary" id="cpCartConfirm" disabled>Carica e conferma</button>
+     `;
+     const m = MiroxUI._build({ title: 'Consenso privacy - Modulo cartaceo', bodyHtml: html, footerHtml: footer, large: true, onClose: () => resolve(null) });
+
+     const marketingChk = m.body.querySelector('#cpCartMarketing');
+     const dlBtn = m.body.querySelector('#cpCartDownload');
+     const dlInfo = m.body.querySelector('#cpCartDownloadInfo');
+     const drop = m.body.querySelector('#cpCartDrop');
+     const fileInput = m.body.querySelector('#cpCartFile');
+     const fileInfo = m.body.querySelector('#cpCartFileInfo');
+     const statusEl = m.body.querySelector('#cpCartStatus');
+     const confirmBtn = m.foot.querySelector('#cpCartConfirm');
+
+     function setStatus(text, type) {
+       if (!text) { statusEl.style.display = 'none'; return; }
+       statusEl.style.display = 'block';
+       statusEl.className = 'cp-status cp-status-' + (type || 'info');
+       statusEl.textContent = text;
+     }
+
+     function refreshConfirmEnabled() {
+       confirmBtn.disabled = !(downloaded && scannedFile);
+     }
+
+     dlBtn.addEventListener('click', async () => {
+       dlBtn.disabled = true;
+       dlBtn.textContent = 'Generazione in corso...';
+       try {
+         const url = '/.netlify/functions/genera-pdf-consenso-cartaceo?anagrafica_id=' + encodeURIComponent(anagraficaId)
+           + '&consenso_marketing=' + (marketingChk.checked ? 'true' : 'false');
+         const res = await MiroxApi.fetch(url);
+         if (!res.ok) {
+           const j = await res.json().catch(() => ({}));
+           throw new Error(j.error || ('HTTP ' + res.status));
+         }
+         const cd = res.headers.get('content-disposition') || '';
+         const m1 = cd.match(/filename="?([^";]+)"?/);
+         const filename = m1 ? m1[1] : 'Privacy_consenso.pdf';
+         const blob = await res.blob();
+         const objUrl = URL.createObjectURL(blob);
+         const a = document.createElement('a');
+         a.href = objUrl; a.download = filename;
+         document.body.appendChild(a); a.click(); document.body.removeChild(a);
+         setTimeout(() => URL.revokeObjectURL(objUrl), 5000);
+         downloaded = true;
+         dlInfo.textContent = 'Scaricato: ' + filename;
+         dlBtn.disabled = false;
+         dlBtn.textContent = 'Scarica di nuovo';
+         marketingChk.disabled = true;
+         refreshConfirmEnabled();
+       } catch (e) {
+         dlBtn.disabled = false;
+         dlBtn.textContent = 'Scarica modulo PDF';
+         setStatus('Errore generazione PDF: ' + (e.message || e), 'err');
+       }
+     });
+
+     function handleFile(f) {
+       if (!f) return;
+       if (f.type !== 'application/pdf') {
+         setStatus('Solo file PDF accettati', 'err');
+         return;
+       }
+       if (f.size > 20 * 1024 * 1024) {
+         setStatus('File troppo grande (max 20 MB)', 'err');
+         return;
+       }
+       scannedFile = f;
+       fileInfo.style.display = 'block';
+       fileInfo.innerHTML = '<strong>File selezionato:</strong> ' + cpEsc(f.name) + ' (' + (f.size / 1024).toFixed(0) + ' KB)';
+       setStatus('', '');
+       refreshConfirmEnabled();
+     }
+
+     drop.addEventListener('click', () => fileInput.click());
+     fileInput.addEventListener('change', () => handleFile(fileInput.files && fileInput.files[0]));
+     drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('is-over'); });
+     drop.addEventListener('dragleave', () => drop.classList.remove('is-over'));
+     drop.addEventListener('drop', (e) => {
+       e.preventDefault();
+       drop.classList.remove('is-over');
+       handleFile(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
+     });
+
+     confirmBtn.addEventListener('click', async () => {
+       if (!scannedFile) return;
+       confirmBtn.disabled = true;
+       confirmBtn.textContent = 'Caricamento...';
+       try {
+         const fd = new FormData();
+         fd.append('file', scannedFile);
+         fd.append('anagrafica_id', anagraficaId);
+         fd.append('consenso_marketing', marketingChk.checked ? 'true' : 'false');
+         if (praticaId) fd.append('pratica_id', praticaId);
+         const res = await MiroxApi.fetch('/.netlify/functions/upload-consenso-cartaceo', { method: 'POST', body: fd });
+         const json = await res.json().catch(() => ({}));
+         if (!res.ok || !json.success) {
+           confirmBtn.disabled = false;
+           confirmBtn.textContent = 'Carica e conferma';
+           setStatus(json.error || ('HTTP ' + res.status), 'err');
+           return;
+         }
+         setStatus('Consenso cartaceo archiviato. Valido fino al ' + cpFormatItalianDate(json.valido_fino_al) + '. Procedo con l\'invio pratica.', 'ok');
+         setTimeout(() => {
+           m.close();
+           resolve({ consenso_id: json.consenso_id, valido_fino_al: json.valido_fino_al });
+         }, 900);
+       } catch (e) {
+         confirmBtn.disabled = false;
+         confirmBtn.textContent = 'Carica e conferma';
+         setStatus('Errore di rete: ' + (e.message || e), 'err');
+       }
+     });
+
+     m.foot.querySelector('[data-cp-cancel]').addEventListener('click', () => { m.close(); resolve(null); });
+   });
+ }
 </script>
 </body>
 </html>

@@ -5,9 +5,10 @@ Modulo CRM per la gestione di vendite, post-vendita e supporto operativo della r
 ## Stack
 
 - **Frontend**: HTML statico + JavaScript vanilla (no bundler), Inter via Google Fonts, client Supabase `@supabase/supabase-js@2` da CDN
-- **Backend serverless**: Netlify Functions (Node + esbuild), librerie `@supabase/supabase-js`, `nodemailer`, `busboy`
-- **Database**: Supabase Postgres (Auth + Storage + RLS + RPC + Trigger), 8 bucket Storage pubblici per dominio
+- **Backend serverless**: Netlify Functions (Node + esbuild), librerie `@supabase/supabase-js`, `nodemailer`, `busboy`, `pdfkit` (generazione PDF informativa privacy)
+- **Database**: Supabase Postgres (Auth + Storage + RLS + RPC + Trigger), 9 bucket Storage (`moduli-template` pubblico + 8 privati con signed URL on-demand)
 - **Email**: Gmail SMTP via nodemailer + template DB (`email_template` + `email_log`)
+- **SMS transactional**: Smshosting REST API (consensi privacy via OTP — vedi `docs/SMSHOSTING_SETUP.md`)
 - **Hosting**: Netlify (static + functions + cron schedules)
 
 ## Struttura cartelle
@@ -47,6 +48,12 @@ Tutte le functions (eccetto `cron-rientro-sim`) richiedono `Authorization: Beare
 | `mirox-send-email` | POST | authenticated | Invio email con template DB |
 | `cron-rientro-sim` | scheduled | nessuna (cron Netlify) | Notifica giornaliera rientro SIM |
 | `public-prenota` | GET / POST | nessuna (form pubblico) | Endpoint per `prenota.html`: GET slot disponibili + POST creazione appuntamento. Service_role + rate-limiting in-memory |
+| `garantisci-anagrafica` | POST | authenticated | Upsert anagrafica (lookup CF/PIVA, update campi vuoti / cambiati o insert). Usato dal wizard prima della raccolta consenso |
+| `check-consenso-privacy` | GET | authenticated | Dedupe 48 mesi: cerca un consenso `stato='confermato'`, non scaduto, non revocato per `anagrafica_id` |
+| `richiedi-otp-privacy` | POST | authenticated | Genera OTP 6 cifre, salva hash+salt, invia SMS via Smshosting. Rate-limit 3 invii/ora per anagrafica + cooldown 60s |
+| `verifica-otp-privacy` | POST | authenticated | Verifica OTP (max 3 tentativi), genera PDF informativa con metadata firma, upload bucket `consensi-privacy`, segna `stato='confermato'` con `valido_fino_al = now()+48 mesi` |
+| `genera-pdf-consenso-cartaceo` | GET | authenticated | Stream PDF precompilato (riquadro firma vuoto) per il flusso cartaceo |
+| `upload-consenso-cartaceo` | POST multipart | authenticated | Upload scansione del modulo firmato a mano (max 20 MB, application/pdf), crea record `stato='confermato'` modalità `'cartaceo'` |
 
 ## Setup locale
 
@@ -85,6 +92,10 @@ git push origin main
 | `ANTHROPIC_API_KEY` | sì | Chiave Claude API per la function `ocr-pda` (estrazione AI dati dal PDA) |
 | `SMTP_USER` | sì | Account Gmail mittente |
 | `SMTP_PASS` | sì | App Password Gmail |
+| `SMSHOSTING_API_KEY` | sì (per consensi OTP) | Username API Smshosting (vedi `docs/SMSHOSTING_SETUP.md`) |
+| `SMSHOSTING_API_SECRET` | sì (per consensi OTP) | Password API Smshosting |
+| `SMSHOSTING_SENDER` | no | Mittente alfanumerico SMS, max 11 caratteri. Default `MIROX`. Va dichiarato in fase di setup account Smshosting |
+| `SMSHOSTING_SIMULATE` | no | `true` per attivare modalità simulazione (logga SMS senza inviarlo). Utile per test dev senza spendere credito |
 | `NOTIFICA_RIENTRO_TO` | no | Default `info@konatech.it` |
 | `PUBLIC_BASE_URL` | no | Base URL del sito per i link nelle mail |
 | `MAIL_FROM_NAME` | no | Default `Mirox CRM` |

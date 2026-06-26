@@ -605,6 +605,38 @@ exports.handler = async (event) => {
       anagraficaId = anagraficaNuova.id;
     }
 
+    // ----------------------------------------------------------------
+    // GUARD CONSENSO PRIVACY (migration 034).
+    // La pratica non puo' essere creata se per l'anagrafica non esiste
+    // un consenso 'confermato', non scaduto, non revocato. Il wizard
+    // dovrebbe averlo raccolto (modale OTP o cartaceo) prima del submit
+    // oppure trovato in dedupe 48 mesi. Il client puo' passare
+    // pratica.consenso_id per evitare race su consensi multipli; se
+    // passato, verifichiamo che corrisponda davvero a quello attivo.
+    // ----------------------------------------------------------------
+    const consensoIdInput = normalizeUuidOrNull(pratica.consenso_id);
+    const { data: consensoAttivo, error: consensoLookupError } = await supabase
+      .from('vendita_consensi_privacy')
+      .select('id, anagrafica_id, stato, modalita, valido_fino_al, revocato_at')
+      .eq('anagrafica_id', anagraficaId)
+      .eq('stato', 'confermato')
+      .is('revocato_at', null)
+      .gt('valido_fino_al', new Date().toISOString())
+      .order('valido_fino_al', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (consensoLookupError) {
+      throw new Error(readableError(consensoLookupError, 'Errore verifica consenso privacy'));
+    }
+    if (!consensoAttivo) {
+      throw new Error('Consenso privacy mancante o scaduto per questo cliente. Raccogliere un nuovo consenso (OTP via SMS o modulo cartaceo firmato) prima di inviare la pratica.');
+    }
+    if (consensoIdInput && consensoIdInput !== consensoAttivo.id) {
+      throw new Error('consenso_id passato dal client non corrisponde al consenso attivo per questa anagrafica');
+    }
+    const consensoIdValidato = consensoAttivo.id;
+
     const { data: praticaRow, error: praticaInsertError } = await supabase
       .from('vendita_pratiche')
       .insert({
@@ -624,6 +656,17 @@ exports.handler = async (event) => {
     }
 
     createdPraticaId = praticaRow.id;
+
+    // Back-link al consenso privacy: se il consenso non aveva pratica_id (es.
+    // appena raccolto senza pratica_id forward dal client), lo agganciamo qui.
+    // Best-effort: se l'update fallisce non rompiamo la pratica.
+    try {
+      await supabase
+        .from('vendita_consensi_privacy')
+        .update({ pratica_id: praticaRow.id })
+        .eq('id', consensoIdValidato)
+        .is('pratica_id', null);
+    } catch (_) { /* ignore */ }
 
     const { nomeCartellaStorage, storageBasePath } = buildStorageNames({
       ragioneSociale,
@@ -956,6 +999,7 @@ exports.handler = async (event) => {
       success: true,
       anagrafica_id: anagraficaId,
       pratica_id: praticaRow.id,
+      consenso_id: consensoIdValidato,
       storage_base_path: storageBasePath,
       nome_cartella_storage: nomeCartellaStorage,
       contratti: createdContracts,
