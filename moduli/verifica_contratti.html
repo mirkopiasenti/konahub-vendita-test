@@ -343,7 +343,8 @@ async function caricaContratti(statoControllo) {
         categoria_snapshot, nome_offerta_snapshot, nome_opzione_snapshot, nome_reload_snapshot,
         tipo_attivazione, apri_chiudi, intestatario, switch_sim, modalita_pagamento,
         dispositivo_associato, imei, fascia_prezzo, tipo_acquisto, finanziaria, kolme,
-        pod_pdr, numero_contratto_energia, ex_fornitore, prezzo_fisso, reload_exchange,
+        smartphone_reload, smartphone_reload_modalita,
+        pod_pdr, numero_contratto_energia, ex_fornitore, prezzo_fisso, reload_exchange, reload_forever,
         punteggio_offerta, punteggio_opzione, punteggio_extra, punteggio_totale,
         stato_controllo, controllato_da, controllato_at, note_controllo,
         data_contratto, created_at, updated_at,
@@ -574,7 +575,7 @@ function apriPopupDettaglio(c, opts) {
         <div class="det-field" id="vc_field_categoria"><label>Categoria</label><select id="vc_categoria_id" ${disabled}><option value="">—</option>${selectOpt(categorie, c.categoria_id, 'id', 'nome')}</select></div>
         <div class="det-field" id="vc_field_offerta"><label>Offerta</label><select id="vc_offerta_id" ${disabled}><option value="">—</option>${selectOpt(offerteFiltered, c.offerta_id, 'id', 'nome_offerta')}</select></div>
         <div class="det-field" id="vc_field_opzione"><label>Opzione</label><select id="vc_opzione_id" ${disabled}><option value="">—</option>${selectOpt(opzioniFiltered, c.opzione_id, 'id', 'nome_opzione')}</select></div>
-        <div class="det-field" id="vc_field_reload"><label>Reload</label><select id="vc_reload_id" ${disabled}><option value="">—</option>${selectOpt(reloadFiltered, c.reload_id, 'id', 'nome')}</select></div>
+        <!-- Dropdown Reload rimosso 2026-06-26 (catalogo vendita_reload dismesso). reload_id storico letto/scritto solo come passthrough. -->
         <div class="det-field" id="vc_field_tipo_attivazione"><label>Tipo Attivazione</label>
           <select id="vc_tipo_attivazione" ${disabled}>
             <option value="">—</option>
@@ -648,6 +649,20 @@ function apriPopupDettaglio(c, opts) {
             <option value="false" ${c.kolme === false ? 'selected' : ''}>No</option>
           </select>
         </div>
+        <div class="det-field" id="vc_field_smartphone_reload"><label>Smartphone Reload</label>
+          <select id="vc_smartphone_reload" ${disabled}>
+            <option value="">—</option>
+            <option value="true" ${c.smartphone_reload === true ? 'selected' : ''}>Si</option>
+            <option value="false" ${c.smartphone_reload === false ? 'selected' : ''}>No</option>
+          </select>
+        </div>
+        <div class="det-field" id="vc_field_smartphone_reload_modalita"><label>Modalita Smartphone Reload</label>
+          <select id="vc_smartphone_reload_modalita" ${disabled}>
+            <option value="">—</option>
+            <option value="Mantenere attivo" ${c.smartphone_reload_modalita === 'Mantenere attivo' ? 'selected' : ''}>Mantenere attivo</option>
+            <option value="Disattivazione cliente" ${c.smartphone_reload_modalita === 'Disattivazione cliente' ? 'selected' : ''}>Disattivazione cliente</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -674,6 +689,13 @@ function apriPopupDettaglio(c, opts) {
           <label>Reload Exchange</label>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:9px 0;">
             <input type="checkbox" id="vc_reload_exchange" ${c.reload_exchange ? 'checked' : ''} ${disabled} style="width:18px;height:18px;accent-color:#FF6600;cursor:pointer;">
+            <span style="font-size:13.5px;font-weight:500;">Attivo</span>
+          </label>
+        </div>
+        <div class="det-field" id="vc_field_reload_forever">
+          <label>Reload Forever</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:9px 0;">
+            <input type="checkbox" id="vc_reload_forever" ${c.reload_forever ? 'checked' : ''} ${disabled} style="width:18px;height:18px;accent-color:#FF6600;cursor:pointer;">
             <span style="font-size:13.5px;font-weight:500;">Attivo</span>
           </label>
         </div>
@@ -835,6 +857,10 @@ function applyVisibilityRules() {
   const tipoAcq = (document.getElementById('vc_tipo_acquisto') || {}).value || '';
   _show('vc_field_finanziaria', hasDevice && tipoAcq === 'Finanziamento');
   _show('vc_field_kolme', hasDevice);
+  // Migration 035 - Smartphone Reload + modalita
+  _show('vc_field_smartphone_reload', hasDevice);
+  const smartphoneReloadVal = (document.getElementById('vc_smartphone_reload') || {}).value || '';
+  _show('vc_field_smartphone_reload_modalita', hasDevice && smartphoneReloadVal === 'true');
 
   // ---- Sezione Extra (campi specifici categoria) ----
   _show('vc_field_pod', isEnergia);
@@ -842,6 +868,7 @@ function applyVisibilityRules() {
   _show('vc_field_ex_fornitore', isEnergia);
   _show('vc_field_prezzo_fisso', isFisso);
   _show('vc_field_reload_exchange', isMobile || isCustomerBase);
+  _show('vc_field_reload_forever', isMobile || isCustomerBase);
   // Mostra/nascondi tutta la sezione extra se non c'è nulla da mostrare
   const extraVisible = isEnergia || isFisso || isMobile || isCustomerBase;
   _show('vc_section_extra', extraVisible);
@@ -1016,6 +1043,9 @@ function leggiPayloadDalPopup() {
     tipo_acquisto: v('vc_tipo_acquisto') || null,
     finanziaria: v('vc_finanziaria') || null,
     kolme: v('vc_kolme') === 'true' ? true : (v('vc_kolme') === 'false' ? false : null),
+    // Migration 035 - Smartphone Reload + modalita (boolean + text con CHECK coerenza)
+    smartphone_reload: v('vc_smartphone_reload') === 'true' ? true : (v('vc_smartphone_reload') === 'false' ? false : null),
+    smartphone_reload_modalita: v('vc_smartphone_reload') === 'true' ? (v('vc_smartphone_reload_modalita') || null) : null,
     pod_pdr: isEnergia ? (v('vc_pod_pdr').trim() || null) : null,
     numero_contratto_energia: isEnergia ? (v('vc_numero_contratto_energia').trim() || null) : null,
     ex_fornitore: isEnergia ? (v('vc_ex_fornitore').trim() || null) : null,
@@ -1025,7 +1055,8 @@ function leggiPayloadDalPopup() {
       const n = parseFloat(s);
       return Number.isFinite(n) ? n : null;
     })() : null,
-    reload_exchange: showRX ? ck('vc_reload_exchange') : false
+    reload_exchange: showRX ? ck('vc_reload_exchange') : false,
+    reload_forever: showRX ? ck('vc_reload_forever') : false
   };
   return { ana, contratto, isEnergia };
 }

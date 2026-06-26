@@ -181,11 +181,28 @@ function normalizeContractInput(contract, index) {
     tipo_acquisto: dispositivoAssociato ? tipoAcquisto : null,
     finanziaria: dispositivoAssociato && tipoAcquisto && tipoAcquisto.toLowerCase() === 'finanziamento' ? finanziaria : null,
     kolme: dispositivoAssociato ? parseBoolean(contract?.kolme, null) : null,
+    // Migration 035 - Smartphone Reload + modalita.
+    // smartphone_reload: bool nullable (true=Si, false=No, null=non specificato).
+    // smartphone_reload_modalita: text nullable, enum {Mantenere attivo, Disattivazione cliente}.
+    // CHECK DB: se smartphone_reload=true, modalita NOT NULL; altrimenti modalita IS NULL.
+    smartphone_reload: dispositivoAssociato ? parseBoolean(contract?.smartphone_reload, null) : null,
+    smartphone_reload_modalita: (() => {
+      if (!dispositivoAssociato) return null;
+      const isSi = parseBoolean(contract?.smartphone_reload, null) === true;
+      if (!isSi) return null;
+      const raw = cleanString(contract?.smartphone_reload_modalita);
+      if (!raw) return null;
+      const allowed = ['Mantenere attivo', 'Disattivazione cliente'];
+      if (!allowed.includes(raw)) {
+        throw new Error(`contratti[${index}].smartphone_reload_modalita non valido (ammessi: ${allowed.join(', ')})`);
+      }
+      return raw;
+    })(),
     // Campi nuovi (Mirox §): predisposizione dei dati extra
     //  - pod_pdr: identificatore contatore (solo Energia)
     //  - numero_contratto_energia: predisposto, popolato a posteriori
     //  - prezzo_fisso: prezzo di vendita per contratti Fisso (chiesto da popup UI)
-    //  - reload_exchange: solo Mobile / Customer Base
+    //  - reload_exchange + reload_forever: solo Mobile / Customer Base (migration 035)
     pod_pdr: cleanString(contract?.pod_pdr) || null,
     numero_contratto_energia: cleanString(contract?.numero_contratto_energia) || null,
     prezzo_fisso: (() => {
@@ -195,6 +212,7 @@ function normalizeContractInput(contract, index) {
       return Number.isFinite(n) ? n : null;
     })(),
     reload_exchange: parseBoolean(contract?.reload_exchange, false) === true,
+    reload_forever: parseBoolean(contract?.reload_forever, false) === true,
     // Convergenza (solo Fisso): uno dei 7 valori ammessi. null per altre categorie o se non fornita.
     // Vedi migration 017_vendita_contratti_convergenza.sql + CHECK constraint a DB.
     convergenza: (() => {
@@ -395,6 +413,16 @@ function validateCategorySpecificRules({ contract, category, offer, index }) {
 
   if (contract.kolme === null) {
     throw new Error(`Campo obbligatorio mancante: contratti[${index}].kolme`);
+  }
+
+  // Migration 035 — Smartphone Reload: la modalita e' obbligatoria solo se Si.
+  // Coerenza con CHECK DB vc_smartphone_reload_coerenza_chk.
+  if (contract.smartphone_reload === true && !contract.smartphone_reload_modalita) {
+    throw new Error(`contratti[${index}].smartphone_reload=Si: smartphone_reload_modalita obbligatoria`);
+  }
+  if (contract.smartphone_reload !== true && contract.smartphone_reload_modalita) {
+    // Sanity: il CHECK DB la rifiuterebbe; meglio normalizzarla qui.
+    contract.smartphone_reload_modalita = null;
   }
 }
 
@@ -904,11 +932,16 @@ exports.handler = async (event) => {
         finanziaria: item.finanziaria,
         kolme: item.kolme,
 
+        // Migration 035 - Smartphone Reload + modalita
+        smartphone_reload: item.smartphone_reload,
+        smartphone_reload_modalita: item.smartphone_reload_modalita,
+
         // Campi extra Mirox (vedi migration 012_contratti_extra_fields.sql)
         pod_pdr: item.pod_pdr,
         numero_contratto_energia: item.numero_contratto_energia,
         prezzo_fisso: item.prezzo_fisso,
         reload_exchange: item.reload_exchange,
+        reload_forever: item.reload_forever,
 
         // Tipo firma (vedi migration 016): solo per categorie PDA. null altrimenti.
         tipo_firma: item.tipo_firma,

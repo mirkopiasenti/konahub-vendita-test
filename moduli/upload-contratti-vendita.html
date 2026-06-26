@@ -1186,12 +1186,22 @@ Dati pre-compilati dall'AI sulla base del PDA caricato. Verifica e correggi prim
 <div class="field">
 <label id="labelOfferta" for="offerta_id">Offerta</label>
 <select id="offerta_id"></select>
+<!-- Reload Exchange + Reload Forever — visibili solo per Mobile/Customer Base.
+     Migration 035: reload_forever boolean NOT NULL DEFAULT false. Allineati
+     sotto la dropdown Offerta come da scelta UX dell'utente. -->
+<div id="fieldReloadFlags" class="hidden" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+<label for="reload_exchange" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:13.5px;color:#0A2540;">
+<input id="reload_exchange" type="checkbox" style="width:18px;height:18px;accent-color:#FF6600;cursor:pointer;">
+Reload Exchange
+</label>
+<label for="reload_forever" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:13.5px;color:#0A2540;">
+<input id="reload_forever" type="checkbox" style="width:18px;height:18px;accent-color:#FF6600;cursor:pointer;">
+Reload Forever
+</label>
+</div>
 </div> <div id="fieldOpzione" class="field hidden">
 <label for="opzione_id">Opzione</label>
 <select id="opzione_id"></select>
-</div> <div id="fieldReload" class="field hidden">
-<label for="reload_id">Reload</label>
-<select id="reload_id"></select>
 </div> <div id="fieldTipoAttivazione" class="field hidden">
 <label for="tipo_attivazione">Tipo Attivazione</label>
 <select id="tipo_attivazione">
@@ -1252,13 +1262,7 @@ Dati pre-compilati dall'AI sulla base del PDA caricato. Verifica e correggi prim
 <option value="Annuale">Annuale</option>
 </select>
 </div>
-<!-- Reload Exchange — visibile solo per Mobile o Customer Base -->
-<div id="fieldReloadExchange" class="field hidden" style="display:flex;align-items:center;">
-<label for="reload_exchange" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:13.5px;color:#0A2540;">
-<input id="reload_exchange" type="checkbox" style="width:18px;height:18px;accent-color:#FF6600;cursor:pointer;">
-Reload Exchange
-</label>
-</div>
+<!-- Reload Exchange + Reload Forever sono ora sotto la dropdown Offerta (vedi fieldReloadFlags) -->
 <!-- Numero contratto Energia: predisposto in DB ma NON visibile/obbligatorio in UI -->
 <input id="numero_contratto_energia" type="hidden" value="">
 </div>
@@ -1298,6 +1302,20 @@ Reload Exchange
 <option value="">Seleziona</option>
 <option value="true">Si</option>
 <option value="false">No</option>
+</select>
+</div> <div id="fieldSmartphoneReload" class="field hidden">
+<label for="smartphone_reload">Smartphone Reload</label>
+<select id="smartphone_reload">
+<option value="">Seleziona</option>
+<option value="true">Si</option>
+<option value="false">No</option>
+</select>
+</div> <div id="fieldSmartphoneReloadModalita" class="field hidden">
+<label for="smartphone_reload_modalita">Modalita Smartphone Reload</label>
+<select id="smartphone_reload_modalita">
+<option value="">Seleziona</option>
+<option value="Mantenere attivo">Mantenere attivo</option>
+<option value="Disattivazione cliente">Disattivazione cliente</option>
 </select>
 </div>
 </div>
@@ -1533,7 +1551,9 @@ Reload Exchange
  categoria: document.getElementById('categoria_id'),
  offerta: document.getElementById('offerta_id'),
  opzione: document.getElementById('opzione_id'),
- reload: document.getElementById('reload_id'),
+ // refs.reload (dropdown catalogo vendita_reload) RIMOSSO 2026-06-26: il catalogo
+ // e' stato dismesso dal wizard e dall'admin (tabella DB vendita_reload + colonna
+ // vendita_contratti.reload_id restano per dati storici, ma non piu' editate).
  tipoAttivazione: document.getElementById('tipo_attivazione'),
  apriChiudi: document.getElementById('apri_chiudi'),
  intestatario: document.getElementById('intestatario'),
@@ -1546,15 +1566,16 @@ Reload Exchange
  tipoAcquisto: document.getElementById('tipo_acquisto'),
  finanziaria: document.getElementById('finanziaria'),
  kolme: document.getElementById('kolme'),
+ smartphoneReload: document.getElementById('smartphone_reload'),
+ smartphoneReloadModalita: document.getElementById('smartphone_reload_modalita'),
 
  fieldOpzione: document.getElementById('fieldOpzione'),
- fieldReload: document.getElementById('fieldReload'),
  fieldTipoAttivazione: document.getElementById('fieldTipoAttivazione'),
  fieldApriChiudi: document.getElementById('fieldApriChiudi'),
  fieldIntestatario: document.getElementById('fieldIntestatario'),
  fieldSwitchSim: document.getElementById('fieldSwitchSim'),
  fieldModalitaPagamento: document.getElementById('fieldModalitaPagamento'),
- // Campi nuovi: POD/PDR (Energia), Reload Exchange (Mobile/Customer Base),
+ // Campi nuovi: POD/PDR (Energia), Reload Exchange + Reload Forever (Mobile/Customer Base, in fieldReloadFlags),
  // Numero contratto Energia (nascosto, predisposizione futura),
  // Prezzo Fisso (chiesto via popup all'avanzamento da step 2 a step 3)
  podPdr: document.getElementById('pod_pdr'),
@@ -1564,7 +1585,8 @@ Reload Exchange
  ricorrenzaAssicurazione: document.getElementById('ricorrenza_assicurazione'),
  fieldRicorrenzaAssicurazione: document.getElementById('fieldRicorrenzaAssicurazione'),
  reloadExchange: document.getElementById('reload_exchange'),
- fieldReloadExchange: document.getElementById('fieldReloadExchange'),
+ reloadForever: document.getElementById('reload_forever'),
+ fieldReloadFlags: document.getElementById('fieldReloadFlags'),
  numeroContrattoEnergia: document.getElementById('numero_contratto_energia'),
  fieldCluster: document.getElementById('fieldCluster'),
  fieldProvincia: document.getElementById('fieldProvincia'),
@@ -1578,6 +1600,8 @@ Reload Exchange
  fieldTipoAcquisto: document.getElementById('fieldTipoAcquisto'),
  fieldFinanziaria: document.getElementById('fieldFinanziaria'),
  fieldKolme: document.getElementById('fieldKolme'),
+ fieldSmartphoneReload: document.getElementById('fieldSmartphoneReload'),
+ fieldSmartphoneReloadModalita: document.getElementById('fieldSmartphoneReloadModalita'),
 
  fileDocumentoIdentita: document.getElementById('file_documento_identita'),
  fileCopiaSimMnp: document.getElementById('file_copia_sim_mnp'),
@@ -1643,6 +1667,34 @@ Reload Exchange
  loadingDetailsText: document.getElementById('loadingDetailsText'),
  loadingTimestamp: document.getElementById('loadingTimestamp')
  };
+
+ // === Shim no-op per catalogo Reload dismesso (2026-06-26) ===
+ // La dropdown #reload_id e il suo wrapper #fieldReload sono stati rimossi dal
+ // DOM. Manteniamo pero' decine di riferimenti `refs.reload.*` e `refs.fieldReload.*`
+ // sparsi nel codice (renderReload, validazioni, draft, payload, ecc.).
+ // Sostituirli uno a uno e' invasivo e regressivo: e' molto piu' sicuro fornire
+ // oggetti fake che assorbono silenziosamente get/set di `.value` e `.classList.toggle`
+ // come no-op. Effetto netto: il codice esistente continua a girare ma il campo
+ // non esiste piu' in UI, non viene mai compilato, e nel payload finale `reload_id`
+ // resta sempre null (gestito nel backend come opzionale). Tabella DB e colonna
+ // FK rimangono per dati storici.
+ const noopClassList = { add() {}, remove() {}, toggle() {}, contains() { return true; } };
+ const noopElement = {
+ value: '',
+ innerHTML: '',
+ options: [],
+ classList: noopClassList,
+ addEventListener() {},
+ removeEventListener() {},
+ dispatchEvent() { return true; },
+ setAttribute() {},
+ removeAttribute() {},
+ getAttribute() { return null; },
+ focus() {}
+ };
+ if (!refs.reload) refs.reload = noopElement;
+ if (!refs.fieldReload) refs.fieldReload = noopElement;
+ if (!refs.fieldReloadExchange) refs.fieldReloadExchange = noopElement;
 
  function setConnectionStatus(status = 'checking', text = 'Verifica...') {
  if (!refs.connectionBadge) return;
@@ -3162,12 +3214,16 @@ Reload Exchange
  const isEnergia = isCategory(categoriaNome, 'Energia');
  refs.fieldPodPdr.classList.toggle('hidden', !isEnergia);
  if (!isEnergia) { refs.podPdr.value = ''; }
- // Reload Exchange: visibile solo per Mobile o Customer Base
+ // Reload Exchange + Reload Forever: visibili solo per Mobile o Customer Base
+ // (allineati esteticamente sotto la dropdown Offerta nel container #fieldReloadFlags).
  const isMobile = isCategory(categoriaNome, 'Mobile');
  const isCustomerBase = isCategory(categoriaNome, 'Customer Base');
- const showReloadExchange = isMobile || isCustomerBase;
- refs.fieldReloadExchange.classList.toggle('hidden', !showReloadExchange);
- if (!showReloadExchange && refs.reloadExchange) { refs.reloadExchange.checked = false; }
+ const showReloadFlags = isMobile || isCustomerBase;
+ if (refs.fieldReloadFlags) refs.fieldReloadFlags.classList.toggle('hidden', !showReloadFlags);
+ if (!showReloadFlags) {
+ if (refs.reloadExchange) refs.reloadExchange.checked = false;
+ if (refs.reloadForever) refs.reloadForever.checked = false;
+ }
  // Campi specifici Assicurazioni: modalita_pagamento_assicurazione + ricorrenza_assicurazione
  const isAssicurazioni = isCategory(categoriaNome, 'Assicurazioni');
  if (refs.fieldModalitaPagamentoAssicurazione) {
@@ -3201,6 +3257,8 @@ Reload Exchange
  refs.tipoAcquisto.value = '';
  refs.finanziaria.value = '';
  refs.kolme.value = '';
+ if (refs.smartphoneReload) refs.smartphoneReload.value = '';
+ if (refs.smartphoneReloadModalita) refs.smartphoneReloadModalita.value = '';
  }
 
  const hasDevice = deviceVisible && refs.dispositivoAssociato.value === 'true';
@@ -3209,12 +3267,22 @@ Reload Exchange
  refs.fieldTipoAcquisto.classList.toggle('hidden', !hasDevice);
  refs.fieldFinanziaria.classList.toggle('hidden', !(hasDevice && refs.tipoAcquisto.value === 'Finanziamento'));
  refs.fieldKolme.classList.toggle('hidden', !hasDevice);
+ // Smartphone Reload: visibile sempre quando hasDevice.
+ // Modalita: visibile solo se smartphone_reload='true' (Si).
+ if (refs.fieldSmartphoneReload) refs.fieldSmartphoneReload.classList.toggle('hidden', !hasDevice);
+ const smartphoneReloadIsSi = hasDevice && refs.smartphoneReload && refs.smartphoneReload.value === 'true';
+ if (refs.fieldSmartphoneReloadModalita) refs.fieldSmartphoneReloadModalita.classList.toggle('hidden', !smartphoneReloadIsSi);
  if (!hasDevice) {
  refs.imei.value = '';
  refs.fasciaPrezzo.value = '';
  refs.tipoAcquisto.value = '';
  refs.finanziaria.value = '';
  refs.kolme.value = '';
+ if (refs.smartphoneReload) refs.smartphoneReload.value = '';
+ if (refs.smartphoneReloadModalita) refs.smartphoneReloadModalita.value = '';
+ } else if (!smartphoneReloadIsSi && refs.smartphoneReloadModalita) {
+ // Se l'operatore cambia smartphone_reload da Si a No/vuoto, azzera la modalita
+ refs.smartphoneReloadModalita.value = '';
  }
 
  refs.fieldFileMnp.classList.toggle('hidden', !mnpVisible);
@@ -3435,6 +3503,14 @@ Reload Exchange
  if (refs.kolme.value === '') {
  throw new Error('Seleziona Kolme (Si/No)');
  }
+
+ // Migration 035 — Smartphone Reload:
+ // se l'operatore ha risposto Si, la modalita e' obbligatoria. Se No/vuoto, nessun vincolo.
+ if (refs.smartphoneReload && refs.smartphoneReload.value === 'true') {
+ if (!refs.smartphoneReloadModalita || !refs.smartphoneReloadModalita.value) {
+ throw new Error('Smartphone Reload = Si: seleziona la modalita (Mantenere attivo / Disattivazione cliente)');
+ }
+ }
  }
 
  const mnpFiles = normalizeFilesArray(selectedFiles.sim_mnp);
@@ -3486,11 +3562,20 @@ Reload Exchange
  kolme: hasDevice
  ? (refs.kolme.value === '' ? null : refs.kolme.value === 'true')
  : null,
+ // Smartphone Reload (migration 035): risposta alla riga "SMARTPHONE RELOAD SI/NO"
+ // del PDA WindTre. true/false/null (Si/No/non specificato). Solo se hasDevice.
+ smartphone_reload: hasDevice && refs.smartphoneReload
+   ? (refs.smartphoneReload.value === '' ? null : refs.smartphoneReload.value === 'true')
+   : null,
+ // Modalita: text enum, obbligatorio quando smartphone_reload=true. Manuale operatore.
+ smartphone_reload_modalita: hasDevice && refs.smartphoneReload && refs.smartphoneReload.value === 'true' && refs.smartphoneReloadModalita
+   ? (refs.smartphoneReloadModalita.value || null)
+   : null,
  // Campi nuovi (Mirox §):
  //  - pod_pdr: solo per Energia
  //  - numero_contratto_energia: hidden, popolato a posteriori
  //  - prezzo_fisso: valorizzato dal popup quando categoria = Fisso (vedi btnStep2Next)
- //  - reload_exchange: solo per Mobile / Customer Base
+ //  - reload_exchange + reload_forever: solo per Mobile / Customer Base (migration 035)
  pod_pdr: isCategory(categoriaNome, 'Energia') ? (refs.podPdr.value.trim() || null) : null,
  numero_contratto_energia: isCategory(categoriaNome, 'Energia')
    ? (refs.numeroContrattoEnergia.value.trim() || null)
@@ -3503,6 +3588,9 @@ Reload Exchange
    : null,
  reload_exchange: (isCategory(categoriaNome, 'Mobile') || isCategory(categoriaNome, 'Customer Base'))
    ? !!(refs.reloadExchange && refs.reloadExchange.checked)
+   : false,
+ reload_forever: (isCategory(categoriaNome, 'Mobile') || isCategory(categoriaNome, 'Customer Base'))
+   ? !!(refs.reloadForever && refs.reloadForever.checked)
    : false,
  // Campi Assicurazioni (vedi migration 021): null per altre categorie
  modalita_pagamento_assicurazione: isCategory(categoriaNome, 'Assicurazioni')
@@ -4186,6 +4274,15 @@ Reload Exchange
  refs.tipoAcquisto.value = item.tipo_acquisto || '';
  refs.finanziaria.value = item.finanziaria || '';
  refs.kolme.value = item.kolme === null ? '' : (item.kolme ? 'true' : 'false');
+ // Smartphone Reload + modalita (migration 035)
+ if (refs.smartphoneReload) {
+ refs.smartphoneReload.value = item.smartphone_reload === null || item.smartphone_reload === undefined
+   ? '' : (item.smartphone_reload ? 'true' : 'false');
+ }
+ if (refs.smartphoneReloadModalita) refs.smartphoneReloadModalita.value = item.smartphone_reload_modalita || '';
+ // Reload Exchange + Reload Forever (migration 035)
+ if (refs.reloadExchange) refs.reloadExchange.checked = item.reload_exchange === true;
+ if (refs.reloadForever) refs.reloadForever.checked = item.reload_forever === true;
  // Campi Assicurazioni (visibili solo se categoria = Assicurazioni)
  if (refs.modalitaPagamentoAssicurazione) refs.modalitaPagamentoAssicurazione.value = item.modalita_pagamento_assicurazione || '';
  if (refs.ricorrenzaAssicurazione) refs.ricorrenzaAssicurazione.value = item.ricorrenza_assicurazione || '';
@@ -4349,12 +4446,16 @@ Reload Exchange
  tipo_acquisto: item.tipo_acquisto,
  finanziaria: item.finanziaria,
  kolme: item.kolme,
+ // Smartphone Reload + modalita (migration 035)
+ smartphone_reload: (item.smartphone_reload === null || item.smartphone_reload === undefined) ? null : (item.smartphone_reload === true),
+ smartphone_reload_modalita: item.smartphone_reload_modalita || null,
  // Campi nuovi propagati al backend (buildInvioPayload)
  pod_pdr: item.pod_pdr || null,
  numero_contratto_energia: item.numero_contratto_energia || null,
  prezzo_fisso: (item.prezzo_fisso !== null && item.prezzo_fisso !== undefined) ? item.prezzo_fisso : null,
  convergenza: item.convergenza || null,
  reload_exchange: item.reload_exchange === true,
+ reload_forever: item.reload_forever === true,
  // PDA in staging: il backend promuovera' temp/<sess>/<file> a <cartella_pratica>/contratto_<categoria>.pdf
  pda_temp_path: item.pda_temp_path || null,
  // Tipo firma (per categorie PDA): 'elettronica' | 'cartacea' | null
@@ -4738,6 +4839,7 @@ Reload Exchange
  refs.apriChiudi.addEventListener('change', renderDynamicSections);
  refs.dispositivoAssociato.addEventListener('change', renderDynamicSections);
  refs.tipoAcquisto.addEventListener('change', renderDynamicSections);
+ if (refs.smartphoneReload) refs.smartphoneReload.addEventListener('change', renderDynamicSections);
 
  function hasUnsavedContractFields() {
  return Boolean(
@@ -4840,12 +4942,16 @@ Reload Exchange
  tipo_acquisto: refs.tipoAcquisto.value || '',
  finanziaria: refs.finanziaria.value || '',
  kolme: refs.kolme.value || '',
+ // Smartphone Reload + modalita (migration 035)
+ smartphone_reload: (refs.smartphoneReload && refs.smartphoneReload.value) || '',
+ smartphone_reload_modalita: (refs.smartphoneReloadModalita && refs.smartphoneReloadModalita.value) || '',
  // Campi nuovi (draft autosave)
  pod_pdr: refs.podPdr ? (refs.podPdr.value || '') : '',
  numero_contratto_energia: refs.numeroContrattoEnergia ? (refs.numeroContrattoEnergia.value || '') : '',
  prezzo_fisso: (refs.numeroContrattoEnergia && refs.numeroContrattoEnergia.dataset.prezzoFisso) || '',
  convergenza: (refs.numeroContrattoEnergia && refs.numeroContrattoEnergia.dataset.convergenza) || '',
  reload_exchange: !!(refs.reloadExchange && refs.reloadExchange.checked),
+ reload_forever: !!(refs.reloadForever && refs.reloadForever.checked),
  modalita_pagamento_assicurazione: refs.modalitaPagamentoAssicurazione ? (refs.modalitaPagamentoAssicurazione.value || '') : '',
  ricorrenza_assicurazione: refs.ricorrenzaAssicurazione ? (refs.ricorrenzaAssicurazione.value || '') : ''
  };
@@ -4966,6 +5072,9 @@ Reload Exchange
  refs.tipoAcquisto.value = contractForm.tipo_acquisto || '';
  refs.finanziaria.value = contractForm.finanziaria || '';
  refs.kolme.value = contractForm.kolme || '';
+ // Smartphone Reload + modalita (migration 035, restore da draft)
+ if (refs.smartphoneReload) refs.smartphoneReload.value = contractForm.smartphone_reload || '';
+ if (refs.smartphoneReloadModalita) refs.smartphoneReloadModalita.value = contractForm.smartphone_reload_modalita || '';
  // Campi nuovi (restore)
  if (refs.podPdr) refs.podPdr.value = contractForm.pod_pdr || '';
  if (refs.numeroContrattoEnergia) {
@@ -4976,6 +5085,7 @@ Reload Exchange
    else delete refs.numeroContrattoEnergia.dataset.convergenza;
  }
  if (refs.reloadExchange) refs.reloadExchange.checked = !!contractForm.reload_exchange;
+ if (refs.reloadForever) refs.reloadForever.checked = !!contractForm.reload_forever;
  if (refs.modalitaPagamentoAssicurazione) refs.modalitaPagamentoAssicurazione.value = contractForm.modalita_pagamento_assicurazione || '';
  if (refs.ricorrenzaAssicurazione) refs.ricorrenzaAssicurazione.value = contractForm.ricorrenza_assicurazione || '';
  renderDynamicSections();
@@ -5300,16 +5410,29 @@ Reload Exchange
  if (ocrData.imei) refs.imei.value = ocrData.imei;
  if (ocrData.tipo_acquisto) refs.tipoAcquisto.value = ocrData.tipo_acquisto;
  if (ocrData.prezzo_device) refs.fasciaPrezzo.value = ocrData.prezzo_device;
+ // Migration 035: smartphone_reload da OCR (true=SI[X], false=NO[X], null=non specificato).
+ // La modalita NON e' nel PDA, resta manuale per l'operatore.
+ if (refs.smartphoneReload && (ocrData.smartphone_reload === true || ocrData.smartphone_reload === false)) {
+ refs.smartphoneReload.value = ocrData.smartphone_reload ? 'true' : 'false';
+ }
 
  refs.fieldImei.classList.remove('hidden');
  refs.fieldFasciaPrezzo.classList.remove('hidden');
  refs.fieldTipoAcquisto.classList.remove('hidden');
  refs.fieldKolme.classList.remove('hidden');
  refs.fieldFinanziaria.classList.toggle('hidden', refs.tipoAcquisto.value !== 'Finanziamento');
+ if (refs.fieldSmartphoneReload) refs.fieldSmartphoneReload.classList.remove('hidden');
+ // Modalita visibile solo se smartphone_reload=Si (operatore poi compila)
+ if (refs.fieldSmartphoneReloadModalita) {
+ refs.fieldSmartphoneReloadModalita.classList.toggle('hidden', refs.smartphoneReload?.value !== 'true');
+ }
 
  runtimeState.ocrDeviceApplied = true;
  if (window.MiroxUI && typeof window.MiroxUI.toast === 'function') {
- window.MiroxUI.toast('Dati dispositivo precompilati dal PDA. Verifica e compila Finanziaria/Kolme.', 'info');
+ const reminderModalita = refs.smartphoneReload?.value === 'true'
+ ? ' + scegli la modalita Smartphone Reload'
+ : '';
+ window.MiroxUI.toast('Dati dispositivo precompilati dal PDA. Verifica e compila Finanziaria/Kolme' + reminderModalita + '.', 'info');
  }
  if (typeof updateScorePreview === 'function') updateScorePreview();
  if (typeof queueDraftSave === 'function') queueDraftSave();
