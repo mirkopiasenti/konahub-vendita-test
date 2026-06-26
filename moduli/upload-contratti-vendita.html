@@ -4399,10 +4399,14 @@ Reload Exchange
  refs.btnAddToCart.disabled = true;
  const uploadResults = [];
  const uploadDebug = [];
+ // payload va dichiarato fuori dal try in modo che il catch sotto possa
+ // accedervi (riferimenti a payload?.cliente?.* nel reportInfo dell'overlay).
+ // In JS le const dichiarate dentro try { } sono block-scoped al try.
+ let payload = null;
  showLoadingOverlay('Caricamento in corso', 'Creazione pratica e contratti...');
 
  try {
- const payload = buildInvioPayload();
+ payload = buildInvioPayload();
  setMessage('Creazione pratica e contratti in corso...', 'info');
  updateLoadingOverlay('Caricamento in corso', 'Creazione pratica e contratti...');
  markTechnicalChecking('Verifica...');
