@@ -10,8 +10,8 @@
 <link rel="stylesheet" href="css/style.css">
 <style>
   .admin-topbar {
-    background: #fff;
-    border-bottom: 1px solid var(--border);
+    background: #1A1F36;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
     padding: 6px 36px;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -39,7 +39,7 @@
   .admin-user-chip {
     display: flex; align-items: center; gap: 10px;
     padding: 5px 14px 5px 5px;
-    background: var(--bg); border-radius: 999px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.08); border-radius: 999px; border: 1px solid rgba(255,255,255,0.12);
   }
   .admin-user-avatar {
     width: 28px; height: 28px; border-radius: 50%;
@@ -47,13 +47,13 @@
     color: #fff; display: flex; align-items: center; justify-content: center;
     font-weight: 700; font-size: 12px;
   }
-  .admin-user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .admin-user-name { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); }
   .admin-btn-logout {
-    background: #fff; border: 1px solid var(--border); color: var(--text-secondary);
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6);
     padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
     cursor: pointer; transition: all 0.2s ease; font-family: inherit;
   }
-  .admin-btn-logout:hover { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+  .admin-btn-logout:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #EF4444; }
 
   .admin-container {
     max-width: 1200px;
