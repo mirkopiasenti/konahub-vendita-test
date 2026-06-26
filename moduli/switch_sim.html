@@ -14,7 +14,7 @@
  :root {
  --windtre-orange: #FF6600;
  --windtre-gray: #58595B;
- --light-gray: #F5F5F5;
+ --light-gray: #EEF3F8;
  --white: #FFFFFF;
  --error-red: #D32F2F;
  --success-green: #388E3C;
@@ -136,10 +136,10 @@
    background: #fff;
    z-index: 2;
    box-shadow: -2px 0 6px rgba(15,23,42,0.05);
-   border-left: 1px solid #e2e8f0;
+   border-left: 1px solid #E3E8EE;
  }
  #pageRiepilogo .data-table thead th.col-azioni {
-   background: #f8fafc;
+   background: #F6F9FC;
  }
  /* Allarga il container principale solo quando siamo su pagine "wide" */
  .container.wide-layout { max-width: 100%; padding: 0 12px; }
@@ -1113,7 +1113,7 @@
  gap: 1rem;
  justify-content: flex-end;
  padding: 2rem;
- background: #f5f5f5;
+ background: #EEF3F8;
  border-radius: 0 0 16px 16px;
  }
 
@@ -1306,7 +1306,7 @@
  }
  
  .ricariche-table tr.effettuata {
- background: #f5f5f5;
+ background: #EEF3F8;
  opacity: 0.7;
  }
  
@@ -1400,7 +1400,7 @@
  }
  
  .modal-ricarica-info {
- background: #f5f5f5;
+ background: #EEF3F8;
  padding: 1rem;
  border-radius: 6px;
  margin-bottom: 1.5rem;
@@ -1560,14 +1560,14 @@
 <div class="form-group">
 <label class="required">Codice Fiscale / P.IVA</label>
 <input type="text" id="anag_vecchio_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
-<small style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori</small>
+<small style="font-size:12px;color:#697386;margin-top:4px;display:block;">Premi TAB o clicca fuori</small>
 </div>
 <div id="anag_vecchio_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
 <div id="anag_vecchio_fields" class="hidden">
 <div class="form-row">
 <div class="form-group">
 <label>Cluster</label>
-<input type="text" id="anag_vecchio_cluster" readonly style="background:#f3f4f6;cursor:not-allowed;">
+<input type="text" id="anag_vecchio_cluster" readonly style="background:#EEF3F8;cursor:not-allowed;">
 </div>
 <div class="form-group">
 <label class="required">Ragione Sociale / Intestatario</label>
@@ -1593,14 +1593,14 @@
 <div class="form-group">
 <label class="required">Codice Fiscale / P.IVA</label>
 <input type="text" id="anag_nuovo_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
-<small style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori</small>
+<small style="font-size:12px;color:#697386;margin-top:4px;display:block;">Premi TAB o clicca fuori</small>
 </div>
 <div id="anag_nuovo_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
 <div id="anag_nuovo_fields" class="hidden">
 <div class="form-row">
 <div class="form-group">
 <label>Cluster</label>
-<input type="text" id="anag_nuovo_cluster" readonly style="background:#f3f4f6;cursor:not-allowed;">
+<input type="text" id="anag_nuovo_cluster" readonly style="background:#EEF3F8;cursor:not-allowed;">
 </div>
 <div class="form-group">
 <label class="required">Ragione Sociale / Intestatario</label>
@@ -1668,15 +1668,15 @@
 </div>
 </div> <!-- Sezione Upload Documenti -->
 <style>
-.mx-drop-zone { border: 2px dashed #cbd5e1; border-radius: 10px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all .2s ease; background: #fafbfc; }
+.mx-drop-zone { border: 2px dashed #C4CDD6; border-radius: 10px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all .2s ease; background: #fafbfc; }
 .mx-drop-zone:hover, .mx-drop-zone.dragover { border-color: #FF6600; background: #FFF3E0; }
 .mx-drop-zone .mx-drop-text { font-weight: 600; color: #475569; font-size: 14px; }
 .mx-drop-zone .mx-drop-hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
 .mx-drop-zone.has-file { border-color: #16a34a; background: #F0FDF4; }
 .mx-drop-zone.has-file .mx-drop-text { color: #047857; }
 .mx-files-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
-.mx-file-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; }
-.mx-file-row .mx-file-name { flex: 1; color: #1e293b; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.mx-file-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #fff; border: 1px solid #E3E8EE; border-radius: 8px; font-size: 13px; }
+.mx-file-row .mx-file-name { flex: 1; color: #0A2540; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
 .mx-file-row .mx-file-remove { background: transparent; border: none; color: #dc2626; cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; }
 </style>
 <div class="section">
@@ -1837,9 +1837,9 @@
 
 <!-- Tab 1°/2° + filtro Mostra OK -->
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
-<div style="display:inline-flex;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:4px;">
+<div style="display:inline-flex;background:#fff;border:1px solid #E3E8EE;border-radius:10px;padding:4px;">
 <button type="button" class="ric-tab active" data-ric-tab="prima" style="padding:9px 22px;font-weight:700;font-size:13px;border:none;background:#FF6600;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">1° Ricarica</button>
-<button type="button" class="ric-tab" data-ric-tab="seconda" style="padding:9px 22px;font-weight:600;font-size:13px;border:none;background:transparent;color:#64748b;border-radius:8px;cursor:pointer;font-family:inherit;">2° Ricarica</button>
+<button type="button" class="ric-tab" data-ric-tab="seconda" style="padding:9px 22px;font-weight:600;font-size:13px;border:none;background:transparent;color:#697386;border-radius:8px;cursor:pointer;font-family:inherit;">2° Ricarica</button>
 </div>
 <label style="display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#475569;cursor:pointer;">
 <input type="checkbox" id="ric-mostra-ok" style="width:16px;height:16px;accent-color:#FF6600;cursor:pointer;">
@@ -1917,7 +1917,7 @@ Mostra anche ricariche in OK
 </div> <div class="form-row">
 <div class="form-group">
 <label>Data Richiesta Switch</label>
-<input type="text" id="dettaglio_dataRichiesta" readonly style="background: #f5f5f5; cursor: not-allowed;">
+<input type="text" id="dettaglio_dataRichiesta" readonly style="background: #EEF3F8; cursor: not-allowed;">
 </div>
 <div class="form-group">
 <label>Operatore</label>
@@ -1946,7 +1946,7 @@ Mostra anche ricariche in OK
 </div>
 <div class="form-group">
 <label>Attuale CF/P.IVA</label>
-<input type="text" id="dettaglio_attualeCFPIVA" readonly style="background: #f5f5f5; cursor: not-allowed;">
+<input type="text" id="dettaglio_attualeCFPIVA" readonly style="background: #EEF3F8; cursor: not-allowed;">
 </div>
 </div> <div class="form-row">
 <div class="form-group">
@@ -1955,7 +1955,7 @@ Mostra anche ricariche in OK
 </div>
 <div class="form-group">
 <label>Nuovo CF/P.IVA</label>
-<input type="text" id="dettaglio_nuovoCFPIVA" readonly style="background: #f5f5f5; cursor: not-allowed;">
+<input type="text" id="dettaglio_nuovoCFPIVA" readonly style="background: #EEF3F8; cursor: not-allowed;">
 </div>
 </div> <div class="form-group">
 <label>Numero MNP</label>
@@ -2004,7 +2004,7 @@ Mostra anche ricariche in OK
 <div class="form-row">
 <div class="form-group">
 <label>Giorno Rientro</label>
-<input type="date" id="dettaglio_giornoRientro" readonly style="background: #f5f5f5; cursor: not-allowed; font-style: italic;">
+<input type="date" id="dettaglio_giornoRientro" readonly style="background: #EEF3F8; cursor: not-allowed; font-style: italic;">
 <small class="field-hint">Auto-calcolato: Portabilità + 61 giorni</small>
 </div>
 <div class="form-group">
@@ -2379,7 +2379,7 @@ Mostra anche ricariche in OK
        document.getElementById('anag_nuovo_fields').style.display = 'block';
        ['anag_nuovo_cfpiva','anag_nuovo_cluster','anag_nuovo_ragione_sociale','anag_nuovo_nome_referente','anag_nuovo_cellulare'].forEach(id => {
          const el = document.getElementById(id);
-         if (el) { el.readOnly = true; el.style.background = '#f3f4f6'; el.style.cursor = 'not-allowed'; }
+         if (el) { el.readOnly = true; el.style.background = '#EEF3F8'; el.style.cursor = 'not-allowed'; }
        });
        anagNuovo.setStatus('= identico all\'Attuale Intestatario', 'info');
        // doc del nuovo intestatario non più richiesto
@@ -2916,7 +2916,7 @@ Mostra anche ricariche in OK
 <td class="${hasNuovoCF ? 'highlight-yellow' : ''}" title="${record.nuovoCFPIVA || ''}">${record.nuovoCFPIVA || '-'}</td>
 <td title="${record.numeroMNP || ''}">${record.numeroMNP || '-'}</td>
 <td title="${record.dataInserimento || ''}">${record.dataInserimento || '-'}</td>
-<td>${record.folderUrl || record.rowIndex ? `<button type="button" class="action-btn" style="background:#fff;border:1px solid #e2e8f0;color:#0f172a;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;" onclick="apriAllegatiSwitchSim(${record.rowIndex})" title="Mostra elenco allegati pratica">Allegati</button>` : '-'}</td>
+<td>${record.folderUrl || record.rowIndex ? `<button type="button" class="action-btn" style="background:#fff;border:1px solid #E3E8EE;color:#0A2540;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;" onclick="apriAllegatiSwitchSim(${record.rowIndex})" title="Mostra elenco allegati pratica">Allegati</button>` : '-'}</td>
 <td style="white-space:nowrap;">
 <button type="button" class="action-btn" style="background:#DCFCE7;color:#047857;border:1px solid #BBF7D0;font-weight:700;margin-right:6px;padding:7px 14px;border-radius:8px;cursor:pointer;" onclick="apriAttivazione(${record.rowIndex})" title="Attiva pratica (apri dettagli)">ATTIVAZIONE</button>
 <button type="button" class="action-btn" style="background:#FEE2E2;color:#b91c1c;border:1px solid #FECACA;font-weight:700;padding:7px 14px;border-radius:8px;cursor:pointer;" onclick="cambiaStatoAttesa(${record.rowIndex}, 'KO')" title="Pratica KO">KO</button>
@@ -3088,7 +3088,7 @@ Mostra anche ricariche in OK
 <td class="${hasNuovoCF ? 'highlight-yellow' : ''}"title="${record.nuovoCFPIVA || ''}">${record.nuovoCFPIVA || '-'}</td>
 <td title="${record.numeroMNP || ''}">${record.numeroMNP || '-'}</td>
 <td title="${record.giornoRientro || ''}">${record.giornoRientro || '-'}</td>
-<td>${record.folderUrl || record.rowIndex ? `<button type="button" class="action-btn" style="background:#fff;border:1px solid #e2e8f0;color:#0f172a;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;" onclick="apriAllegatiSwitchSim(${record.rowIndex})" title="Mostra elenco allegati pratica">Allegati</button>` : '-'}</td>
+<td>${record.folderUrl || record.rowIndex ? `<button type="button" class="action-btn" style="background:#fff;border:1px solid #E3E8EE;color:#0A2540;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;" onclick="apriAllegatiSwitchSim(${record.rowIndex})" title="Mostra elenco allegati pratica">Allegati</button>` : '-'}</td>
 <td class="riepilogo-actions" style="white-space:nowrap;">
 <button type="button" class="action-btn" style="background:#2196F3;color:white;margin-right:.3rem;padding:6px 12px;border-radius:8px;cursor:pointer;border:none;font-weight:600;" onclick="apriDettagli(${record.rowIndex})" title="Apri dettagli tecnici">DETTAGLI</button>
 ${showActions
@@ -3650,7 +3650,7 @@ ${showActions
      const active = b.dataset.ricTab === tab;
      b.classList.toggle('active', active);
      b.style.background = active ? '#FF6600' : 'transparent';
-     b.style.color = active ? '#fff' : '#64748b';
+     b.style.color = active ? '#fff' : '#697386';
      b.style.fontWeight = active ? '700' : '600';
    });
    const col = document.getElementById('ric-col-data');
@@ -3672,7 +3672,7 @@ ${showActions
    if (!tbody) return;
 
    if (allRicariche.length === 0) {
-     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;">Nessuna ricarica da gestire</td></tr>';
+     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9BA8B4;">Nessuna ricarica da gestire</td></tr>';
      return;
    }
 
@@ -3705,7 +3705,7 @@ ${showActions
    });
 
    if (!righe.length) {
-     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;">Nessuna ricarica da visualizzare</td></tr>';
+     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#9BA8B4;">Nessuna ricarica da visualizzare</td></tr>';
      return;
    }
 
@@ -3722,7 +3722,7 @@ ${showActions
        }
      }
      const azione = effettuata
-       ? `<span style="color:#94a3b8;font-size:12px;">${dataEsec || ''} · ${importo || ''}</span>`
+       ? `<span style="color:#9BA8B4;font-size:12px;">${dataEsec || ''} · ${importo || ''}</span>`
        : `<button type="button" class="action-btn" style="background:#DCFCE7;color:#047857;border:1px solid #BBF7D0;font-weight:700;padding:6px 12px;border-radius:8px;cursor:pointer;" onclick="apriRicarica(${r.rowIndex},'${tipo}')">Registra</button>`;
      return `<tr>
        <td><strong>${r.ragioneSociale || '-'}</strong></td>

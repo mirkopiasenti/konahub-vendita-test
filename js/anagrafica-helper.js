@@ -207,7 +207,7 @@
       const el = $('status');
       if (!el) return;
       const colors = { ok: '#047857', warn: '#b45309', err: '#b91c1c', info: '#1d4ed8' };
-      el.style.color = colors[type] || '#0f172a';
+      el.style.color = colors[type] || '#0A2540';
       el.textContent = msg || '';
     }
 
@@ -216,7 +216,7 @@
         const el = $(s);
         if (!el) return;
         el.readOnly = !!readonly;
-        el.style.background = readonly ? '#f3f4f6' : '';
+        el.style.background = readonly ? '#EEF3F8' : '';
         el.style.cursor = readonly ? 'not-allowed' : '';
       });
     }

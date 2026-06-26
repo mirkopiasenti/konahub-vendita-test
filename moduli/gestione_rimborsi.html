@@ -14,7 +14,7 @@
  :root {
  --windtre-orange: #FF6600;
  --windtre-gray: #58595B;
- --light-gray: #F5F5F5;
+ --light-gray: #EEF3F8;
  --white: #FFFFFF;
  --error-red: #D32F2F;
  --success-green: #388E3C;
@@ -277,7 +277,7 @@
  }
 
  table tbody tr:hover {
- background-color: #fafafa;
+ background-color: #F6F9FC;
  }
 
  .status-badge {
@@ -500,7 +500,7 @@
 <div id="alertContainer"></div>
 <!-- Pulsante per registrazione manuale rimborso (no firme, no PDF) -->
 <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
-<button type="button" id="btnRimborsoManuale" class="btn" style="background:#fff;color:#0f172a;border:1px solid #e2e8f0;padding:8px 16px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;" onclick="apriRimborsoManuale()" title="Registra un rimborso senza generare PDF / senza firma cliente">+ Aggiungi rimborso manuale</button>
+<button type="button" id="btnRimborsoManuale" class="btn" style="background:#fff;color:#0A2540;border:1px solid #E3E8EE;padding:8px 16px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;" onclick="apriRimborsoManuale()" title="Registra un rimborso senza generare PDF / senza firma cliente">+ Aggiungi rimborso manuale</button>
 </div>
 <form id="rimborsoForm">
 <div class="form-section">
@@ -509,7 +509,7 @@
 <div class="form-group">
 <label>Codice Fiscale / P.IVA<span class="required">*</span></label>
 <input type="text" id="anag_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
-<small style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori per cercare</small>
+<small style="font-size:12px;color:#697386;margin-top:4px;display:block;">Premi TAB o clicca fuori per cercare</small>
 </div>
 </div>
 <div id="anag_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
@@ -517,7 +517,7 @@
 <div class="form-row">
 <div class="form-group">
 <label>Cluster</label>
-<input type="text" id="anag_cluster" readonly placeholder="Auto" style="background:#f3f4f6;cursor:not-allowed;">
+<input type="text" id="anag_cluster" readonly placeholder="Auto" style="background:#EEF3F8;cursor:not-allowed;">
 </div>
 <div class="form-group">
 <label>Ragione Sociale / Intestatario<span class="required">*</span></label>
@@ -1364,18 +1364,18 @@
    const html = `
      <div style="display:flex;flex-direction:column;gap:14px;">
        <div>
-         <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#0f172a;">Beneficiario (a chi viene corrisposto il rimborso) <span style="color:#FF6600;">*</span></label>
+         <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#0A2540;">Beneficiario (a chi viene corrisposto il rimborso) <span style="color:#FF6600;">*</span></label>
          <input type="text" id="rmManBeneficiario" class="mx-input" placeholder="Es: Mario Rossi" autocomplete="off">
        </div>
        <div>
-         <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#0f172a;">Importo rimborso (€) <span style="color:#FF6600;">*</span></label>
+         <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#0A2540;">Importo rimborso (€) <span style="color:#FF6600;">*</span></label>
          <input type="number" id="rmManImporto" class="mx-input" placeholder="0,00" step="0.01" min="0">
        </div>
        <div>
-         <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#0f172a;">Note (opzionale)</label>
+         <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#0A2540;">Note (opzionale)</label>
          <input type="text" id="rmManNote" class="mx-input" placeholder="Es: rimborso senza contratto associato">
        </div>
-       <p style="margin:0;font-size:12px;color:#64748b;">Questa registrazione NON genera PDF, NON richiede moduli firmati o documenti aggiuntivi.</p>
+       <p style="margin:0;font-size:12px;color:#697386;">Questa registrazione NON genera PDF, NON richiede moduli firmati o documenti aggiuntivi.</p>
      </div>`;
    const footer = `<button type="button" class="mx-btn mx-btn-secondary" data-rm-cancel>Annulla</button>` +
                   `<button type="button" class="mx-btn mx-btn-primary" data-rm-save>Salva rimborso</button>`;

@@ -8,13 +8,13 @@
     --mx-primary-dark: #E55A00;
     --mx-primary-light: #FF8533;
     --mx-primary-bg: #FFF3E0;
-    --mx-text: #0f172a;
-    --mx-text-secondary: #64748b;
-    --mx-text-light: #94a3b8;
-    --mx-bg: #f8fafc;
+    --mx-text: #0A2540;
+    --mx-text-secondary: #697386;
+    --mx-text-light: #9BA8B4;
+    --mx-bg: #F6F9FC;
     --mx-bg-card: #ffffff;
-    --mx-border: #e2e8f0;
-    --mx-border-light: #f1f5f9;
+    --mx-border: #E3E8EE;
+    --mx-border-light: #EEF3F8;
     --mx-success: #22C55E;
     --mx-success-bg: #F0FDF4;
     --mx-warning: #F59E0B;
@@ -23,9 +23,9 @@
     --mx-danger-bg: #FEF2F2;
     --mx-info: #3B82F6;
     --mx-info-bg: #EFF6FF;
-    --mx-shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-    --mx-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    --mx-shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+    --mx-shadow-sm: 0 1px 2px rgba(10,37,64,0.06);
+    --mx-shadow: 0 2px 8px rgba(10,37,64,0.08), 0 1px 2px rgba(10,37,64,0.04);
+    --mx-shadow-lg: 0 8px 30px rgba(10,37,64,0.12);
     --mx-radius: 10px;
     --mx-radius-lg: 14px;
 }
@@ -926,13 +926,13 @@ button.btn-success {
    Binding JS: js/mirox-upload.js (MiroxUpload.bindAll())
    ============================================================ */
 .mx-drop-zone {
-    border: 2px dashed #cbd5e1;
+    border: 2px dashed #C8D4E0;
     border-radius: 10px;
     padding: 22px 16px;
     text-align: center;
     cursor: pointer;
     transition: all .2s ease;
-    background: #fafbfc;
+    background: #F6F9FC;
 }
 .mx-drop-zone:hover,
 .mx-drop-zone.dragover {
@@ -941,12 +941,12 @@ button.btn-success {
 }
 .mx-drop-zone .mx-drop-text {
     font-weight: 600;
-    color: #475569;
+    color: #697386;
     font-size: 14px;
 }
 .mx-drop-zone .mx-drop-hint {
     font-size: 12px;
-    color: #94a3b8;
+    color: #9BA8B4;
     margin-top: 4px;
 }
 .mx-drop-zone.has-file {
@@ -969,13 +969,13 @@ button.btn-success {
     gap: 8px;
     padding: 8px 12px;
     background: #fff;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #E3E8EE;
     border-radius: 8px;
     font-size: 13px;
 }
 .mx-file-row .mx-file-name {
     flex: 1;
-    color: #1e293b;
+    color: #0A2540;
     font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;

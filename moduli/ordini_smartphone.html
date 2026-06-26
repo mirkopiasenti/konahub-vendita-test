@@ -14,7 +14,7 @@
  :root {
  --windtre-orange: #FF6600;
  --windtre-gray: #58595B;
- --light-gray: #F5F5F5;
+ --light-gray: #EEF3F8;
  --white: #FFFFFF;
  --error-red: #D32F2F;
  --success-green: #388E3C;
@@ -621,7 +621,7 @@
 <div class="form-row">
 <div class="form-group">
 <label>Operatore</label>
-<input type="text" id="operatore" readonly style="background:#f3f4f6;cursor:not-allowed;">
+<input type="text" id="operatore" readonly style="background:#EEF3F8;cursor:not-allowed;">
 </div>
 </div>
 </div> <div class="form-section">
@@ -630,7 +630,7 @@
 <div class="form-group">
 <label>Codice Fiscale / P.IVA<span class="required">*</span></label>
 <input type="text" id="anag_cfpiva" required placeholder="Inserisci CF o P.IVA" autocomplete="off" style="text-transform:uppercase">
-<small id="anag_cfpiva_hint" style="font-size:12px;color:#64748b;margin-top:4px;display:block;">Premi TAB o clicca fuori per cercare</small>
+<small id="anag_cfpiva_hint" style="font-size:12px;color:#697386;margin-top:4px;display:block;">Premi TAB o clicca fuori per cercare</small>
 </div>
 </div>
 <div id="anag_status" style="margin:8px 0 12px;font-size:13px;font-weight:600;"></div>
@@ -638,7 +638,7 @@
 <div class="form-row">
 <div class="form-group">
 <label>Cluster</label>
-<input type="text" id="anag_cluster" readonly placeholder="Auto" style="background:#f3f4f6;cursor:not-allowed;">
+<input type="text" id="anag_cluster" readonly placeholder="Auto" style="background:#EEF3F8;cursor:not-allowed;">
 </div>
 <div class="form-group">
 <label>Ragione Sociale / Intestatario<span class="required">*</span></label>
@@ -776,7 +776,7 @@
  function setAnagStatus(msg, type) {
    const el = document.getElementById('anag_status');
    const colors = { ok: '#047857', warn: '#b45309', err: '#b91c1c', info: '#1d4ed8' };
-   el.style.color = colors[type] || '#0f172a';
+   el.style.color = colors[type] || '#0A2540';
    el.textContent = msg || '';
  }
  function setAnagFieldsReadonly(readonly) {
@@ -784,7 +784,7 @@
      const el = document.getElementById(id);
      if (!el) return;
      el.readOnly = !!readonly;
-     el.style.background = readonly ? '#f3f4f6' : '';
+     el.style.background = readonly ? '#EEF3F8' : '';
      el.style.cursor = readonly ? 'not-allowed' : '';
    });
  }
@@ -957,7 +957,7 @@
    if (window.MiroxMailer) {
      try {
        const noteBlock = record.note
-         ? `<div style="background:#fff7ed;border-left:4px solid #FF6600;padding:14px 16px;border-radius:8px;margin-top:18px;"><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Note</div><div style="font-size:14px;line-height:1.5;color:#1e293b;">${record.note}</div></div>`
+         ? `<div style="background:#fff7ed;border-left:4px solid #FF6600;padding:14px 16px;border-radius:8px;margin-top:18px;"><div style="font-size:11px;font-weight:700;color:#9BA8B4;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Note</div><div style="font-size:14px;line-height:1.5;color:#0A2540;">${record.note}</div></div>`
          : '';
        await window.MiroxMailer.send({
          to: 'mirko.piasenti@gmail.com',

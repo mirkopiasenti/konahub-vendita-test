@@ -8,7 +8,7 @@
 <style> * { box-sizing: border-box; }
  body {
  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
- background: #f5f7fa;
+ background: #F6F9FC;
  min-height: 100vh;
  padding: 0;
  line-height: 1.6;
@@ -71,7 +71,7 @@
  }
  .section:last-child { border-bottom: none; }
  .section h3 {
- color: #1f2933;
+ color: #0A2540;
  font-size: 16px;
  font-weight: 600;
  margin-bottom: 12px;
@@ -79,7 +79,7 @@
  select, input {
  width: 100%;
  padding: 12px 14px;
- border: 1px solid #e2e8f0;
+ border: 1px solid #E3E8EE;
  border-radius: 8px;
  font-size: 15px;
  background: #fafbfc;
@@ -97,7 +97,7 @@
  border-radius: 10px;
  padding: 12px 14px;
  font-size: 13px;
- color: #1f2933;
+ color: #0A2540;
  margin: 0 16px 20px;
  }
  .kit-box-title {
@@ -133,10 +133,10 @@
  }
  .device-grid { display: grid; gap: 12px; margin-bottom: 10px; }
  .device-card {
- background: #f8fafc;
+ background: #F6F9FC;
  padding: 10px;
  border-radius: 10px;
- border: 1px solid #e2e8f0;
+ border: 1px solid #E3E8EE;
  display: flex;
  align-items: center;
  gap: 10px;
@@ -156,7 +156,7 @@
  .device-name {
  font-weight: 600;
  font-size: 14px;
- color: #1f2933;
+ color: #0A2540;
  }
  .device-price { font-size: 13px; color: #4b5563; }
  .qty-input {
@@ -170,7 +170,7 @@
  padding: 8px 6px;
  text-align: center;
  font-weight: 600;
- border: 1px solid #cbd5e1;
+ border: 1px solid #C4CDD6;
  border-radius: 6px;
  margin-bottom: 0;
  }
@@ -192,9 +192,9 @@
  .calc-btn { background: #003366; color: white; }
  .calc-btn:hover { background: #00264d; transform: translateY(-1px); }
  .reset-btn {
- background: #f8fafc;
+ background: #F6F9FC;
  color: #374151;
- border: 1px solid #e2e8f0;
+ border: 1px solid #E3E8EE;
  }
  .reset-btn:hover { background: #e5edf5; transform: translateY(-1px); }
  .discount-btn {
@@ -231,7 +231,7 @@
  .live-value {
  font-size: 16px;
  font-weight: 600;
- color: #1f2933;
+ color: #0A2540;
  }
  .disclaimer-live {
  font-size: 10px;
@@ -242,7 +242,7 @@
  }
  .result-card {
  background: #e5edf5;
- color: #1f2933;
+ color: #0A2540;
  padding: 22px;
  margin: 14px 0;
  border-radius: 12px;
@@ -310,8 +310,8 @@
  border-left: 3px solid #f59e0b;
  }
  .print-btn {
- background: #f8fafc;
- border: 1px solid #e2e8f0;
+ background: #F6F9FC;
+ border: 1px solid #E3E8EE;
  color: #374151;
  padding: 12px;
  border-radius: 8px;
@@ -382,24 +382,24 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script> <!-- LOADING OVERLAY -->
 <div id="loadingOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;justify-content:center;align-items:center;">
 <div style="background:#fff;border-radius:16px;padding:32px 40px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-<div style="width:48px;height:48px;border:4px solid #e5e7eb;border-top:4px solid #FF6600;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;"></div>
+<div style="width:48px;height:48px;border:4px solid #E3E8EE;border-top:4px solid #FF6600;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;"></div>
 <div style="font-size:16px;font-weight:600;color:#1a1a2e;">Generazione PDF in corso...</div>
 <div style="font-size:12px;color:#888;margin-top:6px;">Attendere prego</div>
 </div>
 </div> <!-- TRATTATIVE OVERLAY -->
-<div id="trattativeOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#f5f7fa;z-index:9998;overflow-y:auto;">
+<div id="trattativeOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#F6F9FC;z-index:9998;overflow-y:auto;">
 <div style="max-width:700px;margin:0 auto;padding:16px;">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
 <h2 style="margin:0;color:#003366;font-size:20px;">Trattative</h2>
 <button onclick="chiudiTrattative()" style="background:#003366;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">← Torna</button>
 </div>
-<div id="filtroTrattative" style="display:flex;gap:0;background:#fff;border-radius:10px;overflow:hidden;border:2px solid #e5e7eb;margin-bottom:14px;">
+<div id="filtroTrattative" style="display:flex;gap:0;background:#fff;border-radius:10px;overflow:hidden;border:2px solid #E3E8EE;margin-bottom:14px;">
 <button onclick="filtroStato(' In corso')" id="filtro_incorso" class="filtro-btn filtro-attivo" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;"> In Corso</button>
-<button onclick="filtroStato(' Vinto')" id="filtro_vinto" class="filtro-btn" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;border-left:1px solid #e5e7eb;"> Vinto</button>
-<button onclick="filtroStato(' Perso')" id="filtro_perso" class="filtro-btn" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;border-left:1px solid #e5e7eb;"> Perso</button>
+<button onclick="filtroStato(' Vinto')" id="filtro_vinto" class="filtro-btn" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;border-left:1px solid #E3E8EE;"> Vinto</button>
+<button onclick="filtroStato(' Perso')" id="filtro_perso" class="filtro-btn" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;border-left:1px solid #E3E8EE;"> Perso</button>
 </div>
 <div id="trattativeLoading" style="text-align:center;padding:40px;">
-<div style="width:36px;height:36px;border:3px solid #e5e7eb;border-top:3px solid #FF6600;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px;"></div>
+<div style="width:36px;height:36px;border:3px solid #E3E8EE;border-top:3px solid #FF6600;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px;"></div>
 <div style="color:#888;">Caricamento trattative...</div>
 </div>
 <div id="trattativeContent"></div>
@@ -789,7 +789,7 @@
 <div style="font-size:13px;font-weight:600;color:#1a3a5c;margin-bottom:10px;">Dati per il preventivo (obbligatori)</div>
 <input type="text"id="clienteNome"placeholder="Nome e Cognome"style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;">
 <input type="tel"id="clienteTel"placeholder="Numero cellulare"style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;">
-<input type="text"id="operatoreSelect"readonly value="${(window.__profilo?.nome || window.__profilo?.email || '')}"style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;background:#f3f4f6;cursor:not-allowed;">
+<input type="text"id="operatoreSelect"readonly value="${(window.__profilo?.nome || window.__profilo?.email || '')}"style="width:100%;padding:10px;margin-bottom:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;box-sizing:border-box;background:#EEF3F8;cursor:not-allowed;">
 </div>`;
  html += `<button class="print-btn"onclick="generaStampa()"> Scarica PDF Preventivo</button>`;
  document.getElementById('risultati').innerHTML = html;
@@ -895,9 +895,9 @@
  const labelCompAgg = isBusiness ? "COMPONENTI AGGIUNTIVI (prezzi iva)" : "COMPONENTI AGGIUNTIVI";
 
  let html = `
-<div style="max-width:700px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:0;color:#1f2933;">
+<div style="max-width:700px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:0;color:#0A2540;">
 <!-- INTESTAZIONE -->
-<div style="background:#ffffff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e7eb;">
+<div style="background:#ffffff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E3E8EE;">
 <div>
 <img src="${LOGO_IMG}"style="height:60px;width:auto;">
 </div>
@@ -1016,7 +1016,7 @@
  }
 
  html += `
-<div style="margin-top:14px;padding-top:8px;border-top:1px solid #e5e7eb;text-align:center;font-size:8px;color:#9ca3af;letter-spacing:0.3px;"> Preventivo generato il ${new Date().toLocaleDateString('it-IT')} — WindTre Store Legnago — Casa e Negozio Protetti by Protecta
+<div style="margin-top:14px;padding-top:8px;border-top:1px solid #E3E8EE;text-align:center;font-size:8px;color:#9BA8B4;letter-spacing:0.3px;"> Preventivo generato il ${new Date().toLocaleDateString('it-IT')} — WindTre Store Legnago — Casa e Negozio Protetti by Protecta
 </div>
 </div>
 </div>`;

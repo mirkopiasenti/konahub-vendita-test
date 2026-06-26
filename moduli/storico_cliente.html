@@ -13,12 +13,12 @@
   --primary: #FF6600;
   --primary-dark: #E55A00;
   --primary-bg: #FFF3E0;
-  --text: #0f172a;
-  --text-secondary: #64748b;
-  --text-light: #94a3b8;
-  --border: #e2e8f0;
-  --border-light: #f1f5f9;
-  --bg: #f8fafc;
+  --text: #0A2540;
+  --text-secondary: #697386;
+  --text-light: #9BA8B4;
+  --border: #E3E8EE;
+  --border-light: #EEF3F8;
+  --bg: #F6F9FC;
   --bg-card: #ffffff;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -352,8 +352,8 @@ body {
 <!-- VIEW 2: PAGINA DEDICATA CLIENTE (nascosta finché non selezioni un cliente) -->
 <div id="clientView" style="display:none;">
   <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-    <button type="button" id="btnBackToSearch" class="btn-back-internal" onclick="tornaAllaRicerca()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;font-family:inherit;">← Torna alla ricerca</button>
-    <span id="clientBreadcrumb" style="font-size:13px;color:#64748b;font-weight:500;"></span>
+    <button type="button" id="btnBackToSearch" class="btn-back-internal" onclick="tornaAllaRicerca()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#fff;color:#0A2540;border:1px solid #E3E8EE;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;font-family:inherit;">← Torna alla ricerca</button>
+    <span id="clientBreadcrumb" style="font-size:13px;color:#697386;font-weight:500;"></span>
   </div>
   <!-- SCHEDA CLIENTE SELEZIONATA -->
   <div id="clientArea"></div>
@@ -668,8 +668,8 @@ function renderTimeline(storico) {
                   <span class="stato-badge ${statoClasse(op.stato)}">${escapeHtml(op.stato || '-')}</span>
                 </div>
                 <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-                  <button type="button" onclick="apriDettaglioOperazione(${idx})" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;font-family:inherit;">Dettagli</button>
-                  ${hasAllegati ? `<button type="button" onclick="apriAllegatiOperazione(${idx})" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;font-family:inherit;">Allegati</button>` : ''}
+                  <button type="button" onclick="apriDettaglioOperazione(${idx})" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#fff;color:#0A2540;border:1px solid #E3E8EE;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;font-family:inherit;">Dettagli</button>
+                  ${hasAllegati ? `<button type="button" onclick="apriAllegatiOperazione(${idx})" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#fff;color:#0A2540;border:1px solid #E3E8EE;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;font-family:inherit;">Allegati</button>` : ''}
                 </div>
               </div>
             </div>
@@ -715,9 +715,9 @@ async function apriDettaglioOperazione(idx) {
         else if (typeof v === 'object') display = '<code style="font-size:11px;">' + escapeHtml(JSON.stringify(v)) + '</code>';
         else display = escapeHtml(String(v));
         const label = k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        return `<div style="padding:10px 14px;background:#f8fafc;border-left:3px solid #FF6600;border-radius:6px;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;margin-bottom:2px;">${escapeHtml(label)}</div>
-          <div style="font-size:13.5px;color:#0f172a;font-weight:500;word-break:break-word;">${display}</div>
+        return `<div style="padding:10px 14px;background:#F6F9FC;border-left:3px solid #FF6600;border-radius:6px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#697386;margin-bottom:2px;">${escapeHtml(label)}</div>
+          <div style="font-size:13.5px;color:#0A2540;font-weight:500;word-break:break-word;">${display}</div>
         </div>`;
       }).join('');
     const html = `

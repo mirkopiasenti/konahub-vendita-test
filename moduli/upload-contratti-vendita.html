@@ -11,12 +11,12 @@
  --primary: #ff6600;
  --primary-dark: #e55a00;
  --primary-bg: #fff3e0;
- --bg: #f3f4f6;
- --bg-soft: #fafafa;
+ --bg: #F6F9FC;
+ --bg-soft: #F6F9FC;
  --card: #ffffff;
- --border: #e5e7eb;
- --text: #1f2937;
- --muted: #6b7280;
+ --border: #E3E8EE;
+ --text: #0A2540;
+ --muted: #697386;
  --ok: #16a34a;
  --err: #dc2626;
  --info: #2563eb;
@@ -186,7 +186,7 @@
 
  .step-item.disabled {
  opacity: 0.5;
- background: #f3f4f6;
+ background: #F6F9FC;
  }
 
  .firma-cards {
@@ -311,10 +311,10 @@
  .pda-drop {
  display: flex; flex-direction: column; align-items: center; justify-content: center;
  gap: 8px;
- border: 2px dashed #cbd5e1;
+ border: 2px dashed #C4CDD6;
  border-radius: 12px;
  padding: 28px 20px;
- background: #f8fafc;
+ background: #F6F9FC;
  cursor: pointer;
  transition: all .18s ease;
  text-align: center;
@@ -493,7 +493,7 @@
 
  button.ghost:hover {
  background: #f9fafb;
- border-color: #cbd5e1;
+ border-color: #C4CDD6;
  }
 
  button:disabled {
@@ -586,7 +586,7 @@
 
  .cta-secondary:hover {
  background: #f9fafb;
- border-color: #cbd5e1;
+ border-color: #C4CDD6;
  }
 
  .cta-primary {
@@ -649,7 +649,7 @@
  font-size: 12px;
  font-weight: 600;
  border: 1px solid transparent;
- background: #f3f4f6;
+ background: #F6F9FC;
  color: #374151;
  }
 
@@ -723,7 +723,7 @@
  .loading-modal {
  width: min(460px, 94vw);
  background: #fff;
- border: 1px solid #e5e7eb;
+ border: 1px solid #E3E8EE;
  border-radius: 14px;
  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.22);
  padding: 22px 18px;
@@ -736,12 +736,12 @@
  .loading-summary {
  width: 100%;
  text-align: left;
- background: #f8fafc;
- border: 1px solid #e2e8f0;
+ background: #F6F9FC;
+ border: 1px solid #E3E8EE;
  border-radius: 10px;
  padding: 10px;
  font-size: 13px;
- color: #334155;
+ color: #697386;
  display: grid;
  gap: 6px;
  }
@@ -761,21 +761,21 @@
  width: 100%;
  text-align: left;
  font-size: 12px;
- color: #334155;
+ color: #697386;
  }
 
  .loading-details summary {
  cursor: pointer;
  font-weight: 600;
- color: #334155;
+ color: #697386;
  margin-bottom: 8px;
  }
 
  .loading-details pre {
  margin: 0;
  max-height: 180px;
- background: #0f172a;
- color: #e2e8f0;
+ background: #0A2540;
+ color: #E3E8EE;
  font-size: 11px;
  }
 
@@ -838,7 +838,7 @@
 
  .loading-secondary:hover {
  background: #f9fafb;
- border-color: #cbd5e1;
+ border-color: #C4CDD6;
  }
 
  .upload-input-native {
@@ -906,19 +906,19 @@
  margin: 0;
  font-size: 13px;
  font-weight: 700;
- color: #1f2937;
+ color: #0A2540;
  }
 
  .upload-hint {
  margin: 0;
  font-size: 12px;
- color: #6b7280;
+ color: #697386;
  }
 
  .upload-file {
  margin: 0;
  font-size: 12px;
- color: #334155;
+ color: #697386;
  font-weight: 600;
  word-break: break-word;
  white-space: pre-line;
@@ -937,7 +937,7 @@
 
  .upload-clear:hover {
  background: #f9fafb;
- border-color: #cbd5e1;
+ border-color: #C4CDD6;
  }
 
  .loading-spinner {
@@ -958,7 +958,7 @@
  justify-content: center;
  font-size: 22px;
  font-weight: 700;
- background: #f3f4f6;
+ background: #F6F9FC;
  color: #111827;
  }
 
@@ -1106,7 +1106,7 @@
 <div id="categoriaCards" class="categoria-cards"></div>
 <select id="categoria_id" style="display:none"></select>
 <div id="pdaUploadZone" class="hidden" style="margin-top:16px;">
-<h3 style="font-size:15px;margin:0 0 6px;color:#0f172a;">PDA — Pratica di Adesione *</h3>
+<h3 style="font-size:15px;margin:0 0 6px;color:#0A2540;">PDA — Pratica di Adesione *</h3>
 <p class="hint" style="margin:0 0 10px;">Carica il PDF del contratto firmato. Puoi farlo analizzare dall'AI per pre-compilare automaticamente i dati anagrafici, oppure procedere manualmente.</p>
 <label for="file_pda" id="pdaDropZone" class="pda-drop">
 <div class="pda-drop-icon" id="pdaDropIcon">PDF</div>
@@ -1114,7 +1114,7 @@
 <div class="pda-drop-hint" id="pdaDropHint">Solo PDF, max 20 MB</div>
 </label>
 <input id="file_pda" type="file" accept="application/pdf" style="display:none">
-<p id="pdaSelectedInfo" style="margin:8px 0 0;font-size:13px;color:#6b7280;">Nessun file selezionato</p>
+<p id="pdaSelectedInfo" style="margin:8px 0 0;font-size:13px;color:#697386;">Nessun file selezionato</p>
 <p id="pdaOcrStatus" class="hint" style="margin:6px 0 0;display:none;"></p>
 </div>
 </section> <section id="stepAnagraficaSection" class="card panel hidden">
@@ -1254,7 +1254,7 @@ Dati pre-compilati dall'AI sulla base del PDA caricato. Verifica e correggi prim
 </div>
 <!-- Reload Exchange — visibile solo per Mobile o Customer Base -->
 <div id="fieldReloadExchange" class="field hidden" style="display:flex;align-items:center;">
-<label for="reload_exchange" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:13.5px;color:#0f172a;">
+<label for="reload_exchange" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;font-size:13.5px;color:#0A2540;">
 <input id="reload_exchange" type="checkbox" style="width:18px;height:18px;accent-color:#FF6600;cursor:pointer;">
 Reload Exchange
 </label>
@@ -5859,27 +5859,27 @@ Reload Exchange
    const s = document.createElement('style');
    s.id = 'mx-consenso-css';
    s.textContent = `
-.cp-wrap{display:flex;flex-direction:column;gap:14px;font-size:13.5px;color:#0f172a;}
-.cp-section{border:1px solid #e2e8f0;border-radius:10px;padding:14px;background:#f8fafc;}
+.cp-wrap{display:flex;flex-direction:column;gap:14px;font-size:13.5px;color:#0A2540;}
+.cp-section{border:1px solid #E3E8EE;border-radius:10px;padding:14px;background:#F6F9FC;}
 .cp-section h4{margin:0 0 8px;font-size:13px;font-weight:700;color:#FF6600;text-transform:uppercase;letter-spacing:.3px;}
 .cp-section .cp-row{display:flex;justify-content:space-between;gap:8px;padding:4px 0;font-size:13px;}
-.cp-section .cp-row span:first-child{color:#64748b;font-weight:600;}
-.cp-section .cp-row span:last-child{color:#0f172a;text-align:right;word-break:break-word;}
+.cp-section .cp-row span:first-child{color:#697386;font-weight:600;}
+.cp-section .cp-row span:last-child{color:#0A2540;text-align:right;word-break:break-word;}
 .cp-choices{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;}
-.cp-choice{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:18px;border:2px solid #e2e8f0;border-radius:12px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s ease,background .15s ease;}
+.cp-choice{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:18px;border:2px solid #E3E8EE;border-radius:12px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;transition:border-color .15s ease,background .15s ease;}
 .cp-choice:hover{border-color:#FF6600;background:#FFF7ED;}
-.cp-choice .cp-choice-title{font-size:14px;font-weight:700;color:#0f172a;}
-.cp-choice .cp-choice-sub{font-size:12px;color:#64748b;line-height:1.4;}
+.cp-choice .cp-choice-title{font-size:14px;font-weight:700;color:#0A2540;}
+.cp-choice .cp-choice-sub{font-size:12px;color:#697386;line-height:1.4;}
 .cp-choice .cp-choice-badge{font-size:10.5px;font-weight:700;color:#16a34a;background:#DCFCE7;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px;}
 .cp-num{display:flex;align-items:center;gap:8px;}
-.cp-num input{flex:1;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;font-family:inherit;}
+.cp-num input{flex:1;padding:10px 12px;border:1px solid #E3E8EE;border-radius:10px;font-size:14px;font-family:inherit;}
 .cp-num input:focus{outline:none;border-color:#FF6600;box-shadow:0 0 0 3px rgba(255,102,0,.12);}
-.cp-checkbox{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;cursor:pointer;}
+.cp-checkbox{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid #E3E8EE;border-radius:10px;background:#fff;cursor:pointer;}
 .cp-checkbox input{margin-top:3px;flex-shrink:0;width:16px;height:16px;accent-color:#FF6600;}
-.cp-checkbox-text{font-size:12.5px;line-height:1.5;color:#0f172a;}
+.cp-checkbox-text{font-size:12.5px;line-height:1.5;color:#0A2540;}
 .cp-checkbox-text strong{color:#FF6600;}
 .cp-otp-grid{display:flex;gap:8px;justify-content:center;margin:8px 0 4px;}
-.cp-otp-grid input{width:42px;height:48px;text-align:center;font-size:20px;font-weight:700;border:1.5px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;font-family:inherit;}
+.cp-otp-grid input{width:42px;height:48px;text-align:center;font-size:20px;font-weight:700;border:1.5px solid #C4CDD6;border-radius:10px;background:#fff;color:#0A2540;font-family:inherit;}
 .cp-otp-grid input:focus{outline:none;border-color:#FF6600;box-shadow:0 0 0 3px rgba(255,102,0,.12);}
 .cp-status{padding:10px 12px;border-radius:10px;font-size:12.5px;font-weight:600;text-align:center;}
 .cp-status-ok{background:#DCFCE7;color:#15803D;border:1px solid #BBF7D0;}
@@ -5887,9 +5887,9 @@ Reload Exchange
 .cp-status-info{background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;}
 .cp-timer{font-variant-numeric:tabular-nums;font-weight:700;}
 .cp-link{background:transparent;border:none;color:#FF6600;font-weight:600;cursor:pointer;font-size:12.5px;padding:0;text-decoration:underline;}
-.cp-link:disabled{color:#94a3b8;cursor:default;text-decoration:none;}
-.cp-drop{border:2px dashed #cbd5e1;border-radius:12px;padding:24px;text-align:center;cursor:pointer;background:#fff;color:#475569;font-size:13px;}
-.cp-drop.is-over{border-color:#FF6600;background:#FFF7ED;color:#0f172a;}
+.cp-link:disabled{color:#9BA8B4;cursor:default;text-decoration:none;}
+.cp-drop{border:2px dashed #C4CDD6;border-radius:12px;padding:24px;text-align:center;cursor:pointer;background:#fff;color:#697386;font-size:13px;}
+.cp-drop.is-over{border-color:#FF6600;background:#FFF7ED;color:#0A2540;}
 .cp-drop strong{color:#FF6600;}
 .cp-info{background:#FFF7ED;border:1px solid #FED7AA;color:#9A3412;border-radius:10px;padding:12px;font-size:12.5px;line-height:1.5;}
 .cp-info strong{color:#7C2D12;}
@@ -5992,7 +5992,7 @@ Reload Exchange
  function chooseConsensoModality({ cliente }) {
    return new Promise((resolve) => {
      const html = cpBuildClientCard(cliente) + `
-       <div style="margin-top:6px;font-size:13.5px;color:#0f172a;">
+       <div style="margin-top:6px;font-size:13.5px;color:#0A2540;">
          Per archiviare i dati di questo cliente nel CRM Mirox e' richiesto il consenso al trattamento dei dati personali ai sensi dell'art. 13 GDPR. Scegli la modalita' di raccolta:
        </div>
        <div class="cp-choices">
@@ -6036,7 +6036,7 @@ Reload Exchange
            <input type="tel" id="cpOtpCellulare" value="${cpEsc(cliente.cellulare || '')}" placeholder="+39 XXX XXX XXXX" />
            <button type="button" class="mx-btn mx-btn-secondary" id="cpOtpEditNum" style="white-space:nowrap;">Modifica numero</button>
          </div>
-         <div style="font-size:11.5px;color:#64748b;margin-top:6px;">Pre-compilato da anagrafica. Modifica se il numero corretto e' diverso.</div>
+         <div style="font-size:11.5px;color:#697386;margin-top:6px;">Pre-compilato da anagrafica. Modifica se il numero corretto e' diverso.</div>
        </div>
        <label class="cp-checkbox">
          <input type="checkbox" id="cpOtpMarketing" />
@@ -6051,7 +6051,7 @@ Reload Exchange
            <div class="cp-otp-grid" id="cpOtpGrid">
              ${[0,1,2,3,4,5].map(i => `<input type="text" inputmode="numeric" maxlength="1" data-cp-otp="${i}" />`).join('')}
            </div>
-           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:#64748b;">
+           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:#697386;">
              <span>Scadenza: <span class="cp-timer" id="cpOtpTimer">--:--</span></span>
              <button type="button" class="cp-link" id="cpOtpResend">Reinvia SMS</button>
            </div>
@@ -6300,7 +6300,7 @@ Reload Exchange
        </div>
        <div style="display:flex;gap:10px;align-items:center;">
          <button type="button" class="mx-btn mx-btn-primary" id="cpCartDownload">Scarica modulo PDF</button>
-         <span id="cpCartDownloadInfo" style="font-size:12px;color:#64748b;"></span>
+         <span id="cpCartDownloadInfo" style="font-size:12px;color:#697386;"></span>
        </div>
        <div class="cp-section">
          <h4>Carica scansione del modulo firmato</h4>
@@ -6308,7 +6308,7 @@ Reload Exchange
            Trascina qui il PDF della scansione, oppure <strong>clicca per selezionare</strong>.
            <input type="file" id="cpCartFile" accept="application/pdf" style="display:none;" />
          </div>
-         <div id="cpCartFileInfo" style="margin-top:8px;font-size:12.5px;color:#0f172a;display:none;"></div>
+         <div id="cpCartFileInfo" style="margin-top:8px;font-size:12.5px;color:#0A2540;display:none;"></div>
        </div>
        <div id="cpCartStatus" class="cp-status cp-status-info" style="display:none;"></div>
      `;

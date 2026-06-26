@@ -157,30 +157,30 @@
         ];
 
         var rowsHtml = rows.map(function (r) {
-            return '<tr><td style="padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;font-weight:600;color:#475569;white-space:nowrap">'
+            return '<tr><td style="padding:6px 10px;background:#F6F9FC;border:1px solid #E3E8EE;font-weight:600;color:#697386;white-space:nowrap">'
                 + escapeHtml(r[0])
-                + '</td><td style="padding:6px 10px;border:1px solid #e2e8f0;color:#0f172a;word-break:break-word">'
+                + '</td><td style="padding:6px 10px;border:1px solid #E3E8EE;color:#0A2540;word-break:break-word">'
                 + escapeHtml(r[1])
                 + '</td></tr>';
         }).join('');
 
         var sectionTechnical = input.technical
-            ? '<h3 style="margin:18px 0 6px;color:#0f172a;font-size:14px">Dettagli tecnici</h3>'
-              + '<pre style="background:#0f172a;color:#e2e8f0;padding:12px;border-radius:6px;font-size:11px;white-space:pre-wrap;word-break:break-word">'
+            ? '<h3 style="margin:18px 0 6px;color:#0A2540;font-size:14px">Dettagli tecnici</h3>'
+              + '<pre style="background:#0A2540;color:#E3E8EE;padding:12px;border-radius:6px;font-size:11px;white-space:pre-wrap;word-break:break-word">'
               + escapeHtml(input.technical) + '</pre>'
             : '';
 
         var sectionContext = contextStr
-            ? '<h3 style="margin:18px 0 6px;color:#0f172a;font-size:14px">Contesto</h3>'
-              + '<pre style="background:#f1f5f9;color:#0f172a;padding:12px;border-radius:6px;font-size:12px;white-space:pre-wrap;word-break:break-word">'
+            ? '<h3 style="margin:18px 0 6px;color:#0A2540;font-size:14px">Contesto</h3>'
+              + '<pre style="background:#EEF3F8;color:#0A2540;padding:12px;border-radius:6px;font-size:12px;white-space:pre-wrap;word-break:break-word">'
               + escapeHtml(contextStr) + '</pre>'
             : '';
 
-        return '<div style="font-family:Arial,Helvetica,sans-serif;color:#0f172a;max-width:680px">'
+        return '<div style="font-family:Arial,Helvetica,sans-serif;color:#0A2540;max-width:680px">'
             + '<h2 style="margin:0 0 12px;color:#b91c1c;font-size:18px">[MIROX CRM] '
             + escapeHtml(input.title || 'Errore')
             + '</h2>'
-            + '<p style="margin:0 0 12px;color:#334155;font-size:14px">'
+            + '<p style="margin:0 0 12px;color:#697386;font-size:14px">'
             + escapeHtml(input.message || '(nessun messaggio)')
             + '</p>'
             + '<table style="border-collapse:collapse;width:100%;font-size:13px">'
