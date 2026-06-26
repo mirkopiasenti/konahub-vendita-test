@@ -116,8 +116,14 @@ tipo_acquisto: "VAR" o "Finanziamento" (mai altro). Riconosci da 3 segnali conco
 imei: campo "Numero IMEI:" - 15 cifre, solo numero
 prezzo_device: campo "Prezzo device: X.XX euro" - SOLO numero come stringa, usa punto decimale (es. "399.9","1509.90","799.00"). NO "euro", NO simbolo valuta.
 
-Ex device presente: {...,"dispositivo_presente":true,"tipo_acquisto":"VAR","imei":"355297179899755","prezzo_device":"1509.9"}
-Ex device assente: {...,"dispositivo_presente":false,"tipo_acquisto":null,"imei":null,"prezzo_device":null}`;
+=== OUTPUT ===
+DEVI sempre includere TUTTI e 13 i campi nel JSON, anche quelli null. NON omettere mai un campo. NON usare "..." come placeholder.
+
+Esempio privato Mobile con device finanziato:
+{"cf_piva":"RSSMRA85M01H501Z","ragione_sociale":"Mario Rossi","nome_referente":"Mario","cellulare":"3331234567","email":"m.rossi@email.it","provincia":"RM","comune":"Roma","via":"Via Roma","civico":"12","dispositivo_presente":true,"tipo_acquisto":"Finanziamento","imei":"356178252707751","prezzo_device":"399.9"}
+
+Esempio azienda Mobile senza device:
+{"cf_piva":"04971220233","ragione_sociale":"Lucchiari Auto Srl","nome_referente":"Maicol","cellulare":"3520696271","email":"info@lucchiari.it","provincia":"VR","comune":"Sanguinetto","via":"Via Masaglie","civico":"96","dispositivo_presente":false,"tipo_acquisto":null,"imei":null,"prezzo_device":null}`;
 
 const EXPECTED_KEYS = [
   'cf_piva', 'ragione_sociale', 'nome_referente', 'cellulare', 'email',
