@@ -1276,14 +1276,8 @@ Reload Exchange
 <label for="imei">IMEI (15 cifre)</label>
 <input id="imei" inputmode="numeric" autocomplete="off" maxlength="15">
 </div> <div id="fieldFasciaPrezzo" class="field hidden">
-<label for="fascia_prezzo">Fascia Prezzo</label>
-<select id="fascia_prezzo">
-<option value="">Seleziona</option>
-<option value="0-249">0-249</option>
-<option value="250-599">250-599</option>
-<option value="600-1200">600-1200</option>
-<option value="superiore-1200">superiore-1200</option>
-</select>
+<label for="fascia_prezzo">Prezzo Device (euro)</label>
+<input id="fascia_prezzo" type="text" inputmode="decimal" autocomplete="off" placeholder="es. 399.90">
 </div> <div id="fieldTipoAcquisto" class="field hidden">
 <label for="tipo_acquisto">Tipo Acquisto</label>
 <select id="tipo_acquisto">
@@ -1479,7 +1473,12 @@ Reload Exchange
  //                        l'utente naviga avanti/indietro senza cambiare scelta.
  anagraficaId: null,
  pendingReinserimento: null,
- lastReinsCheckKey: null
+ lastReinsCheckKey: null,
+ // OCR PDA: ultimi dati estratti per dispositivo. Quando lastOcrData.dispositivo_presente=true
+ // e la deviceSection diventa visibile (offerta con abilita_dispositivo), maybeApplyOcrDevice
+ // pre-compila toggle/IMEI/tipo_acquisto/prezzo. Il flag impedisce di riapplicare sullo stesso
+ // contratto (resettato in resetContractFields e quando si edita un contratto del carrello).
+ ocrDeviceApplied: false
  };
  const DOC_TYPES = {
  DOCUMENTO_IDENTITA: 'documento_identita',
@@ -3055,7 +3054,10 @@ Reload Exchange
  if (refs.modalitaPagamentoAssicurazione) refs.modalitaPagamentoAssicurazione.value = '';
  if (refs.ricorrenzaAssicurazione) refs.ricorrenzaAssicurazione.value = '';
  // I dati OCR del contratto precedente non valgono per il nuovo
- if (typeof runtimeState !== 'undefined') runtimeState.lastOcrData = null;
+ if (typeof runtimeState !== 'undefined') {
+ runtimeState.lastOcrData = null;
+ runtimeState.ocrDeviceApplied = false;
+ }
  // Migration 033: la scelta reinserimento e' per-contratto. Resettiamo per il prossimo
  // contratto del carrello (lo stesso cliente potrebbe avere piu' candidati separati).
  if (typeof runtimeState !== 'undefined') {
@@ -3232,6 +3234,10 @@ Reload Exchange
  }
 
  updateScorePreview();
+ // Hook OCR: se la deviceSection e' appena diventata visibile e l'OCR aveva un
+ // dispositivo, pre-compila i campi automaticamente. No-op se gia' applicato o
+ // se deviceSection e' hidden.
+ maybeApplyOcrDevice();
  }
 
  function getClienteFormData() {
@@ -3408,9 +3414,15 @@ Reload Exchange
  throw new Error('IMEI obbligatorio e valido (15 cifre) quando dispositivo associato = Si');
  }
 
- if (!refs.fasciaPrezzo.value) {
- throw new Error('Se dispositivo associato = Si, seleziona fascia prezzo');
+ const prezzoRaw = refs.fasciaPrezzo.value.trim().replace(',', '.');
+ if (!prezzoRaw) {
+ throw new Error('Se dispositivo associato = Si, compila il prezzo device (euro)');
  }
+ if (!/^\d+(\.\d{1,2})?$/.test(prezzoRaw)) {
+ throw new Error('Prezzo device non valido: usa formato numerico es. 399.90');
+ }
+ // Normalizza nel campo per coerenza (es. "399,9" -> "399.9")
+ refs.fasciaPrezzo.value = prezzoRaw;
 
  if (!refs.tipoAcquisto.value) {
  throw new Error('Se dispositivo associato = Si, seleziona tipo acquisto');
@@ -4151,6 +4163,9 @@ Reload Exchange
  }
 
  function loadCartContractInForm(item) {
+ // Carichiamo un contratto gia' salvato in carrello: NON riapplicare OCR sopra
+ // le scelte dell'operatore (anche se lastOcrData e' ancora in runtimeState).
+ if (typeof runtimeState !== 'undefined') runtimeState.ocrDeviceApplied = true;
  refs.categoria.value = item.categoria_id || refs.categoria.value;
  renderOfferte();
  refs.offerta.value = item.offerta_id || '';
@@ -5263,6 +5278,41 @@ Reload Exchange
  if (refs.anagraficaOcrBanner) {
  refs.anagraficaOcrBanner.classList.toggle('hidden', !appliedAny);
  }
+
+ // Reset flag dispositivo: nuovo OCR significa nuovo PDA -> riapplica device alla prossima
+ // apertura step 3 con offerta che abilita dispositivo.
+ runtimeState.ocrDeviceApplied = false;
+ }
+
+ // Auto-compila i campi dispositivo (toggle, IMEI, tipo_acquisto, prezzo) dai dati OCR
+ // del PDA. Si attiva solo quando: (a) il PDA aveva dispositivo_presente=true,
+ // (b) la deviceSection e' visibile (l'utente ha scelto un'offerta con abilita_dispositivo),
+ // (c) non e' gia' stato applicato sullo stesso contratto.
+ // finanziaria e kolme NON sono pre-compilati: vanno scelti manualmente dall'operatore
+ // (non sono ricavabili dal PDA).
+ function maybeApplyOcrDevice() {
+ const ocrData = runtimeState.lastOcrData;
+ if (!ocrData || ocrData.dispositivo_presente !== true) return;
+ if (runtimeState.ocrDeviceApplied) return;
+ if (!refs.deviceSection || refs.deviceSection.classList.contains('hidden')) return;
+
+ refs.dispositivoAssociato.value = 'true';
+ if (ocrData.imei) refs.imei.value = ocrData.imei;
+ if (ocrData.tipo_acquisto) refs.tipoAcquisto.value = ocrData.tipo_acquisto;
+ if (ocrData.prezzo_device) refs.fasciaPrezzo.value = ocrData.prezzo_device;
+
+ refs.fieldImei.classList.remove('hidden');
+ refs.fieldFasciaPrezzo.classList.remove('hidden');
+ refs.fieldTipoAcquisto.classList.remove('hidden');
+ refs.fieldKolme.classList.remove('hidden');
+ refs.fieldFinanziaria.classList.toggle('hidden', refs.tipoAcquisto.value !== 'Finanziamento');
+
+ runtimeState.ocrDeviceApplied = true;
+ if (window.MiroxUI && typeof window.MiroxUI.toast === 'function') {
+ window.MiroxUI.toast('Dati dispositivo precompilati dal PDA. Verifica e compila Finanziaria/Kolme.', 'info');
+ }
+ if (typeof updateScorePreview === 'function') updateScorePreview();
+ if (typeof queueDraftSave === 'function') queueDraftSave();
  }
 
  // ===== EVENT HANDLERS =====

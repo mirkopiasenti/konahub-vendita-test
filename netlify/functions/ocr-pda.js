@@ -6,8 +6,13 @@
  * Field 'file': PDF (max 20 MB, application/pdf)
  *
  * Risposta (sempre 200 anche su parsing parziale):
- *   { success: true, data: { cf_piva, ragione_sociale, nome_referente, cellulare,
- *                            email, provincia, comune, via, civico } }
+ *   { success: true, data: {
+ *       // Cliente
+ *       cf_piva, ragione_sociale, nome_referente, cellulare, email,
+ *       provincia, comune, via, civico,
+ *       // Dispositivo (Mobile/Customer Base con device associato)
+ *       dispositivo_presente, tipo_acquisto, imei, prezzo_device
+ *   } }
  * In caso di errore "hard" (file mancante, API down): 4xx / 5xx con { success: false, error }.
  *
  * Env vars:
@@ -87,8 +92,10 @@ function readMultipart(event) {
 }
 
 // Prompt compatto per minimizzare token. Output: SOLO JSON.
-const SYSTEM_PROMPT = `Estrai dati del CLIENTE (non operatore) da contratto IT. Solo JSON, no testo extra.
+const SYSTEM_PROMPT = `Estrai dati del CLIENTE (non operatore) e del DISPOSITIVO da contratto WINDTRE IT. Solo JSON, no testo extra.
 Null se mancante o non sicuro, NON inventare.
+
+=== CLIENTE ===
 cf_piva: CF(16) o PIVA(11), solo valore
 ragione_sociale: nome+cognome (privato) o ragione azienda
 nome_referente: SOLO il nome di battesimo (es. "Mario" da "Mario Rossi"). Per persona fisica: nome del titolare. Per azienda: nome del referente. Mai cognome.
@@ -98,9 +105,26 @@ provincia: sigla 2 lettere maiuscole (VR,MI,RM)
 comune: nome
 via: senza civico
 civico: solo numero (es 12, 12/A)
-Ex: {"cf_piva":"RSSMRA85M01H501Z","ragione_sociale":"Mario Rossi","nome_referente":"Mario","cellulare":"3331234567","email":"m@b.it","provincia":"RM","comune":"Roma","via":"Via Roma","civico":"12"}`;
 
-const EXPECTED_KEYS = ['cf_piva', 'ragione_sociale', 'nome_referente', 'cellulare', 'email', 'provincia', 'comune', 'via', 'civico'];
+=== DISPOSITIVO ===
+dispositivo_presente: true SOLO se il PDA contiene una sezione device con IMEI+prezzo compilati. false altrimenti.
+tipo_acquisto: "VAR" o "Finanziamento" (mai altro). Riconosci da 3 segnali concordi nel PDA:
+  - Titolo pagina device: "Proposta di Adesione Offerta con Finanziamento" -> Finanziamento; "Proposta di Adesione Offerta Vendita a Rate" -> VAR
+  - Header sezione: "OFFERTA CON FINANZIAMENTO" -> Finanziamento; "VENDITA A RATE" -> VAR
+  - Riga "Opzioni/servizi" della SIM: contiene "Vendita con Finanziamento" -> Finanziamento; contiene "Vendita a rate" -> VAR
+  Se i segnali sono in contrasto o assenti -> null.
+imei: campo "Numero IMEI:" - 15 cifre, solo numero
+prezzo_device: campo "Prezzo device: X.XX euro" - SOLO numero come stringa, usa punto decimale (es. "399.9","1509.90","799.00"). NO "euro", NO simbolo valuta.
+
+Ex device presente: {...,"dispositivo_presente":true,"tipo_acquisto":"VAR","imei":"355297179899755","prezzo_device":"1509.9"}
+Ex device assente: {...,"dispositivo_presente":false,"tipo_acquisto":null,"imei":null,"prezzo_device":null}`;
+
+const EXPECTED_KEYS = [
+  'cf_piva', 'ragione_sociale', 'nome_referente', 'cellulare', 'email',
+  'provincia', 'comune', 'via', 'civico',
+  'dispositivo_presente', 'tipo_acquisto', 'imei', 'prezzo_device'
+];
+const BOOLEAN_KEYS = new Set(['dispositivo_presente']);
 
 function emptyResult() {
   const out = {};
@@ -114,9 +138,35 @@ function normalizeResult(raw) {
   EXPECTED_KEYS.forEach((k) => {
     const v = raw[k];
     if (v === null || v === undefined) { out[k] = null; return; }
+    if (BOOLEAN_KEYS.has(k)) {
+      if (v === true || v === 'true' || v === 1 || v === '1') out[k] = true;
+      else if (v === false || v === 'false' || v === 0 || v === '0') out[k] = false;
+      else out[k] = null;
+      return;
+    }
     const s = String(v).trim();
-    out[k] = s === '' ? null : s;
+    if (s === '') { out[k] = null; return; }
+    out[k] = s;
   });
+
+  // Validazione mirata dei nuovi campi device: se il dato OCR e' "sporco",
+  // meglio null che spazzatura nel form (l'operatore vede campo vuoto e
+  // compila a mano, invece di trovarsi un valore plausibile ma errato).
+  if (out.tipo_acquisto && !['VAR', 'Finanziamento'].includes(out.tipo_acquisto)) {
+    out.tipo_acquisto = null;
+  }
+  if (out.imei && !/^\d{15}$/.test(out.imei)) {
+    out.imei = null;
+  }
+  if (out.prezzo_device) {
+    const normalized = out.prezzo_device.replace(',', '.').replace(/[^\d.]/g, '');
+    out.prezzo_device = /^\d+(\.\d{1,2})?$/.test(normalized) ? normalized : null;
+  }
+  // Coerenza: se i 3 campi-chiave sono tutti vuoti, dispositivo_presente=false
+  if (out.dispositivo_presente !== false &&
+      !out.tipo_acquisto && !out.imei && !out.prezzo_device) {
+    out.dispositivo_presente = false;
+  }
   return out;
 }
 
@@ -194,7 +244,7 @@ exports.handler = async (event) => {
 
     const completion = await client.messages.create({
       model: MODEL,
-      max_tokens: 400, // output e' ~200 token, 400 e' cap conservativo per non sprecare token
+      max_tokens: 600, // output ~250-300 token con i campi device, 600 e' cap conservativo
       system: SYSTEM_PROMPT,
       messages: [
         {
@@ -204,7 +254,7 @@ exports.handler = async (event) => {
               type: 'document',
               source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 }
             },
-            { type: 'text', text: 'Estrai dati cliente. Solo JSON.' }
+            { type: 'text', text: 'Estrai dati cliente e dispositivo. Solo JSON.' }
           ]
         }
       ]

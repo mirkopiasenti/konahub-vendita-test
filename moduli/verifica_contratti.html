@@ -624,11 +624,8 @@ function apriPopupDettaglio(c, opts) {
           </select>
         </div>
         <div class="det-field" id="vc_field_imei"><label>IMEI (15 cifre)</label><input type="text" id="vc_imei" maxlength="15" value="${escapeHtml(c.imei || '')}" ${ro}></div>
-        <div class="det-field" id="vc_field_fascia"><label>Fascia Prezzo</label>
-          <select id="vc_fascia_prezzo" ${disabled}>
-            <option value="">—</option>
-            ${['0-249','250-599','600-1200','superiore-1200'].map(v => `<option value="${v}" ${c.fascia_prezzo === v ? 'selected' : ''}>${v}</option>`).join('')}
-          </select>
+        <div class="det-field" id="vc_field_fascia"><label>Prezzo Device (euro)</label>
+          <input type="text" id="vc_fascia_prezzo" inputmode="decimal" placeholder="es. 399.90" value="${escapeHtml(c.fascia_prezzo || '')}" ${ro}>
         </div>
         <div class="det-field" id="vc_field_tipo_acq"><label>Tipo Acquisto</label>
           <select id="vc_tipo_acquisto" ${disabled}>
