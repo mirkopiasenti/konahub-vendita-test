@@ -793,6 +793,17 @@ function apriPopupDettaglio(c, opts) {
     // Su cambio tipo acquisto → rivaluta finanziaria
     const ta = document.getElementById('vc_tipo_acquisto');
     if (ta) ta.addEventListener('change', applyVisibilityRules);
+    // Migration 035: cambio smartphone_reload → mostra/nascondi modalita
+    const sr = document.getElementById('vc_smartphone_reload');
+    if (sr) sr.addEventListener('change', () => {
+      // Quando smartphone_reload passa a No o vuoto, azzera la modalita
+      // (CHECK DB vc_smartphone_reload_coerenza_chk impone modalita NOT NULL solo se Si)
+      if (sr.value !== 'true') {
+        const m = document.getElementById('vc_smartphone_reload_modalita');
+        if (m) m.value = '';
+      }
+      applyVisibilityRules();
+    });
   }
 }
 
@@ -1076,6 +1087,15 @@ async function confermaVerifica(id) {
   if (isEnergia && !contratto.ex_fornitore) {
     await window.MiroxUI.alert('Per i contratti Energia è obbligatorio inserire l\'<strong>Ex Fornitore</strong> prima di poter confermare la verifica.', { type: 'warning', title: 'Campo obbligatorio', html: true });
     const inp = document.getElementById('vc_ex_fornitore');
+    if (inp) inp.focus();
+    return;
+  }
+  // Migration 035: se smartphone_reload=Si, la modalita e' obbligatoria.
+  // Altrimenti il CHECK DB vc_smartphone_reload_coerenza_chk rifiuta l'UPDATE
+  // con un errore poco leggibile dal client.
+  if (contratto.smartphone_reload === true && !contratto.smartphone_reload_modalita) {
+    await window.MiroxUI.alert('Hai impostato <strong>Smartphone Reload = Si</strong>: seleziona la <strong>Modalita</strong> (Mantenere attivo / Disattivazione cliente) prima di confermare.', { type: 'warning', title: 'Modalita Smartphone Reload obbligatoria', html: true });
+    const inp = document.getElementById('vc_smartphone_reload_modalita');
     if (inp) inp.focus();
     return;
   }
