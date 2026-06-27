@@ -418,6 +418,19 @@
       <div class="action-square-label">Call Center</div>
     </a>
 
+    <a class="action-square disabled" href="#" id="btnAppuntamentiOggi" onclick="return false;">
+      <div class="action-square-icon">
+        <svg viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+          <circle cx="12" cy="16" r="2"/>
+        </svg>
+      </div>
+      <div class="action-square-label">Appuntamenti Oggi</div>
+    </a>
+
     <a class="action-square disabled" href="#" id="btnAdmin" onclick="return false;">
       <div class="action-square-icon">
         <svg viewBox="0 0 24 24">
@@ -475,6 +488,20 @@
         }
       } catch(e) {
         console.error('Errore setup bottone Call Center:', e);
+      }
+
+      // Bottone Appuntamenti Oggi: attivo se ha permesso appuntamenti_oggi o è admin
+      try {
+        const isAdmin = profilo.ruolo === 'admin';
+        const perms = profilo.pagine_accessibili || {};
+        const btnAppoOggi = document.getElementById('btnAppuntamentiOggi');
+        if (btnAppoOggi && (isAdmin || perms['appuntamenti_oggi'] === true)) {
+          btnAppoOggi.classList.remove('disabled');
+          btnAppoOggi.setAttribute('href', 'moduli/call-center/appuntamenti-oggi.html');
+          btnAppoOggi.onclick = null;
+        }
+      } catch(e) {
+        console.error('Errore setup bottone Appuntamenti Oggi:', e);
       }
 
       // Aggiorna badge ticket aperti
