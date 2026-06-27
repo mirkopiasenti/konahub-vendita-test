@@ -191,6 +191,7 @@ const Notifiche = {
      * Scompare solo cliccando il pulsante di chiusura.
      */
     mostraPopupSeNecessario() {
+        if (new URLSearchParams(window.location.search).get('skip_notifiche')) return;
         if (this._conteggio === 0) return;
         const chiavePopup = 'mirox_notifiche_popup_' + Auth.getId();
         if (sessionStorage.getItem(chiavePopup)) return;

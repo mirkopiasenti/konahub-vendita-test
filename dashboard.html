@@ -498,7 +498,7 @@
         const btnAppoOggi = document.getElementById('btnAppuntamentiOggi');
         if (btnAppoOggi && (isAdmin || perms['appuntamenti_oggi'] === true)) {
           btnAppoOggi.classList.remove('disabled');
-          btnAppoOggi.setAttribute('href', 'moduli/call-center/appuntamenti-oggi.html');
+          btnAppoOggi.setAttribute('href', 'moduli/call-center/appuntamenti-oggi.html?skip_notifiche=1');
           btnAppoOggi.onclick = null;
         }
       } catch(e) {
