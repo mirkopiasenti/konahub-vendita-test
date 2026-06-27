@@ -401,8 +401,13 @@ function validateCategorySpecificRules({ contract, category, offer, index }) {
     throw new Error(`Campo obbligatorio mancante: contratti[${index}].fascia_prezzo`);
   }
 
-  // tipo_acquisto: obbligatorio per Mobile/Customer Base; opzionale per Fisso FWA Indoor
-  if (!contract.tipo_acquisto && !isFwaIndoor) {
+  // tipo_acquisto: obbligatorio per Mobile/Customer Base.
+  // Per Fisso FWA Indoor e' SEMPRE 'VAR' (modem a rate, mai finanziamento) -
+  // il wizard lo blocca lato UI, qui lo forziamo come safety net server-side.
+  if (isFwaIndoor) {
+    contract.tipo_acquisto = 'VAR';
+    contract.finanziaria = null;
+  } else if (!contract.tipo_acquisto) {
     throw new Error(`Campo obbligatorio mancante: contratti[${index}].tipo_acquisto`);
   }
 

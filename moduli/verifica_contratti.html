@@ -874,9 +874,19 @@ function applyVisibilityRules() {
   _show('vc_field_imei', hasDevice);
   _show('vc_field_fascia', hasDevice);
   _show('vc_field_tipo_acq', hasDevice);
-  // Finanziaria solo se tipo acquisto = Finanziamento
+  // FWA Indoor: dispositivo_associato + tipo_acquisto bloccati e fissi.
+  const dispEl = document.getElementById('vc_dispositivo_associato');
+  const taEl = document.getElementById('vc_tipo_acquisto');
+  if (isFwaIndoor) {
+    if (dispEl) { dispEl.value = 'true'; dispEl.disabled = true; }
+    if (taEl) { taEl.value = 'VAR'; taEl.disabled = true; }
+  } else {
+    if (dispEl) dispEl.disabled = false;
+    if (taEl) taEl.disabled = false;
+  }
+  // Finanziaria solo se tipo acquisto = Finanziamento (mai per FWA Indoor)
   const tipoAcq = (document.getElementById('vc_tipo_acquisto') || {}).value || '';
-  _show('vc_field_finanziaria', hasDevice && tipoAcq === 'Finanziamento');
+  _show('vc_field_finanziaria', hasDevice && !isFwaIndoor && tipoAcq === 'Finanziamento');
   // Kolme + Smartphone Reload + modalita: nascosti per FWA Indoor (modem)
   _show('vc_field_kolme', hasDevice && !isFwaIndoor);
   _show('vc_field_smartphone_reload', hasDevice && !isFwaIndoor);

@@ -3270,16 +3270,19 @@ Reload Forever
  if (refs.smartphoneReloadModalita) refs.smartphoneReloadModalita.value = '';
  }
 
- // Fisso FWA Indoor: il dispositivo (modem) e' SEMPRE associato. Forza il
- // dropdown a 'true' e disabilita l'edit. Inoltre Kolme e Smartphone Reload
- // non sono rilevanti per il modem FWA, vengono nascosti dal blocco device
- // (vedi piu' sotto).
+ // Fisso FWA Indoor: il dispositivo (modem) e' SEMPRE associato e il tipo
+ // acquisto e' SEMPRE VAR (acquisto a rate del modem, niente finanziamento).
+ // Forza entrambi i dropdown e disabilita l'edit. Inoltre Kolme e Smartphone
+ // Reload non sono rilevanti per il modem FWA, vengono nascosti (vedi sotto).
  const fwaIndoor = deviceVisible && isFwaIndoor();
  if (fwaIndoor) {
  refs.dispositivoAssociato.value = 'true';
  refs.dispositivoAssociato.disabled = true;
+ refs.tipoAcquisto.value = 'VAR';
+ refs.tipoAcquisto.disabled = true;
  } else {
  refs.dispositivoAssociato.disabled = false;
+ refs.tipoAcquisto.disabled = false;
  }
 
  const hasDevice = deviceVisible && refs.dispositivoAssociato.value === 'true';
