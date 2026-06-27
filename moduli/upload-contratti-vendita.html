@@ -3192,9 +3192,8 @@ Reload Forever
  const categoriaNome = getCategoriaName();
  const offertaNome = getOffertaName();
  const opzioniDisponibili = filteredOpzioni();
- renderReload({ preserveCurrent: true });
- const reloadDisponibili = filteredReload();
- const reloadVisible = reloadDisponibili.length> 0;
+ // Migration 035: catalogo Reload dismesso, niente render dropdown ne' calcolo visibility
+ const reloadVisible = false;
  const deviceVisible = shouldShowDevice();
  const switchSimVisible = shouldShowSwitchSim();
  const opzioneVisible = shouldShowOpzione(categoriaNome, opzioniDisponibili);
@@ -3392,7 +3391,9 @@ Reload Forever
  // campi → indipendente dalla pagina corrente del wizard.
  const opzioniDisponibili = filteredOpzioni();
  const opzioneVisible = shouldShowOpzione(categoriaNome, opzioniDisponibili);
- const reloadVisible = filteredReload().length > 0;
+ // Migration 035: catalogo Reload dismesso. La dropdown non e' piu' nel DOM,
+ // quindi qualunque validazione "Seleziona una reload" bloccherebbe il submit.
+ const reloadVisible = false;
  const switchSimVisible = shouldShowSwitchSim();
  const tipoAttivazioneVisible = isFisso;
  const apriChiudiVisible = isFisso;
