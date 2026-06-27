@@ -387,6 +387,12 @@ function validateCategorySpecificRules({ contract, category, offer, index }) {
     return;
   }
 
+  // Riconosce l'offerta Fisso "FWA Indoor" (case-insensitive, match parziale)
+  // sul nome offerta. Per FWA Indoor: il device (modem) e' sempre associato,
+  // ma tipo_acquisto + kolme + smartphone_reload non sono rilevanti.
+  const offerName = String(offer?.nome_offerta || '').toLowerCase();
+  const isFwaIndoor = categoryName === 'fisso' && offerName.includes('fwa') && offerName.includes('indoor');
+
   if (!contract.imei || !/^\d{15}$/.test(contract.imei)) {
     throw new Error(`IMEI non valido per contratti[${index}]: richieste 15 cifre`);
   }
@@ -395,7 +401,8 @@ function validateCategorySpecificRules({ contract, category, offer, index }) {
     throw new Error(`Campo obbligatorio mancante: contratti[${index}].fascia_prezzo`);
   }
 
-  if (!contract.tipo_acquisto) {
+  // tipo_acquisto: obbligatorio per Mobile/Customer Base; opzionale per Fisso FWA Indoor
+  if (!contract.tipo_acquisto && !isFwaIndoor) {
     throw new Error(`Campo obbligatorio mancante: contratti[${index}].tipo_acquisto`);
   }
 
@@ -411,7 +418,14 @@ function validateCategorySpecificRules({ contract, category, offer, index }) {
     contract.finanziaria = null;
   }
 
-  if (contract.kolme === null) {
+  // kolme: obbligatorio per Mobile/Customer Base (device con telefono).
+  // Per Fisso FWA Indoor (modem) e' opzionale: il wizard nasconde il campo
+  // e il backend lo forza a NULL.
+  if (isFwaIndoor) {
+    contract.kolme = null;
+    contract.smartphone_reload = null;
+    contract.smartphone_reload_modalita = null;
+  } else if (contract.kolme === null) {
     throw new Error(`Campo obbligatorio mancante: contratti[${index}].kolme`);
   }
 

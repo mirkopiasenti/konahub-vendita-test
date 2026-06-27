@@ -2841,6 +2841,16 @@ Reload Forever
  return getSelectedOfferta()?.nome_offerta || '';
  }
 
+ // Riconosce l'offerta Fisso "FWA Indoor" (case-insensitive, match parziale).
+ // Quando attiva, il wizard forza dispositivo_associato=Si e nasconde Kolme +
+ // Smartphone Reload + modalita (dati non rilevanti per modem FWA).
+ function isFwaIndoor() {
+ const nome = getOffertaName();
+ if (!nome) return false;
+ const n = normalizeText(nome);
+ return n.includes('fwa') && n.includes('indoor');
+ }
+
  function isCategory(nome, expected) {
  return normalizeText(nome) === normalizeText(expected);
  }
@@ -3260,22 +3270,38 @@ Reload Forever
  if (refs.smartphoneReloadModalita) refs.smartphoneReloadModalita.value = '';
  }
 
+ // Fisso FWA Indoor: il dispositivo (modem) e' SEMPRE associato. Forza il
+ // dropdown a 'true' e disabilita l'edit. Inoltre Kolme e Smartphone Reload
+ // non sono rilevanti per il modem FWA, vengono nascosti dal blocco device
+ // (vedi piu' sotto).
+ const fwaIndoor = deviceVisible && isFwaIndoor();
+ if (fwaIndoor) {
+ refs.dispositivoAssociato.value = 'true';
+ refs.dispositivoAssociato.disabled = true;
+ } else {
+ refs.dispositivoAssociato.disabled = false;
+ }
+
  const hasDevice = deviceVisible && refs.dispositivoAssociato.value === 'true';
  refs.fieldImei.classList.toggle('hidden', !hasDevice);
  refs.fieldFasciaPrezzo.classList.toggle('hidden', !hasDevice);
  refs.fieldTipoAcquisto.classList.toggle('hidden', !hasDevice);
  refs.fieldFinanziaria.classList.toggle('hidden', !(hasDevice && refs.tipoAcquisto.value === 'Finanziamento'));
- refs.fieldKolme.classList.toggle('hidden', !hasDevice);
- // Smartphone Reload: visibile sempre quando hasDevice.
- // Modalita: visibile solo se smartphone_reload='true' (Si).
- if (refs.fieldSmartphoneReload) refs.fieldSmartphoneReload.classList.toggle('hidden', !hasDevice);
- const smartphoneReloadIsSi = hasDevice && refs.smartphoneReload && refs.smartphoneReload.value === 'true';
+ // Kolme + Smartphone Reload non rilevanti per FWA Indoor (modem)
+ refs.fieldKolme.classList.toggle('hidden', !hasDevice || fwaIndoor);
+ if (refs.fieldSmartphoneReload) refs.fieldSmartphoneReload.classList.toggle('hidden', !hasDevice || fwaIndoor);
+ const smartphoneReloadIsSi = hasDevice && !fwaIndoor && refs.smartphoneReload && refs.smartphoneReload.value === 'true';
  if (refs.fieldSmartphoneReloadModalita) refs.fieldSmartphoneReloadModalita.classList.toggle('hidden', !smartphoneReloadIsSi);
  if (!hasDevice) {
  refs.imei.value = '';
  refs.fasciaPrezzo.value = '';
  refs.tipoAcquisto.value = '';
  refs.finanziaria.value = '';
+ refs.kolme.value = '';
+ if (refs.smartphoneReload) refs.smartphoneReload.value = '';
+ if (refs.smartphoneReloadModalita) refs.smartphoneReloadModalita.value = '';
+ } else if (fwaIndoor) {
+ // FWA Indoor: kolme e smartphone_reload non si raccolgono, azzero
  refs.kolme.value = '';
  if (refs.smartphoneReload) refs.smartphoneReload.value = '';
  if (refs.smartphoneReloadModalita) refs.smartphoneReloadModalita.value = '';
@@ -3501,6 +3527,10 @@ Reload Forever
  throw new Error('Con tipo acquisto Finanziamento devi selezionare la finanziaria');
  }
 
+ // Fisso FWA Indoor: kolme e smartphone_reload non sono rilevanti per il modem,
+ // saltiamo le validazioni (i campi sono nascosti in UI).
+ const fwaIndoorVal = isFwaIndoor();
+ if (!fwaIndoorVal) {
  if (refs.kolme.value === '') {
  throw new Error('Seleziona Kolme (Si/No)');
  }
@@ -3510,6 +3540,7 @@ Reload Forever
  if (refs.smartphoneReload && refs.smartphoneReload.value === 'true') {
  if (!refs.smartphoneReloadModalita || !refs.smartphoneReloadModalita.value) {
  throw new Error('Smartphone Reload = Si: seleziona la modalita (Mantenere attivo / Disattivazione cliente)');
+ }
  }
  }
  }
@@ -3560,16 +3591,17 @@ Reload Forever
  fascia_prezzo: hasDevice ? refs.fasciaPrezzo.value || null : null,
  tipo_acquisto: hasDevice ? refs.tipoAcquisto.value || null : null,
  finanziaria: hasDevice && refs.tipoAcquisto.value === 'Finanziamento' ? refs.finanziaria.value || null : null,
- kolme: hasDevice
+ // Kolme: NULL per FWA Indoor (campo nascosto). Per altre offerte con device, boolean da dropdown.
+ kolme: hasDevice && !isFwaIndoor()
  ? (refs.kolme.value === '' ? null : refs.kolme.value === 'true')
  : null,
  // Smartphone Reload (migration 035): risposta alla riga "SMARTPHONE RELOAD SI/NO"
- // del PDA WindTre. true/false/null (Si/No/non specificato). Solo se hasDevice.
- smartphone_reload: hasDevice && refs.smartphoneReload
+ // del PDA WindTre. NULL per FWA Indoor (campo nascosto, modem FWA non ha l'opzione).
+ smartphone_reload: hasDevice && !isFwaIndoor() && refs.smartphoneReload
    ? (refs.smartphoneReload.value === '' ? null : refs.smartphoneReload.value === 'true')
    : null,
- // Modalita: text enum, obbligatorio quando smartphone_reload=true. Manuale operatore.
- smartphone_reload_modalita: hasDevice && refs.smartphoneReload && refs.smartphoneReload.value === 'true' && refs.smartphoneReloadModalita
+ // Modalita: text enum, obbligatorio quando smartphone_reload=true. NULL per FWA Indoor.
+ smartphone_reload_modalita: hasDevice && !isFwaIndoor() && refs.smartphoneReload && refs.smartphoneReload.value === 'true' && refs.smartphoneReloadModalita
    ? (refs.smartphoneReloadModalita.value || null)
    : null,
  // Campi nuovi (Mirox §):
@@ -5411,29 +5443,31 @@ Reload Forever
  if (ocrData.imei) refs.imei.value = ocrData.imei;
  if (ocrData.tipo_acquisto) refs.tipoAcquisto.value = ocrData.tipo_acquisto;
  if (ocrData.prezzo_device) refs.fasciaPrezzo.value = ocrData.prezzo_device;
- // Migration 035: smartphone_reload da OCR (true=SI[X], false=NO[X], null=non specificato).
- // La modalita NON e' nel PDA, resta manuale per l'operatore.
- if (refs.smartphoneReload && (ocrData.smartphone_reload === true || ocrData.smartphone_reload === false)) {
+
+ // FWA Indoor: device sempre Si, ma Kolme + Smartphone Reload nascosti e non rilevanti.
+ const fwaIndoorOcr = isFwaIndoor();
+ if (!fwaIndoorOcr && refs.smartphoneReload && (ocrData.smartphone_reload === true || ocrData.smartphone_reload === false)) {
  refs.smartphoneReload.value = ocrData.smartphone_reload ? 'true' : 'false';
  }
 
  refs.fieldImei.classList.remove('hidden');
  refs.fieldFasciaPrezzo.classList.remove('hidden');
  refs.fieldTipoAcquisto.classList.remove('hidden');
- refs.fieldKolme.classList.remove('hidden');
  refs.fieldFinanziaria.classList.toggle('hidden', refs.tipoAcquisto.value !== 'Finanziamento');
- if (refs.fieldSmartphoneReload) refs.fieldSmartphoneReload.classList.remove('hidden');
+ refs.fieldKolme.classList.toggle('hidden', fwaIndoorOcr);
+ if (refs.fieldSmartphoneReload) refs.fieldSmartphoneReload.classList.toggle('hidden', fwaIndoorOcr);
  // Modalita visibile solo se smartphone_reload=Si (operatore poi compila)
  if (refs.fieldSmartphoneReloadModalita) {
- refs.fieldSmartphoneReloadModalita.classList.toggle('hidden', refs.smartphoneReload?.value !== 'true');
+ refs.fieldSmartphoneReloadModalita.classList.toggle('hidden', fwaIndoorOcr || refs.smartphoneReload?.value !== 'true');
  }
 
  runtimeState.ocrDeviceApplied = true;
  if (window.MiroxUI && typeof window.MiroxUI.toast === 'function') {
- const reminderModalita = refs.smartphoneReload?.value === 'true'
- ? ' + scegli la modalita Smartphone Reload'
- : '';
- window.MiroxUI.toast('Dati dispositivo precompilati dal PDA. Verifica e compila Finanziaria/Kolme' + reminderModalita + '.', 'info');
+ const msg = fwaIndoorOcr
+ ? 'Dati modem FWA Indoor precompilati dal PDA (IMEI + Prezzo).'
+ : 'Dati dispositivo precompilati dal PDA. Verifica e compila Finanziaria/Kolme'
+   + (refs.smartphoneReload?.value === 'true' ? ' + scegli la modalita Smartphone Reload' : '') + '.';
+ window.MiroxUI.toast(msg, 'info');
  }
  if (typeof updateScorePreview === 'function') updateScorePreview();
  if (typeof queueDraftSave === 'function') queueDraftSave();

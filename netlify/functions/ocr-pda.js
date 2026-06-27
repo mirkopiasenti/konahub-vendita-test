@@ -115,9 +115,15 @@ tipo_acquisto: "VAR" o "Finanziamento" (mai altro). Riconosci da 3 segnali conco
   - Header sezione: "OFFERTA CON FINANZIAMENTO" -> Finanziamento; "VENDITA A RATE" -> VAR
   - Riga "Opzioni/servizi" della SIM: contiene "Vendita con Finanziamento" -> Finanziamento; contiene "Vendita a rate" -> VAR
   Se i segnali sono in contrasto o assenti -> null.
-imei: campo "Numero IMEI:" - 15 cifre, solo numero
-prezzo_device: campo "Prezzo device: X.XX euro" - SOLO numero come stringa, usa punto decimale (es. "399.9","1509.90","799.00"). NO "euro", NO simbolo valuta.
-smartphone_reload: nella sezione OPZIONE AGGIUNTIVA c'e' "È stata richiesta l'attivazione contestuale dell'opzione SMARTPHONE RELOAD SI [ ] NO [ ]". Se la X (o "X") e' sulla casella SI -> true. Se la X e' sulla casella NO -> false. Se entrambe vuote o sezione assente -> null.
+imei: 15 cifre, solo numero. Cerca in:
+  - Mobile/Customer Base: campo "Numero IMEI:" nella sezione device
+  - Fisso (FWA Indoor): campo "Seriale/IMEI:" nel "Dettaglio dell'ubicazione della linea" OPPURE "Seriale numero:" nella sezione PRODOTTI OPPURE "SERIALE MODEM" nel modulo cessione credito
+prezzo_device: SOLO numero come stringa, usa punto decimale (es. "287.52","399.9","1509.90"). NO "euro", NO simbolo valuta. Cerca in:
+  - Mobile/Customer Base: campo "Prezzo device: X.XX euro"
+  - Fisso (FWA Indoor): "prezzo pari a X,XX euro" (sezione PRODOTTI) OPPURE "cede l'importo di X,XX euro" (modulo cessione credito)
+  La virgola va normalizzata a punto: "287,52" -> "287.52".
+tipo_acquisto: per Mobile/Customer Base segui i 3 segnali sopra. Per Fisso (FWA Indoor) -> null (il PDA Fisso non parla di VAR/Finanziamento).
+smartphone_reload: solo per Mobile/Customer Base. Nella sezione OPZIONE AGGIUNTIVA c'e' "È stata richiesta l'attivazione contestuale dell'opzione SMARTPHONE RELOAD SI [ ] NO [ ]". Se la X (o "X") e' sulla casella SI -> true. Se la X e' sulla casella NO -> false. Se entrambe vuote o sezione assente (Fisso) -> null.
 
 === OUTPUT ===
 DEVI sempre includere TUTTI e 14 i campi nel JSON, anche quelli null. NON omettere mai un campo. NON usare "..." come placeholder.
@@ -129,7 +135,10 @@ Esempio azienda Mobile con device VAR e smartphone reload NO:
 {"cf_piva":"04971220233","ragione_sociale":"Lucchiari Auto Srl","nome_referente":"Maicol","cellulare":"3520696271","email":"info@lucchiari.it","provincia":"VR","comune":"Sanguinetto","via":"Via Masaglie","civico":"96","dispositivo_presente":true,"tipo_acquisto":"VAR","imei":"355297179899755","prezzo_device":"1509.9","smartphone_reload":false}
 
 Esempio SIM solo (senza device):
-{"cf_piva":"RSSMRA85M01H501Z","ragione_sociale":"Mario Rossi","nome_referente":"Mario","cellulare":"3331234567","email":"m.rossi@email.it","provincia":"RM","comune":"Roma","via":"Via Roma","civico":"12","dispositivo_presente":false,"tipo_acquisto":null,"imei":null,"prezzo_device":null,"smartphone_reload":null}`;
+{"cf_piva":"RSSMRA85M01H501Z","ragione_sociale":"Mario Rossi","nome_referente":"Mario","cellulare":"3331234567","email":"m.rossi@email.it","provincia":"RM","comune":"Roma","via":"Via Roma","civico":"12","dispositivo_presente":false,"tipo_acquisto":null,"imei":null,"prezzo_device":null,"smartphone_reload":null}
+
+Esempio Fisso FWA Indoor con modem (tipo_acquisto e smartphone_reload null perche' non applicabili al Fisso):
+{"cf_piva":"CMRGZN48P07A837N","ragione_sociale":"Graziano Camera","nome_referente":"Graziano","cellulare":"3453923639","email":"camera.gra@gmail.com","provincia":"VR","comune":"Bevilacqua","via":"Piazza Marega","civico":"1050","dispositivo_presente":true,"tipo_acquisto":null,"imei":"352941750260290","prezzo_device":"287.52","smartphone_reload":null}`;
 
 const EXPECTED_KEYS = [
   'cf_piva', 'ragione_sociale', 'nome_referente', 'cellulare', 'email',

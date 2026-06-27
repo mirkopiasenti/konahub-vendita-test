@@ -825,6 +825,13 @@ function _show(id, visible) {
   el.style.display = visible ? '' : 'none';
 }
 
+function _offertaNomeSelezionata() {
+  const sel = document.getElementById('vc_offerta_id');
+  if (!sel) return '';
+  const opt = sel.options[sel.selectedIndex];
+  return opt ? (opt.textContent || '').trim() : '';
+}
+
 function applyVisibilityRules() {
   const cat = _categoriaNomeSelezionato();
   const isFisso = _isCat(cat, 'Fisso');
@@ -832,6 +839,9 @@ function applyVisibilityRules() {
   const isMobile = _isCat(cat, 'Mobile');
   const isCustomerBase = _isCat(cat, 'Customer Base');
   const isAllarmi = _isCat(cat, 'Allarmi');
+  // Fisso FWA Indoor: device sempre associato (modem) ma Kolme + Smartphone Reload non rilevanti
+  const offertaNome = _offertaNomeSelezionata().toLowerCase();
+  const isFwaIndoor = isFisso && offertaNome.includes('fwa') && offertaNome.includes('indoor');
 
   // Categoria/Offerta sempre visibili
   // Opzione: visibile solo se ci sono opzioni disponibili in tendina
@@ -855,8 +865,8 @@ function applyVisibilityRules() {
   // Modalità Pagamento: solo Allarmi
   _show('vc_field_modalita_pagamento', isAllarmi);
 
-  // ---- Sezione Dispositivo (visibile solo per Mobile/Customer Base) ----
-  const deviceVisible = isMobile || isCustomerBase;
+  // ---- Sezione Dispositivo (Mobile/Customer Base sempre, + Fisso FWA Indoor) ----
+  const deviceVisible = isMobile || isCustomerBase || isFwaIndoor;
   _show('vc_section_device', deviceVisible);
   // Sotto-campi visibili solo se dispositivo_associato = true
   const dispVal = (document.getElementById('vc_dispositivo_associato') || {}).value || '';
@@ -867,11 +877,11 @@ function applyVisibilityRules() {
   // Finanziaria solo se tipo acquisto = Finanziamento
   const tipoAcq = (document.getElementById('vc_tipo_acquisto') || {}).value || '';
   _show('vc_field_finanziaria', hasDevice && tipoAcq === 'Finanziamento');
-  _show('vc_field_kolme', hasDevice);
-  // Migration 035 - Smartphone Reload + modalita
-  _show('vc_field_smartphone_reload', hasDevice);
+  // Kolme + Smartphone Reload + modalita: nascosti per FWA Indoor (modem)
+  _show('vc_field_kolme', hasDevice && !isFwaIndoor);
+  _show('vc_field_smartphone_reload', hasDevice && !isFwaIndoor);
   const smartphoneReloadVal = (document.getElementById('vc_smartphone_reload') || {}).value || '';
-  _show('vc_field_smartphone_reload_modalita', hasDevice && smartphoneReloadVal === 'true');
+  _show('vc_field_smartphone_reload_modalita', hasDevice && !isFwaIndoor && smartphoneReloadVal === 'true');
 
   // ---- Sezione Extra (campi specifici categoria) ----
   _show('vc_field_pod', isEnergia);
