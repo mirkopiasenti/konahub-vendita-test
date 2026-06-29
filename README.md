@@ -66,7 +66,12 @@ Per le functions in locale servono le env vars (vedi sotto). Mettile in un file 
 
 ## Deploy Netlify
 
-1. Collega il repo su Netlify
+- **Production**: [`mirox-crm.it`](https://mirox-crm.it) (dal 2026-06-29). Custom domain Netlify, qui sono configurate tutte le env vars (Supabase, Smshosting, ecc.)
+- Vecchio URL di test `test-upload-contratti-konahub.netlify.app` non e' piu' aggiornato — considerare deprecato
+- Da non confondere con `mirox-crm.netlify.app`, che e' il sito Call Center prod (altro repo)
+
+Setup:
+1. Repo gia' collegato su Netlify
 2. Le build settings vengono lette da `netlify.toml` (base directory vuota se il contenuto sta in root del repo)
 3. Imposta le env vars nel pannello Netlify (sezione Site settings → Environment variables)
 4. Deploy automatico al push

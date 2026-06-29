@@ -6223,8 +6223,8 @@ Reload Forever
      m.body.querySelectorAll('[data-cp-modality]').forEach((btn) => {
        btn.addEventListener('click', () => {
          const v = btn.getAttribute('data-cp-modality');
-         m.close();
          resolve(v);
+         m.close();
        });
      });
      m.foot.querySelector('[data-cp-cancel]').addEventListener('click', () => { m.close(); resolve(null); });
@@ -6445,8 +6445,8 @@ Reload Forever
          if (timerHandle) clearInterval(timerHandle);
          if (cooldownHandle) clearInterval(cooldownHandle);
          setTimeout(() => {
-           m.close();
            resolve({ consenso_id: json.consenso_id, valido_fino_al: json.valido_fino_al });
+           m.close();
          }, 900);
        } catch (e) {
          verifyBtn.disabled = false;
@@ -6629,8 +6629,8 @@ Reload Forever
          }
          setStatus('Consenso cartaceo archiviato. Valido fino al ' + cpFormatItalianDate(json.valido_fino_al) + '. Procedo con l\'invio pratica.', 'ok');
          setTimeout(() => {
-           m.close();
            resolve({ consenso_id: json.consenso_id, valido_fino_al: json.valido_fino_al });
+           m.close();
          }, 900);
        } catch (e) {
          confirmBtn.disabled = false;
