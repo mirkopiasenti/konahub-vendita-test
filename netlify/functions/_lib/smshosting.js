@@ -159,9 +159,10 @@ async function sendSms({ to, text, sender }) {
  */
 async function sendOtpSms({ to, otp, sender }) {
     const text =
-        `KONA TECH: il tuo codice di verifica e' ${otp}. ` +
-        `Comunicalo solo al nostro operatore per confermare il consenso privacy. ` +
-        `Valido 10 minuti. Non condividerlo con altri.`;
+        `Il tuo codice di verifica è: ${otp}\n\n` +
+        `Non condividere il codice.\n\n` +
+        `Per assistenza, contattaci su WhatsApp:\n` +
+        `https://wa.me/390442750029?text=Ciao%2C%20ho%20bisogno%20di%20assistenza%20per%20la%20verifica`;
     return sendSms({ to, text, sender });
 }
 
