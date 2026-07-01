@@ -158,11 +158,14 @@ async function sendSms({ to, text, sender }) {
  * Helper specializzato per OTP. Costruisce il testo standard.
  */
 async function sendOtpSms({ to, otp, sender }) {
+    // 139 caratteri (GSM-7, tutti ASCII), sotto la soglia di 160 -> 1 solo SMS.
+    // Se aggiungi accenti (e', ecc.) o cambi il link, riverifica la lunghezza:
+    // "e" con accento vero attiva UCS-2 (limite 70) e il messaggio diventa 2+ SMS.
     const text =
-        `Il tuo codice di verifica è: ${otp}\n\n` +
+        `Il tuo codice di verifica: ${otp}\n\n` +
         `Non condividere il codice.\n\n` +
         `Per assistenza, contattaci su WhatsApp:\n` +
-        `https://wa.me/390442750029?text=Ciao%2C%20ho%20bisogno%20di%20assistenza%20per%20la%20verifica`;
+        `https://wa.me/390442750029?text=Ciao`;
     return sendSms({ to, text, sender });
 }
 
