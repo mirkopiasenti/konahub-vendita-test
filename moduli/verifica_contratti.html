@@ -297,6 +297,14 @@ function fmtDate(iso) {
   const d = new Date(iso); if (isNaN(d)) return iso;
   return d.toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric' });
 }
+// Converte un ISO timestamptz nel formato richiesto da <input type="datetime-local">
+// (YYYY-MM-DDTHH:mm) usando l'ora locale del browser (Europe/Rome).
+function toLocalDatetimeInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso); if (isNaN(d)) return '';
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 function setCount(id, n) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -500,14 +508,16 @@ async function apriDettaglioContratto(id, stateKey) {
     // Carica liste utili per le tendine (categorie, offerte, opzioni, reload).
     // NB: vendita_reload non ha colonna offerta_id (è una lista globale di
     // reload), e il flag è "attivo" (maschile), non "attiva" come le altre.
-    const [catRes, offRes, opzRes, relRes, filesRes] = await Promise.all([
+    const [catRes, offRes, opzRes, relRes, filesRes, profRes] = await Promise.all([
       sb.from('vendita_categorie').select('id, nome').eq('attiva', true).order('ordine'),
       sb.from('vendita_offerte').select('id, categoria_id, nome_offerta, cluster_cliente').eq('attiva', true),
       sb.from('vendita_opzioni').select('id, categoria_id, offerta_id, nome_opzione, cluster_cliente').eq('attiva', true),
       sb.from('vendita_reload').select('id, nome').eq('attivo', true).order('ordine', { ascending: true }),
       // Filtriamo per contratto_id specifico, NON per anagrafica_id (un cliente
       // può avere N contratti, ognuno con i propri PDF).
-      sb.from('vendita_documenti').select('id, tipo_documento, storage_bucket, storage_path, file_name, uploaded_at').eq('contratto_id', fromState.id).order('uploaded_at', { ascending: false })
+      sb.from('vendita_documenti').select('id, tipo_documento, storage_bucket, storage_path, file_name, uploaded_at').eq('contratto_id', fromState.id).order('uploaded_at', { ascending: false }),
+      // Lista operatori per la dropdown "Operatore" (modifica utente che ha inserito la pratica)
+      sb.from('profili').select('id, nome').eq('attivo', true).order('nome', { ascending: true })
     ]);
     if (catRes.error) throw catRes.error;
     if (offRes.error) throw offRes.error;
@@ -519,8 +529,15 @@ async function apriDettaglioContratto(id, stateKey) {
     const opzioni = opzRes.data || [];
     const reload = relRes.data || [];
     const allegati = (filesRes && !filesRes.error) ? (filesRes.data || []) : [];
+    let profili = (profRes && !profRes.error) ? (profRes.data || []) : [];
+    // Se l'operatore attuale del contratto non è più attivo (es. import legacy),
+    // aggiungiamolo comunque all'elenco così resta selezionato e non si perde.
+    if (fromState.operatore_id && !profili.some(p => p.id === fromState.operatore_id)) {
+      const nome = (fromState.operatore && fromState.operatore.nome) || '(operatore non attivo)';
+      profili = [{ id: fromState.operatore_id, nome }, ...profili];
+    }
     loader.hide();
-    apriPopupDettaglio(fromState, { categorie, offerte, opzioni, reload, allegati, isReadOnly, stateKey });
+    apriPopupDettaglio(fromState, { categorie, offerte, opzioni, reload, allegati, profili, isReadOnly, stateKey });
   } catch (e) {
     loader.error('Errore caricamento');
     console.error('Errore dettaglio:', e);
@@ -529,7 +546,7 @@ async function apriDettaglioContratto(id, stateKey) {
 }
 
 function apriPopupDettaglio(c, opts) {
-  const { categorie, offerte, opzioni, reload, allegati, isReadOnly, stateKey } = opts;
+  const { categorie, offerte, opzioni, reload, allegati, profili, isReadOnly, stateKey } = opts;
   const ana = c.anagrafica || {};
   const isEnergia = (c.categoria_snapshot || '').toLowerCase().includes('energia');
   const isFisso = (c.categoria_snapshot || '').toLowerCase().includes('fisso');
@@ -566,6 +583,21 @@ function apriPopupDettaglio(c, opts) {
         <div class="det-field"><label>Comune</label><input type="text" id="vc_comune" value="${escapeHtml(ana.comune || '')}" ${ro}></div>
         <div class="det-field"><label>Via</label><input type="text" id="vc_via" value="${escapeHtml(ana.via || '')}" ${ro}></div>
         <div class="det-field"><label>Civico</label><input type="text" id="vc_civico" value="${escapeHtml(ana.civico || '')}" ${ro}></div>
+      </div>
+    </div>
+
+    <div class="det-section">
+      <h4>Inserimento pratica</h4>
+      <div class="det-grid">
+        <div class="det-field"><label>Data di upload</label>
+          <input type="datetime-local" id="vc_data_contratto" value="${toLocalDatetimeInput(c.data_contratto)}" ${ro}>
+        </div>
+        <div class="det-field"><label>Operatore inserimento</label>
+          <select id="vc_operatore_id" ${disabled}>
+            <option value="">—</option>
+            ${selectOpt(profili || [], c.operatore_id, 'id', 'nome')}
+          </select>
+        </div>
       </div>
     </div>
 
@@ -1058,7 +1090,19 @@ function leggiPayloadDalPopup() {
   const catText = (document.querySelector('#vc_categoria_id option:checked')?.textContent || '').toLowerCase();
   const showRX = catText.includes('mobile') || catText.includes('customer base');
 
+  // Data di upload (data_contratto) + operatore che ha inserito la pratica.
+  // Il campo datetime-local è in ora locale (Europe/Rome): lo convertiamo in ISO
+  // UTC. Se il campo è vuoto manteniamo il valore originale per non azzerarlo.
+  let dataContrattoIso = c.data_contratto || null;
+  const dcRaw = v('vc_data_contratto');
+  if (dcRaw) {
+    const d = new Date(dcRaw);
+    if (!isNaN(d)) dataContrattoIso = d.toISOString();
+  }
+
   const contratto = {
+    data_contratto: dataContrattoIso,
+    operatore_id: v('vc_operatore_id') || null,
     categoria_id: v('vc_categoria_id') || null,
     offerta_id: v('vc_offerta_id') || null,
     opzione_id: v('vc_opzione_id') || null,
